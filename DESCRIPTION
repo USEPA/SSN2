@@ -1,0 +1,51 @@
+Package: SSN2
+Title: Spatial Modeling on Stream Networks
+Version: 0.1.0
+Authors@R: c(
+    person(given = "Michael",
+           family = "Dumelle",
+           role = c("aut", "cre"),
+           email = "Dumelle.Michael@epa.gov",
+           comment = c(ORCID = "0000-0002-3393-5529")),
+    person(given = "Jay M.",
+       family = "Ver Hoef",
+       role = "aut",
+       email = "jay.verhoef@noaa.gov"),
+    person(given = "Erin",
+           family = "Peterson",
+           role = "aut"),
+    person(given = "Alan",
+           family = "Pearse",
+           role = "aut"),
+    person(given = "Dan",
+           family = "Isaak",
+           role = "aut")
+    )
+Description: Spatial statistical modeling and prediction for data on stream networks, including models based on in-stream distance (Ver Hoef, J.M. and Peterson, E.E., 2010. <DOI:10.1198/jasa.2009.ap08248>.) Models are created using moving average constructions. Spatial linear models, including explanatory variables, can be fit with (restricted) maximum likelihood.  Mapping and other graphical functions are included. 
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Depends: 
+    R (>= 2.10)
+Imports: 
+    stats,
+    sf,
+    Matrix,
+    generics,
+    tibble,
+    graphics,
+    parallel,
+    spmodel,
+    RSQLite,
+    utils
+Suggests: 
+    rmarkdown,
+    knitr,
+    testthat (>= 3.0.0),
+    ggplot2,
+    sp,
+    statmod
+Config/testthat/edition: 3
+VignetteBuilder: knitr

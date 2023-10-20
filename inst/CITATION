@@ -1,0 +1,24 @@
+bibentry(
+  bibtype = "Manual",
+  title        = "{SSN2}: Spatial Modeling on Stream Networks in {R}",
+  author       = c(person(given = "Michael",
+                          family = "Dumelle",
+                          email = "Dumelle.Michael@epa.gov"),
+                   person(given = "Erin",
+                          family = "Peterson"),
+                   person(given = "Jay M.",
+                          family = "Ver Hoef"),
+                   person(given = "Alan",
+                          family = "Pearse"),
+                   person(given = "Dan",
+                          family = "Isaak")
+                          ),
+  year         = "2023",
+  note         = "{R} package version 0.1.0",
+
+  header       = "To cite SSN2 in publications use:",
+  textVersion  =
+  paste("Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023).",
+        "SSN2: Spatial Modeling on Stream Networks in R.",
+        "R package version 0.1.0")
+)

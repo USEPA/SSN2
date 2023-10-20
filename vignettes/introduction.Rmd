@@ -1,0 +1,792 @@
+---
+title: "An Introduciton to Modeling Spatial Stream Networks Using SSN2"
+author: "Michael Dumelle, Erin Peterson, Jay M. Ver Hoef, Alan Pearse, and Dan Isaak"
+header-includes:
+   - \usepackage{amsmath,amsfonts,amssymb}
+   - \usepackage{bm, bbm}
+   - \usepackage{mathtools}
+bibliography: '`r system.file("references.bib", package="SSN2")`'
+output:
+    pdf_document:
+      number_sections: true
+      toc: true
+vignette: >
+  %\VignetteIndexEntry{An Introduction to SSN2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+# # jss style
+# knitr::opts_chunk$set(prompt=TRUE, echo = TRUE, highlight = FALSE, continue = " + ", comment = "")
+# options(replace.assign=TRUE, width=90, prompt="R> ")
+
+# rmd style
+knitr::opts_chunk$set(collapse = FALSE, comment = "#>", warning = FALSE, message = FALSE)
+
+# load packages
+library(ggplot2)
+library(SSN2)
+```
+
+# Background
+
+Data from streams frequently exhibit unique patterns of spatial
+autocorrelation resulting from the branching network structure,
+longitudinal (i.e., upstream/downstream) connectivity, directional
+water flow, and differences in flow volume throughout the network
+[@peterson2013modelling]. In addition, stream networks are embedded
+within a spatial environment, which can also influence
+observations on the stream network. Traditional spatial
+statistical models, which are based solely on Eucliean distance, often fail to
+adequately describe these unique and complex spatial depedendencies. 
+
+Spatial stream network models are based on a moving-average
+construction [@ver2010moving] and are specifically designed to
+describe two unique spatial relationships found in streams data. A pair of
+sites is considered flow-connected when water flows from an upstream
+site to a downstream site. Sites are flow-unconnected when they reside
+on the same stream network (i.e., share a common junction downstream)
+but do not share flow. 
+
+Spatial stream network models typically rely on
+two families of covariance functions to represent these relationships:
+the tail-up and tail-down models. In a tail-up model, the
+moving-average function points in the upstream direction. Covariance
+is a function of stream distance and a weighting structure used to
+proportionally allocate, or split, the function at upstream junctions
+to account for differences in flow volume or other influential variables [@peterson2010mixed]. As a
+result, non-zero covariances are restricted to flow-connected sites in a
+tail-up model. In a tail-down model, the moving average function
+points in the downstream direction. In contrast to the tail-up model,
+tail-down models describe both flow-connected and flow-unconnected
+relationships, although covariances will always be equal or stronger
+for flow-unconnected sites than flow-connected sites separated by
+equal stream distances [@ver2010moving]. In the tail-down model, covariance is
+a function of stream distance and weights are not required.
+However, it is also possible and often preferable to build
+spatial stream network models based on a mixture of four components: a
+tail-up component, a tail-down component, a Euclidean component, and a
+nugget component. The Euclidean component is useful because it
+captures covariance in influential processes that are independent of
+the stream network at intermediate and broad scales (e.g., air
+temperature, soil type, or geology). The nugget component captures
+covariance in processes that are highly localized, thus being
+independent across sites. For more details regarding the construction
+of spatial stream network models and their covariance components, see
+@cressie2006spatial, @ver2006spatial, @ver2010moving,
+@peterson2010mixed, and @isaak2014applications.
+
+The `SSN2` **R** package is used to fit and summarize spatial stream network models and make predictions at unobserved locations (Kriging). `SSN2` is an updated version of the `SSN` **R** package [@ver2014ssn].  Why did we create `SSN2` to replace `SSN`? There are two main reasons:
+
+1.  `SSN` depends on the `rgdal` [@bivand2021rgdal], `rgeos` [@bivand2020rgeos], and `maptools` [@bivand2021maptools] **R** packages, which are being retired in October, 2023. Their functionality has been replaced and modernized by the `sf` package [@pebesma2018sf]. `SSN2` depends on `sf` instead of `rgdal`, `rgeos`, and `maptools`, reflecting this broader change regarding handling spatial data in **R**.
+    
+    * See @nowosad2023 for more information regarding the retirement of `rgdal`, `rgeos`, and `maptools`, available at https://geocompx.org//post/2023/rgdal-retirement .
+
+2.  There are features we added to `SSN2` that would have been difficult to implement in `SSN` without a massive restructuring of `SSN`'s foundation, so we created a new package. For example, the `SSN` objects in `SSN2` are S3 objects but the `SSN` objects in `SSN` were S4 objects. Additionally, many functions were rewritten and/or repurposed in `SSN2` to use generic functions (e.g., block prediction in `SSN2` is performed using `predict()` while in `SSN` it was performed using `BlockPredict()`).
+
+This vignette provides an overview of basic features in `SSN2`. We load `SSN2` by running
+```{r, eval = FALSE}
+library(SSN2)
+```
+
+If you use `SSN2` in a formal publication or report, please cite it. Citing `SSN2` lets us devote more resources to it in the future. We view the `SSN2` citation by running
+```{r}
+citation(package = "SSN2")
+```
+
+# Input Data
+
+Spatial input data must be pre-processed before it can be used to fit spatial stream
+network models in the `SSN2` package. This information is
+generated using the Spatial Tools for the Analysis of River Systems
+(STARS) toolset for ArcGIS Desktop versions 9.3x-10.8x
+[@peterson2014stars]. Note that `STARS` is designed to work with
+existing streams data in vector format. The `openSTARS` R package
+[@kattwinkel2020openSTARS] provides an open source alternative to the
+STARS toolset, which depends on GRASS GIS. In contrast to `STARS`, `openSTARS` is
+designed to derive streams in raster format from a digital elevation
+model (DEM). Both tools output a `.ssn` directory which contains all
+of the spatial, topological and attribute information needed to fit a
+spatial stream network model using `SSN2`. This includes:
+
+1. edges: a shapefile of lines representing the linear geometry of the
+   stream network(s).
+2. sites: a shapefile of site locations where observed data were collected on the stream network.
+3. prediction sites: one or more shapefiles of locations where
+   predictions will be made. Optional. 
+4. netIDx.dat for each stream network: a text file containing topological relationships for
+   the line segments in edges, by network. 
+   
+# `SSN` Objects in `SSN2`
+
+The data contained in the `.ssn` object are read into R and stored as
+an `SSN` object, which has a special list structure with four elements:
+
+1.  `edges`: An `sf` object that contains the edges with `LINESTRING` geometry.
+2.  `obs`: An `sf` object that contains the observed data with `POINT` geometry.
+3.  `preds` A list of `sf` objects with `POINT` geometry, each containing a set of locations
+    where predictions will be made.
+4.  `path`: A character string that represents the path to the relevant `.ssn`
+    directory stored on your computer.
+	
+A `netgeometry` (short for "network geometry") column is also added to each of the `sf` objects
+stored within an `SSN` object. The `netgeometry` column contains a character string describing the position of each line (`edges`) and point (`obs` and `preds`)
+feature in relation to one another. The format of the `netgeometry` column
+differs depending on whether it is describing a feature with
+`LINESTRING` or `POINT` geometry. For edges, the format of `netgeometry`
+is
+
+`"ENETWORK (netID rid upDist)"`,
+
+and for sites
+
+`"SNETWORK (netID rid upDist ratio pid locID)"`,
+
+**The data used to define the `netgeometry` column are found in the edges,**
+**observed sites, and prediction sites shapefiles, which are created**
+**using the `STARS` or `openSTARS` software.**
+For edges, this includes a
+unique network identifier (`netID`) and reach (i.e., edge) identifier
+(`rid`), as well as the distance between the most downstream location on
+the stream network (i.e., stream outlet) to the upstream node of each
+edge segment, when movement is restricted to the stream
+network (`upDist`). The `netgeometry` column for sites also
+contains the `netID` and `rid` for the edge on which the site resides. The
+point identifier (`pid`) is unique to each measurement, while the
+location identifier (`locID`) is unique to each spatial location. Note
+that a `locID` may have multiple `pid`s associated with it if there are
+repeated measurements in the observed data or multiple predictions are made at
+the same location. The `upDist` value for each site represents the
+stream distance between the stream outlet and the site
+location. Finally, the `ratio` is used to describe the relative position
+of a site on its associated edge segment. It is the proportional
+distance from the most downstream node of the edge segment to the site
+location. For example, `ratio` at a site is close to zero when the site
+is close to the most downstream node of the edge segment, and `ratio` at a site
+is close to one when the site is far from the
+most downstream node of the edge segment. Together
+these key pieces of data are used to describe which network and edge
+each site resides on, as well as where exactly the site is on
+each line segment. It may at first seem redundant to combine and store
+multiple numeric columns as text in the `netgeometry` column. However,
+these data dictate how the observed and prediction sites relate to one
+another in topological space, which impacts parameter estimates and
+predicted values generated from fitted models. Storing these data as
+text in the `netgeometry` column significantly reduces the chance that
+these values are accidentally (and unknowingly) altered by a user.
+
+## The Middle Fork Data
+
+In this vignette, we will use the Middle Fork 2004 stream temperature data in `SSN2`. The raw input data are stored in the `lsndata/MiddleFork04.ssn` directory installed
+alongside `SSN2`. We must copy the data to a temporary directory before we can load it in by running
+```{r}
+copy_lsn_to_temp()
+```
+
+We create a path to the temporary directory and read in the data using `ssn_import()`, naming the `SSN` object `mf04p`:
+```{r}
+temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
+mf04p <- ssn_import(
+  path = temp_path,
+  predpts = c("pred1km", "CapeHorn", "Knapp"),
+  overwrite = TRUE
+)
+```
+
+The copying and reading in via the temporary directory is only required to work with the example Middle Fork 04 data installed alongside `SSN2`. When creating `.ssn` objects using `STARS` or `openSTARS`, users will only have to call `ssn_import()`, specifying the file path where the `.ssn` object is stored.
+
+We summarise the `mf04p` data by running
+```{r}
+summary(mf04p)
+```
+
+We see that `mf04p` contains 45 observation sites and a
+total of 2102 prediction sites stored in three different prediction
+datasets. We will explore several of these variables throughout the rest of the vignette:
+
+* `AREAWTMAP`: Precipitation (area-weighted in mm)
+* `ELEV_DEM`: Elevation (based on a 30m DEM)
+* `Summer_mn`: Mean summer temperature (Celsius)
+* `C16`: Number of times daily stream temperature exceeded 16 Celsius (in the summer)
+
+A more detailed description of all the variables in `mf04p` is available in the documentation and can be seen by running `?MiddleFork04.ssn` or `help(MiddleFork04.ssn, package = "SSN2")`. `SSN2` currently does not have a generic plotting function for `SSN` objects. Instead, we rely on the plotting functionality of `ggplot2`
+[@wickham2016ggplot2] and `sf` [@pebesma2018sf]. This vignette focuses on the use of `ggplot2`, which we load by running
+
+```{r, eval = FALSE}
+library(ggplot2)
+```
+
+ggplot2 is only installed alongside `SSN2` when `dependencies = TRUE` in `install.packages()`, so check that it is installed before reproducing any visualizations in this vignette.
+
+Prediction sites can be easily accessed in the `SSN` object using the
+list element number or names attribute. For example, we print the
+names of the prediction datasets to the console
+
+```{r}
+names(mf04p$preds)
+```
+
+We view the Middle Fork stream network, overlay the observed sites where data were collected using brown dots, and overlay the
+`pred1km` prediction locations using smaller, black dots by running
+```{r}
+ggplot() +
+  geom_sf(data = mf04p$edges) +
+  geom_sf(data = mf04p$preds$pred1km) +
+  geom_sf(data = mf04p$obs, color = "brown", size = 1.5) +
+  theme_bw()
+```
+
+Later we will fit models to stream network data. Before doing this, however, stream distance matrices must be calculated for the observed sites and prediction sites:
+```{r, eval = FALSE}
+ssn_create_distmat(
+  ssn.object = mf04p,
+  predpts = c("pred1km", "CapeHorn", "Knapp"),
+  overwrite = TRUE
+)
+```
+Stream distance matrices are saved as local files the `.ssn` directory associated
+with the `SSN` object, `mf04p$path`, in a folder called `distance`
+created by `ssn_create_distmat()`. The matrices are stored as `.Rdata`
+files in separate sub-folders for observed sites (`obs`) and each set
+of prediction sites. If the file path to the `.ssn` directory is incorrect, the
+`ssn_update_path()` can be used to update it before the distance
+matrices are generated. 
+
+
+# Spatial Stream Network (SSN) Models
+
+## Linear SSN Models {#sec:lm}
+
+We begin by fitting linear models to stream network data using the `ssn_lm()` function. Later in Section$~$\ref{sec:glm} we fit generalized linear models to stream network data using the `ssn_glm()` function. Typically, linear models are used when the response variable (i.e., dependent variable) is continuous and not highly skewed, and generalized linear models are often used when the response variable is binary, a count, or highly skewed.
+
+Linear spatial stream network models for a quantitative response vector $\mathbf{y}$ have spatially dependent random errors and are often parameterized as
+
+```{=tex}
+\begin{equation*}
+\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\tau}_{tu} + \boldsymbol{\tau}_{td} + \boldsymbol{\tau}_{eu} + \boldsymbol{\epsilon},
+\end{equation*}
+```
+where $\mathbf{X}$ is a matrix of explanatory variables (usually including a column of 1's for an intercept), $\boldsymbol{\beta}$ is a vector of fixed effects that describe the average impact of $\mathbf{X}$ on $\mathbf{y}$, $\boldsymbol{\tau}_{tu}$ is a vector of spatially dependent (correlated) tail-up random errors, $\boldsymbol{\tau}_{td}$ is a vector of spatially dependent (correlated) tail-down random errors, $\boldsymbol{\tau}_{eu}$ is a vector of spatially dependent (correlated) Euclidean random errors, and $\boldsymbol{\epsilon}$ is a vector of spatially independent (uncorrelated) random errors. The spatial dependence of each $\boldsymbol{\tau}$ term is explicitly specified using a spatial covariance function that incorporates the variance of the respective $\boldsymbol{\tau}$ term, often called a partial sill, and a range parameter that controls the behavior of the respective spatial covariance. The variance of $\boldsymbol{\epsilon}$ is often called the nugget (or nugget effect).
+
+Suppose we are interested in studying summer mean temperature (`Summer_mn`) on the stream network. We can visualize the distribution of summer mean temperature (overlain onto the stream network) by running
+
+```{r}
+ggplot() +
+  geom_sf(data = mf04p$edges) +
+  geom_sf(data = mf04p$obs, aes(color = Summer_mn), size = 1.5) +
+  scale_color_viridis_c(limits = c(-1.5, 17), option = "H") +
+  theme_bw()
+```
+
+The `ssn_lm()` function is used to fit linear spatial stream network models and bears many similarities to base-**R**'s `lm()` function for non-spatial linear models. Below we provide a few commonly used arguments to `ssn_lm()`:
+
+* `formula`: a formula that describes the relationship between the response variable and explanatory variables.
+    * `formula` uses the same syntax as the `formula` argument in `lm()`.
+* `ssn.object`: the `.ssn` object.
+* `tailup_type`: the tail-up covariance, can be `"linear"`, `"spherical"`, `"exponential"`, `"mariah"`, `"epa"`, or `"none"` (the default)
+* `taildown_type`: the tail-down covariance, can be `"linear"`, `"spherical"`, `"exponential"`, `"mariah"`, `"epa"`, or `"none"` (the default)
+* `euclid_type`: the Euclidean covariance, can be `"spherical"`, `"exponential"`, `"gaussian"`, `"cosine"`, `"cubic"`, `"pentaspherical"`, `"wave"`, `"jbessel"`, `"gravity"`, `"rquad"`, `"magnetic"`, or `"none"` (the default)
+* `nugget_type`: `"nugget"` (the default) or `"none"`.
+
+It is important to note that the default for `tailup_type`, `taildown_type`, and `euclid_type` is `"none"`, which means that they must be specified if their relevant covariances are desired. The default for `nugget_type` is `"nugget"`, which specifies a nugget effect, useful because many ecological processes have localized variability that is important to capture.  Full parameterizations of each covariance function are given in `ssn_lm()`'s documentation, which can be viewed by running `help("ssn_lm", "SSN2")`. There are different approaches to choosing between covariance functions. One approach is to fit several models and compare their fits using statistics like AIC or cross-validation error. Another approach is to visualize the `Torgegram()` and choose functions appropriately. 
+
+The `Torgegram()` in SSN2 is essentially a semivariogram that describes variability in streams data based on flow-connected, flow-unconnected, and Euclidean spatial relationships. Like other semivariograms, the Torgegram describes how the semivariance (i.e. halved average squared difference) between observations changes with hydrologic or Euclidean distances. If there is strong dependence between sites based on flow-connected or flow-unconnected relationships, the semivariance will increase with respective distance. If, however, there is not strong dependence, the semivariance will be relatively flat. The Torgegram() output can be combined with `plot()` to better understand which covariance components may be most suitable in the model. For example, when the semivariance for flow-connected sites increases with hydrologic distance but the semivariance for flow-unconnected sites is flat, then a tail-up component may be sufficient for the model (i.e., a tail-down component is not needed). However, the model would likely benefit from a tail-down component or a combination of tail-up and tail-down models if the semivariance for both flow-connected and flow-unconnected sites increases with distance. Alternatively, if the semivariance is flat, then the model is unlikely to benefit from tail-up or tail-down components. SSN2 also allows users to visualize changes in semivariance based on Euclidean distance, which may provide additional insights about whether a Euclidean component or a mixture of tail-up, tail-down and/or Euclidean models will improve the model. Please see @zimmerman2017torgegram for a more in-depth review of Toregegrams, along with strategies for interpreting and using them to inform model fitting.  For a more formal comparison between models, use statistics like `AIC` or cross-validation error, which we discuss later.
+
+Suppose that we want to model mean summer temperature as a function of elevation and precipitation. We can aid our understanding of what covariance components may be informative by visualizing a Torgegram:
+```{r}
+tg <- Torgegram(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  ssn.object = mf04p,
+  type = c("flowcon", "flowuncon", "euclid")
+)
+```
+
+The first argument to `Torgegram` is `formula`. Residuals from a non-spatial linear model specified by `formula` are used by the Toregram to visualize remaining spatial dependence. The `type` argument specifies the Torgegram types and has a default value of `c("flowcon", "flowuncon")` for both flow-connected and flow-unconnected semivariances. Here we also desire to visualize Euclidean semivariance. We visualize all three components by running
+
+```{r}
+plot(tg)
+```
+
+The flow-connected semivariances seem to generally increase with distance, which suggests that the model will benefit from at least a tail-up component. The takeaway for flow-unconnected and Euclidean semivariances is less clear -- they seem to generally increase with distance but there are some low distances with high semivariances. This suggests that tail-down and Euclidean components may not be too impactful on the model fit. We investigate this next while we fit a model with all three components: tail-up, tail-down, and Euclidean.
+
+We fit a spatial stream network model regressing mean summer temperature on elevation, precipitation, and their interaction using an exponential tail-up covariance function with additive weights created using watershed area (`afvArea`), a spherical tail-down covariance function, a Gaussian Euclidean covariance function, and a nugget effect by running
+
+```{r}
+ssn_mod <- ssn_lm(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  ssn.object = mf04p,
+  tailup_type = "exponential",
+  taildown_type = "spherical",
+  euclid_type = "gaussian",
+  additive = "afvArea"
+)
+```
+
+The estimation method is specified via the `estmethod` argument, which has a default value of `"reml"` for restricted maximum likelihood (REML). The other estimation method is `"ml"` for maximum likelihood (ML). REML is chosen as the default because it tends to yield more accurate covariance parameter estimates than ML, especially for small sample sizes. One nuance of REML, however, is that comparisons of likelihood-based statistics like AIC are only valid when the models have the same fixed effects structure (i.e., the same `formula`). To compare fixed effects and covariance structures simultaneously, use ML or a model comparison tool that is not likelihood-based, such as cross validation via `loocv()`, which we discuss later.
+
+### Model Summaries
+
+We summarize the fitted model by running
+```{r}
+summary(ssn_mod)
+```
+
+Similar to summaries of `lm()` objects, summaries of `ssn_lm()` objects include the original function call, residuals, and a coefficients table of fixed effects. The `(Intercept)` represents the average summer mean temperature at sea level (an elevation of zero) and no precipitation, `ELEV_DEM` represents the decrease in average summer mean temperature with a one unit (meter) increase in elevation, and `AREAWTMAP` represents the decrease in average summer mean temperature with a one unit (mm) increase in precipitation. There is strong evidence that average summer mean temperature decreases with elevation ($p$-value $< 0.001$), while there is moderate evidence that average summer mean temperature decreases with precipitation ($p$-value $\approx$ 0.05). A pseudo r-squared is also returned, which quantifies the proportion of variability explained by the fixed effects. The coefficients table of covariance parameters describes the model's dependence. The larger the `de` parameter, the more variability in the process is attributed to the relevant effect. Here, most of the model's random variability comes from the tail-up portion of the model. The larger the `range` parameter, the more correlated nearby observations are with respect to the relevant effect.
+
+We directly compare the sources of variability in the model using the `varcomp` function:
+```{r}
+varcomp(ssn_mod)
+```
+
+Most of the variability in mean summer temperature is
+explained by the fixed effects of elevation and precipitation (`Covariates (PR-sq)`) as well as the tail-up component.  Note that the values in the `proportion` column sum to one.
+
+In the remainder of this subsection, we describe the broom [@robinson2021broom] functions `tidy()`, `glance()` and `augment()`. `tidy()` tidies coefficient output in a convenient `tibble`, `glance()` glances at model-fit statistics, and `augment()` augments the data with fitted model diagnostics.
+
+We tidy the fixed effects (and add confidence intervals) by running
+```{r}
+tidy(ssn_mod, conf.int = TRUE)
+```
+
+We glance at the model-fit statistics by running
+```{r}
+glance(ssn_mod)
+```
+
+The columns of this `tibble` represent:
+
+-   `n`: The sample size.
+-   `p`: The number of fixed effects (linearly independent columns in $\mathbf{X}$).
+-   `npar`: The number of estimated covariance parameters.
+-   `value`: The value of the minimized objective function used when fitting the model.
+-   `AIC`: The Akaike Information Criterion (AIC).
+-   `AICc`: The AIC with a small sample size correction.
+-   `logLik`: The log-likelihood.
+-   `deviance`: The deviance.
+-   `pseudo.r.squared`: The pseudo r-squared.
+
+The `glances()` function can be used to glance at multiple models at once. Suppose we wanted to compare the current model to a new model that omits the tail-up and Euclidean components. We do this using `glances()` by running
+```{r}
+ssn_mod2 <- ssn_lm(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  ssn.object = mf04p,
+  taildown_type = "spherical"
+)
+glances(ssn_mod, ssn_mod2)
+```
+
+Often AIC and AICc are used for model selection, as they balance model fit and model simplicity. The lower AIC and AICc for the original model (`ssn_mod`) indicates it is a better fit to the data (than `ssn_mod2`). Outside of `glance()` and `glances()`, the functions `AIC()`, `AICc()`, `logLik()`, `deviance()`, and `pseudoR2()` are available to compute the relevant statistics. Note that `additive` is only required when the tail-up covariance is specified.  We are able to compare `AIC` and `AICc` for these models fit using REML because we are only changing the covariance structure, not the fixed effects structure. To compare `AIC` and `AICc` for models with varying fixed effect and covariance structures, use ML. For example, we compare a model with and without elevation to assess its importance:
+
+```{r}
+ml_mod <- ssn_lm(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  ssn.object = mf04p,
+  tailup_type = "exponential",
+  taildown_type = "spherical",
+  euclid_type = "gaussian",
+  additive = "afvArea",
+  estmethod = "ml"
+)
+ml_mod2 <- ssn_lm(
+  formula = Summer_mn ~ AREAWTMAP,
+  ssn.object = mf04p,
+  tailup_type = "exponential",
+  taildown_type = "spherical",
+  euclid_type = "gaussian",
+  additive = "afvArea",
+  estmethod = "ml"
+)
+glances(ml_mod, ml_mod2)
+```
+
+Elevation seems important to model fit, as evidenced by the lower AIC. @peterson2010mixed describe a two-step model procedure for model selection based on AIC when comparing models with varying covariance and fixed structures. First, all covariance components are included (tail-up, tail-down, Euclidean, nugget) and fixed effects are compared using ML. Then using the model with the lowest AIC, refit using REML and compare models with varying combinations of covariance components. Finally, proceed with the model having the lowest AIC. Another approach is to compare a suite of models (having varying fixed effect and covariance components) using ML and then refit the best model using REML. Henceforth, we proceed with the REML models, `ssn_mod` and `ssn_mod2`.
+
+Another way to compare model fits is leave-one-out cross validation available via the `loocv()` function. `loocv()` returns many model-fit statistics. One of these in the root-mean-squared-prediction error, which captures the typical absolute error associated with a prediction. We can compare the mean-squared-prediction error between `ssn_mod`, `ssn_mod2`:
+```{r}
+loocv_mod <- loocv(ssn_mod)
+loocv_mod$RMSPE
+loocv_mod2 <- loocv(ssn_mod2)
+loocv_mod2$RMSPE
+```
+
+`ssn_mod` is the better model with respect to `AIC`, `AICc`, and `RMSPE` and shortly we use it to return model diagnostics and make predictions. `loocv()` predictions using `ssn_mod` are typically within `r round(loocv_mod$RMSPE, digits = 3)`. of the true mean summer temperature. Note that model comparison using `loocv()` does not depend on the estimation method (ML vs REML).
+
+We augment the data with model diagnostics by running
+```{r}
+aug_ssn_mod <- augment(ssn_mod)
+aug_ssn_mod
+```
+
+The columns of this tibble represent:
+
+-   `Summer_mn`: Mean summer temperature.
+-   `ELEV_DEM`: Elevation.
+-   `Precipitation`: Precipitation.
+-   `.fitted`: The fitted values (the estimated mean given the explanatory variable values).
+-   `.resid`: The residuals (the response minus the fitted values).
+-   `.hat`: The leverage (hat) values.
+-   `.cooksd`: The Cook's distance.
+-   `.std.residuals`: Standardized residuals.
+-   `pid`: The `pid` value.
+-   `geometry`: The spatial information in the `sf` object.
+
+By default, `augment()` only returns the variables in the data used by the model. All variables from the original data are returned by setting `drop = FALSE`. We can write the augmented data to a shapefile by loading `sf` (which comes installed alongside `SSN2`) and running
+```{r, results = "hide"}
+library(sf)
+st_write(aug_ssn_mod, paste0(tempdir(), "/aug_ssn_mod.shp"))
+```
+
+Many of the model diagnostics returned by `augment()` can be visualized by running using `plot()`. For example, we plot the fitted values against the standardized residuals by running
+```{r}
+plot(ssn_mod, which = 1)
+```
+
+There are 6 total diagnostic plots (specified via the `which` argument) that return the same information returned from running `plot()` on an `lm()` object. 
+
+
+### Prediction (Kriging)
+
+Commonly a goal of a data analysis is to make predictions at unobserved locations. In spatial contexts, prediction is often called Kriging. Next we make mean summer temperature predictions at each location in the `pred1km` data in `mf04p` by running
+```{r, results = "hide"}
+predict(ssn_mod, newdata = "pred1km")
+```
+
+While `augment()` was previously used to augment the original data with model diagnostics, it can also be used to augment the `newdata` with predictions:
+```{r}
+aug_preds <- augment(ssn_mod, newdata = "pred1km")
+aug_preds[, ".fitted"]
+```
+
+Here `.fitted` represents the predictions. Confidence intervals for the mean response or prediction intervals for the predicted response can be obtained by specifying the `interval` argument in `predict()` and `augment()`. By default, `predict()` and `augment()` compute 95% intervals, though this can be changed using the `level` argument. The arguments for `predict()` and `augment()` on `ssn_lm()` objects is slightly different than the same arguments for an `lm()` object -- to learn more run `help("predict.SSN2", "SSN2")` or `help("augment.SSN2", "SSN2")`.
+
+We visualize these predictions (overlain onto the stream network) by running
+```{r}
+ggplot() +
+  geom_sf(data = mf04p$edges) +
+  geom_sf(data = aug_preds, aes(color = .fitted), size = 1.5) +
+  scale_color_viridis_c(limits = c(-1.5, 17), option = "H") +
+  theme_bw()
+```
+
+Previously we wrote out model diagnostics to a shapefile. Now we write out predictions to a geopackage (recall `sf` must be loaded) by running
+```{r, results = "hide"}
+st_write(aug_preds, paste0(tempdir(), "/aug_preds.gpkg"))
+```
+
+
+When performing prediction in `SSN2`, the name of `newdata` must be the name of a prediction data set contained in `ssn.object$preds`. If `newdata` is omitted or has the value `"all"`, prediction is performed for all prediction data sets in `ssn.object`. For example,
+
+```{r, eval = FALSE}
+predict(ssn_mod)
+predict(ssn_mod, newdata = "all")
+```
+
+makes predictions for `pred1km`, `Knapp`, and `CapeHorn` (the names of `mf04p$preds`). Lastly, if there are observations (in the `obs` object) whose response is missing (`NA`), these observations are removed from model fitting and moved to a prediction data set named `.missing`. Then predictions can be obtained at these locations.
+
+We can also predict the average value in a region using block Prediction (instead of making point predictions). We predict the average summer mean temperature throughout the Middle Fork stream network by running
+```{r}
+predict(ssn_mod, newdata = "pred1km", block = TRUE, interval = "prediction")
+```
+
+### Advanced Features {#sec:advanced}
+
+There are several additional modeling tools available in `SSN2` that we discuss next: Fixing parameter values; non-spatial random effects; and partition factors. 
+
+Perhaps we want to assume a particular covariance parameter is known. This may be reasonable if information is known about the process or the desire is to perform model selection for nested models or create profile likelihood confidence intervals. Fixing covariance parameters in `SSN2` is accomplished via the `tailup_initial`, `taildown_initial`, `euclid_initial`, and `nugget_initial` arguments to `ssn_lm()`. These arguments are passed an appropriate initial value object created using the `tailup_initial()`, `taildown_initial()`, `euclid_initial()`, or `nugget_initial()` function, respectively. For example, suppose we want to fix the Euclidean dependent error variance parameter at 1, forcing this component to have a moderate effect on the covariance. First, we specify the appropriate object by running
+```{r}
+euclid_init <- euclid_initial("gaussian", de = 1, known = "de")
+euclid_init
+```
+
+The `euclid_init` output shows that the `range` parameter has an initial value of 1 that is assumed known. The `range` parameter will still be estimated. Next the model is fit:
+
+```{r}
+ssn_init <- ssn_lm(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  ssn.object = mf04p,
+  tailup_type = "exponential",
+  taildown_type = "spherical",
+  euclid_initial = euclid_init,
+  additive = "afvArea"
+)
+ssn_init
+```
+
+Notice the Euclidean variance is 1.
+
+Random effects can be added to an SSN model to incorporate additional sources of variability separate from those on the stream network. Common additional sources of variability modeled include repeated observations at sites or network-specific effects. The random effects are modeled using similar syntax as for random effects in the `nlme` [@pinheiro2006mixed] and `lme4` [@bates2015lme4] **R** packages, being specified via a formula passed to the `random` argument. We model random intercepts for each of the two networks in the data by running
+```{r}
+ssn_rand <- ssn_lm(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  ssn.object = mf04p,
+  tailup_type = "exponential",
+  taildown_type = "spherical",
+  euclid_type = "gaussian",
+  additive = "afvArea",
+  random = ~ as.factor(netID)
+)
+ssn_rand
+```
+
+`random = ~ as.factor(netID)` is short-hand for `random = ~ (1 | as.factor(netID))`, which is the more familiar `lme4` or `nlme` syntax.
+
+A partition factor is a variable that allows observations to be uncorrelated when they from different levels of the partition factors. For example, one may want to partition the model into two networks despite their adjacency because of a significant land mass or similar obstruction. Partition factors are modeled using a formula that contains a single variable passed to the `partition_factor` argument. We model the two networks as uncorrelated by running
+```{r}
+ssn_part <- ssn_lm(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  ssn.object = mf04p,
+  tailup_type = "exponential",
+  taildown_type = "spherical",
+  euclid_type = "gaussian",
+  additive = "afvArea",
+  partition_factor = ~ as.factor(netID)
+)
+ssn_part
+```
+
+In short, the partition factor enables model fitting that builds independence in places not typical on a stream network but deemed relevant by the researcher.
+
+## Generalized Linear SSN Models {#sec:glm}
+
+Generalized linear spatial stream network models for a response vector $\mathbf{y}$ have spatially dependent random errors and are often parameterized as
+
+```{=tex}
+\begin{equation*}
+g(\boldsymbol{\mu}) = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\tau}_{tu} + \boldsymbol{\tau}_{td} + \boldsymbol{\tau}_{eu} + \boldsymbol{\epsilon},
+\end{equation*}
+```
+where $\boldsymbol{\mu}$ is the mean of $\mathbf{y}$, $g(\cdot)$ is a link function that "links" $\mathbf{\mu}$ to a linear function of the predictor variables and random errors, and all other terms are the same as those defined in Section$~$\ref{sec:lm} (Linear Models). Rather than assuming $y$ is normally (Gaussian) distributed as is often the case with linear spatial stream network models, generalized linear spatial stream network models assume $\mathbf{y}$ follows one of many distributions and has a corresponding link function. Below we summarize the families of generalized linear spatial stream network models supported by `SSN2` their link functions, and the type of data typically associated with these families. For more on generalized linear models more generally, see @mccullagh1989generalized, @myers2012generalized, and @faraway2016extending.
+
+The `ssn_glm()` function is used to fit generalized linear spatial stream network models and bears many similarities to base-**R**'s `glm()` function for non-spatial generalized linear models. The family (i.e., resposne distribution) is controlled by the `family` argument. When `family` is `Gaussian()`, the model fit is equivalent to one fit using `ssn_lm()`. Note that parameters are estimated on the relevant link scale and should be interpreted accordingly.
+
+| Family            | Link Function                                               | Link Name | Data Type                    | `SSN2` Function         |
+|---------------|---------------|---------------|---------------|---------------|
+| Gaussian          | $g(\mathbf{\mu}) = \mathbf{\mu}$                            | Identity  | Continuous                   | `ssn_lm()`; `ssn_glm()` |
+| Binomial          | $g(\mathbf{\mu}) = \log(\mathbf{\mu} / (1 - \mathbf{\mu}))$ | Logit     | Binary; Binary Count         | `ssn_glm()`             |
+| Beta              | $g(\mathbf{\mu}) = \log(\mathbf{\mu} / (1 - \mathbf{\mu}))$ | Logit     | Proportion                   | `ssn_glm()`             |
+| Poisson           | $g(\mathbf{\mu}) = \log(\mathbf{\mu})$                      | Log       | Count                        | `ssn_glm()`             |
+| Negative Binomial | $g(\mathbf{\mu}) = \log(\mathbf{\mu})$                      | Log       | Count                        | `ssn_glm()`             |
+| Gamma             | $g(\mathbf{\mu}) = \log(\mathbf{\mu})$                      | Log       | Skewed (positive continuous) | `ssn_glm()`             |
+| Inverse Gaussian  | $g(\mathbf{\mu}) = \log(\mathbf{\mu})$                      | Log       | Skewed (positive continuous) | `ssn_glm()`             |
+
+The `C16` variable in `mf04p` represents the number of times daily summer stream temperature exceeded 16 Celsius:
+```{r}
+ggplot() +
+  geom_sf(data = mf04p$edges) +
+  geom_sf(data = mf04p$obs, aes(color = C16), size = 1.5) +
+  scale_color_viridis_c(option = "H") +
+  theme_bw()
+```
+
+Suppose we want to model `C16` as a function of elevation and precipitation. Often count data are modeled using Poisson regression. Using tail-up, tail-down, and nugget components, we fit this Poisson model by running
+
+```{r}
+ssn_pois <- ssn_glm(
+  formula = C16 ~ ELEV_DEM + AREAWTMAP,
+  family = "poisson",
+  ssn.object = mf04p,
+  tailup_type = "epa",
+  taildown_type = "mariah",
+  additive = "afvArea"
+)
+```
+
+The previous `SSN2` functions used to explore linear spatial stream network models are also available for generalized linear spatial stream network models. For example, we can summarize the model using `summary()`:
+```{r}
+summary(ssn_pois)
+```
+
+Similar to summaries of `glm()` objects, summaries of `ssn_glm()` objects include the original function call, deviance residuals, and a coefficients table of fixed effects. The `(Intercept)` represents the log average `C16` at sea level (an elevation of zero) and zero precipitation, `ELEV_DEM` represents the decrease in log average summer mean temperature with a one unit (meter) increase in elevation, and `AREAWTMAP` represents the decrease in log average summer mean temperature with a one unit (mm) increase in precipitation. There is strong evidence that log average summer mean temperature decreases with elevation ($p$-value $< 0.001$), while there is moderate evidence that log average summer mean temperature decreases with precipitation ($p$-value $\approx$ 0.03). Recall that the covariance parameter estimates are on the link (here, log) scale.
+
+The Poisson model assumes that each observations mean and variance are equal. Often with ecological or environmental data, the variance is larger than the mean -- this is called overdispersion. The negative binomial model accommodates overdispersion for count data. We fit a negative binomial model by running
+
+```{r}
+ssn_nb <- ssn_glm(
+  formula = C16 ~ ELEV_DEM + AREAWTMAP,
+  family = "nbinomial",
+  ssn.object = mf04p,
+  tailup_type = "epa",
+  taildown_type = "mariah",
+  additive = "afvArea"
+)
+```
+
+These two models have different likelihoods, so we can't use AIC or AICc directly to compare them. We can, however, compare them using leave-one-out cross validation by running
+```{r}
+loocv_pois <- loocv(ssn_pois)
+loocv_pois$RMSPE
+loocv_nb <- loocv(ssn_nb)
+loocv_nb$RMSPE
+```
+
+The Poisson has a lower `RMSPE`, which suggests no evidence of overdispersion. 
+
+All advanced modeling features discussed for linear spatial stream network models (e.g., fixing covariance parameter values, random effects, partition factors) are also available for generalized linear spatial stream network models.
+
+## Simulating Spatial Stream Network Data
+
+The `ssn_simulate()` function is used to simulate data on a stream network. First, covariance parameter values are specified and a seed set:
+```{r}
+tu_params <- tailup_params("exponential", de = 0.4, range = 1e5)
+td_params <- taildown_params("spherical", de = 0.1, range = 1e6)
+euc_params <- euclid_params("gaussian", de = 0.2, range = 1e3)
+nug_params <- nugget_params("nugget", nugget = 0.1)
+set.seed(2)
+```
+
+Then call `ssn_simulate()`, specifying the `family` argument depending on the type of simulated data desired (here, Gaussian), the `ssn.object` and the network (here, the observed network):
+```{r}
+sims <- ssn_simulate(
+  family = "gaussian",
+  ssn.object = mf04p,
+  network = "obs",
+  additive = "afvArea",
+  tailup_params = tu_params,
+  taildown_params = td_params,
+  euclid_params = euc_params,
+  nugget_params = nug_params,
+  mean = 0,
+  samples = 1
+)
+head(sims)
+```
+
+We simulate binomial (presence/absence) data by running
+```{r}
+sims <- ssn_simulate(
+  family = "binomial",
+  ssn.object = mf04p,
+  network = "obs",
+  additive = "afvArea",
+  tailup_params = tu_params,
+  taildown_params = td_params,
+  euclid_params = euc_params,
+  nugget_params = nug_params,
+  mean = 0,
+  samples = 2
+)
+head(sims)
+```
+
+Currently, `ssn_simulate()` only works on the observed network (`network = "obs"`). However, simulation in `SSN2` will be a focus of future updates, and we plan to add support for simulating on prediction networks as well as observed and prediction networks simultaneously.
+
+# Function Glossary
+
+Here we list the two `SSN2` functions used to fit models:
+
+-   `ssn_glm()`: Fit a spatial stream network generalized linear model.
+-   `ssn_lm()`: Fit a spatial stream network linear model.
+
+Here we list some commonly used `SSN2` functions that operate on model fits:
+
+-   `AIC()`: Compute the AIC.
+-   `AICc()`: Compute the AICc.
+-   `anova()`: Perform an analysis of variance.
+-   `augment()`: Augment data with diagnostics or new data with predictions.
+-   `coef()`: Return coefficients.
+-   `confint()`: Compute confidence intervals.
+-   `cooks.distance()`: Compute Cook's distance.
+-   `covmatrix()`: Return covariance matrices.
+-   `deviance()`: Compute the deviance.
+-   `fitted()`: Compute fitted values.
+-   `glance()`: Glance at a fitted model.
+-   `glances()`: Glance at multiple fitted models.
+-   `hatvalues()`: Compute leverage (hat) values.
+-   `logLik()`: Compute the log-likelihood.
+-   `loocv()`: Perform leave-one-out cross validation and compute relevant statistics.
+-   `model.matrix()`: Return the model matrix ($\mathbf{X}$).
+-   `plot()`: Create fitted model plots.
+-   `predict()`: Compute predictions and prediction intervals.
+-   `pseudoR2()`: Compute the pseudo r-squared.
+-   `residuals()`: Compute residuals.
+-   `summary()`: Summarize fitted models.
+-   `tidy()`: Tidy fitted models.
+-   `varcomp()`: Compare variance components.
+-   `vcov()`: Compute variance-covariance matrices of estimated parameters.
+
+Documentation for these functions can be found by running `?function_name.SSN2` or `help("function_name.SSN2", "SSN2")`. For example, `?predict.SSN2` or `help("predict.SSN2", "SSN2")`.
+
+Here we list some commonly used `SSN2` functions for manipulating `SSN` objects:
+
+-   `ssn_create_distmat()`: Create distance matrices in the `.ssn` directory
+     for use with modeling functions.
+-   `ssn_get_data()`: Extract an `sf` `data.frame` of observed or
+    prediction locations from the `SSN` object.
+-   `ssn_get_netgeometry()`: Extract topological information from the
+    `netgeometry` column.
+-   `ssn_get_stream_distmat()`: Extract the stream distance matrices for
+    the observed or prediction locations in an `SSN` object.
+-   `ssn_import()`: Import an `SSN` object from an `.ssn` directory.
+-   `ssn_import_predpts()`: Import prediction data and store within
+    an existing `SSN` object.
+-   `ssn_put_data()`: Replace an `sf` `data.frame` of observed or
+    prediction locations in an `SSN` object.
+-   `ssn_split_predpts()`: Split prediction data stored within an
+    `SSN` object into multiple prediction data sets.
+-   `ssn_subset()`: Subset an existing `SSN` object based on a logical
+    expression.
+-   `SSN_to_SSN2()`: Convert an S4 `SpatialStreamNetwork` object created
+    in the `SSN` to an S3 `SSN` object used in `SSN2`.
+-   `ssn_update_path()`: Update the `path` element of an `SSN` object.
+-   `ssn_write()`: Write an `SSN` project to a new local `.ssn` directory.
+
+Here we list some commonly used miscellaneous `SSN2` functions:
+
+-   `ssn_simulate()`: Simulate spatially correlated random variables on a stream network.
+
+For a full list of `SSN2` functions alongside their documentation, see the documentation manual.
+
+# From `SSN` to `SSN2`
+
+Here we present a table of `SSN` functions and provide their relevant successors in `SSN2`:
+
+| `SSN` Function Name         | `SSN2` Function Name                                 |
+|-----------------------------|------------------------------------------------------|
+| `AIC()`                     | `AIC()`; `AICc()`                                    |
+| `BlockPredict()`            | `predict(…, block = TRUE)`                           |
+| `BLUP()`                    | `fitted(…, type)`                                    |
+| `covparms()`                | `coef()`; `tidy(..., effects)`                       |
+| `createDistMat()`           | `ssn_create_distmat()`                               |
+| `CrossValidationSSN()`      | `loocv()`                                            |
+| `CrossValidationStatsSSN()` | `loocv()`                                            |
+| `EmpiricalSemivariogram()`  | `Torgegram(…, type)`                                 |
+| `getSSNdata.frame()`        | `ssn_get_data()`                                     |
+| `getStreamDistMat()`        | `ssn_get_stream_distmat()`                           |
+| `glmssn()`                  | `ssn_glm()`; `ssn_lm()`                              |
+| `GR2()`                     | `pseudoR2()`                                         |
+| `importPredpts()`           | `ssn_import_predpts()`                               |
+| `importSSN()`               | `ssn_import()`                                       |
+| `InfoCritCompare()`         | `augment()`; `glance()`; `glances()`; `loocv()`      |
+| `predict()`                 | `predict()`                                          |
+| `putSSNdata.frame()`        | `ssn_put_data()`                                     |
+| `residuals()`               | `residuals()`                                        |
+| `SimulateOnSSN()`           | `ssn_simulate()`                                     |
+| `splitPredictions()`        | `ssn_split_predpts()`                                |
+| `subsetSSN()`               | `ssn_subset()`                                       |
+| `summary()`                 | `summary()`                                          |
+| `Torgegram()`               | `Torgegram(…, type)`                                 |
+| `updatePath()`              | `ssn_update_path()`                                  |
+| `varcomp()`                 | `varcomp()`                                          |
+| `writeSSN()`                | `ssn_write()`                                        |
+
+In addition to the function name changes above, a few function argument names also changed. Please read the documentation for each function of interest to see its relevant argument name changes.
+
+# The Future of `SSN2`
+
+There are several features we have planned for future versions of `SSN2` that did not make it into the initial release due to the October timeline regarding the `rgdal`, `rgeos`, and `maptools` retirements. As such, we plan to regularly update and add features to `SSN2` in the coming years -- so check back often! Some of these features include additional tools for large data sets (both model fitting and prediction), manipulating the `.ssn` object, simulating data, and more. We will do our best to make future versions of `SSN2` backward compatible with this version, but minor changes may occur until we are ready to release version 1.0.0.
+
+# R Code Appendix {.unnumbered}
+
+```{r get-labels, echo = FALSE}
+labs <- knitr::all_labels()
+labs <- setdiff(labs, c("setup", "get-labels"))
+```
+
+```{r all-code, ref.label=labs, eval = FALSE}
+```
+
+# References {.unnumbered}
+
+::: {#refs}
+:::
