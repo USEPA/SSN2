@@ -33,24 +33,24 @@ errors for each observation (if \code{se.fit = TRUE}).
 
 If an \code{ssn_lm} object, the cross validation error metrics are:
 \itemize{
-\item{bias: }{The average difference between the predicted value and true value}
-\item{std.bias: }{The average standardized difference between the predicted value and true value}
-\item{MSPE: }{The average squared difference between the predicted value and true value}
-\item{RMSPE: }{The root average squared difference between the predicted value and true value}
-\item{std.MSPE: }{The average standardized squared difference between the predicted value and true value}
-\item{RAV: }{The root of the average estimated variance of the predicted value}
-\item{cor2: }{The squared correlation between the predicted and true values}
-\item{cover.80: }{Coverage rates of 80\% prediction intervals built for the true values}
-\item{cover.90: }{Coverage rates of 90\% prediction intervals built for the true values}
-\item{cover.95: }{Coverage rates of 95\% prediction intervals built for the true values}
+\item bias: The average difference between the predicted value and true value
+\item std.bias: The average standardized difference between the predicted value and true value
+\item MSPE: The average squared difference between the predicted value and true value
+\item RMSPE: The root average squared difference between the predicted value and true value
+\item std.MSPE: The average standardized squared difference between the predicted value and true value
+\item RAV: The root of the average estimated variance of the predicted value
+\item cor2: The squared correlation between the predicted and true values
+\item cover.80: Coverage rates of 80\% prediction intervals built for the true values
+\item cover.90: Coverage rates of 90\% prediction intervals built for the true values
+\item cover.95: Coverage rates of 95\% prediction intervals built for the true values
 }
 
 If an \code{ssn_glm} object, the cross validation error metrics are:
 \itemize{
-\item{bias: }{The average difference between the predicted value and true value}
-\item{MSPE: }{The average squared difference between the predicted value and true value}
-\item{RMSPE: }{The root average squared difference between the predicted value and true value}
-\item{RAV: }{The root of the average estimated variance of the predicted value (on the link scale)}
+\item bias: The average difference between the predicted value and true value
+\item MSPE: The average squared difference between the predicted value and true value
+\item RMSPE: The root average squared difference between the predicted value and true value
+\item RAV: The root of the average estimated variance of the predicted value (on the link scale)
 }
 }
 \description{

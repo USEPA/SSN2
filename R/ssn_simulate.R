@@ -49,13 +49,13 @@
 #'   each response distribution do exist:
 #'
 #'   \itemize{
-#'     \item{\code{ssn_rnorm()}: }{Simulate from a Gaussian distribution}
-#'     \item{\code{ssn_rpois()}: }{Simulate from a Poisson distribution}
-#'     \item{\code{ssn_rnbinom()}: }{Simulate from a negative binomial distribution}
-#'     \item{\code{ssn_rbinom()}: }{Simulate from a binomial distribution}
-#'     \item{\code{ssn_rbeta()}: }{Simulate from a beta distribution}
-#'     \item{\code{ssn_rgamma()}: }{Simulate from a gamma distribution}
-#'     \item{\code{ssn_rinvgauss()}: }{Simulate from an inverse Gaussian distribution}
+#'     \item \code{ssn_rnorm()}: Simulate from a Gaussian distribution
+#'     \item \code{ssn_rpois()}: Simulate from a Poisson distribution
+#'     \item \code{ssn_rnbinom()}: Simulate from a negative binomial distribution
+#'     \item \code{ssn_rbinom()}: Simulate from a binomial distribution
+#'     \item \code{ssn_rbeta()}: Simulate from a beta distribution
+#'     \item \code{ssn_rgamma()}: Simulate from a gamma distribution
+#'     \item \code{ssn_rinvgauss()}: Simulate from an inverse Gaussian distribution
 #'
 #'   }
 #'

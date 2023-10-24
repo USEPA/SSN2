@@ -15,8 +15,12 @@ Authors:
 \itemize{
   \item Jay M. Ver Hoef \email{jay.verhoef@noaa.gov}
   \item Erin Peterson
-  \item Alan Pearse
-  \item Dan Isaak
+}
+
+Other contributors:
+\itemize{
+  \item Alan Pearse [contributor]
+  \item Dan Isaak [contributor]
 }
 
 }

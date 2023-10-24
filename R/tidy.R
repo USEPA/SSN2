@@ -42,9 +42,14 @@
 #' tidy(ssn_mod)
 tidy.ssn_lm <- function(x, conf.int = FALSE,
                         conf.level = 0.95, effects = "fixed", ...) {
+
+  if (conf.int && (conf.level < 0 || conf.level > 1)) {
+    stop("conf.level must be between 0 and 1.", call. = FALSE)
+  }
+
   if (effects == "fixed") {
     result <- tibble::as_tibble(summary(x)$coefficients$fixed,
-      rownames = "term"
+      rownames = "term", .name_repair = "minimal"
     )
     colnames(result) <- c(
       "term", "estimate", "std.error",
@@ -57,10 +62,10 @@ tidy.ssn_lm <- function(x, conf.int = FALSE,
           level = conf.level,
           type = "fixed"
         ),
-        rownames = "term"
+        rownames = "term", .name_repair = "minimal"
       )
       colnames(ci) <- c("term", "conf.low", "conf.high")
-      result <- tibble::as_tibble(base::merge(result, ci, by = "term"))
+      result <- tibble::as_tibble(base::merge(result, ci, by = "term"), .name_repair = "minimal")
     }
   } else if (effects == "ssn") {
     tailup_coef <- unclass(coefficients(x, type = "tailup"))
@@ -101,7 +106,7 @@ tidy.ssn_lm <- function(x, conf.int = FALSE,
       is_known = unname(x$is_known$nugget)
     )
 
-    result <- tibble::as_tibble(rbind(tailup_result, taildown_result, euclid_result, nugget_result))
+    result <- tibble::as_tibble(rbind(tailup_result, taildown_result, euclid_result, nugget_result), .name_repair = "minimal")
   } else if (effects == "tailup") {
     tailup_coef <- unclass(coefficients(x, type = "tailup"))
     result <- tibble::tibble(
@@ -160,9 +165,14 @@ tidy.ssn_lm <- function(x, conf.int = FALSE,
 #' @export
 tidy.ssn_glm <- function(x, conf.int = FALSE,
                          conf.level = 0.95, effects = "fixed", ...) {
+
+  if (conf.int && (conf.level < 0 || conf.level > 1)) {
+    stop("conf.level must be between 0 and 1.", call. = FALSE)
+  }
+
   if (effects == "fixed") {
     result <- tibble::as_tibble(summary(x)$coefficients$fixed,
-      rownames = "term"
+      rownames = "term", .name_repair = "minimal"
     )
     colnames(result) <- c(
       "term", "estimate", "std.error",
@@ -175,10 +185,10 @@ tidy.ssn_glm <- function(x, conf.int = FALSE,
           level = conf.level,
           type = "fixed"
         ),
-        rownames = "term"
+        rownames = "term", .name_repair = "minimal"
       )
       colnames(ci) <- c("term", "conf.low", "conf.high")
-      result <- tibble::as_tibble(base::merge(result, ci, by = "term"))
+      result <- tibble::as_tibble(base::merge(result, ci, by = "term"), .name_repair = "minimal")
     }
   } else if (effects == "ssn") {
     tailup_coef <- unclass(coefficients(x, type = "tailup"))
@@ -230,7 +240,7 @@ tidy.ssn_glm <- function(x, conf.int = FALSE,
     result <- tibble::as_tibble(rbind(
       tailup_result, taildown_result, euclid_result, nugget_result,
       dispersion_result
-    ))
+    ), .name_repair = "minimal")
   } else if (effects == "tailup") {
     tailup_coef <- unclass(coefficients(x, type = "tailup"))
     result <- tibble::tibble(

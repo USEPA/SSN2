@@ -16,10 +16,10 @@ Authors@R: c(
            role = "aut"),
     person(given = "Alan",
            family = "Pearse",
-           role = "aut"),
+           role = "ctb"),
     person(given = "Dan",
            family = "Isaak",
-           role = "aut")
+           role = "ctb")
     )
 Description: Spatial statistical modeling and prediction for data on stream networks, including models based on in-stream distance (Ver Hoef, J.M. and Peterson, E.E., 2010. <DOI:10.1198/jasa.2009.ap08248>.) Models are created using moving average constructions. Spatial linear models, including explanatory variables, can be fit with (restricted) maximum likelihood.  Mapping and other graphical functions are included. 
 License: GPL-3

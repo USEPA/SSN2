@@ -1,7 +1,7 @@
 # SSN2: Spatial Modeling on Stream Networks
 
 `SSN2` is an R package for spatial statistical modeling and prediction on
-stream networks, including models based on in-stream distance (Ver Hoef, J.M. and Peterson, E.E., 2010. <DOI:10.1198/jasa.2009.ap08248>.)
+stream networks, including models based on in-stream distance.
 Models are created using moving average constructions. Spatial linear models,
 including explanatory variables, can be fit with (restricted) maximum likelihood.
 Mapping and other graphical functions are included. It is an update version of the

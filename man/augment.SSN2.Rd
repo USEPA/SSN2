@@ -70,20 +70,20 @@ variances when predicting via models fit using \code{ssn_glm}. The default is
 \value{
 When augmenting the original data set, a tibble with additional columns
 \itemize{
-\item{\code{.fitted}}{ Fitted value}
-\item{\code{.resid}}{ Response residual (the difference between observed and fitted values)}
-\item{\code{.hat}}{ Leverage (diagonal of the hat matrix)}
-\item{\code{.cooksd}}{ Cook's distance}
-\item{\code{.std.resid}}{ Standardized residuals}
-\item{\code{.se.fit}}{ Standard error of the fitted value.}
+\item \code{.fitted}: Fitted value
+\item \code{.resid}: Response residual (the difference between observed and fitted values)
+\item \code{.hat}: Leverage (diagonal of the hat matrix)
+\item \code{.cooksd}: Cook's distance
+\item \code{.std.resid}: Standardized residuals
+\item \code{.se.fit}: Standard error of the fitted value.
 }
 
 When augmenting a new data set, a tibble with additional columns
 \itemize{
-\item{\code{.fitted}}{ Predicted (or fitted) value}
-\item{\code{.lower}}{ Lower bound on interval}
-\item{\code{.upper}}{ Upper bound on interval}
-\item{\code{.se.fit}}{ Standard error of the predicted (or fitted) value}
+\item \code{.fitted}: Predicted (or fitted) value
+\item \code{.lower}: Lower bound on interval
+\item \code{.upper}: Upper bound on interval
+\item \code{.se.fit}: Standard error of the predicted (or fitted) value
 }
 
 When predictions for all prediction objects are desired, the output is a list

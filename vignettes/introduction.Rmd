@@ -1,5 +1,5 @@
 ---
-title: "An Introduciton to Modeling Spatial Stream Networks Using SSN2"
+title: "An Introduction to Spatial Stream Network Modeling in R Using SSN2"
 author: "Michael Dumelle, Erin Peterson, Jay M. Ver Hoef, Alan Pearse, and Dan Isaak"
 header-includes:
    - \usepackage{amsmath,amsfonts,amssymb}
@@ -612,7 +612,7 @@ ssn_nb <- ssn_glm(
 )
 ```
 
-These two models have different likelihoods, so we can't use AIC or AICc directly to compare them. We can, however, compare them using leave-one-out cross validation by running
+We can compare the fit of these models using leave-one-out cross validation by running
 ```{r}
 loocv_pois <- loocv(ssn_pois)
 loocv_pois$RMSPE

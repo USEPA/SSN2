@@ -14,12 +14,12 @@
 #' @details For all fitted model objects,, the values of \code{which} make the
 #'   corresponding plot:
 #'   \itemize{
-#'     \item{1:}{ Standardized residuals vs fitted values (of the response)}
-#'     \item{2:}{ Normal quantile-quantile plot of standardized residuals}
-#'     \item{3:}{ Scale-location plot of standardized residuals}
-#'     \item{4:}{ Cook's distance}
-#'     \item{5:}{ Standardized residuals vs leverage}
-#'     \item{6:}{ Cook's distance vs leverage}
+#'     \item 1: Standardized residuals vs fitted values (of the response)
+#'     \item 2: Normal quantile-quantile plot of standardized residuals
+#'     \item 3: Scale-location plot of standardized residuals
+#'     \item 4: Cook's distance
+#'     \item 5: Standardized residuals vs leverage
+#'     \item 6: Cook's distance vs leverage
 #'   }
 #'
 #' @return No return value. Function called for plotting side effects.

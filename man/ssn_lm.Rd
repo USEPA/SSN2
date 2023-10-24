@@ -116,39 +116,39 @@ summarize model fit are available for \code{ssn_lm} objects, including
 
 This fitted model list contains the following elements:
 \itemize{
-\item{\code{additive}: }{The name of the additive function value column.}
-\item{\code{anisotropy}: }{Whether euclidean anisotropy was modeled.}
-\item{\code{call}: }{The function call.}
-\item{\code{coefficients}: }{Model coefficients.}
-\item{\code{contrasts}: }{Any user-supplied contrasts.}
-\item{\code{cooks_distance}: }{Cook's distance values.}
-\item{\code{crs}: }{The geographic coordinate reference system.}
-\item{\code{deviance}: }{The model deviance.}
-\item{\code{diagtol}: }{A tolerance value that may be added to the diagonal
-of covariance matrices to encourage decomposition stability.}
-\item{\code{estmethod}: }{The estimation method.}
-\item{\code{euclid_max}: }{The maximum euclidean distance.}
-\item{\code{fitted}: }{Fitted values.}
-\item{\code{formula}: }{The model formula.}
-\item{\code{hatvalues}: }{The hat (leverage) values.}
-\item{\code{is_known}: }{An object that identifies which parameters are known.}
-\item{\code{local_index}: }{An index identifier used internally for sorting.}
-\item{\code{missing_index}: }{Which rows in the "obs" object had missing responses.}
-\item{\code{n}: }{The sample size.}
-\item{\code{npar}: }{The number of estimated covariance parameters.}
-\item{\code{observed_index}: }{Which rows in the "obs" object had observed responses.}
-\item{\code{optim}: }{The optimization output.}
-\item{\code{p}: }{The number of fixed effects.}
-\item{\code{partition_factor}: }{The partition factor formula.}
-\item{\code{pseudoR2}: }{The pseudo R-squared.}
-\item{\code{random}: }{The random effect formula.}
-\item{\code{residuals}: }{The residuals.}
-\item{\code{sf_column_name}: }{The name of the geometry columns \code{ssn.object}}
-\item{\code{ssn.object}: }{An updated \code{ssn.object}.}
-\item{\code{tail_max}: }{The maximum stream distance.}
-\item{\code{terms}: }{The model terms.}
-\item{\code{vcov}: }{Variance-covariance matrices}
-\item{\code{xlevels}: }{The levels of factors in the model matrix.}
+\item \code{additive}: The name of the additive function value column.
+\item \code{anisotropy}: Whether euclidean anisotropy was modeled.
+\item \code{call}: The function call.
+\item \code{coefficients}: Model coefficients.
+\item \code{contrasts}: Any user-supplied contrasts.
+\item \code{cooks_distance}: Cook's distance values.
+\item \code{crs}: The geographic coordinate reference system.
+\item \code{deviance}: The model deviance.
+\item \code{diagtol}: A tolerance value that may be added to the diagonal
+of  ovariance matrices to encourage decomposition stability.
+\item \code{estmethod}: The estimation method.
+\item \code{euclid_max}: The maximum euclidean distance.
+\item \code{fitted}: Fitted values.
+\item \code{formula}: The model formula.
+\item \code{hatvalues}: The hat (leverage) values.
+\item \code{is_known}: An object that identifies which parameters are known.
+\item \code{local_index}: An index identifier used internally for sorting.
+\item \code{missing_index}: Which rows in the "obs" object had missing responses.
+\item \code{n}: The sample size.
+\item \code{npar}: The number of estimated covariance parameters.
+\item \code{observed_index}: Which rows in the "obs" object had observed responses.
+\item \code{optim}: The optimization output.
+\item \code{p}: The number of fixed effects.
+\item \code{partition_factor}: The partition factor formula.
+\item \code{pseudoR2}: The pseudo R-squared.
+\item \code{random}: The random effect formula.
+\item \code{residuals}: The residuals.
+\item \code{sf_column_name}: The name of the geometry columns \code{ssn.object}
+\item \code{ssn.object}: An updated \code{ssn.object}.
+\item \code{tail_max}: The maximum stream distance.
+\item \code{terms}: The model terms.
+\item \code{vcov}: Variance-covariance matrices
+\item \code{xlevels}: The levels of factors in the model matrix.
 }
 
 These list elements are meant to be used with various generic functions
@@ -192,12 +192,12 @@ and \eqn{I} be
 an identity matrix. Then parametric forms for flow-connected
 elements of \eqn{R(zu)} are given below:
 \itemize{
-\item{linear: }{\eqn{(1 - r) * (r <= 1) * W}}
-\item{spherical: }{\eqn{(1 - 1.5r + 0.5r^3) * (r <= 1) * W}}
-\item{exponential: }{\eqn{exp(-r) * W}}
-\item{mariah: }{\eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}}
-\item{epa: }{\eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}}
-\item{none: }{\eqn{I} * W}
+\item linear: \eqn{(1 - r) * (r <= 1) * W}
+\item spherical: \eqn{(1 - 1.5r + 0.5r^3) * (r <= 1) * W}
+\item exponential: \eqn{exp(-r) * W}
+\item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
+\item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
+\item none: \eqn{I} * W
 }
 
 Details describing the \code{F} matrix in the \code{epa} covariance are given in Garreta et al. (2010).
@@ -209,12 +209,12 @@ Observations on different networks are also assumed uncorrelated.
 and \eqn{I} be an identity matrix. Then parametric forms for flow-connected
 elements of \eqn{R(zd)} are given below:
 \itemize{
-\item{linear: }{\eqn{(1 - r) * (r <= 1)}}
-\item{spherical: }{\eqn{(1 - 1.5r + 0.5r^3) * (r <= 1)}}
-\item{exponential: }{\eqn{exp(-r)}}
-\item{mariah: }{\eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}}
-\item{epa: }{\eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}}
-\item{none: }{\eqn{I}}
+\item linear: \eqn{(1 - r) * (r <= 1)}
+\item spherical: \eqn{(1 - 1.5r + 0.5r^3) * (r <= 1)}
+\item exponential: \eqn{exp(-r)}
+\item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
+\item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
+\item none: \eqn{I}
 }
 
 Now let \eqn{A} be a matrix that contains the shorter of the two distances
@@ -223,12 +223,12 @@ between two sites and the common downstream junction, \eqn{r1 = A / range},
 common downstream junction, \eqn{r2 = B / range},  and \eqn{I} be an identity matrix.
 Then parametric forms for flow-unconnected elements of \eqn{R(zd)} are given below:
 \itemize{
-\item{linear: }{\eqn{(1 - r2) * (r2 <= 1)}}
-\item{spherical: }{\eqn{(1 - 1.5r1 + 0.5r2) * (1 - r2)^2 * (r2 <= 1)}}
-\item{exponential: }{\eqn{exp(-(r1 + r2))}}
-\item{mariah: }{\eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}}
-\item{epa: }{\eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}}
-\item{none: }{\eqn{I}}
+\item linear: \eqn{(1 - r2) * (r2 <= 1)}
+\item spherical: \eqn{(1 - 1.5r1 + 0.5r2) * (1 - r2)^2 * (r2 <= 1)}
+\item exponential: \eqn{exp(-(r1 + r2))}
+\item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
+\item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
+\item none: \eqn{I}
 }
 
 Details describing the \code{F1} and \code{F2} matrices in the \code{epa}
@@ -239,34 +239,34 @@ Observations on different networks are assumed uncorrelated.
 \eqn{r = D / range}, and \eqn{I} be an identity matrix. Then parametric
 forms for elements of \eqn{R(ze)} are given below:
 \itemize{
-\item{exponential: }{\eqn{exp(- r )}}
-\item{spherical: }{\eqn{(1 - 1.5r + 0.5r^3) * (r <= 1)}}
-\item{gaussian: }{\eqn{exp(- r^2 )}}
-\item{cubic: }{\eqn{(1 - 7r^2 + 8.75r^3 - 3.5r^5 + 0.75r^7) * (r <= 1)}}
-\item{pentaspherical: }{\eqn{(1 - 1.875r + 1.25r^3 - 0.375r^5) * (r <= 1)}}
-\item{cosine: }{\eqn{cos(r)}}
-\item{wave: }{\eqn{sin(r) * (h > 0) / r + (h = 0)}}
-\item{jbessel: }{\eqn{Bj(h * range)}, Bj is Bessel-J function}
-\item{gravity: }{\eqn{(1 + r^2)^{-0.5}}}
-\item{rquad: }{\eqn{(1 + r^2)^{-1}}}
-\item{magnetic: }{\eqn{(1 + r^2)^{-1.5}}}
-\item{none: }{\eqn{I}}
+\item exponential: \eqn{exp(- r )}
+\item spherical: \eqn{(1 - 1.5r + 0.5r^3) * (r <= 1)}
+\item gaussian: \eqn{exp(- r^2 )}
+\item cubic: \eqn{(1 - 7r^2 + 8.75r^3 - 3.5r^5 + 0.75r^7) * (r <= 1)}
+\item pentaspherical: \eqn{(1 - 1.875r + 1.25r^3 - 0.375r^5) * (r <= 1)}
+\item cosine: \eqn{cos(r)}
+\item wave: \eqn{sin(r) * (h > 0) / r + (h = 0)}
+\item jbessel: \eqn{Bj(h * range)}, Bj is Bessel-J function
+\item gravity: \eqn{(1 + r^2)^{-0.5}}
+\item rquad: \eqn{(1 + r^2)^{-1}}
+\item magnetic: \eqn{(1 + r^2)^{-1.5}}
+\item none: \eqn{I}
 }
 
 \code{nugget_type} Details: Let \eqn{I} be an identity matrix and \eqn{0}
 be the zero matrix. Then parametric
 forms for elements the nugget variance are given below:
 \itemize{
-\item{nugget: }{\eqn{I}}
-\item{none: }{\eqn{0}}
+\item nugget: \eqn{I}
+\item none: \eqn{0}
 }
 In short, the nugget effect is modeled when \code{nugget_type} is \code{"nugget"}
 and omitted when \code{nugget_type} is \code{"none"}.
 
 \code{estmethod} Details: The various estimation methods are
 \itemize{
-\item{\code{reml}: }{Maximize the restricted log-likelihood.}
-\item{\code{ml}: }{Maximize the log-likelihood.}
+\item \code{reml}: Maximize the restricted log-likelihood.
+\item \code{ml}: Maximize the log-likelihood.
 }
 
 \code{anisotropy} Details: By default, all Euclidean covariance parameters except \code{rotate}

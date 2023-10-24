@@ -70,8 +70,8 @@ a vector of predictions or a matrix of predictions with column names
 \code{fit}, \code{lwr}, and \code{upr} if \code{interval} is \code{"confidence"}
 or \code{"prediction"}. If \code{se.fit} is \code{TRUE}, a list with the following components is returned:
 \itemize{
-\item{\code{fit}: }{vector or matrix as above}
-\item{\code{se.fit: }}{standard error of each fit}
+\item \code{fit}: vector or matrix as above
+\item \code{se.fit:} standard error of each fit
 }
 }
 \description{

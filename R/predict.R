@@ -33,8 +33,8 @@
 #'   \code{fit}, \code{lwr}, and \code{upr} if \code{interval} is \code{"confidence"}
 #'   or \code{"prediction"}. If \code{se.fit} is \code{TRUE}, a list with the following components is returned:
 #'   \itemize{
-#'     \item{\code{fit}: }{vector or matrix as above}
-#'     \item{\code{se.fit: }}{standard error of each fit}
+#'     \item \code{fit}: vector or matrix as above
+#'     \item \code{se.fit:} standard error of each fit
 #'   }
 #'
 #' @name predict.SSN2
@@ -58,20 +58,28 @@
 #' predict(ssn_mod, "CapeHorn")
 predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none", "confidence", "prediction"),
                            level = 0.95, block = FALSE, ...) {
-  # call predict_block if necessary
-  if (block) {
-    call_val <- match.call()
-    call_val[[1]] <- as.symbol("predict_block")
-    call_list <- as.list(call_val)
-    call_list <- call_list[-which(names(call_list) %in% c("block"))]
-    call_list[[1]] <- quote(SSN2:::predict_block)
-    call_val <- as.call(call_list)
-    object <- eval(call_val, envir = parent.frame())
-    return(object)
-  }
+
 
   # match interval argument so the three display
   interval <- match.arg(interval)
+
+  # call predict_block if necessary
+  # if (block) { # gives ::: warning so no rd exported
+  #   call_val <- match.call()
+  #   call_val[[1]] <- as.symbol("predict_block")
+  #   call_list <- as.list(call_val)
+  #   call_list <- call_list[-which(names(call_list) %in% c("block"))]
+  #   # call_list[[1]] <- quote(SSN2:::predict_block)
+  #   call_val <- as.call(call_list)
+  #   object <- eval(call_val, envir = parent.frame())
+  #   return(object)
+  # }
+
+  #  safter but potentially passes block
+  if (block) {
+    object <- predict_block(object, newdata, se.fit, interval, level, ...)
+    return(object)
+  }
 
   # deal with local (omitted for now)
   # if (missing(local)) local <- NULL
@@ -323,9 +331,9 @@ get_pred <- function(newdata_list, se.fit, interval, formula, obdata, cov_matrix
 
 
 
-predict_block <- function(object, newdata, se.fit = FALSE, interval = c("none", "prediction", "confidence"), level = 0.95, ...) {
-  # match interval argument so the three display
-  interval <- match.arg(interval)
+predict_block <- function(object, newdata, se.fit, interval, level, ...) {
+
+
 
   # deal with local (omitted for now)
   # if (missing(local)) local <- NULL

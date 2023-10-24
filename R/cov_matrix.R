@@ -14,7 +14,7 @@ cov_matrix <- function(params, dist_object, ...) {
 ###############################################################################
 
 #' @export
-cov_matrix.tailup_linear <- function(params, dist_object) {
+cov_matrix.tailup_linear <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   w <- dist_object$w_mat
   m <- dist_object$mask_mat
@@ -23,7 +23,7 @@ cov_matrix.tailup_linear <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.tailup_spherical <- function(params, dist_object) {
+cov_matrix.tailup_spherical <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   w <- dist_object$w_mat
   m <- dist_object$mask_mat
@@ -32,7 +32,7 @@ cov_matrix.tailup_spherical <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.tailup_exponential <- function(params, dist_object) {
+cov_matrix.tailup_exponential <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   w <- dist_object$w_mat
   m <- dist_object$mask_mat
@@ -41,7 +41,7 @@ cov_matrix.tailup_exponential <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.tailup_mariah <- function(params, dist_object) {
+cov_matrix.tailup_mariah <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   w <- dist_object$w_mat
   m <- dist_object$mask_mat
@@ -52,7 +52,7 @@ cov_matrix.tailup_mariah <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.tailup_epa <- function(params, dist_object) {
+cov_matrix.tailup_epa <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   w <- dist_object$w_mat
   m <- dist_object$mask_mat
@@ -63,7 +63,7 @@ cov_matrix.tailup_epa <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.tailup_none <- function(params, dist_object) {
+cov_matrix.tailup_none <- function(params, dist_object, ...) {
   0
 }
 
@@ -71,10 +71,8 @@ cov_matrix.tailup_none <- function(params, dist_object) {
 # TAILDOWN COVARIANCES
 ###############################################################################
 
-# WHY DO THESE USE A INSTEAD OF B? WHY DOES EXPONENTIAL USE NEITHER?
-
 #' @export
-cov_matrix.taildown_linear <- function(params, dist_object) {
+cov_matrix.taildown_linear <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   a <- dist_object$a_mat
   b <- dist_object$b_mat
@@ -91,7 +89,7 @@ cov_matrix.taildown_linear <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.taildown_spherical <- function(params, dist_object) {
+cov_matrix.taildown_spherical <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   a <- dist_object$a_mat
   b <- dist_object$b_mat
@@ -109,7 +107,7 @@ cov_matrix.taildown_spherical <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.taildown_exponential <- function(params, dist_object) {
+cov_matrix.taildown_exponential <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   m <- dist_object$mask_mat
   dist_ratio <- h / params[["range"]]
@@ -117,7 +115,7 @@ cov_matrix.taildown_exponential <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.taildown_mariah <- function(params, dist_object) {
+cov_matrix.taildown_mariah <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   a <- dist_object$a_mat
   b <- dist_object$b_mat
@@ -139,7 +137,7 @@ cov_matrix.taildown_mariah <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.taildown_epa <- function(params, dist_object) {
+cov_matrix.taildown_epa <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
   a <- dist_object$a_mat
   b <- dist_object$b_mat
@@ -159,7 +157,7 @@ cov_matrix.taildown_epa <- function(params, dist_object) {
 }
 
 #' @export
-cov_matrix.taildown_none <- function(params, dist_object) {
+cov_matrix.taildown_none <- function(params, dist_object, ...) {
   0
 }
 
@@ -168,7 +166,7 @@ cov_matrix.taildown_none <- function(params, dist_object) {
 ###############################################################################
 
 #' @export
-cov_matrix.euclid_exponential <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_exponential <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   cor_part <- exp(-dist_ratio)
@@ -176,7 +174,7 @@ cov_matrix.euclid_exponential <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_spherical <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_spherical <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 - (3 / 2) * dist_ratio + (1 / 2) * dist_ratio^3) * (dist_ratio <= 1)
@@ -184,7 +182,7 @@ cov_matrix.euclid_spherical <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_gaussian <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_gaussian <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   cor_part <- exp(-dist_ratio^2)
@@ -192,7 +190,7 @@ cov_matrix.euclid_gaussian <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_cosine <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_cosine <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   min_val <- pmin(dist_ratio, 1)
@@ -201,7 +199,7 @@ cov_matrix.euclid_cosine <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_cubic <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_cubic <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 - (7 / 1 * dist_ratio^2) + (35 / 4 * dist_ratio^3) - (7 / 2 * dist_ratio^5) + (3 / 4 * dist_ratio^7)) * (dist_ratio <= 1)
@@ -209,7 +207,7 @@ cov_matrix.euclid_cubic <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_pentaspherical <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_pentaspherical <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 - (15 / 8 * dist_ratio) + (5 / 4 * dist_ratio^3) - (3 / 8 * dist_ratio^5)) * (dist_ratio <= 1)
@@ -217,7 +215,7 @@ cov_matrix.euclid_pentaspherical <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_wave <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_wave <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   cor_part <- sin(dist_ratio) / (dist_ratio)
@@ -226,7 +224,7 @@ cov_matrix.euclid_wave <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_jbessel <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_jbessel <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_product <- h * params[["range"]]
   cor_part <- besselJ(as.matrix(pmin(dist_product, 100000)), 0)
@@ -234,7 +232,7 @@ cov_matrix.euclid_jbessel <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_gravity <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_gravity <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 + dist_ratio^2)^(-1 / 2)
@@ -242,7 +240,7 @@ cov_matrix.euclid_gravity <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_rquad <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_rquad <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 + dist_ratio^2)^(-1)
@@ -250,7 +248,7 @@ cov_matrix.euclid_rquad <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_magnetic <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_magnetic <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 + dist_ratio^2)^(-3 / 2)
@@ -258,7 +256,7 @@ cov_matrix.euclid_magnetic <- function(params, dist_object, anisotropy) {
 }
 
 #' @export
-cov_matrix.euclid_none <- function(params, dist_object, anisotropy) {
+cov_matrix.euclid_none <- function(params, dist_object, anisotropy, ...) {
   0
 }
 
@@ -267,7 +265,7 @@ cov_matrix.euclid_none <- function(params, dist_object, anisotropy) {
 ###############################################################################
 
 #' @export
-cov_matrix.nugget_nugget <- function(params, dist_object, de_scale, diagtol = 0) { # de scale for diagonal stability
+cov_matrix.nugget_nugget <- function(params, dist_object, de_scale, diagtol = 0, ...) { # de scale for diagonal stability
   n_obs <- length(dist_object$network_index)
   nugget_matrix_observed <- Matrix::Matrix(0, nrow = n_obs, ncol = n_obs)
   diag(nugget_matrix_observed) <- max(params[["nugget"]], 1e-4 * de_scale, diagtol)
@@ -275,7 +273,7 @@ cov_matrix.nugget_nugget <- function(params, dist_object, de_scale, diagtol = 0)
 }
 
 #' @export
-cov_matrix.nugget_none <- function(params, dist_object, de_scale, diagtol = 0) { # de scale for diagonal stability
+cov_matrix.nugget_none <- function(params, dist_object, de_scale, diagtol = 0, ...) { # de scale for diagonal stability
   # CANT ZERO OUT HERE LIKE TAILUP, TAILDOWN, AND EUCLIDEAN BECAUSE WE NEED DIAGAONAL STABILITY
   n_obs <- length(dist_object$network_index)
   nugget_matrix_observed <- Matrix::Matrix(0, nrow = n_obs, ncol = n_obs)

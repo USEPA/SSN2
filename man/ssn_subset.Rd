@@ -64,16 +64,15 @@ mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
 
 ## Subset SSN observations, edges, and prediction sites on network 1
 ssn.sub1 <- ssn_subset(mf04p,
-  path = paste0(tempdir(), "subset1.ssn"),
+  path = paste0(tempdir(), "/subset1.ssn"),
   subset = netID == 1, clip = TRUE,
   overwrite = TRUE
 )
 
 ## Subset SSN observations, removing two sites
 ssn.sub2 <- ssn_subset(mf04p,
-  path = paste(tempdir(), "/subset2.ssn",
-    sep = ""
-  ), subset = !COMID \%in\% c("23519461", "23519365"),
+  path = paste0(tempdir(), "/subset2.ssn"),
+  subset = !COMID \%in\% c("23519461", "23519365"),
   overwrite = TRUE
 )
 }
