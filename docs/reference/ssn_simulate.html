@@ -39,7 +39,13 @@ resposne distribution also exist."><!-- mathjax --><script src="https://cdnjs.cl
       </ul><form class="form-inline my-2 my-lg-0" role="search">
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
 
-      <ul class="navbar-nav"></ul></div>
+      <ul class="navbar-nav"><li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/USEPA/SSN2/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul></div>
 
     
   </div>
@@ -47,7 +53,7 @@ resposne distribution also exist."><!-- mathjax --><script src="https://cdnjs.cl
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Simulate random variables on a stream network</h1>
-      
+      <small class="dont-index">Source: <a href="https://github.com/USEPA/SSN2/blob/HEAD/R/ssn_simulate.R" class="external-link"><code>R/ssn_simulate.R</code></a>, <a href="https://github.com/USEPA/SSN2/blob/HEAD/R/ssn_rbeta.R" class="external-link"><code>R/ssn_rbeta.R</code></a>, <a href="https://github.com/USEPA/SSN2/blob/HEAD/R/ssn_rbinom.R" class="external-link"><code>R/ssn_rbinom.R</code></a>, and 5 more</small>
       <div class="d-none name"><code>ssn_simulate.Rd</code></div>
     </div>
 
@@ -319,14 +325,14 @@ DOI: 10.1198/jasa.2009.ap08248.  Rejoinder pgs. 22--24.</p>
 <span class="r-in"><span><span class="va">euclid</span> <span class="op">&lt;-</span> <span class="fu"><a href="ssn_params.html">euclid_params</a></span><span class="op">(</span><span class="st">"spherical"</span>, de <span class="op">=</span> <span class="fl">0.2</span>, range <span class="op">=</span> <span class="fl">1000</span>, rotate <span class="op">=</span> <span class="fl">0</span>, scale <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">nugget</span> <span class="op">&lt;-</span> <span class="fu"><a href="ssn_params.html">nugget_params</a></span><span class="op">(</span><span class="st">"nugget"</span>, nugget <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">ssn_simulate</span><span class="op">(</span><span class="st">"gaussian"</span>, <span class="va">mf04p</span>, <span class="st">"obs"</span>, <span class="va">tailup</span>, <span class="va">taildown</span>, <span class="va">euclid</span>, <span class="va">nugget</span>, additive <span class="op">=</span> <span class="st">"afvArea"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1]  0.77066103 -1.67736495  0.17120770 -1.23051748 -1.58724313 -1.32217768</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] -0.21132103  0.80537527 -0.39347300  0.20541503 -0.66342376 -0.96034368</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13] -1.02335113  0.84659347  1.70081627  1.45250159 -0.85830049  0.10308196</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19]  0.97005127 -0.87566522  0.67584607  0.44928749 -0.34352289  1.00822814</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25]  1.52283793  0.51120161 -0.44675698  1.59634461  0.37802360  1.92895279</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [31] -0.85755595 -0.46435675 -0.86906759 -0.64738943  0.23315511 -2.10085470</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [37] -0.12481909 -0.76298645 -1.31312762 -0.01259949  0.82393250  0.31535739</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [43] -0.80369166  0.53723253  0.57052639</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] -0.62503798  1.75579816 -0.43151800 -1.21902238 -1.60377652  0.14847389</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] -1.61462658 -0.89246044  1.34221433  0.90006427  1.65796269 -0.07341423</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] -1.61618004  1.25116313  0.75991676 -0.26805892  0.11075102  0.56878777</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] -0.70068084 -0.01150171 -0.50829336 -0.79202237  0.31158424  0.36039120</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] -0.08527730  0.85758310  1.31915384 -0.72367757  0.18187132 -0.11025396</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] -0.27148463  0.61870500  0.29158539  0.99220230  1.06509335 -0.80110336</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [37] -0.26030184 -1.96480266  0.52776997  0.33328106 -0.22129387 -0.10576830</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [43] -0.30035452  0.49123368  0.24545208</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

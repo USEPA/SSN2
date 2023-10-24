@@ -4,7 +4,7 @@
 stream networks, including models based on in-stream distance.
 Models are created using moving average constructions. Spatial linear models,
 including explanatory variables, can be fit with (restricted) maximum likelihood.
-Mapping and other graphical functions are included. It is an update version of the
+Mapping and other graphical functions are included. It is an updated version of the
 archived `SSN` R package.
 
 # Installation
