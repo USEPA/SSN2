@@ -49,3 +49,5 @@ Suggests:
     statmod
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+URL: https://usepa.github.io/SSN2/
+BugReports: https://github.com/USEPA/SSN2/issues
