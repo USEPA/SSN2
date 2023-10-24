@@ -731,6 +731,8 @@ Here we list some commonly used `SSN2` functions for manipulating `SSN` objects:
 -   `ssn_update_path()`: Update the `path` element of an `SSN` object.
 -   `ssn_write()`: Write an `SSN` project to a new local `.ssn` directory.
 
+All functions that manipulate `SSN` objects have an `ssn_` prefix, which makes them easily accessible via tab completion in RStudio.
+
 Here we list some commonly used miscellaneous `SSN2` functions:
 
 -   `ssn_simulate()`: Simulate spatially correlated random variables on a stream network.
