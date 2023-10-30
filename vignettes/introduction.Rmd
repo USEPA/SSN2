@@ -1,15 +1,17 @@
 ---
 title: "An Introduction to Spatial Stream Network Modeling in R Using SSN2"
 author: "Michael Dumelle, Erin Peterson, Jay M. Ver Hoef, Alan Pearse, and Dan Isaak"
-header-includes:
-   - \usepackage{amsmath,amsfonts,amssymb}
-   - \usepackage{bm, bbm}
-   - \usepackage{mathtools}
 bibliography: '`r system.file("references.bib", package="SSN2")`'
 output:
-    pdf_document:
-      number_sections: true
-      toc: true
+  html_document:
+    theme: flatly
+    number_sections: true
+    highlighted: default 
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: no
+    toc_depth: 3
 vignette: >
   %\VignetteIndexEntry{An Introduction to SSN2}
   %\VignetteEngine{knitr::rmarkdown}
@@ -258,7 +260,7 @@ matrices are generated.
 
 ## Linear SSN Models {#sec:lm}
 
-We begin by fitting linear models to stream network data using the `ssn_lm()` function. Later in Section$~$\ref{sec:glm} we fit generalized linear models to stream network data using the `ssn_glm()` function. Typically, linear models are used when the response variable (i.e., dependent variable) is continuous and not highly skewed, and generalized linear models are often used when the response variable is binary, a count, or highly skewed.
+We begin by fitting linear models to stream network data using the `ssn_lm()` function. Later we fit generalized linear models to stream network data using the `ssn_glm()` function. Typically, linear models are used when the response variable (i.e., dependent variable) is continuous and not highly skewed, and generalized linear models are often used when the response variable is binary, a count, or highly skewed.
 
 Linear spatial stream network models for a quantitative response vector $\mathbf{y}$ have spatially dependent random errors and are often parameterized as
 
@@ -556,7 +558,7 @@ Generalized linear spatial stream network models for a response vector $\mathbf{
 g(\boldsymbol{\mu}) = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\tau}_{tu} + \boldsymbol{\tau}_{td} + \boldsymbol{\tau}_{eu} + \boldsymbol{\epsilon},
 \end{equation*}
 ```
-where $\boldsymbol{\mu}$ is the mean of $\mathbf{y}$, $g(\cdot)$ is a link function that "links" $\mathbf{\mu}$ to a linear function of the predictor variables and random errors, and all other terms are the same as those defined in Section$~$\ref{sec:lm} (Linear Models). Rather than assuming $y$ is normally (Gaussian) distributed as is often the case with linear spatial stream network models, generalized linear spatial stream network models assume $\mathbf{y}$ follows one of many distributions and has a corresponding link function. Below we summarize the families of generalized linear spatial stream network models supported by `SSN2` their link functions, and the type of data typically associated with these families. For more on generalized linear models more generally, see @mccullagh1989generalized, @myers2012generalized, and @faraway2016extending.
+where $\boldsymbol{\mu}$ is the mean of $\mathbf{y}$, $g(\cdot)$ is a link function that "links" $\mathbf{\mu}$ to a linear function of the predictor variables and random errors, and all other terms are the same as those defined for linear spatial stream network models. Rather than assuming $y$ is normally (Gaussian) distributed as is often the case with linear spatial stream network models, generalized linear spatial stream network models assume $\mathbf{y}$ follows one of many distributions and has a corresponding link function. Below we summarize the families of generalized linear spatial stream network models supported by `SSN2` their link functions, and the type of data typically associated with these families. For more on generalized linear models more generally, see @mccullagh1989generalized, @myers2012generalized, and @faraway2016extending.
 
 The `ssn_glm()` function is used to fit generalized linear spatial stream network models and bears many similarities to base-**R**'s `glm()` function for non-spatial generalized linear models. The family (i.e., resposne distribution) is controlled by the `family` argument. When `family` is `Gaussian()`, the model fit is equivalent to one fit using `ssn_lm()`. Note that parameters are estimated on the relevant link scale and should be interpreted accordingly.
 
