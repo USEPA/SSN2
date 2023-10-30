@@ -1,3 +1,7 @@
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/USEPA/SSN2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/USEPA/SSN2/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 # SSN2: Spatial Modeling on Stream Networks
 
 `SSN2` is an R package for spatial statistical modeling and prediction on
