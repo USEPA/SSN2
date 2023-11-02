@@ -219,8 +219,13 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   rm(tmp.df)
 
   ## Get netID with observed or predicted sites
-  site.nets<- unique(c(levels(ssn$obs$NetworkID),
-                       levels(ssn$preds[[predpts]]$NetworkID)))
+  if (!is.null(predpts)) {
+    site.nets<- unique(c(levels(ssn$obs$NetworkID),
+                         levels(ssn$preds[[predpts]]$NetworkID)))
+  } else {
+    site.nets<- unique(c(levels(ssn$obs$NetworkID)))
+  }
+
   net.count <- length(site.nets)
   warned.overwrite <- FALSE
 
