@@ -193,23 +193,23 @@ get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred)
 
 
   # get network index values and their unique entries
-  network_index_obs <- as.character(order_list_pred$network_index)
-  network_index_pred <- as.character(order_list_pred$network_index_pred)
+  network_index_obs <- as.numeric(as.character(order_list_pred$network_index))
+  network_index_pred <- as.numeric(as.character(order_list_pred$network_index_pred))
   network_index_vals <- sort(unique(c(network_index_obs, network_index_pred)))
-  network_index_integer <- seq_along(network_index_vals)
+  # network_index_integer <- seq_along(network_index_vals)
 
   # get network pid
   network_pid_obs <- as.character(order_list_pred$pid)
 
   # find distance junction prediction matrices (as a list) separately for each
   # network index
-  distjunc_pred_matlist <- lapply(network_index_integer, function(x) {
+  distjunc_pred_matlist <- lapply(network_index_vals, function(x) {
     # find observations for each network index
-    ind_obs <- which(network_index_obs == network_index_vals[x])
+    ind_obs <- which(network_index_obs == x)
     # find the number of observations having that index
     n_obs <- length(ind_obs)
     # find observations for each prediction network index
-    ind_pred <- which(network_index_pred == network_index_vals[x])
+    ind_pred <- which(network_index_pred == x)
     # find number of predictions having that index
     n_pred <- length(ind_pred)
 
@@ -234,7 +234,7 @@ get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred)
         close(file_handle)
 
         # find observations that are used to build model
-        which_obs <- rownames(distmat) %in% network_pid_obs[network_index_obs == network_index_vals[x]]
+        which_obs <- rownames(distmat) %in% network_pid_obs[network_index_obs == x]
         # find prediction observations
         which_pred <- !which_obs
         distmata <- distmat[which_obs, which_pred, drop = FALSE]
@@ -276,7 +276,7 @@ get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred)
         close(file_handle)
 
         # only keep observed from ssn object
-        which_obs <- rownames(distmata) %in% network_pid_obs[network_index_obs == network_index_vals[x]]
+        which_obs <- rownames(distmata) %in% network_pid_obs[network_index_obs == x]
         distmata <- distmata[which_obs, , drop = FALSE]
         distmatb <- distmatb[, which_obs, drop = FALSE]
       }
@@ -343,10 +343,10 @@ get_hydro_pred_matlist <- function(distjunc_pred_matlist) {
 
 get_w_pred_matlist <- function(ssn.object, newdata_name, order_list_pred, additive, b_pred_matlist, mask_pred_matlist) {
   # make list
-  network_index_obs <- as.character(order_list_pred$network_index)
-  network_index_pred <- as.character(order_list_pred$network_index_pred)
+  network_index_obs <- as.numeric(as.character(order_list_pred$network_index))
+  network_index_pred <- as.numeric(as.character(order_list_pred$network_index_pred))
   network_index_vals <- sort(unique(c(network_index_obs, network_index_pred)))
-  network_index_integer <- seq_along(network_index_vals)
+ # network_index_integer <- seq_along(network_index_vals)
 
   dist_order <- order_list_pred$dist_order
 
@@ -358,28 +358,34 @@ get_w_pred_matlist <- function(ssn.object, newdata_name, order_list_pred, additi
   additive_pred_val_order <- additive_pred_val[dist_pred_order]
 
   # make additive unmasked
-  additive_pred_matlist <- lapply(network_index_integer, function(x) {
-    vals_obs <- network_index_obs == network_index_vals[x]
+  additive_pred_matlist <- lapply(network_index_vals, function(x) {
+    vals_obs <- network_index_obs == x
     ind_obs <- which(vals_obs[dist_order])
     n_obs <- length(ind_obs)
     addfval_obs <- additive_val_order[ind_obs]
-    vals_pred <- network_index_pred == network_index_vals[x]
+    vals_pred <- network_index_pred == x
     ind_pred <- which(vals_pred[dist_pred_order])
     n_pred <- length(ind_pred)
     addfval_pred <- additive_pred_val_order[ind_pred]
-    additive_obs_val <- replicate(n_pred, addfval_obs, simplify = "array")
-    additive_pred_val <- replicate(n_obs, addfval_pred, simplify = "array")
-    if (n_pred == 0) {
-      w_pred_val <- Matrix::Matrix(0, nrow = n_obs, ncol = n_pred)
-    } else {
+    additive_obs_val <- do.call(cbind, replicate(n_pred, addfval_obs, FALSE))
+    additive_pred_val <- do.call(cbind, replicate(n_obs, addfval_pred, simplify = FALSE))
+    if (n_obs != 0 && n_pred != 0) {
       w_pred_val <- pmin(additive_obs_val, t(additive_pred_val)) / pmax(additive_obs_val, t(additive_pred_val))
+    } else {
+      w_pred_val <- Matrix::Matrix(0, nrow = n_obs, ncol = n_pred)
     }
     Matrix::Matrix(sqrt(w_pred_val), sparse = TRUE)
   })
 
   # make w
   w_pred_matlist_val <- mapply(
-    FUN = function(additive, b, m) additive * (b == 0) * m, # b == 0 is flow connected
+    FUN = function(additive, b, m) {
+      if (NROW(additive) > 0) {
+        return(additive * (b == 0) * m) # b == 0 is flow connected)
+      } else {
+        return(additive) # return zero matrix if it is there
+      }
+    },
     additive = additive_pred_matlist,
     b = b_pred_matlist,
     m = mask_pred_matlist,
