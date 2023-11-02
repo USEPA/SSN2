@@ -138,10 +138,18 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   # iterate if predpts is not null
   if (length(predpts) > 1) {
     if (only_predpts) {
-      x <- lapply(predpts, function(x) ssn_create_distmat(ssn.object, predpts = x, overwrite, among_predpts, only_predpts))
+      x <- lapply(predpts, function(x) ssn_create_distmat(ssn.object,
+                                                          predpts = x,
+                                                          overwrite,
+                                                          among_predpts,
+                                                          only_predpts))
     } else {
       x1 <- ssn_create_distmat(ssn.object, overwrite = overwrite)
-      x2 <- lapply(predpts, function(x) ssn_create_distmat(ssn.object, predpts = x, overwrite, among_predpts, only_predpts = TRUE))
+      x2 <- lapply(predpts, function(x) ssn_create_distmat(ssn.object,
+                                                           predpts = x,
+                                                           overwrite,
+                                                           among_predpts,
+                                                           only_predpts = TRUE))
     }
     return(invisible(NULL))
   }
@@ -210,8 +218,10 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   ssn <- ssn_put_data(tmp.df, ssn)
   rm(tmp.df)
 
-  ## Get observed site network count
-  net.count <- length(levels(ssn$obs$NetworkID))
+  ## Get netID with observed or predicted sites
+  site.nets<- unique(c(levels(ssn$obs$NetworkID),
+                       levels(ssn$preds[[predpts]]$NetworkID)))
+  net.count <- length(site.nets)
   warned.overwrite <- FALSE
 
   ## Extract netgeometry and format edges data
@@ -224,7 +234,7 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   ## ------------------------------------------------------------------
 
   if (file.exists(file.path(ssn$path, "binaryID.db")) == FALSE) {
-    stop("binaryID.db is missing from SSN object. Use importSSN() to create it.")
+    stop("binaryID.db is missing from SSN object. Use ssn_import() to create it.")
   }
 
   ## Connect to SQLite database
@@ -243,7 +253,8 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   ## ----------------------------------------------------------------
   for (i in 1:net.count) {
     ## Set network number and name
-    net.num <- levels(ssn$edges$NetworkID)[i]
+    ##net.num <- levels(ssn$edges$NetworkID)[i]
+    net.num <- site.nets[i]
     net.name <- paste("net", net.num, sep = "")
 
     ## Get indicator for sites on this network
@@ -352,8 +363,9 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       ## locID.obi<- ssn$obs$ng.locID
 
       ## Create data.frame for obs with columns pid, rid, locID
-      ob.i <- ssn_get_netgeometry(ssn$obs[ind.obs, ], c("pid", "SegmentID", "locID"))
-      ob.i <- as.data.frame(sapply(ob.i, as.numeric))
+      ob.i <- ssn_get_netgeometry(ssn$obs[ind.obs, ], c("pid", "SegmentID", "locID"),
+                                  reformat = TRUE)
+      ##ob.i <- as.data.frame(sapply(ob.i, as.numeric))
       colnames(ob.i) <- c("pid", "rid", "locID")
       ob.i$locID <- as.factor(ob.i$locID)
 
@@ -481,7 +493,8 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
 
       net.name <- paste("net", net.num, sep = "")
 
-      if (!exists("bin.table")) {
+      ## This uses bin.table from last network if site.no == 0
+      if (site.no == 0 | !exists("bin.table")) {
         bin.table <- dbReadTable(connect, net.name)
       }
 

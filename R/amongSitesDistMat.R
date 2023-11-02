@@ -25,8 +25,9 @@ amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
     pid.data <- ssn_get_netgeometry(ssn$obs[ind.pids, ], c(
       "pid", "SegmentID", "locID",
       "DistanceUpstream"
-    ))
-    pid.data <- as.data.frame(sapply(pid.data, as.numeric))
+      ), reformat = TRUE)
+    
+    ##pid.data <- as.data.frame(sapply(pid.data, as.numeric))   
     colnames(pid.data) <- c("pid", "rid", "locID", "upDist")
   }
 

@@ -21,7 +21,7 @@ createBinaryID <- function(ssn, overwrite) {
     connect <- dbConnect(SQLite(), db.name)
 
     ## get number of networks from observed sites attribute table...
-    net.no <- unique(ssn$obs$netID)
+    net.no <- unique(ssn$edges$netID)
 
     ## read data into SQLite directly from file
     for (i in 1:length(net.no)) {
