@@ -16,6 +16,12 @@ if (test_local) {
     overwrite = TRUE
   )
 
+  ssn_create_distmat(
+    ssn.object = mf04p,
+    predpts = c("pred1km", "CapeHorn", "Knapp"),
+    overwrite = TRUE
+  )
+
   test_that("random effects work", {
     ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
       tailup_type = "exponential",
@@ -30,7 +36,6 @@ if (test_local) {
   test_that("partition factors work", {
     ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
       tailup_type = "exponential",
-      taildown_type = "exponential", euclid_type = "exponential",
       nugget_type = "nugget", additive = "afvArea",
       partition_factor = ~ as.factor(netID)
     )
@@ -40,9 +45,8 @@ if (test_local) {
 
   test_that("anisotropy works", {
     ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
-      tailup_type = "exponential",
-      taildown_type = "exponential", euclid_type = "exponential",
-      nugget_type = "nugget", additive = "afvArea",
+      taildown_type = "exponential",
+      nugget_type = "nugget", estmethod = "ml",
       anisotropy = TRUE
     )
     expect_s3_class(ssn_mod, "ssn_lm")
@@ -54,7 +58,7 @@ if (test_local) {
     ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
       tailup_initial = tu,
       taildown_type = "exponential", euclid_type = "exponential",
-      nugget_type = "nugget", additive = "afvArea"
+      nugget_type = "none", additive = "afvArea"
     )
     expect_s3_class(ssn_mod, "ssn_lm")
     expect_vector(predict(ssn_mod, "pred1km"))
@@ -65,7 +69,6 @@ if (test_local) {
     mf04p$obs$Summer_mn[1] <- NA
     ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
       tailup_type = "exponential",
-      taildown_type = "exponential", euclid_type = "exponential",
       nugget_type = "nugget", additive = "afvArea"
     )
     expect_s3_class(ssn_mod, "ssn_lm")

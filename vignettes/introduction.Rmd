@@ -244,6 +244,7 @@ Later we will fit models to stream network data. Before doing this, however, str
 ssn_create_distmat(
   ssn.object = mf04p,
   predpts = c("pred1km", "CapeHorn", "Knapp"),
+  among_predpts = TRUE,
   overwrite = TRUE
 )
 ```

@@ -5,6 +5,8 @@
 #' @param x An SSN, ssn_lm or ssn_glm object.
 #' @param path Filepath to the .ssn folder associated with the SSN
 #'   object.
+#' @param verbose A logical that indicates if the new path should be printed
+#'   to the console.
 #'
 #' @details At times, it may be necessary to move a .ssn directory,
 #'   which is linked to an SSN object in an R workspace. If the .ssn
@@ -22,7 +24,7 @@
 #' ## If you use ssn_import(), the path will be correct
 #' newpath <- paste0(tempdir(), "/MiddleFork04.ssn")
 #' mf04p <- ssn_update_path(mf04p, newpath)
-ssn_update_path <- function(x, path) {
+ssn_update_path <- function(x, path, verbose = FALSE) {
   file <- path
 
   if (inherits(x, "SSN")) {
@@ -33,6 +35,9 @@ ssn_update_path <- function(x, path) {
     x$ssn.object$path <- file
   }
 
-  print(paste("SSN path updated to", file, sep = " "))
+  if (verbose) {
+    print(paste("SSN path updated to", file, sep = " "))
+  }
+
   return(x)
 }

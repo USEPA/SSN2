@@ -4,13 +4,16 @@
 \alias{ssn_update_path}
 \title{Update path in an SSN object}
 \usage{
-ssn_update_path(x, path)
+ssn_update_path(x, path, verbose = FALSE)
 }
 \arguments{
 \item{x}{An SSN, ssn_lm or ssn_glm object.}
 
 \item{path}{Filepath to the .ssn folder associated with the SSN
 object.}
+
+\item{verbose}{A logical that indicates if the new path should be printed
+to the console.}
 }
 \description{
 Update the local path in an existing SSN object based

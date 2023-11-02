@@ -91,7 +91,7 @@ alongside standard errors and confidence intervals for the mean.
 # path to the .ssn data on your machine
 copy_lsn_to_temp()
 temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-mf04p <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
+mf04p <- ssn_import(temp_path, predpts = "pred1km", overwrite = TRUE)
 
 ssn_mod <- ssn_lm(
   formula = Summer_mn ~ ELEV_DEM,
@@ -99,5 +99,5 @@ ssn_mod <- ssn_lm(
   tailup_type = "exponential",
   additive = "afvArea"
 )
-predict(ssn_mod, "CapeHorn")
+predict(ssn_mod, "pred1km")
 }

@@ -120,11 +120,16 @@ test_that("generics work ssn_glm point data", {
   # plot
   expect_invisible(plot(ssn_mod1, which = 1))
   expect_invisible(plot(ssn_mod1, which = 2))
+  expect_invisible(plot(ssn_mod1, which = 3))
+  expect_invisible(plot(ssn_mod1, which = 4))
+  expect_invisible(plot(ssn_mod1, which = 5))
+  expect_invisible(plot(ssn_mod1, which = 6))
 
   # predict
   expect_vector(predict(ssn_mod1, newdata = "pred1km"))
-  expect_type(predict(ssn_mod1, newdata = "CapeHorn", interval = "prediction", se.fit = TRUE), "list")
-  expect_true(inherits(predict(ssn_mod1, newdata = "Knapp", interval = "confidence", level = 0.9), "matrix"))
+  expect_type(predict(ssn_mod1, newdata = "pred1km", se.fit = TRUE), "list")
+  expect_type(predict(ssn_mod1, newdata = "pred1km", interval = "prediction", se.fit = TRUE), "list")
+  expect_true(inherits(predict(ssn_mod1, newdata = "pred1km", interval = "confidence", level = 0.9), "matrix"))
 
   # print
   expect_output(print(ssn_mod1))
@@ -151,6 +156,12 @@ test_that("generics work ssn_glm point data", {
 
   # tidy
   expect_s3_class(tidy(ssn_mod1), "data.frame")
+  expect_s3_class(tidy(ssn_mod1, conf.int = TRUE, level = 0.9), "data.frame")
+  expect_s3_class(tidy(ssn_mod1, effects = "ssn"), "data.frame")
+  expect_s3_class(tidy(ssn_mod1, effects = "tailup"), "data.frame")
+  expect_s3_class(tidy(ssn_mod1, effects = "taildown"), "data.frame")
+  expect_s3_class(tidy(ssn_mod1, effects = "euclid"), "data.frame")
+  expect_s3_class(tidy(ssn_mod1, effects = "nugget"), "data.frame")
 
   # update
   expect_s3_class(update(ssn_mod2), "ssn_glm")

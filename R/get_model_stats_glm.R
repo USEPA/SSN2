@@ -268,7 +268,7 @@ get_fitted_glm <- function(w_list, betahat, params_object, data_object, eigenpro
   # find nugget fitted values (NULL if not used)
   nugget_none <- inherits(params_object$nugget, "nugget_none")
   if (nugget_none) {
-    fitted_nugget_ <- NULL
+    fitted_nugget <- NULL
   } else {
     fitted_nugget <- as.numeric(params_object$nugget[["nugget"]] * do.call("rbind", SigInv_r_list))
   }

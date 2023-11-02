@@ -305,19 +305,19 @@ get_pred_glm <- function(newdata_list, se.fit, interval,
   cov_vector_val <- newdata_list$c0
 
   if (local$method == "covariance") {
-    n <- length(cov_vector_val)
-    cov_index <- order(as.numeric(cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
-    obdata <- obdata[cov_index, , drop = FALSE]
-    cov_vector_val <- cov_vector_val[cov_index]
-    cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
-    w <- w[cov_index]
-    y <- y[cov_index]
-    if (!is.null(size)) {
-      size <- size[cov_index]
-    }
-    cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
-    model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
-    Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
+    # n <- length(cov_vector_val)
+    # cov_index <- order(as.numeric(cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
+    # obdata <- obdata[cov_index, , drop = FALSE]
+    # cov_vector_val <- cov_vector_val[cov_index]
+    # cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
+    # w <- w[cov_index]
+    # y <- y[cov_index]
+    # if (!is.null(size)) {
+    #   size <- size[cov_index]
+    # }
+    # cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
+    # model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
+    # Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
   }
 
   c0 <- as.numeric(cov_vector_val)

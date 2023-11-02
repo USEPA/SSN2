@@ -159,36 +159,36 @@ get_loocv.ssn_lm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
       cv_predict_se <- vapply(cv_predict_val_list, function(x) x$se.fit, numeric(1))
     }
   } else {
-    model_frame <- model.frame(object)
-    X <- model.matrix(object)
-    y <- model.response(model_frame)
-    betahat <- coef(object)
-    cov_betahat <- vcov(object)
-
-    cov_matrix_val <- covmatrix(object)
-    total_var <- cov_matrix_val[1, 1]
-
-    if (local_list$parallel) {
-      # turn of parallel as it is used different in predict
-      local_list$parallel <- FALSE
-      cl <- parallel::makeCluster(local_list$ncores)
-      cv_predict_val_list <- parallel::parLapply(
-        cl, seq_len(object$n), loocv_local, se.fit, cov_matrix_val,
-        total_var, X, y, betahat, cov_betahat, local_list
-      )
-      cl <- parallel::stopCluster(cl)
-    } else {
-      cv_predict_val_list <- lapply(
-        seq_len(object$n), loocv_local, se.fit, cov_matrix_val,
-        total_var, X, y, betahat, cov_betahat, local_list
-      )
-    }
-    if (se.fit) {
-      cv_predict_val <- vapply(cv_predict_val_list, function(x) x$fit, numeric(1))
-      cv_predict_se <- vapply(cv_predict_val_list, function(x) x$se.fit, numeric(1))
-    } else {
-      cv_predict_val <- unlist(cv_predict_val_list)
-    }
+    # model_frame <- model.frame(object)
+    # X <- model.matrix(object)
+    # y <- model.response(model_frame)
+    # betahat <- coef(object)
+    # cov_betahat <- vcov(object)
+    #
+    # cov_matrix_val <- covmatrix(object)
+    # total_var <- cov_matrix_val[1, 1]
+    #
+    # if (local_list$parallel) {
+    #   # turn of parallel as it is used different in predict
+    #   local_list$parallel <- FALSE
+    #   cl <- parallel::makeCluster(local_list$ncores)
+    #   cv_predict_val_list <- parallel::parLapply(
+    #     cl, seq_len(object$n), loocv_local, se.fit, cov_matrix_val,
+    #     total_var, X, y, betahat, cov_betahat, local_list
+    #   )
+    #   cl <- parallel::stopCluster(cl)
+    # } else {
+    #   cv_predict_val_list <- lapply(
+    #     seq_len(object$n), loocv_local, se.fit, cov_matrix_val,
+    #     total_var, X, y, betahat, cov_betahat, local_list
+    #   )
+    # }
+    # if (se.fit) {
+    #   cv_predict_val <- vapply(cv_predict_val_list, function(x) x$fit, numeric(1))
+    #   cv_predict_se <- vapply(cv_predict_val_list, function(x) x$se.fit, numeric(1))
+    # } else {
+    #   cv_predict_val <- unlist(cv_predict_val_list)
+    # }
   }
   if (cv_predict) {
     if (se.fit) {
@@ -207,38 +207,38 @@ get_loocv.ssn_lm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
 }
 
 loocv_local <- function(row, se.fit, cov_matrix_val, total_var, Xmat, y, betahat, cov_betahat, local) {
-  new_cov_matrix_val <- cov_matrix_val[-row, -row, drop = FALSE]
-  new_cov_vector_val <- cov_matrix_val[row, -row, drop = FALSE]
-  new_Xmat <- Xmat[-row, , drop = FALSE]
-  new_y <- y[-row]
-
-  if (local$method == "covariance") { # always on covariance as all gets routed to full cholesky and this is not called
-    n <- length(new_cov_vector_val)
-    cov_index <- order(as.numeric(new_cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
-    new_cov_vector_val <- new_cov_vector_val[cov_index]
-    new_cov_matrix_val <- new_cov_matrix_val[cov_index, cov_index, drop = FALSE]
-    cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(new_cov_matrix_val)))
-    new_Xmat <- new_Xmat[cov_index, , drop = FALSE]
-    new_y <- new_y[cov_index]
-  }
-
-  c0 <- as.numeric(new_cov_vector_val)
-  SqrtSigInv_X <- forwardsolve(cov_lowchol, new_Xmat)
-  SqrtSigInv_y <- forwardsolve(cov_lowchol, new_y)
-  residuals_pearson <- SqrtSigInv_y - SqrtSigInv_X %*% betahat
-  SqrtSigInv_c0 <- forwardsolve(cov_lowchol, c0)
-  x0 <- Xmat[row, , drop = FALSE]
-
-  fit <- as.numeric(x0 %*% betahat + Matrix::crossprod(SqrtSigInv_c0, residuals_pearson))
-  H <- x0 - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_X)
-  if (se.fit) {
-    total_var <- total_var
-    var <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
-    pred_list <- list(fit = fit, se.fit = sqrt(var))
-  } else {
-    pred_list <- list(fit = fit)
-  }
-  pred_list
+  # new_cov_matrix_val <- cov_matrix_val[-row, -row, drop = FALSE]
+  # new_cov_vector_val <- cov_matrix_val[row, -row, drop = FALSE]
+  # new_Xmat <- Xmat[-row, , drop = FALSE]
+  # new_y <- y[-row]
+  #
+  # if (local$method == "covariance") { # always on covariance as all gets routed to full cholesky and this is not called
+  #   n <- length(new_cov_vector_val)
+  #   cov_index <- order(as.numeric(new_cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
+  #   new_cov_vector_val <- new_cov_vector_val[cov_index]
+  #   new_cov_matrix_val <- new_cov_matrix_val[cov_index, cov_index, drop = FALSE]
+  #   cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(new_cov_matrix_val)))
+  #   new_Xmat <- new_Xmat[cov_index, , drop = FALSE]
+  #   new_y <- new_y[cov_index]
+  # }
+  #
+  # c0 <- as.numeric(new_cov_vector_val)
+  # SqrtSigInv_X <- forwardsolve(cov_lowchol, new_Xmat)
+  # SqrtSigInv_y <- forwardsolve(cov_lowchol, new_y)
+  # residuals_pearson <- SqrtSigInv_y - SqrtSigInv_X %*% betahat
+  # SqrtSigInv_c0 <- forwardsolve(cov_lowchol, c0)
+  # x0 <- Xmat[row, , drop = FALSE]
+  #
+  # fit <- as.numeric(x0 %*% betahat + Matrix::crossprod(SqrtSigInv_c0, residuals_pearson))
+  # H <- x0 - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_X)
+  # if (se.fit) {
+  #   total_var <- total_var
+  #   var <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
+  #   pred_list <- list(fit = fit, se.fit = sqrt(var))
+  # } else {
+  #   pred_list <- list(fit = fit)
+  # }
+  # pred_list
 }
 
 get_loocv <- function(obs, Sig, SigInv, Xmat, y, yX, SigInv_yX, se.fit) {

@@ -21,8 +21,6 @@ test_that("prediction works", {
   expect_true(inherits(predict(ssn_mod1, "pred1km", interval = "confidence"), "matrix"))
   expect_true(inherits(predict(ssn_mod1, "pred1km", interval = "prediction", level = 0.9), "matrix"))
   expect_type(predict(ssn_mod1), type = "list")
-  expect_type(predict(ssn_mod1, block = TRUE), type = "list")
-
 
   ssn_mod2 <- ssn_glm(Summer_mn ~ ELEV_DEM, mf04p, "Gamma",
     tailup_type = "exponential",

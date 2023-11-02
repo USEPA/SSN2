@@ -47,7 +47,7 @@
 #' # path to the .ssn data on your machine
 #' copy_lsn_to_temp()
 #' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-#' mf04p <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
+#' mf04p <- ssn_import(temp_path, predpts = "pred1km", overwrite = TRUE)
 #'
 #' ssn_mod <- ssn_lm(
 #'   formula = Summer_mn ~ ELEV_DEM,
@@ -55,7 +55,7 @@
 #'   tailup_type = "exponential",
 #'   additive = "afvArea"
 #' )
-#' predict(ssn_mod, "CapeHorn")
+#' predict(ssn_mod, "pred1km")
 predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none", "confidence", "prediction"),
                            level = 0.95, block = FALSE, ...) {
 
@@ -289,16 +289,16 @@ get_pred <- function(newdata_list, se.fit, interval, formula, obdata, cov_matrix
   cov_vector_val <- newdata_list$c0
 
   if (local$method == "covariance") {
-    n <- length(cov_vector_val)
-    cov_index <- order(as.numeric(cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
-    obdata <- obdata[cov_index, , drop = FALSE]
-    cov_vector_val <- cov_vector_val[cov_index]
-    cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
-    cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
-    model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
-    Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
-    y <- model.response(model_frame)
-    offset <- model.offset(model_frame)
+    # n <- length(cov_vector_val)
+    # cov_index <- order(as.numeric(cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
+    # obdata <- obdata[cov_index, , drop = FALSE]
+    # cov_vector_val <- cov_vector_val[cov_index]
+    # cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
+    # cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
+    # model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
+    # Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
+    # y <- model.response(model_frame)
+    # offset <- model.offset(model_frame)
   }
 
   # handle offset

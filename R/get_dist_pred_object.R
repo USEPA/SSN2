@@ -87,6 +87,7 @@ get_dist_pred_object <- function(object, newdata_name, initial_object) {
 # get the list of prediction matrices
 get_dist_pred_matlist <- function(ssn.object, newdata_name, initial_object, additive,
                                   order_list_pred) {
+
   # store network indices and orders
   network_index <- order_list_pred$network_index
   dist_order <- order_list_pred$dist_order

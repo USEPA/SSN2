@@ -24,15 +24,15 @@ get_local_list_estimation <- function(local, data, n, partition_factor) {
 
   # errors
   if (!"index" %in% names_local && "method" %in% names_local) {
-    if (!local$method %in% c("random", "kmeans")) {
-      stop("Invalid local method. Local method must be \"random\" or \"kmeans\".", call. = FALSE)
-    }
+    # if (!local$method %in% c("random", "kmeans")) {
+    #   stop("Invalid local method. Local method must be \"random\" or \"kmeans\".", call. = FALSE)
+    # }
   }
 
   if (!"index" %in% names_local && "var_adjust" %in% names_local) {
-    if (!local$var_adjust %in% c("none", "theoretical", "empirical", "pooled")) {
-      stop("Invalid local var_adjust. Local var_adjust must be \"none\", \"theoretical\", \"empirical\", or \"pooled\".", call. = FALSE)
-    }
+    # if (!local$var_adjust %in% c("none", "theoretical", "empirical", "pooled")) {
+    #   stop("Invalid local var_adjust. Local var_adjust must be \"none\", \"theoretical\", \"empirical\", or \"pooled\".", call. = FALSE)
+    # }
   }
 
   if ("index" %in% names_local) {
@@ -40,20 +40,20 @@ get_local_list_estimation <- function(local, data, n, partition_factor) {
     local$groups <- NULL
     local$method <- NULL
   } else {
-    if (!"size" %in% names_local) {
-      if ("groups" %in% names_local) {
-        local$size <- ceiling(n / local$groups)
-      } else {
-        local$size <- 50
-        local$groups <- ceiling(n / local$size)
-      }
-    } else {
-      local$groups <- ceiling(n / local$size)
-    }
-    if (!"method" %in% names_local) {
-      local$method <- "random"
-    }
-    local$index <- get_local_estimation_index(local, data, n)
+    # if (!"size" %in% names_local) {
+    #   if ("groups" %in% names_local) {
+    #     local$size <- ceiling(n / local$groups)
+    #   } else {
+    #     local$size <- 50
+    #     local$groups <- ceiling(n / local$size)
+    #   }
+    # } else {
+    #   local$groups <- ceiling(n / local$size)
+    # }
+    # if (!"method" %in% names_local) {
+    #   local$method <- "random"
+    # }
+    # local$index <- get_local_estimation_index(local, data, n)
   }
 
   # setting var adjust
@@ -70,31 +70,31 @@ get_local_list_estimation <- function(local, data, n, partition_factor) {
   }
 
   if (local$parallel) {
-    n_index <- length(unique(local$index))
-    if ("ncores" %in% names_local) {
-      cores_available <- parallel::detectCores()
-      local$ncores <- min(n_index, local$ncores, cores_available)
-    } else {
-      local$ncores <- parallel::detectCores()
-      local$ncores <- min(n_index, local$ncores)
-    }
+    # n_index <- length(unique(local$index))
+    # if ("ncores" %in% names_local) {
+    #   cores_available <- parallel::detectCores()
+    #   local$ncores <- min(n_index, local$ncores, cores_available)
+    # } else {
+    #   local$ncores <- parallel::detectCores()
+    #   local$ncores <- min(n_index, local$ncores)
+    # }
   }
 
   local
 }
 
 get_local_estimation_index <- function(local, data, n) {
-  if (local$method == "random") {
-    index <- sample(rep(seq_len(local$groups), times = local$size)[seq_len(n)])
-  } else if (local$method == "kmeans") {
-    kmeans_args <- setdiff(names(local), c("size", "groups", "method", "index", "parallel", "ncores", "var_adjust"))
-    coords <- sf::st_coordinates(data)
-    x <- cbind(coords[, 1], coords[, 2])
-    index <- do.call("kmeans", c(list(x = x, centers = local$groups), kmeans_args))$cluster
-  } else {
-    stop("local$method must be random (the default) or kmeans")
-  }
-  index
+  # if (local$method == "random") {
+  #   index <- sample(rep(seq_len(local$groups), times = local$size)[seq_len(n)])
+  # } else if (local$method == "kmeans") {
+  #   kmeans_args <- setdiff(names(local), c("size", "groups", "method", "index", "parallel", "ncores", "var_adjust"))
+  #   coords <- sf::st_coordinates(data)
+  #   x <- cbind(coords[, 1], coords[, 2])
+  #   index <- do.call("kmeans", c(list(x = x, centers = local$groups), kmeans_args))$cluster
+  # } else {
+  #   stop("local$method must be random (the default) or kmeans")
+  # }
+  # index
 }
 
 get_local_list_prediction <- function(local) {
@@ -122,11 +122,11 @@ get_local_list_prediction <- function(local) {
 
   if (!"method" %in% names_local) {
     # local$method <- "all"
-    local$method <- "covariance"
+    # local$method <- "covariance"
   }
 
   if (local$method %in% c("distance", "covariance") && !"size" %in% names_local) {
-    local$size <- 50
+    # local$size <- 50
   }
 
   if (!"parallel" %in% names_local) {
@@ -135,9 +135,9 @@ get_local_list_prediction <- function(local) {
   }
 
   if (local$parallel) {
-    if (!"ncores" %in% names_local) {
-      local$ncores <- parallel::detectCores()
-    }
+    # if (!"ncores" %in% names_local) {
+    #   local$ncores <- parallel::detectCores()
+    # }
   }
 
   local

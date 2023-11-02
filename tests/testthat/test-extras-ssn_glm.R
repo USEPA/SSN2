@@ -16,6 +16,11 @@ if (test_local) {
     overwrite = TRUE
   )
 
+  ssn_create_distmat(
+    ssn.object = mf04p,
+    predpts = c("pred1km", "CapeHorn", "Knapp"),
+    overwrite = TRUE
+  )
 
   # set a seed
   set.seed(2)
@@ -43,7 +48,6 @@ if (test_local) {
   test_that("ssn_glm models fit negative binomial", {
     ssn_mod <- ssn_glm(round(Summer_mn) ~ ELEV_DEM,
       family = "nbinomial", mf04p, tailup_type = "exponential",
-      taildown_type = "exponential", euclid_type = "exponential",
       nugget_type = "nugget", additive = "afvArea"
     )
     expect_s3_class(ssn_mod, "ssn_glm")
@@ -54,7 +58,7 @@ if (test_local) {
     ssn_mod <- ssn_glm(Summer_mn > 11 ~ ELEV_DEM,
       family = "binomial", mf04p, tailup_type = "exponential",
       taildown_type = "exponential", euclid_type = "exponential",
-      nugget_type = "nugget", additive = "afvArea"
+      nugget_type = "nugget", additive = "afvArea", estmethod = "ml"
     )
     expect_s3_class(ssn_mod, "ssn_glm")
     expect_vector(predict(ssn_mod, "pred1km"))
@@ -63,9 +67,9 @@ if (test_local) {
   test_that("ssn_glm models fit beta", {
     mf04p$obs$betavar <- runif(NROW(mf04p$obs), min = 0.25, max = 0.75)
     ssn_mod <- ssn_glm(betavar ~ ELEV_DEM,
-      family = "beta", mf04p, tailup_type = "exponential",
+      family = "beta", mf04p,
       taildown_type = "exponential", euclid_type = "exponential",
-      nugget_type = "nugget", additive = "afvArea"
+      nugget_type = "nugget"
     )
     expect_s3_class(ssn_mod, "ssn_glm")
     expect_vector(predict(ssn_mod, "pred1km"))
@@ -74,8 +78,7 @@ if (test_local) {
   test_that("ssn_glm models fit gamma", {
     ssn_mod <- ssn_glm(Summer_mn ~ ELEV_DEM,
       family = "Gamma", mf04p, tailup_type = "exponential",
-      taildown_type = "exponential", euclid_type = "exponential",
-      nugget_type = "nugget", additive = "afvArea"
+      nugget_type = "none", additive = "afvArea"
     )
     expect_s3_class(ssn_mod, "ssn_glm")
     expect_vector(predict(ssn_mod, "pred1km"))
@@ -83,9 +86,8 @@ if (test_local) {
 
   test_that("ssn_glm models fit inverse gaussian", {
     ssn_mod <- ssn_glm(Summer_mn ~ ELEV_DEM, mf04p, inverse.gaussian,
-      tailup_type = "exponential",
-      taildown_type = "exponential", euclid_type = "exponential",
-      nugget_type = "nugget", additive = "afvArea"
+     euclid_type = "exponential",
+      nugget_type = "nugget",
     )
     expect_s3_class(ssn_mod, "ssn_glm")
     expect_vector(predict(ssn_mod, "pred1km"))
@@ -95,7 +97,7 @@ if (test_local) {
   test_that("random effects work", {
     ssn_mod <- ssn_glm(Summer_mn > 11 ~ ELEV_DEM, mf04p,
       family = "binomial", tailup_type = "exponential",
-      taildown_type = "exponential", euclid_type = "exponential",
+      taildown_type = "exponential",
       nugget_type = "nugget", additive = "afvArea",
       random = ~ as.factor(netID)
     )
@@ -105,9 +107,8 @@ if (test_local) {
 
   test_that("partition factors work", {
     ssn_mod <- ssn_glm(Summer_mn > 11 ~ ELEV_DEM, mf04p,
-      family = "binomial", tailup_type = "exponential",
+      family = "binomial",
       taildown_type = "exponential",
-      nugget_type = "nugget", additive = "afvArea",
       partition_factor = ~ as.factor(netID)
     )
     expect_s3_class(ssn_mod, "ssn_glm")
@@ -141,7 +142,7 @@ if (test_local) {
     mf04p$obs$Summer_mn[1] <- NA
     ssn_mod <- ssn_glm(Summer_mn > 11 ~ ELEV_DEM, mf04p,
       family = "binomial",
-      taildown_type = "exponential", euclid_type = "exponential",
+      taildown_type = "exponential",
       nugget_type = "nugget"
     )
     expect_s3_class(ssn_mod, "ssn_glm")
