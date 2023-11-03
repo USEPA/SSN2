@@ -15,6 +15,8 @@
 #'   to the .ssn directory. The \command{ssn_update_path} is a helper
 #'   function that serves this purpose.
 #'
+#' @return An SSN object with a new path list element.
+#'
 #' @export
 #' @examples
 #' ## Use mf04p SSN object provided in SSN2
@@ -36,7 +38,7 @@ ssn_update_path <- function(x, path, verbose = FALSE) {
   }
 
   if (verbose) {
-    print(paste("SSN path updated to", file, sep = " "))
+    message(paste("SSN path updated to", file, sep = " "))
   }
 
   return(x)

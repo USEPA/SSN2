@@ -124,7 +124,7 @@ ssn_import_predpts <- function(x, predpts,
   }
 
   if (file.exists(paste(predpts, ".shp", sep = "")) == 0) {
-    stop(paste(predpts, ".shp data is missing from ", getwd(),
+    stop(paste(predpts, ".shp data is missing from ", old_wd,
       " folder",
       sep = ""
     ))
@@ -143,13 +143,13 @@ ssn_import_predpts <- function(x, predpts,
     }
     for (q in 1:length(names_additive)) {
       if (!names_additive[q] %in% colnames(predpoints)) {
-        print(paste0(names_additive[q], " is not found in ", predpts))
+        warning(paste0(names_additive[q], " is not found in ", predpts), call. = FALSE)
       } else {
         ## Extract afv column
         tmp.col <- st_drop_geometry(predpoints[, names_additive[q]])
         ## convert to character if column is numeric
         if (!inherits(tmp.col[, 1], "numeric")) {
-          print(paste0(names_additive[q], " is not numeric. AFV values were not modified"))
+          message(paste0(names_additive[q], " is not numeric. AFV values were not modified"))
         } else {
           tmp.col2 <- formatC(tmp.col[, 1],
             digits = 254, format = "f",

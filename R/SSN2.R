@@ -2,8 +2,9 @@
 "_PACKAGE"
 
 #' @useDynLib SSN2
-#' @import Matrix
-#' @import RSQLite
+#' @importFrom Matrix bdiag chol chol2inv colSums crossprod determinant diag Diagonal
+#'   forceSymmetric Matrix print qr rankMatrix solve sparseMatrix t tcrossprod which
+#' @importFrom RSQLite dbConnect dbDisconnect dbExistsTable dbListTables dbReadTable dbRemoveTable dbWriteTable SQLite
 #' @importFrom generics tidy glance augment
 #' @importFrom graphics abline legend par points title
 #' @importFrom parallel detectCores makeCluster parLapply stopCluster
@@ -16,5 +17,5 @@
 #'   pnorm predict printCoefmat pt qnorm qqnorm qqline qt quantile rbinom resid residuals
 #'   reformulate rbeta rgamma rnbinom rnorm rpois rstandard terms var vcov
 #' @importFrom tibble tibble as_tibble
-#' @importFrom utils read.table
+#' @importFrom utils read.table tail
 NULL

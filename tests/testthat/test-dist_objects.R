@@ -9,6 +9,13 @@ mf04p <- ssn_import(
   overwrite = TRUE
 )
 
+ssn_create_distmat(
+  ssn.object = mf04p,
+  predpts = c("pred1km"),
+  overwrite = TRUE,
+  among_predpts = TRUE
+)
+
 # fit an example model
 ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p, tailup_type = "exponential", additive = "afvArea")
 

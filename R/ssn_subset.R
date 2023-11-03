@@ -76,12 +76,9 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
       }
     }
 
-    oldwd <- getwd()
+    old_wd <- getwd()
+    on.exit(setwd(old_wd))
     setwd(file)
-
-    on.exit({
-      setwd(oldwd)
-    })
 
     ssn.tmp <- ssn
     ssn.tmp$path <- getwd()
@@ -285,8 +282,6 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
         ssn.tmp <- ssn_import_predpts(ssn.tmp, pred.names.vec[j])
       }
     }
-
-    setwd(oldwd)
 
     return(ssn.tmp)
   })

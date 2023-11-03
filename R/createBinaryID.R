@@ -4,7 +4,7 @@ createBinaryID <- function(ssn, overwrite) {
     if (overwrite == TRUE) {
       unlink("binaryID.db")
     } else {
-      cat("binaryID.db already exists - no changes were made to binaryID.db table\n")
+      message("binaryID.db already exists - no changes were made to binaryID.db table\n")
       mm <- T
     }
   }

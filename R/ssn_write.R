@@ -51,12 +51,9 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
       }
     }
 
-    oldwd <- getwd()
+    old_wd <- getwd()
+    on.exit(setwd(old_wd))
     setwd(file)
-
-    on.exit({
-      setwd(oldwd)
-    })
 
     ## Get list of files NOT associated with shapefiles
     ssn.tmp <- ssn

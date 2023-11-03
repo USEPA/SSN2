@@ -240,7 +240,7 @@ ggplot() +
 ```
 
 Later we will fit models to stream network data. Before doing this, however, stream distance matrices must be calculated for the observed sites and prediction sites:
-```{r, eval = FALSE}
+```{r}
 ssn_create_distmat(
   ssn.object = mf04p,
   predpts = c("pred1km", "CapeHorn", "Knapp"),
@@ -480,7 +480,7 @@ st_write(aug_preds, paste0(tempdir(), "/aug_preds.gpkg"))
 
 When performing prediction in `SSN2`, the name of `newdata` must be the name of a prediction data set contained in `ssn.object$preds`. If `newdata` is omitted or has the value `"all"`, prediction is performed for all prediction data sets in `ssn.object`. For example,
 
-```{r, eval = FALSE}
+```{r, results = "hide"}
 predict(ssn_mod)
 predict(ssn_mod, newdata = "all")
 ```
@@ -491,6 +491,7 @@ We can also predict the average value in a region using block Prediction (instea
 ```{r}
 predict(ssn_mod, newdata = "pred1km", block = TRUE, interval = "prediction")
 ```
+
 
 ### Advanced Features {#sec:advanced}
 

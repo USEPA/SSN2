@@ -179,7 +179,7 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   } else {
     ## Send warning if observed distance matrices are missing
     if (!file.exists(file.path(ssn$path, "distance", "obs"))) {
-      print(paste("WARNING: only_predpts == TRUE and distance matrices for observed sites are missing. Set only_predpts = FALSE to calculate distance matrices for observed and prediction sites."))
+      warning("only_predpts == TRUE and distance matrices for observed sites are missing. Set only_predpts = FALSE to calculate distance matrices for observed and prediction sites.", call. = FALSE)
     }
   }
 
@@ -337,13 +337,13 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
         if (all(exists)) {
           if (!warned.overwrite) {
             warned.overwrite <- TRUE
-            cat("Distance matrices already exist with overwrite set to FALSE. Not overwriting existing matrices\n")
+            message("Distance matrices already exist with overwrite set to FALSE. Not overwriting existing matrices\n")
           }
           next
 
           ## if some exist but some don't that's an error
         } else if (any(exists) && any(!exists)) {
-          stop("overwrite was set to FALSE and some (but not all) distance matrices already exist")
+          stop("overwrite was set to FALSE and some (but not all) distance matrices already exist", call. = FALSE)
         }
       }
 

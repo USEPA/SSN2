@@ -56,19 +56,3 @@ function values can also be converted to text manually using the
 \code{\link[base]{formatC}} function, which provides the
 flexibility needed to store the values with their full precision.
 }
-\examples{
-\dontrun{
-## Load saved workspace that contains S4 SpatialStreamNetwork
-# object created using SSN package
-load("old_SSN.rda")
-
-## Load SSN2 library
-library(SSN2)
-
-## Convert S4 SpatialStreamNetworkObject to S3 SSN object
-new_SSN <- SSN_to_SSN2(old_SSN,
-  edge_additive = "afvArea",
-  site_additive = "afvArea"
-)
-}
-}

@@ -13,7 +13,7 @@ test_that("ssn manipulation functions work", {
 
   expect_no_error(ssn_update_path(mf04p, mf04p$path))
 
-  expect_no_error(ssn_create_distmat(mf04p, predpts = c("pred1km")))
+  expect_message(ssn_create_distmat(mf04p, predpts = c("pred1km")))
   expect_no_error(ssn_create_distmat(mf04p, overwrite = TRUE))
   expect_no_error(ssn_create_distmat(mf04p, predpts = c("pred1km", "Knapp"),
                      overwrite = TRUE, among_predpts = TRUE, only_predpts = TRUE))

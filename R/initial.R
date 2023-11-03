@@ -31,6 +31,99 @@
 #'   assumed known. The value \code{"given"} is shorthand for assuming all
 #'   covariance parameters given to \code{*_initial()} are assumed known.
 #'
+#' @details Create an initial object for use with [ssn_lm()] or [ssn_glm()].
+#'   \code{NA} values can be given for \code{ie}, \code{rotate}, and \code{scale}, which lets
+#'   these functions find initial values for parameters that are sometimes
+#'   otherwise assumed known (e.g., \code{rotate} and \code{scale} with [ssn_lm()] and [ssn_glm()].
+#'   Parametric forms for each spatial covariance type are presented below.
+#'
+#'   \code{tailup_type} Details: Let \eqn{D} be a matrix of hydrologic distances,
+#'   \eqn{W} be a diagonal matrix of weights from \code{additive}, \eqn{r = D / range},
+#'   and \eqn{I} be
+#'   an identity matrix. Then parametric forms for flow-connected
+#'   elements of \eqn{R(zu)} are given below:
+#'   \itemize{
+#'     \item linear: \eqn{(1 - r) * (r <= 1) * W}
+#'     \item spherical: \eqn{(1 - 1.5r + 0.5r^3) * (r <= 1) * W}
+#'     \item exponential: \eqn{exp(-r) * W}
+#'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
+#'     \item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
+#'     \item none: \eqn{I} * W
+#'   }
+#'
+#'   Details describing the \code{F} matrix in the \code{epa} covariance are given in Garreta et al. (2010).
+#'   Flow-unconnected elements of \eqn{R(zu)} are assumed uncorrelated.
+#'   Observations on different networks are also assumed uncorrelated.
+#'
+#'   \code{taildown_type} Details: Let \eqn{D} be a matrix of hydrologic distances,
+#'   \eqn{r = D / range},
+#'   and \eqn{I} be an identity matrix. Then parametric forms for flow-connected
+#'   elements of \eqn{R(zd)} are given below:
+#'   \itemize{
+#'     \item linear: \eqn{(1 - r) * (r <= 1)}
+#'     \item spherical: \eqn{(1 - 1.5r + 0.5r^3) * (r <= 1)}
+#'     \item exponential: \eqn{exp(-r)}
+#'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
+#'     \item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
+#'     \item none: \eqn{I}
+#'   }
+#'
+#'   Now let \eqn{A} be a matrix that contains the shorter of the two distances
+#'   between two sites and the common downstream junction, \eqn{r1 = A / range},
+#'   \eqn{B} be a matrix that contains the longer of the two distances between two sites and the
+#'   common downstream junction, \eqn{r2 = B / range},  and \eqn{I} be an identity matrix.
+#'   Then parametric forms for flow-unconnected elements of \eqn{R(zd)} are given below:
+#'   \itemize{
+#'     \item linear: \eqn{(1 - r2) * (r2 <= 1)}
+#'     \item spherical: \eqn{(1 - 1.5r1 + 0.5r2) * (1 - r2)^2 * (r2 <= 1)}
+#'     \item exponential: \eqn{exp(-(r1 + r2))}
+#'     \item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
+#'     \item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
+#'     \item none: \eqn{I}
+#'   }
+#'
+#'   Details describing the \code{F1} and \code{F2} matrices in the \code{epa}
+#'   covariance are given in Garreta et al. (2010).
+#'   Observations on different networks are assumed uncorrelated.
+#'
+#'  \code{euclid_type} Details: Let \eqn{D} be a matrix of Euclidean distances,
+#'  \eqn{r = D / range}, and \eqn{I} be an identity matrix. Then parametric
+#'  forms for elements of \eqn{R(ze)} are given below:
+#'   \itemize{
+#'     \item exponential: \eqn{exp(- r )}
+#'     \item spherical: \eqn{(1 - 1.5r + 0.5r^3) * (r <= 1)}
+#'     \item gaussian: \eqn{exp(- r^2 )}
+#'     \item cubic: \eqn{(1 - 7r^2 + 8.75r^3 - 3.5r^5 + 0.75r^7) * (r <= 1)}
+#'     \item pentaspherical: \eqn{(1 - 1.875r + 1.25r^3 - 0.375r^5) * (r <= 1)}
+#'     \item cosine: \eqn{cos(r)}
+#'     \item wave: \eqn{sin(r) * (h > 0) / r + (h = 0)}
+#'     \item jbessel: \eqn{Bj(h * range)}, Bj is Bessel-J function
+#'     \item gravity: \eqn{(1 + r^2)^{-0.5}}
+#'     \item rquad: \eqn{(1 + r^2)^{-1}}
+#'     \item magnetic: \eqn{(1 + r^2)^{-1.5}}
+#'     \item none: \eqn{I}
+#'   }
+#'
+#'   \code{nugget_type} Details: Let \eqn{I} be an identity matrix and \eqn{0}
+#'    be the zero matrix. Then parametric
+#'    forms for elements the nugget variance are given below:
+#'   \itemize{
+#'     \item nugget: \eqn{I}
+#'     \item none: \eqn{0}
+#'   }
+#'   In short, the nugget effect is modeled when \code{nugget_type} is \code{"nugget"}
+#'   and omitted when \code{nugget_type} is \code{"none"}.
+#'
+#'   Dispersion and random effect initial objects are specified via
+#'   [spmodel::dispersion_initial()] and [spmodel::randcov_initial()], respectively.
+#'
+#' @return A list with two elements: \code{initial} and \code{is_known}.
+#'   \code{initial} is a named numeric vector indicating the spatial covariance parameters
+#'   with specified initial and/or known values. \code{is_known} is a named
+#'   numeric vector indicating whether the spatial covariance parameters in
+#'   \code{initial} are known or not. The class of the list
+#'   matches the the relevant spatial covariance type.
+#'
 #' @name ssn_initial
 #'
 #' @export

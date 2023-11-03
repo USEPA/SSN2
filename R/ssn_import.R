@@ -140,17 +140,17 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
   file <- path
   ssn_folder <- file
 
+  # Get wd
+  old_wd <- getwd()
+  on.exit(setwd(old_wd)) # if the function crashes or finishes, it will restore the initial working directory
+
   ## Adjust if relative pathname is supplied and fix edges
   if (substr(ssn_folder, start = 1, stop = 2) == "./") {
     rel.path <- substr(ssn_folder, start = 2, stop = nchar(ssn_folder))
-    ssn_folder <- paste0(getwd(), rel.path)
+    ssn_folder <- paste0(old_wd, rel.path)
   }
 
   if (!dir.exists(ssn_folder)) stop("Cannot find the .ssn folder.")
-
-  # Get wd
-  init_wd <- getwd()
-  on.exit(setwd(init_wd)) # if the function crashes or finishes, it will restore the initial working directory
 
   # Set wd
   setwd(ssn_folder)
@@ -186,13 +186,13 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
         }
         for (q in 1:length(names_additive)) {
           if (!names_additive[q] %in% colnames(sfsites)) {
-            print(paste0(names_additive[q], " is not found in obs"))
+            warning(paste0(names_additive[q], " is not found in obs"), call. = FALSE)
           } else {
             ## Extract afv column
             tmp.col <- st_drop_geometry(sfsites[, names_additive[q]])
             ## convert to character if column is numeric
             if (!inherits(tmp.col[, 1], "numeric")) {
-              print(paste0(names_additive[q], " is not numeric. AFV values were not modified"))
+              message(paste0(names_additive[q], " is not numeric. AFV values were not modified"))
             } else {
               tmp.col2 <- formatC(tmp.col[, 1],
                 digits = 254, format = "f",
@@ -235,13 +235,13 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
           }
           for (q in 1:length(names_additive)) {
             if (!names_additive[q] %in% colnames(tmp.preds)) {
-              print(paste0(names_additive[q], " is not found in ", predpts[m]))
+              warning(paste0(names_additive[q], " is not found in ", predpts[m]), call. = FALSE)
             } else {
               ## Extract afv column
               tmp.col <- st_drop_geometry(tmp.preds[, names_additive[q]])
               ## convert to character if column is numeric
               if (!inherits(tmp.col[, 1], "numeric")) {
-                print(paste0(names_additive[q], " is not numeric. AFV values were not modified"))
+                message(paste0(names_additive[q], " is not numeric. AFV values were not modified"))
               } else {
                 tmp.col2 <- formatC(tmp.col[, 1],
                   digits = 254, format = "f",
@@ -292,13 +292,13 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
       }
       for (q in 1:length(names_additive)) {
         if (!names_additive[q] %in% colnames(sfedges)) {
-          print(paste0(names_additive[q], " is not found in obs"))
+          warning(paste0(names_additive[q], " is not found in obs"), call. = FALSE)
         } else {
           ## Extract afv column
           tmp.col <- st_drop_geometry(sfedges[, names_additive[q]])
           ## convert to character if column is numeric
           if (!inherits(tmp.col[, 1], "numeric")) {
-            print(paste0(names_additive[q], " is not numeric. AFV values were not modified"))
+            message(paste0(names_additive[q], " is not numeric. AFV values were not modified"))
           } else {
             tmp.col2 <- formatC(tmp.col[, 1],
               digits = 254, format = "f",

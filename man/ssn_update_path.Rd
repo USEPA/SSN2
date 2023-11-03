@@ -15,6 +15,9 @@ object.}
 \item{verbose}{A logical that indicates if the new path should be printed
 to the console.}
 }
+\value{
+An SSN object with a new path list element.
+}
 \description{
 Update the local path in an existing SSN object based
 on an user defined file.

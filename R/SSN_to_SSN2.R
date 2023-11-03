@@ -44,21 +44,6 @@
 #'
 #' @name SSN_to_SSN2
 #' @export
-#' @examples
-#' \dontrun{
-#' ## Load saved workspace that contains S4 SpatialStreamNetwork
-#' # object created using SSN package
-#' load("old_SSN.rda")
-#'
-#' ## Load SSN2 library
-#' library(SSN2)
-#'
-#' ## Convert S4 SpatialStreamNetworkObject to S3 SSN object
-#' new_SSN <- SSN_to_SSN2(old_SSN,
-#'   edge_additive = "afvArea",
-#'   site_additive = "afvArea"
-#' )
-#' }
 SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
   if (!requireNamespace("sp", quietly = TRUE)) {
     stop("Install the sp package before using SSN_to_SSN2", call. = FALSE)
@@ -94,11 +79,11 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
     ## Convert additive function values to text
     if (!is.null(edge_additive)) {
       if (sum(edge_additive %in% colnames(edges)) != length(edge_additive)) {
-        print(paste0(
-          "Warning: AFV column '",
+        warning(paste0(
+          "AFV column '",
           edge_additive[!edge_additive %in% colnames(edges)],
           "' not found in edges"
-        ))
+        ), call. = FALSE)
       } else {
         for (j in 1:length(edge_additive)) {
           tmp <- edges[, edge_additive[j]]
@@ -155,11 +140,11 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
     ## Convert additive function values to text
     if (!is.null(site_additive)) {
       if (sum(site_additive %in% colnames(sites)) != length(site_additive)) {
-        print(paste0(
-          "WARNING: AFV column '",
+        warning(paste0(
+          "AFV column '",
           site_additive[!site_additive %in% colnames(sites)],
           "' not found in observed sites"
-        ))
+        ), call. = FALSE)
       } else {
         for (j in 1:length(site_additive)) {
           ## tmp<- 'st_geometry<-'(sites[,site_additive[j]], NULL)
@@ -222,11 +207,11 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
         ## Convert additive function values to text
         if (!is.null(site_additive)) {
           if (sum(site_additive %in% colnames(tmp.sf)) != length(site_additive)) {
-            print(paste0(
-              "Warning: AFV column '",
+            warning(paste0(
+              "AFV column '",
               site_additive[!site_additive %in% colnames(tmp.sf)],
               "' not found in prediction dataset ", pred.name
-            ))
+            ), call. = FALSE)
           } else {
             for (j in 1:length(site_additive)) {
               ## tmp<- 'st_geometry<-'(tmp.sf[,site_additive[j]], NULL)
@@ -267,3 +252,17 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
     return(ssnlist)
   }
 }
+
+# # example
+# ## Load saved workspace that contains S4 SpatialStreamNetwork
+# # object created using SSN package
+# load("old_SSN.rda")
+#
+# ## Load SSN2 library
+# library(SSN2)
+#
+# ## Convert S4 SpatialStreamNetworkObject to S3 SSN object
+# new_SSN <- SSN_to_SSN2(old_SSN,
+#   edge_additive = "afvArea",
+#   site_additive = "afvArea"
+# )

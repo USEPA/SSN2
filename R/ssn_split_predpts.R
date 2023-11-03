@@ -144,8 +144,8 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
     ## Get max pid
     max.pid <- max(pid.vec)
 
-    old.wd <- getwd()
-    on.exit(setwd(old.wd), add = TRUE)
+    old_wd <- getwd()
+    on.exit(setwd(old_wd), add = TRUE)
     setwd(ssn$path)
 
     ## REPLACE PID VALUES IF NECESSARY
