@@ -17,7 +17,7 @@ amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
       "pid", "SegmentID", "locID",
       "DistanceUpstream"
     ))
-    pid.data <- as.data.frame(sapply(pid.data, as.numeric))
+    pid.data <- as.data.frame(lapply(pid.data, as.numeric))
     colnames(pid.data) <- c("pid", "rid", "locID", "upDist")
   } else {
     ind.pids <- ssn$obs$ng.pid %in% as.character(pids)
@@ -26,8 +26,8 @@ amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
       "pid", "SegmentID", "locID",
       "DistanceUpstream"
       ), reformat = TRUE)
-    
-    ##pid.data <- as.data.frame(sapply(pid.data, as.numeric))   
+
+    ##pid.data <- as.data.frame(sapply(pid.data, as.numeric))
     colnames(pid.data) <- c("pid", "rid", "locID", "upDist")
   }
 
@@ -40,7 +40,7 @@ amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
 
   ## locID values can be repeated, in which case they have the same distance data.
   locID.old <- -1
-  for (b in 1:site.no) {
+  for (b in seq_len(site.no)) {
     locID.b <- pid.data[b, "locID"]
     upDist.b <- pid.data[b, "upDist"]
     pid.b <- pid.data[b, "pid"]

@@ -146,7 +146,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
 
     if (clip == FALSE) {
       ssn.files <- list.files(ssn$path)
-      for (i in 1:length(ssn.files)) {
+      for (i in seq_len(length(ssn.files))) {
         fn.old <- file.path(ssn$path, ssn.files[i])
         if (basename(fn.old) != "distance") {
           if (substr(basename(fn.old), 1, 5) != "sites") {
@@ -261,7 +261,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
       netID.list <- edges.sub$netID[ind.dup]
 
       # copy netID files
-      for (i in 1:length(netID.list)) {
+      for (i in seq_len(length(netID.list))) {
         fn.old <- file.path(ssn$path, paste("netID", netID.list[i], ".dat", sep = ""))
         fn.new <- file.path(ssn.tmp$path, paste("netID", netID.list[i], ".dat", sep = ""))
         file.copy(fn.old, fn.new, overwrite = TRUE)
@@ -271,14 +271,14 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
 
     ## Import subset SSN
     if (pred.len == 0) {
-      ssn.tmp <- ssn_import(ssn.tmp$path, overwrite = T)
+      ssn.tmp <- ssn_import(ssn.tmp$path, overwrite = TRUE)
     }
 
     if (pred.len > 0) {
       ## pred.names.vec <- attributes(ssn.tmp$preds)$names
-      ssn.tmp <- ssn_import(ssn.tmp$path, overwrite = T)
+      ssn.tmp <- ssn_import(ssn.tmp$path, overwrite = TRUE)
 
-      for (j in 1:length(pred.names.vec)) {
+      for (j in seq_len(length(pred.names.vec))) {
         ssn.tmp <- ssn_import_predpts(ssn.tmp, pred.names.vec[j])
       }
     }

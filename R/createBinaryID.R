@@ -5,14 +5,14 @@ createBinaryID <- function(ssn, overwrite) {
       unlink("binaryID.db")
     } else {
       message("binaryID.db already exists - no changes were made to binaryID.db table\n")
-      mm <- T
+      mm <- TRUE
     }
   }
 
   ## If binaryID.db does not exist
   options(show.error.messages = FALSE)
   m <- try(if (file.exists("binaryID.db") == FALSE) {
-    mm <- F
+    mm <- FALSE
     ## Define database driver
     driver <- RSQLite::SQLite()
 
@@ -24,7 +24,7 @@ createBinaryID <- function(ssn, overwrite) {
     net.no <- unique(ssn$edges$netID)
 
     ## read data into SQLite directly from file
-    for (i in 1:length(net.no)) {
+    for (i in seq_len(length(net.no))) {
       network <- paste("net", net.no[i], sep = "")
       file.name <- paste("netID", net.no[i], ".dat", sep = "")
 
@@ -33,9 +33,9 @@ createBinaryID <- function(ssn, overwrite) {
       }
 
       dbWriteTable(connect, network, read.table(
-        file = file.name, header = T, sep = ",",
+        file = file.name, header = TRUE, sep = ",",
         colClasses = c("numeric", "character")
-      ), overwrite = T, row.names = F)
+      ), overwrite = TRUE, row.names = FALSE)
 
       ## Check to ensure binary files were imported to SQLite database
       if (i == length(net.no)) {
@@ -51,8 +51,8 @@ createBinaryID <- function(ssn, overwrite) {
   }, silent = TRUE)
   options(show.error.messages = TRUE)
 
-  if (mm != T) {
-    if (m != T) {
+  if (mm != TRUE) {
+    if (m != TRUE) {
       dbDisconnect(connect)
       stop("ERROR: binary tables did not import to SQLite database properly")
     }

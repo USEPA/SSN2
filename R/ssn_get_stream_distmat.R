@@ -145,14 +145,14 @@ ssn_get_stream_distmat <- function(x, name = "obs") {
   path <- paste0(x$path, "/distance/", name)
   flist <- list.files(path)
   distMats <- vector("list", length(flist))
-  for (i in 1:length(flist)) {
+  for (i in seq_len(length(flist))) {
     path1 <- paste0(path, "/", flist[i])
     file_handle <- file(path1, open = "rb")
     distmat <- unserialize(file_handle)
     close(file_handle)
     ordrow <- order(as.numeric(rownames(distmat)))
     ordcol <- order(as.numeric(colnames(distmat)))
-    distmat <- distmat[ordrow, ordcol, drop = F]
+    distmat <- distmat[ordrow, ordcol, drop = FALSE]
     distMats[[i]] <- distmat
     nameSplit <- unlist(strsplit(flist[i], "[.]"))
     tname <- nameSplit[1]

@@ -128,7 +128,7 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
     )
     pid.vec <- pid.vec$pid
 
-    for (i in 1:length(ssn$preds)) {
+    for (i in seq_len(length(ssn$preds))) {
       tmp <- ssn_get_netgeometry(ssn$preds[[i]],
         netvars = "all",
         reformat = TRUE
@@ -163,7 +163,7 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
 
       ## Avoid merging issues with sf & data.frame
       tmp <- ssn$preds[[predpts]]
-      for (m in 1:length(ng.cols)) {
+      for (m in seq_len(length(ng.cols))) {
         tmp[, ng.cols[m]] <- ng.df[, ng.cols[m]]
       }
 
@@ -206,7 +206,7 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
         chunks <- c(chunks, n.points + 1)
       }
 
-      for (j in 1:(length(chunks) - 1)) {
+      for (j in seq_len(length(chunks) - 1)) {
         id_predpts2 <- paste(predpts, "-", j, sep = "")
 
         ## Get chunk
@@ -294,7 +294,7 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
       levels <- unique(as.data.frame(tmp.df)[, by])
 
       new.predids <- c()
-      for (k in 1:length(levels)) {
+      for (k in seq_len(length(levels))) {
         id_predpts <- paste(predpts, "-", by, "-", levels[k], sep = "")
         new.predids <- c(new.predids, id_predpts)
 

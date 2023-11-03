@@ -241,7 +241,7 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response"), se.fi
         upr <- invlink(upr, object$family, newdata_size)
       }
       fit <- cbind(fit, lwr, upr)
-      row.names(fit) <- 1:NROW(fit)
+      row.names(fit) <- seq_len(NROW(fit))
       if (se.fit) {
         if (add_newdata_rows) {
           row.names(fit) <- object$missing_index
@@ -275,7 +275,7 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response"), se.fi
       upr <- invlink(upr, object$family, newdata_size)
     }
     fit <- cbind(fit, lwr, upr)
-    row.names(fit) <- 1:NROW(fit)
+    row.names(fit) <- seq_len(NROW(fit))
     if (se.fit) {
       if (add_newdata_rows) {
         row.names(fit) <- object$missing_index

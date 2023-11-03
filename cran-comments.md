@@ -26,12 +26,12 @@ Instead of `print()/cat()` rather use `message()/warning()` or
 e.g.: -> `R/ssn_subset.R`; `R/ssn_write.R`; `R/createBinaryID.R` ...
 `oldwd <- getwd() # code line i`
 `on.exit(setwd(oldwd)) # code line i+1`
-    * We have ensured that `on.exit(setwd(oldwd))` occurs immediately after the first call to `getwd()` within a function
-...
-setwd(...) # somewhere after
-...
+`...`
+`setwd(...) # somewhere after`
+`...`
 e.g.:
 If you're not familiar with the function, please check ?on.exit. This function makes it possible to restore options before exiting a function even if the function breaks. Therefore it needs to be called immediately after the option change within a function.
+    * We have ensured that `on.exit(setwd(oldwd))` occurs immediately after the first call to `getwd()` within a function
 
 
 -------

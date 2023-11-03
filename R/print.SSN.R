@@ -17,7 +17,7 @@ print.SSN <- function(x, ...) {
   nobs <- matrix(nobs, 1, )
   np <- length(x$preds)
   if (np > 0) {
-    for (i in 1:np) {
+    for (i in seq_len(np)) {
       nobs <- rbind(nobs, dim(x$preds[[i]]))
     }
   }

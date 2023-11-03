@@ -242,7 +242,7 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
       lwr <- fit - tstar * se
       upr <- fit + tstar * se
       fit <- cbind(fit, lwr, upr)
-      row.names(fit) <- 1:NROW(fit)
+      row.names(fit) <- seq_len(NROW(fit))
       if (se.fit) {
         if (add_newdata_rows) {
           row.names(fit) <- object$missing_index
@@ -266,7 +266,7 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
     lwr <- fit - tstar * se
     upr <- fit + tstar * se
     fit <- cbind(fit, lwr, upr)
-    row.names(fit) <- 1:NROW(fit)
+    row.names(fit) <- seq_len(NROW(fit))
     if (se.fit) {
       if (add_newdata_rows) {
         row.names(fit) <- object$missing_index

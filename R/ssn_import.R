@@ -184,7 +184,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
         if (is.null(names_additive)) {
           stop("names_additive is required when format_additive = TRUE")
         }
-        for (q in 1:length(names_additive)) {
+        for (q in seq_len(length(names_additive))) {
           if (!names_additive[q] %in% colnames(sfsites)) {
             warning(paste0(names_additive[q], " is not found in obs"), call. = FALSE)
           } else {
@@ -221,7 +221,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
     if (all(file.exists(predpts))) {
       sfpreds <- vector(mode = "list", length = length(predpts))
 
-      for (m in 1:length(predpts)) {
+      for (m in seq_len(length(predpts))) {
         tmp.preds <- st_read(paste0(file, "/", predpts[m]), quiet = TRUE)
 
         ## Check geometry type
@@ -233,7 +233,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
           if (is.null(names_additive)) {
             stop("names_additive is required when format_additive = TRUE")
           }
-          for (q in 1:length(names_additive)) {
+          for (q in seq_len(length(names_additive))) {
             if (!names_additive[q] %in% colnames(tmp.preds)) {
               warning(paste0(names_additive[q], " is not found in ", predpts[m]), call. = FALSE)
             } else {
@@ -290,7 +290,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
       if (is.null(names_additive)) {
         stop("names_additive is required when format_additive = TRUE")
       }
-      for (q in 1:length(names_additive)) {
+      for (q in seq_len(length(names_additive))) {
         if (!names_additive[q] %in% colnames(sfedges)) {
           warning(paste0(names_additive[q], " is not found in obs"), call. = FALSE)
         } else {

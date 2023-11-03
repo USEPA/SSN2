@@ -91,7 +91,7 @@ ssn_import_predpts <- function(x, predpts,
     count <- 0
 
     if (length(x$ssn.object$preds) > 0) {
-      for (m in 1:length(x$ssn.object$preds)) {
+      for (m in seq_len(length(x$ssn.object$preds))) {
         if (names(x$ssn.object$preds[m]) == predpts) {
           pred.num <- m
           count <- count + 1
@@ -110,7 +110,7 @@ ssn_import_predpts <- function(x, predpts,
     count <- 0
 
     if (length(x$preds) > 0) {
-      for (m in 1:length(x$preds)) {
+      for (m in seq_len(length(x$preds))) {
         if (names(x$preds[m]) == predpts) {
           pred.num <- m
           count <- count + 1
@@ -141,7 +141,7 @@ ssn_import_predpts <- function(x, predpts,
     if (is.null(names_additive)) {
       stop("names_additive is required when format_additive = TRUE")
     }
-    for (q in 1:length(names_additive)) {
+    for (q in seq_len(length(names_additive))) {
       if (!names_additive[q] %in% colnames(predpoints)) {
         warning(paste0(names_additive[q], " is not found in ", predpts), call. = FALSE)
       } else {

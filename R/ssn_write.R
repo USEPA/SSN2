@@ -68,14 +68,14 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
 
     ind.list <- vector(mode = "logical", length = length(ssn.files))
 
-    for (j in 1:length(ssn.files)) {
+    for (j in seq_len(length(ssn.files))) {
       tmp <- unlist(strsplit(ssn.files[j], "[.]"))
       if ((tmp[1] %in% sub.list) == TRUE) ind.list[j] <- TRUE
     }
     ssn.files <- ssn.files[!ind.list]
 
     ## Copy files to new .ssn directory
-    for (i in 1:length(ssn.files)) {
+    for (i in seq_len(length(ssn.files))) {
       fn.old <- file.path(ssn$path, ssn.files[i])
       if (basename(fn.old) != "distance") {
         fn.new <- file.path(ssn.tmp$path, ssn.files[i])
@@ -104,7 +104,7 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
         stop("Duplicated prediction dataset names are not allowed.")
       }
       pred.name.vec <- attributes(ssn.tmp$preds)$names
-      for (i in 1:pred.len) {
+      for (i in seq_len(pred.len)) {
         pred.name <- pred.name.vec[i]
         st_write(ssn$preds[[pred.name]], paste0(
           ssn.tmp$path, "/",
@@ -124,7 +124,7 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
     ## Import SSN with all prediction sites
     if (import == TRUE & pred.len > 0) {
       ssn.tmp2 <- ssn_import(ssn.tmp$path, overwrite = FALSE)
-      for (j in 1:pred.len) {
+      for (j in seq_len(pred.len)) {
         ssn.tmp2 <- ssn_import_predpts(ssn.tmp2, pred.name.vec[j])
       }
       return(ssn.tmp2)

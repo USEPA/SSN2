@@ -256,7 +256,7 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   ## ----------------------------------------------------------------
   ## FOR EACH NETWORK
   ## ----------------------------------------------------------------
-  for (i in 1:net.count) {
+  for (i in seq_len(net.count)) {
     ## Set network number and name
     ##net.num <- levels(ssn$edges$NetworkID)[i]
     net.num <- site.nets[i]
@@ -395,7 +395,7 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       ind.dup <- !duplicated(ob.i_by_locID$locID)
 
       ## Calculate distances between observed sites
-      for (j in 1:nrow(ob.i)) {
+      for (j in seq_len(NROW(ob.i))) {
         pid.i <- ob.i[j, "pid"]
         locID.i <- ob.i[j, "locID"]
         ind <- ssn$obs$ng.pid == pid.i

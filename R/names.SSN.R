@@ -20,7 +20,7 @@ names.SSN <- function(x, ...) {
   namesList[[1]] <- no
   names4List <- "obs"
   if (np > 0) {
-    for (i in 1:np) {
+    for (i in seq_len(np)) {
       names4List <- c(names4List, names(x$preds)[[i]])
       d <- x$preds[[i]]
       namesList[[i + 1]] <- names(d)

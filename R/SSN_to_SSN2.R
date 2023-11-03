@@ -85,7 +85,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
           "' not found in edges"
         ), call. = FALSE)
       } else {
-        for (j in 1:length(edge_additive)) {
+        for (j in seq_len(length(edge_additive))) {
           tmp <- edges[, edge_additive[j]]
           tmp <- st_set_geometry(tmp, NULL)
           ## tmp<- 'st_geometry<-'(tmp, NULL)
@@ -146,7 +146,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
           "' not found in observed sites"
         ), call. = FALSE)
       } else {
-        for (j in 1:length(site_additive)) {
+        for (j in seq_len(length(site_additive))) {
           ## tmp<- 'st_geometry<-'(sites[,site_additive[j]], NULL)
           tmp <- st_set_geometry(sites[, site_additive[j]], NULL)
           ## sites[,site_additive[j]]<- as.character(tmp[,])
@@ -166,7 +166,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
 
     if (length(object@predpoints@ID) > 0) {
       pred.list <- list()
-      for (i in 1:length(object@predpoints@ID)) {
+      for (i in seq_len(length(object@predpoints@ID))) {
         pred.name <- object@predpoints@ID[i]
         ## tmp.sf <- st_as_sf(sp::SpatialPointsDataFrame(object@predpoints@SSNPoints[[i]]@point.coords,
         ##   object@predpoints@SSNPoints[[i]]@point.data,
@@ -213,7 +213,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
               "' not found in prediction dataset ", pred.name
             ), call. = FALSE)
           } else {
-            for (j in 1:length(site_additive)) {
+            for (j in seq_len(length(site_additive))) {
               ## tmp<- 'st_geometry<-'(tmp.sf[,site_additive[j]], NULL)
               tmp <- st_set_geometry(tmp.sf[, site_additive[j]], NULL)
               ## tmp.sf[,site_additive[j]]<- as.character(tmp[,])
