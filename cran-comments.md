@@ -1,5 +1,8 @@
 Thank you very much for all the time and effort the CRAN team puts into maintaining
-packages and assuring their high quality.
+packages and assuring their high quality. 
+
+We have done our absolute best to address each point CRAN set regarding our initial submission.
+A point-by-point response to each comment is provided below and has been incorporated into the revised submission.
 
 ## Revised CRAN Submission
 
