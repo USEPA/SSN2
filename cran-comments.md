@@ -1,10 +1,13 @@
 Thank you very much for all the time and effort the CRAN team puts into maintaining
 packages and assuring their high quality. 
 
-We have done our absolute best to address each point CRAN set regarding our initial submission.
+We have done our best to sufficiently address each point CRAN sent regarding our initial submission.
 A point-by-point response to each comment is provided below and has been incorporated into the revised submission.
 
 ## Revised CRAN Submission
+
+* Please write references in the description of the DESCRIPTION file in the form authors (year) <doi:...> So please write the year in brackets.
+    * The relevant reference now reads Ver Hoef, J.M. and Peterson, E.E., (2010) <DOI:10.1198/jasa.2009.ap08248>.
 
 * Size of tarball: 7201753 bytes A CRAN package should not be larger than 5 MB.
   Please reduce the size.
@@ -23,6 +26,11 @@ It is more R like to generate objects that can be used to extract the informatio
 Instead of `print()/cat()` rather use `message()/warning()` or
 `if(verbose)cat(..) (or maybe stop())` if you really have to write text to the console. (except for print, summary, interactive functions) -> `R/createBinaryID.R`; `R/ssn_create_distmat.R`, ...
     * We have removed the use of `print()` and `cat()` (outside of print, summary, interactive functions) and replaced with `message()` or `warning()`
+
+
+* Please ensure that your functions do not write by default or in your examples/vignettes/tests in the user's home filespace (including the package directory and getwd()). This is not allowed by CRAN policies.
+Please omit any default path in writing functions. In your examples/vignettes/tests you can write to `tempdir()`.
+    * No functions write by default to the user's home filespace, and our examples/vignettes/tests write to `tempdir()`.
 
     
 * Please make sure that you do not change the user's options, par or working directory. If you really have to do so within functions, please ensure with an *immediate* call of on.exit() that the settings are reset when the function is exited.
