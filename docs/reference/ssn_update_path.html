@@ -60,7 +60,7 @@ on an user defined file.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ssn_update_path</span><span class="op">(</span><span class="va">x</span>, <span class="va">path</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ssn_update_path</span><span class="op">(</span><span class="va">x</span>, <span class="va">path</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -73,7 +73,18 @@ on an user defined file.</p>
 <dd><p>Filepath to the .ssn folder associated with the SSN
 object.</p></dd>
 
+
+<dt>verbose</dt>
+<dd><p>A logical that indicates if the new path should be printed
+to the console.</p></dd>
+
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    
+
+<p>An SSN object with a new path list element.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>At times, it may be necessary to move a .ssn directory,
@@ -93,7 +104,6 @@ function that serves this purpose.</p>
 <span class="r-in"><span><span class="co">## If you use ssn_import(), the path will be correct</span></span></span>
 <span class="r-in"><span><span class="va">newpath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/MiddleFork04.ssn"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mf04p</span> <span class="op">&lt;-</span> <span class="fu">ssn_update_path</span><span class="op">(</span><span class="va">mf04p</span>, <span class="va">newpath</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "SSN path updated to C:\\Users\\mdumelle\\AppData\\Local\\Temp\\Rtmp6xS0wA/MiddleFork04.ssn"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

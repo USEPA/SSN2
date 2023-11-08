@@ -133,6 +133,82 @@ a nugget.</p></dd>
 
 </dl></div>
     <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    
+
+<p>A list with two elements: <code>initial</code> and <code>is_known</code>.
+<code>initial</code> is a named numeric vector indicating the spatial covariance parameters
+with specified initial and/or known values. <code>is_known</code> is a named
+numeric vector indicating whether the spatial covariance parameters in
+<code>initial</code> are known or not. The class of the list
+matches the the relevant spatial covariance type.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Create an initial object for use with <code><a href="ssn_lm.html">ssn_lm()</a></code> or <code><a href="ssn_glm.html">ssn_glm()</a></code>.
+<code>NA</code> values can be given for <code>ie</code>, <code>rotate</code>, and <code>scale</code>, which lets
+these functions find initial values for parameters that are sometimes
+otherwise assumed known (e.g., <code>rotate</code> and <code>scale</code> with <code><a href="ssn_lm.html">ssn_lm()</a></code> and <code><a href="ssn_glm.html">ssn_glm()</a></code>.
+Parametric forms for each spatial covariance type are presented below.</p>
+<p><code>tailup_type</code> Details: Let \(D\) be a matrix of hydrologic distances,
+\(W\) be a diagonal matrix of weights from <code>additive</code>, \(r = D / range\),
+and \(I\) be
+an identity matrix. Then parametric forms for flow-connected
+elements of \(R(zu)\) are given below:</p><ul><li><p>linear: \((1 - r) * (r &lt;= 1) * W\)</p></li>
+<li><p>spherical: \((1 - 1.5r + 0.5r^3) * (r &lt;= 1) * W\)</p></li>
+<li><p>exponential: \(exp(-r) * W\)</p></li>
+<li><p>mariah: \(log(90r + 1) / 90r * (D &gt; 0) + 1 * (D = 0) * W\)</p></li>
+<li><p>epa: \((D - range)^2 * F * (r &lt;= 1) * W / 16range^5\)</p></li>
+<li><p>none: \(I\) * W</p></li>
+</ul><p>Details describing the <code>F</code> matrix in the <code>epa</code> covariance are given in Garreta et al. (2010).
+Flow-unconnected elements of \(R(zu)\) are assumed uncorrelated.
+Observations on different networks are also assumed uncorrelated.</p>
+<p><code>taildown_type</code> Details: Let \(D\) be a matrix of hydrologic distances,
+\(r = D / range\),
+and \(I\) be an identity matrix. Then parametric forms for flow-connected
+elements of \(R(zd)\) are given below:</p><ul><li><p>linear: \((1 - r) * (r &lt;= 1)\)</p></li>
+<li><p>spherical: \((1 - 1.5r + 0.5r^3) * (r &lt;= 1)\)</p></li>
+<li><p>exponential: \(exp(-r)\)</p></li>
+<li><p>mariah: \(log(90r + 1) / 90r * (D &gt; 0) + 1 * (D = 0)\)</p></li>
+<li><p>epa: \((D - range)^2 * F1 * (r &lt;= 1) / 16range^5\)</p></li>
+<li><p>none: \(I\)</p></li>
+</ul><p>Now let \(A\) be a matrix that contains the shorter of the two distances
+between two sites and the common downstream junction, \(r1 = A / range\),
+\(B\) be a matrix that contains the longer of the two distances between two sites and the
+common downstream junction, \(r2 = B / range\),  and \(I\) be an identity matrix.
+Then parametric forms for flow-unconnected elements of \(R(zd)\) are given below:</p><ul><li><p>linear: \((1 - r2) * (r2 &lt;= 1)\)</p></li>
+<li><p>spherical: \((1 - 1.5r1 + 0.5r2) * (1 - r2)^2 * (r2 &lt;= 1)\)</p></li>
+<li><p>exponential: \(exp(-(r1 + r2))\)</p></li>
+<li><p>mariah: \((log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)\)</p></li>
+<li><p>epa: \((B - range)^2 * F2 * (r2 &lt;= 1) / 16range^5\)</p></li>
+<li><p>none: \(I\)</p></li>
+</ul><p>Details describing the <code>F1</code> and <code>F2</code> matrices in the <code>epa</code>
+covariance are given in Garreta et al. (2010).
+Observations on different networks are assumed uncorrelated.</p>
+<p><code>euclid_type</code> Details: Let \(D\) be a matrix of Euclidean distances,
+\(r = D / range\), and \(I\) be an identity matrix. Then parametric
+forms for elements of \(R(ze)\) are given below:</p><ul><li><p>exponential: \(exp(- r )\)</p></li>
+<li><p>spherical: \((1 - 1.5r + 0.5r^3) * (r &lt;= 1)\)</p></li>
+<li><p>gaussian: \(exp(- r^2 )\)</p></li>
+<li><p>cubic: \((1 - 7r^2 + 8.75r^3 - 3.5r^5 + 0.75r^7) * (r &lt;= 1)\)</p></li>
+<li><p>pentaspherical: \((1 - 1.875r + 1.25r^3 - 0.375r^5) * (r &lt;= 1)\)</p></li>
+<li><p>cosine: \(cos(r)\)</p></li>
+<li><p>wave: \(sin(r) * (h &gt; 0) / r + (h = 0)\)</p></li>
+<li><p>jbessel: \(Bj(h * range)\), Bj is Bessel-J function</p></li>
+<li><p>gravity: \((1 + r^2)^{-0.5}\)</p></li>
+<li><p>rquad: \((1 + r^2)^{-1}\)</p></li>
+<li><p>magnetic: \((1 + r^2)^{-1.5}\)</p></li>
+<li><p>none: \(I\)</p></li>
+</ul><p><code>nugget_type</code> Details: Let \(I\) be an identity matrix and \(0\)
+be the zero matrix. Then parametric
+forms for elements the nugget variance are given below:</p><ul><li><p>nugget: \(I\)</p></li>
+<li><p>none: \(0\)</p></li>
+</ul><p>In short, the nugget effect is modeled when <code>nugget_type</code> is <code>"nugget"</code>
+and omitted when <code>nugget_type</code> is <code>"none"</code>.</p>
+<p>Dispersion and random effect initial objects are specified via
+<code><a href="https://usepa.github.io/spmodel/reference/dispersion_initial.html" class="external-link">spmodel::dispersion_initial()</a></code> and <code><a href="https://usepa.github.io/spmodel/reference/randcov_initial.html" class="external-link">spmodel::randcov_initial()</a></code>, respectively.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Peterson, E.E. and Ver Hoef, J.M. (2010) A mixed-model moving-average approach
 to geostatistical modeling in stream networks. <em>Ecology</em> <b>91(3)</b>,
