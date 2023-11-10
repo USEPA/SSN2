@@ -226,7 +226,9 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
         }
 
         ## Write shapefile
-        st_write(sub.data, paste0(id_predpts2, ".shp"), quiet = TRUE)
+        ind<- colnames(sub.data) == "netgeometry"
+        st_write(sub.data[,!ind], paste0(id_predpts2, ".shp"), quiet = TRUE)
+        rm(ind)
 
         ## Add to existing ssn
         new.index <- length(ssn$preds) + 1
@@ -264,7 +266,9 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
       }
 
       ## write subset of prediction points to file
-      st_write(sub.data, paste0(id_predpts, ".shp"), quiet = TRUE)
+      ind<- colnames(sub.data) == "netgeometry"
+      st_write(sub.data[,!ind], paste0(id_predpts, ".shp"), quiet = TRUE)
+      rm(ind)
 
       ## Add to existing ssn
       new.index <- length(ssn$preds) + 1
@@ -317,7 +321,9 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
         }
 
         ## write subset of prediction points to file
-        st_write(sub.data, paste0(id_predpts, ".shp"), quiet = TRUE)
+        ind<- colnames(sub.data) == "netgeometry"
+        st_write(sub.data[,!ind], paste0(id_predpts, ".shp"), quiet = TRUE)
+        rm(ind)
 
         ## Add to existing ssn
         new.index <- length(ssn$preds) + 1
