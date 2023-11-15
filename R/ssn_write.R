@@ -91,16 +91,10 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
 
     ## Copy observed sites if they exist
     if (class(ssn.tmp$obs)[1] == c("sf")) {
-      ## REMOVE netgeomtry b/c > 10 character column name
-      ind <- colnames(ssn$obs) == "netgeometry"
-      ssn$obs<- ssn$obs[,!ind]
       st_write(ssn$obs, paste0(ssn.tmp$path, "/sites.shp"), quiet = TRUE)
     }
 
     ## Copy edges
-    ## REMOVE netgeomtry b/c > 10 character column name
-    ind <- colnames(ssn$edges) == "netgeometry"
-    ssn$edges<- ssn$edges[,!ind]
     st_write(ssn$edges, paste0(ssn.tmp$path, "/edges.shp"), quiet = TRUE)
 
     ## Copy prediction sites
@@ -112,10 +106,6 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
       pred.name.vec <- attributes(ssn.tmp$preds)$names
       for (i in seq_len(pred.len)) {
         pred.name <- pred.name.vec[i]
-        ## REMOVE netgeomtry b/c > 10 character column name
-        ind <- colnames(ssn$preds[[pred.name]]) == "netgeometry"
-        ssn$preds[[pred.name]]<- ssn$preds[[pred.name]][,!ind]
-        
         st_write(ssn$preds[[pred.name]], paste0(
           ssn.tmp$path, "/",
           pred.name, ".shp"

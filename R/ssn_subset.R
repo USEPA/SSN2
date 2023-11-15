@@ -141,9 +141,6 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
     }
 
     ## Write sites shapefile
-    ## REMOVE netgeomtry b/c > 10 character column name
-    ind <- colnames(ssn.tmp$obs) == "netgeometry"
-    ssn.tmp$obs<- ssn.tmp$obs[,!ind]
     st_write(ssn.tmp$obs, paste0(file, "/sites.shp"), quiet = TRUE)
 
 
@@ -204,9 +201,6 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
       edges.sub <- ssn.tmp$edges[ind.edges, ]
 
       ## Save subset of edges
-      ## REMOVE netgeomtry b/c > 10 character column name
-      ind <- colnames(edges.sub) == "netgeometry"
-      edges.sub<- edges.sub[,!ind]
       st_write(edges.sub, paste0(ssn.tmp$path, "/edges.shp"), quiet = TRUE)
 
 
@@ -249,12 +243,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
               rm(ind, ind2)
             }
             ## Subset predictions
-            
-           
             preds.sub <- ssn.tmp$preds[[pred.name]][ind.preds, ]
-
-            ind <- colnames(preds.sub) == "netgeometry"
-            preds.sub<- preds.sub[,!ind]
             st_write(preds.sub, paste0(ssn.tmp$path, "/", pred.name, ".shp"),
               quiet = TRUE
             )
