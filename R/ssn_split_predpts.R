@@ -122,14 +122,14 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
     }
 
     ## Get vector of pids in obs and all sets of preds
-    pid.vec <- ssn_get_netgeometry(ssn$obs,
+    pid.vec <- ssn_get_netgeom(ssn$obs,
       netvars = "all",
       reformat = TRUE
     )
     pid.vec <- pid.vec$pid
 
     for (i in seq_len(length(ssn$preds))) {
-      tmp <- ssn_get_netgeometry(ssn$preds[[i]],
+      tmp <- ssn_get_netgeom(ssn$preds[[i]],
         netvars = "all",
         reformat = TRUE
       )
@@ -151,11 +151,11 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
     ## REPLACE PID VALUES IF NECESSARY
     if (keep == TRUE) {
       ## Replace network geometry columns in predpts with values from
-      ## netgeometry
+      ## netgeom
       ng.cols <- c("netID", "rid", "upDist", "ratio", "pid", "locID")
       ind <- colnames(ssn$preds[[predpts]]) %in% ng.cols
       ssn$preds[[predpts]] <- ssn$preds[[predpts]][, !ind]
-      ng.df <- ssn_get_netgeometry(ssn$preds[[predpts]],
+      ng.df <- ssn_get_netgeom(ssn$preds[[predpts]],
         netvars = "all",
         reformat = TRUE
       )
@@ -175,10 +175,10 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
       pid.vec <- append(pid.vec, tmp.pid)
       rm(tmp.pid)
 
-      ## Recreate netgeometry
-      ind <- colnames(tmp) == "netgeometry"
+      ## Recreate netgeom
+      ind <- colnames(tmp) == "netgeom"
       tmp <- tmp[, !ind]
-      tmp <- create_netgeometry(tmp, "point")
+      tmp <- create_netgeom(tmp, "point")
 
       ## Replace predpts with updated data.frame
       ssn$preds[[predpts]] <- tmp

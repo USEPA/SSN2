@@ -62,8 +62,8 @@ ssn_put_data <-
       stop(paste0("sf_data must be an sf data.frame with POINT geometry"))
     }
 
-    if (!"netgeometry" %in% names(sf_data)) {
-      stop("'netgeometry' column is missing in sf_data\n")
+    if (!"netgeom" %in% names(sf_data)) {
+      stop("'netgeom' column is missing in sf_data\n")
     }
 
     if (!inherits(x, c("SSN", "ssn_lm", "ssn_glm"))) {

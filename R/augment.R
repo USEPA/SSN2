@@ -111,7 +111,7 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
       augment_data$.se.fit <- preds_data$se.fit
     }
     tibble_out <- tibble::tibble(cbind(data, augment_data, influence(x)))
-    tibble_out$pid <- ssn_get_netgeometry(x$ssn.object$obs, netvars = "pid")$pid
+    tibble_out$pid <- ssn_get_netgeom(x$ssn.object$obs, netvars = "pid")$pid
     coords <- sf::st_coordinates(x$ssn.object$obs)
     tibble_out$.xcoord <- coords[, 1, drop = TRUE]
     tibble_out$.ycoord <- coords[, 2, drop = TRUE]
@@ -158,7 +158,7 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
       }
       coords <- sf::st_coordinates(newdata)
       tibble_out <- tibble::tibble(cbind(sf::st_drop_geometry(newdata), augment_newdata))
-      augment_newdata$pid <- ssn_get_netgeometry(newdata, netvars = "pid")$pid
+      augment_newdata$pid <- ssn_get_netgeom(newdata, netvars = "pid")$pid
       tibble_out$.xcoord <- coords[, 1, drop = TRUE]
       tibble_out$.ycoord <- coords[, 2, drop = TRUE]
       tibble_out <- sf::st_as_sf(tibble_out, coords = c(".xcoord", ".ycoord"), crs = x$crs)

@@ -184,7 +184,7 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
   order <- unlist(split(seq_len(n), local$index), use.names = FALSE)
 
   # store global pid
-  pid <- ssn_get_netgeometry(ssn.object$obs, "pid")$pid
+  pid <- ssn_get_netgeom(ssn.object$obs, "pid")$pid
 
   # restructure ssn
   ssn.object <- restruct_ssn_missing(ssn.object, observed_index, missing_index)

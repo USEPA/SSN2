@@ -110,9 +110,9 @@ existing binaryID.db files.</p></dd>
 
 <p><code>ssn_import</code> returns an object of class SSN, which is a list
 with four elements containing:</p><ul><li><p><code>edges</code>: An <code>sf data.frame</code> containing the stream network,
-with an additional 'netgeometry' column.</p></li>
+with an additional 'netgeom' column.</p></li>
 <li><p><code>obs</code>: An sf data.frame containing observed site locations,
-with an additional 'netgeometry' column. NA if <code>include_obs =
+with an additional 'netgeom' column. NA if <code>include_obs =
     FALSE</code>.</p></li>
 <li><p><code>preds</code>: A list of sf data.frames containing prediction
 site locations. The names of the preds list correspond to the
@@ -152,13 +152,13 @@ the topological relationships of the line segments in edges.</p></li>
 </ul><p>A more detailed description of the .ssn directory and its
 contents is provided in Peterson and Ver Hoef (2014).</p>
 <p>The <code class="command">ssn_import</code> imports the edges, observed sites, and
-prediction sites as <code>sf data.frame</code> objects. A new column named 'netgeometry'
+prediction sites as <code>sf data.frame</code> objects. A new column named 'netgeom'
 is created to store important data that represents
 topological relationships in a spatial stream network
 model. These data are stored in character format, which is less
 likely to be inadvertantly changed by users. See
-<code><a href="ssn_get_netgeometry.html">ssn_get_netgeometry</a></code> for a more detailed description of
-the format and contents of 'netgeometry'.</p>
+<code><a href="ssn_get_netgeom.html">ssn_get_netgeom</a></code> for a more detailed description of
+the format and contents of 'netgeom'.</p>
 <p>The information contained in the netID text files is imported
 into an SQLite database, binaryID.db, which is stored in the .ssn
 directory. This information is used internally by
@@ -198,7 +198,7 @@ network data. <em>Journal of Statistical Software</em>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><a href="ssn_get_netgeometry.html">ssn_get_netgeometry</a></p></div>
+    <div class="dont-index"><p><a href="ssn_get_netgeom.html">ssn_get_netgeom</a></p></div>
     </div>
 
     <div class="section level2">

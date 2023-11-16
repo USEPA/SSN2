@@ -132,11 +132,11 @@ an `SSN` object, which has a special list structure with four elements:
 4.  `path`: A character string that represents the path to the relevant `.ssn`
     directory stored on your computer.
 	
-A `netgeometry` (short for "network geometry") column is also added to each of the `sf` objects
-stored within an `SSN` object. The `netgeometry` column contains a character string describing the position of each line (`edges`) and point (`obs` and `preds`)
-feature in relation to one another. The format of the `netgeometry` column
+A `netgeom` (short for "network geometry") column is also added to each of the `sf` objects
+stored within an `SSN` object. The `netgeom` column contains a character string describing the position of each line (`edges`) and point (`obs` and `preds`)
+feature in relation to one another. The format of the `netgeom` column
 differs depending on whether it is describing a feature with
-`LINESTRING` or `POINT` geometry. For edges, the format of `netgeometry`
+`LINESTRING` or `POINT` geometry. For edges, the format of `netgeom`
 is
 
 `"ENETWORK (netID rid upDist)"`,
@@ -145,7 +145,7 @@ and for sites
 
 `"SNETWORK (netID rid upDist ratio pid locID)"`,
 
-**The data used to define the `netgeometry` column are found in the edges,**
+**The data used to define the `netgeom` column are found in the edges,**
 **observed sites, and prediction sites shapefiles, which are created**
 **using the `STARS` or `openSTARS` software.**
 For edges, this includes a
@@ -153,7 +153,7 @@ unique network identifier (`netID`) and reach (i.e., edge) identifier
 (`rid`), as well as the distance between the most downstream location on
 the stream network (i.e., stream outlet) to the upstream node of each
 edge segment, when movement is restricted to the stream
-network (`upDist`). The `netgeometry` column for sites also
+network (`upDist`). The `netgeom` column for sites also
 contains the `netID` and `rid` for the edge on which the site resides. The
 point identifier (`pid`) is unique to each measurement, while the
 location identifier (`locID`) is unique to each spatial location. Note
@@ -171,11 +171,11 @@ most downstream node of the edge segment. Together
 these key pieces of data are used to describe which network and edge
 each site resides on, as well as where exactly the site is on
 each line segment. It may at first seem redundant to combine and store
-multiple numeric columns as text in the `netgeometry` column. However,
+multiple numeric columns as text in the `netgeom` column. However,
 these data dictate how the observed and prediction sites relate to one
 another in topological space, which impacts parameter estimates and
 predicted values generated from fitted models. Storing these data as
-text in the `netgeometry` column significantly reduces the chance that
+text in the `netgeom` column significantly reduces the chance that
 these values are accidentally (and unknowingly) altered by a user.
 
 ## The Middle Fork Data
@@ -717,8 +717,8 @@ Here we list some commonly used `SSN2` functions for manipulating `SSN` objects:
      for use with modeling functions.
 -   `ssn_get_data()`: Extract an `sf` `data.frame` of observed or
     prediction locations from the `SSN` object.
--   `ssn_get_netgeometry()`: Extract topological information from the
-    `netgeometry` column.
+-   `ssn_get_netgeom()`: Extract topological information from the
+    `netgeom` column.
 -   `ssn_get_stream_distmat()`: Extract the stream distance matrices for
     the observed or prediction locations in an `SSN` object.
 -   `ssn_import()`: Import an `SSN` object from an `.ssn` directory.

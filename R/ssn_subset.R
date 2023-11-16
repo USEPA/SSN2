@@ -91,14 +91,14 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
     s <- deparse(substitute(subset))
     ## ##s<- deparse(substitute(netID == 2))
 
-    ## If the subset expression contains special netgeometry columns
+    ## If the subset expression contains special netgeom columns
     if (grepl(
       pattern = "netID|rid|upDist|ratio|pid|locID",
       s
     ) == TRUE) {
-      ## Identify which netgeometry columns are used
+      ## Identify which netgeom columns are used
       data.cols <- c("netID", "rid", "upDist", "ratio", "pid", "locID")
-      netg.obs <- ssn_get_netgeometry(ssn.tmp$obs, reformat = TRUE)
+      netg.obs <- ssn_get_netgeom(ssn.tmp$obs, reformat = TRUE)
       colnames(netg.obs) <- data.cols
 
       ind <- colnames(ssn.tmp$obs) %in% data.cols
@@ -123,7 +123,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
     ssn.tmp$obs <- ssn.tmp$obs[ind, ]
     rm(ind)
 
-    ## Fix netgeometry column names if necessary
+    ## Fix netgeom column names if necessary
     if (exists("netg.obs")) {
       ind <- colnames(ssn.tmp$obs) %in% data.cols
       ssn.tmp$obs <- ssn.tmp$obs[, !ind]
@@ -159,10 +159,10 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
 
       ## Clip everything based on subset expression
     } else {
-      ## If subset expression depends on netgeometry columns then extract and
+      ## If subset expression depends on netgeom columns then extract and
       ## rename them
       if (exists("netg.obs")) {
-        netg.edges <- ssn_get_netgeometry(ssn.tmp$edges, reformat = TRUE)
+        netg.edges <- ssn_get_netgeom(ssn.tmp$edges, reformat = TRUE)
         colnames(netg.edges) <- data.cols[1:3]
         ind <- colnames(ssn.tmp$edges) %in% data.cols[1:3]
         colnames(ssn.tmp$edges)[ind] <- paste0("._", colnames(ssn.tmp$edges)[ind], "_")
@@ -210,7 +210,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
           pred.name <- attributes(ssn.tmp$preds)$names[i]
 
           if (exists("netg.obs")) {
-            netg.pred <- ssn_get_netgeometry(ssn.tmp$preds[[pred.name]], reformat = TRUE)
+            netg.pred <- ssn_get_netgeom(ssn.tmp$preds[[pred.name]], reformat = TRUE)
             colnames(netg.pred) <- data.cols
             ind <- colnames(ssn.tmp$preds[[pred.name]]) %in% data.cols
             colnames(ssn.tmp$preds[[pred.name]])[ind] <-
