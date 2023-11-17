@@ -54,7 +54,7 @@ The linear spatial stream network model is written as
 \mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\tau}_{tu} + \boldsymbol{\tau}_{td} + \boldsymbol{\tau}_{eu} + \boldsymbol{\epsilon},
 \end{equation*}
 ```
-where $\mathbf{X}$ is a matrix of explanatory variables (usually including a column of 1's for an intercept), $\boldsymbol{\beta}$ is a vector of fixed effects that describe the average impact of $\mathbf{X}$ on $\mathbf{y}$, $\boldsymbol{\tau}_{tu}$ is a vector of spatially dependent (correlated) tail-up random errors, $\boldsymbol{\tau}_{td}$ is a vector of spatially dependent (correlated) tail-down random errors, $\boldsymbol{\tau}_{eu}$ is a vector of spatially dependent (correlated) Euclidean random errors, and $\boldsymbol{\epsilon}$ is a vector of spatially independent (uncorrelated) random errors. The spatial dependence of each $\boldsymbol{\tau}$ term is explicitly specified using a spatial covariance function that incorporates the variance of the respective $\boldsymbol{\tau}$ term, often called a partial sill, and a range parameter that controls the behavior of the respective spatial covariance. The variance of $\boldsymbol{\epsilon}$ is often called the nugget (or nugget effect). The tail-up random errors incorporate dependence only among sites that share flow, while the tail-up random errors incorporate dependence among sites that share flow and do not share flow. The tail-up random errors also incorporate an "additive function" that reflects the upstream branching structure of the network [@ver2010moving]. @ver2010 and @peterson2010mixed describe these models in more detail.
+where $\mathbf{X}$ is a matrix of explanatory variables (usually including a column of 1's for an intercept), $\boldsymbol{\beta}$ is a vector of fixed effects that describe the average impact of $\mathbf{X}$ on $\mathbf{y}$, $\boldsymbol{\tau}_{tu}$ is a vector of spatially dependent (correlated) tail-up random errors, $\boldsymbol{\tau}_{td}$ is a vector of spatially dependent (correlated) tail-down random errors, $\boldsymbol{\tau}_{eu}$ is a vector of spatially dependent (correlated) Euclidean random errors, and $\boldsymbol{\epsilon}$ is a vector of spatially independent (uncorrelated) random errors. The spatial dependence of each $\boldsymbol{\tau}$ term is explicitly specified using a spatial covariance function that incorporates the variance of the respective $\boldsymbol{\tau}$ term, often called a partial sill, and a range parameter that controls the behavior of the respective spatial covariance. The variance of $\boldsymbol{\epsilon}$ is often called the nugget (or nugget effect). The tail-up random errors incorporate dependence only among sites that share flow, while the tail-up random errors incorporate dependence among sites that share flow and do not share flow. The tail-up random errors also incorporate an "additive function" that reflects the upstream branching structure of the network [@ver2010moving]. @ver2010moving and @peterson2010mixed describe these models in more detail.
 
 There are two main classes of functions in `SSN2`: 1) functions that operate on spatial stream network objects to either manipulate the SSN object, fit models, or simulate data (these have an `ssn_` prefix) and 2) functions that operate on a fitted model object, which are used to summarize the model, make predictions, and more. 
 
@@ -70,12 +70,12 @@ path <- paste0(tempdir(), "/MiddleFork04.ssn")
 ```
 
 Copying to the temporary directory is only used in this illustrative example, as users will read in the `.ssn` object from an appropriate file path stored on their computer. Next we import the observed data and prediction sites (`pred1km`):
-```{r}
+```{r, message=FALSE, results='hide'}
 mf04p <- ssn_import(path, predpts = "pred1km")
 ```
 
 We visualize the stream network, observed sties, and prediction sites using `ggplot2` [@wickham2016ggplot2] by running
-```{r, fig.cap="Middle Fork 2004 stream newtork. Observed sites are represnted by brown, closed circles. Prediction sites are represented by black, closed circles.", out.width="75%"}
+```{r steamnetwork, fig.cap="Middle Fork 2004 stream newtork. Observed sites are represnted by brown, closed circles. Prediction sites are represented by black, closed circles.", out.width="75%", fig.align="center", warning=FALSE}
 library(ggplot2)
 ggplot() +
   geom_sf(data = mf04p$edges) +
@@ -105,7 +105,8 @@ summary(ssn_mod)
 ```{r}
 tidy(ssn_mod, conf.int = TRUE)
 glance(ssn_mod)
-augment(ssn_mod)
+aug_mod <- augment(ssn_mod)
+subset(aug_mod, select = c(Summer_mn, .fitted, .resid, .hat, .cooksd))
 ```
 
 Specific helper functions (e.g., `coef()`, `AIC()`, `residuals()`) can be used to obtain the same quantities returned by `tidy()`, `glance()`, and `augment()`:
@@ -115,9 +116,10 @@ AIC(ssn_mod)
 head(residuals(ssn_mod))
 ```
 
-Prediction at the prediction sites is performed using `predict()` or `augment()`:
+Prediction at the prediction sites is performed using `predict()` (or `augment()`):
 ```{r}
-augment(ssn_mod, newdata = "pred1km", interval = "prediction")
+aug_pred <- augment(ssn_mod, newdata = "pred1km", interval = "prediction")
+subset(aug_pred, select = c(.fitted, .lower, .upper))
 ```
 
 Generalized linear models for binary, count, proportion, and skewed data are available via the `ssn_glm()` function. Simulating data on a stream network is performed via `ssn_simulate()`.
