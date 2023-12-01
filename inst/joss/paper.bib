@@ -1,5 +1,13 @@
+@Book{bivand2013applied,
+  author = {Roger S. Bivand and Edzer Pebesma and Virgilio Gomez-Rubio},
+  title = {Applied spatial data analysis with {R}, Second edition},
+  year = {2013},
+  publisher = {Springer, NY},
+  url = {https://asdar-book.org/},
+}
+
 @Manual{bivand2020rgeos,
-  title = {rgeos: Interface to Geometry Engine - Open Source ('GEOS')},
+  title = {{rgeos}: Interface to Geometry Engine - Open Source ('GEOS')},
   author = {Roger Bivand and Colin Rundel},
   year = {2020},
   note = {R package version 0.5-5},
@@ -7,7 +15,7 @@
 }
 
 @Manual{bivand2021maptools,
-  title = {maptools: Tools for Handling Spatial Objects},
+  title = {{maptools}: Tools for Handling Spatial Objects},
   author = {Roger Bivand and Nicholas Lewin-Koh},
   year = {2021},
   note = {R package version 1.1-2},
@@ -15,7 +23,7 @@
 }
 
 @Manual{bivand2021rgdal,
-  title = {rgdal: Bindings for the 'Geospatial' Data Abstraction Library},
+  title = {{rgdal}: Bindings for the 'Geospatial' Data Abstraction Library},
   author = {Roger Bivand and Tim Keitt and Barry Rowlingson},
   year = {2021},
   note = {R package version 1.5-27},
@@ -23,10 +31,10 @@
 }
 
 @book{cressie1993statistics,
-  title={Statistics for spatial data},
+  title={Statistics for spatial data (Revised edition)},
   author={Cressie, Noel},
   year={1993},
-  publisher={John Wiley \& Sons}
+  publisher={Wiley: Hoboken, NJ}
 }
 
 @article{detenbeck2016spatial,
@@ -40,14 +48,38 @@
   publisher={Wiley Online Library}
 }
 
+@Article{dumelle2023spmodel,
+  title = {{spmodel}: Spatial statistical modeling and prediction in {R}},
+  author = {Michael Dumelle and Matt Higham and Jay M. {Ver Hoef}},
+  journal = {PLOS ONE},
+  year = {2023},
+  volume = {18},
+  number = {3},
+  pages = {1--32},
+  doi = {10.1371/journal.pone.0282524},
+  url = {https://doi.org/10.1371/journal.pone.0282524},
+}
+
+
 @article{fuller2021integrating,
   title={Integrating thermal infrared stream temperature imagery and spatial stream network models to understand natural spatial thermal variability in streams},
   author={Fuller, Matthew R and Ebersole, Joseph L and Detenbeck, Naomi E and Labiosa, Rochelle and Leinenbach, Peter and Torgersen, Christian E},
-  journal={Journal of thermal biology},
+  journal={Journal of Thermal Biology},
   volume={100},
   pages={103028},
   year={2021},
   publisher={Elsevier}
+}
+
+@article{fuller2022riparian,
+  title={Riparian vegetation shade restoration and loss effects on recent and future stream temperatures},
+  author={Fuller, Matthew R and Leinenbach, Peter and Detenbeck, Naomi E and Labiosa, Rochelle and Isaak, Daniel J},
+  journal={Restoration Ecology},
+  volume={30},
+  number={7},
+  pages={e13626},
+  year={2022},
+  publisher={Wiley Online Library}
 }
 
 @article{isaak2014applications,
@@ -61,6 +93,17 @@
   publisher={Wiley Online Library}
 }
 
+@article{isaak2017norwest,
+  title={The NorWeST summer stream temperature model and scenarios for the western US: A crowd-sourced database and new geospatial tools foster a user community and predict broad climate warming of rivers and streams},
+  author={Isaak, Daniel J and Wenger, Seth J and Peterson, Erin E and Ver Hoef, Jay M and Nagel, David E and Luce, Charles H and Hostetler, Steven W and Dunham, Jason B and Roper, Brett B and Wollrab, Sherry P and others},
+  journal={Water Resources Research},
+  volume={53},
+  number={11},
+  pages={9181--9205},
+  year={2017},
+  publisher={Wiley Online Library}
+}
+
 @article{isaak2017scalable,
   title={Scalable population estimates using spatial-stream-network (SSN) models, fish density surveys, and national geospatial database frameworks for streams},
   author={Isaak, Daniel J and Ver Hoef, Jay M and Peterson, Erin E and Horan, Dona L and Nagel, David E},
@@ -70,6 +113,17 @@
   pages={147--156},
   year={2017},
   publisher={NRC Research Press}
+}
+
+
+@article{lindgren2015bayesian,
+  title={Bayesian spatial modelling with {R-INLA}},
+  author={Lindgren, Finn and Rue, H{\aa}vard},
+  journal={Journal of Statistical Software},
+  volume={63},
+  number={19},
+  year={2015},
+  publisher={University of California at Los Angeles}
 }
 
 @article{mainali2019review,
@@ -113,10 +167,20 @@
   langid = {en}
 }
 
+@Misc{nychka2021fields,
+  title = {fields: Tools for spatial data},
+  author = {Nychka, Douglas and Furrer, Reinhard and Paige, John and Sain, Stephan},
+  note = {R package version 15.2},
+  organization = {University Corporation for Atmospheric Research},
+  address = {Boulder, CO, USA},
+  year = {2021},
+  url = {https://github.com/dnychka/fieldsRPackage},
+}
+
 @article{pearse2020ssndesign,
-  title={SSNdesign—An R package for pseudo-Bayesian optimal and adaptive sampling designs on stream networks},
+  title={{SSNdesign} — An {R} package for pseudo-{B}ayesian optimal and adaptive sampling designs on stream networks},
   author={Pearse, Alan R and McGree, James M and Som, Nicholas A and Leigh, Catherine and Maxwell, Paul and Ver Hoef, Jay M and Peterson, Erin E},
-  journal={PloS one},
+  journal={PLOS ONE},
   volume={15},
   number={9},
   pages={e0238422},
@@ -124,9 +188,18 @@
   publisher={Public Library of Science San Francisco, CA USA}
 }
 
+@Article{pebesma2004gstat,
+  title = {Multivariable geostatistics in {S}: the gstat package},
+  author = {Edzer J. Pebesma},
+  journal = {Computers & Geosciences},
+  year = {2004},
+  volume = {30},
+  pages = {683-691},
+}
+
 @article{pebesma2018sf,
   author = {Edzer Pebesma},
-  title = {{Simple Features for R: Standardized Support for Spatial Vector Data}},
+  title = {{Simple Features for {R}: Standardized Support for Spatial Vector Data}},
   year = {2018},
   journal = {{The R Journal}},
   doi = {10.32614/RJ-2018-009},
@@ -148,20 +221,67 @@
 }
 
 @article{peterson2014stars,
-  title={STARS: An ArcGIS toolset used to calculate the spatial information needed to fit spatial statistical models to stream network data},
-  author={Peterson, Erin and Ver Hoef, Jay},
+  title={{STARS}: An {ArcGIS} toolset used to calculate the spatial information needed to fit spatial statistical models to stream network data},
+  author={Peterson, Erin E and Ver Hoef, Jay M},
   journal={Journal of Statistical Software},
   volume={56},
   pages={1--17},
   year={2014}
 }
 
+@article{ruesch2012projected,
+  title={Projected climate-induced habitat loss for salmonids in the John Day River network, Oregon, USA},
+  author={Ruesch, Aaron S and Torgersen, Christian E and Lawler, Joshua J and Olden, Julian D and Peterson, Erin E and Volk, Carol J and Lawrence, David J},
+  journal={Conservation Biology},
+  volume={26},
+  number={5},
+  pages={873--882},
+  year={2012},
+  publisher={Wiley Online Library}
+}
+
+@Manual{ribiero2022geoR,
+  title = {{geoR}: Analysis of Geostatistical Data},
+  author = {Paulo Justiniano {Ribeiro Jr} and Peter Diggle and Ole Christensen and Martin Schlather and Roger Bivand and Brian Ripley},
+  year = {2022},
+  note = {R package version 1.9-2},
+  url = {https://CRAN.R-project.org/package=geoR},
+}
+
+@article{rodriguez2019spatial,
+  title={A spatial stream-network approach assists in managing the remnant genetic diversity of riparian forests},
+  author={Rodr{\'\i}guez-Gonz{\'a}lez, Patricia Mar{\'\i}a and Garc{\'\i}a, Cristina and Albuquerque, Ant{\'o}nio and Monteiro-Henriques, Tiago and Faria, Carla and Guimar{\~a}es, Joana B and Mendon{\c{c}}a, Diogo and Sim{\~o}es, Fernanda and Ferreira, Maria Teresa and Mendes, Ana and others},
+  journal={Scientific Reports},
+  volume={9},
+  number={1},
+  pages={6741},
+  year={2019},
+  publisher={Nature Publishing Group UK London}
+}
+
+@article{rodriguez2019estimating,
+  title={Estimating ecosystem metabolism to entire river networks},
+  author={Rodr{\'\i}guez-Castillo, Tamara and Est{\'e}vez, Edurne and Gonz{\'a}lez-Ferreras, Alexia Mar{\'\i}a and Barqu{\'\i}n, Jos{\'e}},
+  journal={Ecosystems},
+  volume={22},
+  pages={892--911},
+  year={2019},
+  publisher={Springer}
+}
+
 @Manual{robinson2021broom,
   title = {broom: Convert Statistical Objects into Tidy Tibbles},
-  author = {David Robinson and Alex Hayes and Simon Couch},
+  author = {Robinson, David and Hayes, Alex and Couch, Simon},
   year = {2021},
   note = {R package version 0.7.6},
   url = {https://CRAN.R-project.org/package=broom},
+}
+
+@Article{sainsbury2002frk,
+  title = {Modelling big, heterogeneous, non-Gaussian spatial and spatio-temporal data using FRK},
+  author = {Sainsbury-Dale, Matthew and Zammit-Mangion, Andrew and Cressie, Noel},
+  journal = {arXiv:2110.02507},
+  year = {2022},
 }
 
 @article{santos2022bayesian,
@@ -172,6 +292,35 @@
   pages={107446},
   year={2022},
   publisher={Elsevier}
+}
+
+@article{scown2017improving,
+  title={Improving predictive models of in-stream phosphorus concentration based on nationally-available spatial data coverages},
+  author={Scown, Murray W and McManus, Michael G and Carson Jr, John H and Nietch, Christopher T},
+  journal={Journal of the American Water Resources Association},
+  volume={53},
+  number={4},
+  pages={944--960},
+  year={2017},
+  publisher={Wiley Online Library}
+}
+
+@article{sharma2021dendritic,
+  title={Dendritic prioritization through spatial stream network modeling informs targeted management of Himalayan riverscapes under brown trout invasion},
+  author={Sharma, Aashna and Dubey, Vineet K and Johnson, Jeyaraj A and Rawal, Yogesh K and Sivakumar, Kuppusamy},
+  journal={Journal of Applied Ecology},
+  volume={58},
+  number={11},
+  pages={2415--2426},
+  year={2021},
+  publisher={Wiley Online Library}
+}
+
+@Article{skoien2014rtop,
+  title = {{rtop}: An {R} package for interpolation of data with a variable spatial support, with an example from river networks},
+  author = {J. O. Skoien and {G. Bloschl} and {G. Laaha} and {E. Pebesma} and {J. Parajka} and {A. Viglione}},
+  journal = {Computers \& Geosciences},
+  year = {2014},
 }
 
 @article{ver2010moving,
@@ -186,8 +335,8 @@
 }
 
 @article{ver2014ssn,
-  title={SSN: An {R} package for spatial statistical modeling on stream networks},
-  author={Ver Hoef, Jay and Peterson, Erin and Clifford, David and Shah, Rohan},
+  title={{SSN}: An {R} package for spatial statistical modeling on stream networks},
+  author={Ver Hoef, Jay M. and Peterson, Erin E and Clifford, David and Shah, Rohan},
   journal={Journal of Statistical Software},
   volume={56},
   pages={1--45},
@@ -196,7 +345,7 @@
 
 @Book{wickham2016ggplot2,
   author = {Hadley Wickham},
-  title = {ggplot2: Elegant Graphics for Data Analysis},
+  title = {{ggplot2}: Elegant Graphics for Data Analysis},
   publisher = {Springer-Verlag New York},
   year = {2016},
   isbn = {978-3-319-24277-4},
