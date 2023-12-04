@@ -1,0 +1,135 @@
+---
+title: 'SSN2: The next generation of spatial stream network modeling in R'
+tags:
+  - R
+  - Spatial stream network
+  - Spatial correlation
+  - Spatial prediction
+  - Linear model
+  - Generalized linear model
+  - Torgegram
+authors:
+  - name: Michael Dumelle
+    orcid: 0000-0002-3393-5529
+    affiliation: "1" # (Multiple affiliations must be quoted)
+  - name: Erin Peterson
+    affiliation: 2
+  - name: Jay M. Ver Hoef
+    affiliation: 3
+  - name: Alan Pearse
+    affiliation: 4
+  - name: Dan Isaak
+    affiliation: 5
+affiliations:
+ - name: United States Environmental Protection Agency
+   index: 1
+ - name: Queensland University of Technology
+   index: 2
+ - name: United States National Oceanic and Atmospheric Administration
+   index: 3
+ - name: University of Wollongong
+   index: 4
+ - name: United States Forest Service
+   index: 5
+citation_author: Dumelle et. al.
+date: 11 November 2023
+year: 2023
+bibliography: paper.bib
+output: rticles::joss_article
+csl: apa.csl
+journal: JOSS
+---
+
+# Summary
+
+The `SSN2` **R** package provides tools for spatial statistical modeling and prediction on stream (river) networks. `SSN2` supersedes the `SSN` **R** package [@ver2014ssn], which was archived alongside broader changes in the **R**-spatial ecosystem [@nowosad2023] that included the retirement of `rgdal` [@bivand2021rgdal], `rgeos` [@bivand2020rgeos], and `maptools` [@bivand2021maptools]. `SSN2` leverages modern **R**-spatial tools like `sf` [@pebesma2018sf] and provides many useful modeling features that were not feasible to implement in `SSN`. 
+
+# Statement of Need
+
+Streams (and rivers) are vital aquatic resources that sustain wildlife, provide drinking water, irrigate crops, and reduce pollution.  Data are often collected at various locations on a stream network and used to characterize some aspect of the stream. For example, a researcher may be interested in how the amount of a hazardous chemical changes throughout the stream network and use this information to inform mitigation efforts. Spatial statistical models (i.e., geostatistical models) incorporate spatial covariance (i.e., dependence) among nearby observations to improve model fit and prediction accuracy [@cressie1993statistics]. Typically spatial covariance is modeled as a function of the Euclidean distance between observations. However, spatial covariance based solely on Euclidean distance fail to adequately describe unique and complex spatial dependencies on a stream network. Consider two pairs of sites that have the same stream distance between them but one pair shares flow among the sites and the other pair does not -- these two pairs should have different amounts of covariance.  The `SSN2` **R** package provides a formal structure for building stream network models that incorporates upstream processes (e.g., salmon swimming) and downstream processes (e.g., sediment transport).
+
+The linear spatial stream network model is written as
+```{=tex}
+\begin{equation*}
+\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\tau}_{tu} + \boldsymbol{\tau}_{td} + \boldsymbol{\tau}_{eu} + \boldsymbol{\epsilon},
+\end{equation*}
+```
+where $\mathbf{X}$ is a matrix of explanatory variables (usually including a column of 1's for an intercept), $\boldsymbol{\beta}$ is a vector of fixed effects that describe the average impact of $\mathbf{X}$ on $\mathbf{y}$, $\boldsymbol{\tau}_{tu}$ is a vector of spatially dependent (correlated) tail-up random errors, $\boldsymbol{\tau}_{td}$ is a vector of spatially dependent (correlated) tail-down random errors, $\boldsymbol{\tau}_{eu}$ is a vector of spatially dependent (correlated) Euclidean random errors, and $\boldsymbol{\epsilon}$ is a vector of spatially independent (uncorrelated) random errors. The spatial dependence of each $\boldsymbol{\tau}$ term is explicitly specified using a spatial covariance function that incorporates the variance of the respective $\boldsymbol{\tau}$ term, often called a partial sill, and a range parameter that controls the behavior of the respective spatial covariance. The variance of $\boldsymbol{\epsilon}$ is often called the nugget (or nugget effect). The tail-up random errors incorporate dependence only among sites that share flow, while the tail-up random errors incorporate dependence among sites that share flow and do not share flow. The tail-up random errors also incorporate an "additive function" that reflects the upstream branching structure of the network [@ver2010moving]. @ver2010moving and @peterson2010mixed describe these models in more detail.
+
+There are two main classes of functions in `SSN2`: 1) functions that operate on spatial stream network objects to either manipulate the SSN object, fit models, or simulate data (these have an `ssn_` prefix) and 2) functions that operate on a fitted model object, which are used to summarize the model, make predictions, and more. 
+
+# Package Overview
+
+Stream network data must be pre-processed using the STARS toolset for ArcGIS Desktop versions 9.3x - 10.8x [@peterson2014stars]. STARS is used to create a `.ssn` folder, which contains all the topological information needed to fit stream network using `SSN2`. The `.ssn` folder is read into **R** using `ssn_import()`, which yields an SSN object that has a special list structure with four elements: `edges`, an `sf` object that contains network edges with `LINESTRING` geometry; `obs` an `sf` object that contains the observed data with `POINT` geometry; `preds`, a list of `sf` objects with `POINT` geometry that each contain a set of sites requiring prediction; and `path` a character string that stores the computer path to the `.ssn` object.
+
+The `SSN2` packages comes with an example `.ssn` folder that represents temperature measurements from the Middle Fork stream network taken during 2004. To use this example data, we must copy the `.ssn` folder that comes shipped with `SSN2` to a temporary directory and store the temporary directory's file path:
+```{r}
+library(SSN2)
+copy_lsn_to_temp()
+path <- paste0(tempdir(), "/MiddleFork04.ssn")
+```
+
+Copying to the temporary directory is only used in this illustrative example, as users will read in the `.ssn` object from an appropriate file path stored on their computer. Next we import the observed data and prediction sites (`pred1km`):
+```{r, message=FALSE, results='hide'}
+mf04p <- ssn_import(path, predpts = "pred1km")
+```
+
+We visualize the stream network, observed sties, and prediction sites using `ggplot2` [@wickham2016ggplot2] by running
+```{r steamnetwork, fig.cap="Middle Fork 2004 stream newtork. Observed sites are represnted by brown, closed circles. Prediction sites are represented by black, closed circles.", out.width="75%", fig.align="center", warning=FALSE}
+library(ggplot2)
+ggplot() +
+  geom_sf(data = mf04p$edges) +
+  geom_sf(data = mf04p$preds$pred1km) +
+  geom_sf(data = mf04p$obs, color = "brown", size = 1.5) +
+  theme_bw()
+```
+
+Suppose we wanted to summer model stream temperature (`Summer_mn`) as a function of elevation (`ELEV_DEM`) and precipitation (`AREAWTMAP`). We fit and summarize this model using `SSN2` by running
+```{r}
+ssn_mod <- ssn_lm(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  ssn.object = mf04p,
+  tailup_type = "exponential",
+  taildown_type = "spherical",
+  euclid_type = "gaussian",
+  additive = "afvArea"
+)
+```
+
+The `additive` argument represents a variable in `mf04p` that captures the "additive function value", which captures elements of the branching network used by the tail-up covariance [@ver2010moving]. A summary of the fitted model looks similar to a summary returned by `lm()` with information about the spatial covariance structure added:
+```{r}
+summary(ssn_mod)
+```
+
+`SSN2` leverages the `tidy()`, `glance()`, and `augment()` functions [@robinson2021broom] to tidy, glance at, and augment the fitted model:
+```{r}
+tidy(ssn_mod, conf.int = TRUE)
+glance(ssn_mod)
+aug_mod <- augment(ssn_mod)
+subset(aug_mod, select = c(Summer_mn, .fitted, .resid, .hat, .cooksd))
+```
+
+Specific helper functions (e.g., `coef()`, `AIC()`, `residuals()`) can be used to obtain the same quantities returned by `tidy()`, `glance()`, and `augment()`:
+```{r}
+coef(ssn_mod)
+AIC(ssn_mod)
+head(residuals(ssn_mod))
+```
+
+Prediction at the prediction sites is performed using `predict()` (or `augment()`):
+```{r}
+aug_pred <- augment(ssn_mod, newdata = "pred1km", interval = "prediction")
+subset(aug_pred, select = c(.fitted, .lower, .upper))
+```
+
+Generalized linear models for binary, count, proportion, and skewed data are available via the `ssn_glm()` function. Simulating data on a stream network is performed via `ssn_simulate()`.
+
+# Discussion
+
+After the retirement of `SSN`, `SSN2` is the primary tool available in the **R** ecosystem available to fit models, make predictions, and simulate data on spatial stream networks. Spatial stream network models are incredibly useful and have motivated research studying water quality [@mainali2019review], fish populations [@isaak2017scalable], temperature patterns [@detenbeck2016spatial], and salinization [@mcmanus2020variation], among many other applications (e.g., @isaak2014applications; @neill2018using; @pearse2020ssndesign; @fuller2021integrating; @santos2022bayesian). 
+
+# Acknowledgements
+
+The views expressed in this manuscript are those of the authors and do not necessarily represent the views or policies of USEPA, NOAA, or USFS. Any mention of trade names, products, or services does not imply an endorsement by the U.S. government, USEPA, NOAA, or USFS. USEPA, NOAA, or USFS do not endorse any commercial products, services or enterprises.
+
+# References

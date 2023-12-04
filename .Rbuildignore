@@ -12,3 +12,4 @@
 ^pkgdown$
 ^CRAN-SUBMISSION$
 ^CONTRIBUTING\.md$
+^inst/joss$
