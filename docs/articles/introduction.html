@@ -237,19 +237,19 @@ predictions will be made.</li>
 <code>path</code>: A character string that represents the path to
 the relevant <code>.ssn</code> directory stored on your computer.</li>
 </ol>
-<p>A <code>netgeometry</code> (short for “network geometry”) column is
+<p>A <code>netgeom</code> (short for “network geometry”) column is
 also added to each of the <code>sf</code> objects stored within an
-<code>SSN</code> object. The <code>netgeometry</code> column contains a
+<code>SSN</code> object. The <code>netgeom</code> column contains a
 character string describing the position of each line
 (<code>edges</code>) and point (<code>obs</code> and <code>preds</code>)
 feature in relation to one another. The format of the
-<code>netgeometry</code> column differs depending on whether it is
+<code>netgeom</code> column differs depending on whether it is
 describing a feature with <code>LINESTRING</code> or <code>POINT</code>
-geometry. For edges, the format of <code>netgeometry</code> is</p>
+geometry. For edges, the format of <code>netgeom</code> is</p>
 <p><code>"ENETWORK (netID rid upDist)"</code>,</p>
 <p>and for sites</p>
 <p><code>"SNETWORK (netID rid upDist ratio pid locID)"</code>,</p>
-<p><strong>The data used to define the <code>netgeometry</code> column
+<p><strong>The data used to define the <code>netgeom</code> column
 are found in the edges,</strong> <strong>observed sites, and prediction
 sites shapefiles, which are created</strong> <strong>using the
 <code>STARS</code> or <code>openSTARS</code> software.</strong> For
@@ -258,7 +258,7 @@ and reach (i.e., edge) identifier (<code>rid</code>), as well as the
 distance between the most downstream location on the stream network
 (i.e., stream outlet) to the upstream node of each edge segment, when
 movement is restricted to the stream network (<code>upDist</code>). The
-<code>netgeometry</code> column for sites also contains the
+<code>netgeom</code> column for sites also contains the
 <code>netID</code> and <code>rid</code> for the edge on which the site
 resides. The point identifier (<code>pid</code>) is unique to each
 measurement, while the location identifier (<code>locID</code>) is
@@ -277,11 +277,11 @@ is far from the most downstream node of the edge segment. Together these
 key pieces of data are used to describe which network and edge each site
 resides on, as well as where exactly the site is on each line segment.
 It may at first seem redundant to combine and store multiple numeric
-columns as text in the <code>netgeometry</code> column. However, these
+columns as text in the <code>netgeom</code> column. However, these
 data dictate how the observed and prediction sites relate to one another
 in topological space, which impacts parameter estimates and predicted
 values generated from fitted models. Storing these data as text in the
-<code>netgeometry</code> column significantly reduces the chance that
+<code>netgeom</code> column significantly reduces the chance that
 these values are accidentally (and unknowingly) altered by a user.</p>
 <div class="section level3">
 <h3 id="the-middle-fork-data">The Middle Fork Data<a class="anchor" aria-label="anchor" href="#the-middle-fork-data"></a>
@@ -327,25 +327,25 @@ to call <code><a href="../reference/ssn_import.html">ssn_import()</a></code>, sp
 <span><span class="co">#&gt; [11] "C20"         "C24"         "FlowCMS"     "AirMEANc"    "AirMWMTc"   </span></span>
 <span><span class="co">#&gt; [16] "NEAR_X"      "NEAR_Y"      "rid"         "ratio"       "afvArea"    </span></span>
 <span><span class="co">#&gt; [21] "upDist"      "locID"       "netID"       "pid"         "geometry"   </span></span>
-<span><span class="co">#&gt; [26] "netgeometry"</span></span>
+<span><span class="co">#&gt; [26] "netgeom"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $pred1km</span></span>
 <span><span class="co">#&gt;  [1] "COMID"       "GNIS_NAME"   "CDRAINAG"    "AREAWTMAP"   "SLOPE"      </span></span>
 <span><span class="co">#&gt;  [6] "ELEV_DEM"    "FlowCMS"     "AirMEANc"    "AirMWMTc"    "NEAR_X"     </span></span>
 <span><span class="co">#&gt; [11] "NEAR_Y"      "rid"         "ratio"       "afvArea"     "upDist"     </span></span>
-<span><span class="co">#&gt; [16] "locID"       "netID"       "pid"         "geometry"    "netgeometry"</span></span>
+<span><span class="co">#&gt; [16] "locID"       "netID"       "pid"         "geometry"    "netgeom"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $CapeHorn</span></span>
 <span><span class="co">#&gt;  [1] "COMID"       "GNIS_NAME"   "CDRAINAG"    "AREAWTMAP"   "SLOPE"      </span></span>
 <span><span class="co">#&gt;  [6] "ELEV_DEM"    "FlowCMS"     "AirMEANc"    "AirMWMTc"    "NEAR_X"     </span></span>
 <span><span class="co">#&gt; [11] "NEAR_Y"      "rid"         "ratio"       "afvArea"     "upDist"     </span></span>
-<span><span class="co">#&gt; [16] "locID"       "netID"       "pid"         "geometry"    "netgeometry"</span></span>
+<span><span class="co">#&gt; [16] "locID"       "netID"       "pid"         "geometry"    "netgeom"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $Knapp</span></span>
 <span><span class="co">#&gt;  [1] "COMID"       "GNIS_NAME"   "CDRAINAG"    "AREAWTMAP"   "SLOPE"      </span></span>
 <span><span class="co">#&gt;  [6] "ELEV_DEM"    "FlowCMS"     "AirMEANc"    "AirMWMTc"    "NEAR_X"     </span></span>
 <span><span class="co">#&gt; [11] "NEAR_Y"      "rid"         "ratio"       "afvArea"     "upDist"     </span></span>
-<span><span class="co">#&gt; [16] "locID"       "netID"       "pid"         "geometry"    "netgeometry"</span></span></code></pre>
+<span><span class="co">#&gt; [16] "locID"       "netID"       "pid"         "geometry"    "netgeom"</span></span></code></pre>
 <p>We see that <code>mf04p</code> contains 45 observation sites and a
 total of 2102 prediction sites stored in three different prediction
 datasets. We will explore several of these variables throughout the rest
@@ -1470,8 +1470,8 @@ manipulating <code>SSN</code> objects:</p>
 <code>data.frame</code> of observed or prediction locations from the
 <code>SSN</code> object.</li>
 <li>
-<code><a href="../reference/ssn_get_netgeometry.html">ssn_get_netgeometry()</a></code>: Extract topological information
-from the <code>netgeometry</code> column.</li>
+<code><a href="../reference/ssn_get_netgeom.html">ssn_get_netgeom()</a></code>: Extract topological information
+from the <code>netgeom</code> column.</li>
 <li>
 <code><a href="../reference/ssn_get_stream_distmat.html">ssn_get_stream_distmat()</a></code>: Extract the stream distance
 matrices for the observed or prediction locations in an <code>SSN</code>

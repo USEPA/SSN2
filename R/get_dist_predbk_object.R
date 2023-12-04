@@ -1,13 +1,13 @@
 # parent function to get the distance object
 get_dist_predbk_object <- function(object, newdata_name, initial_object) {
-  # get netgeometry
-  netgeometry <- ssn_get_netgeometry(object$ssn.object$preds[[newdata_name]], reformat = TRUE)
+  # get netgeom
+  netgeom <- ssn_get_netgeom(object$ssn.object$preds[[newdata_name]], reformat = TRUE)
 
   # get network index
-  network_index <- netgeometry$NetworkID
+  network_index <- netgeom$NetworkID
 
   # get pid
-  pid <- netgeometry$pid
+  pid <- netgeom$pid
 
   # distance order
   dist_order <- order(network_index, pid)

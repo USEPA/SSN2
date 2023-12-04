@@ -161,8 +161,8 @@ ssn_import_predpts <- function(x, predpts,
     }
   }
 
-  ## Add netgeometry column
-  predpoints[, "netgeometry"] <- paste0("SNETWORK (", paste(
+  ## Add netgeom column
+  predpoints[, "netgeom"] <- paste0("SNETWORK (", paste(
     predpoints$netID,
     predpoints$rid,
     predpoints$upDist,

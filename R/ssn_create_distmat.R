@@ -197,9 +197,9 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
     if (!file.exists(file.path(ssn$path, "distance", predpts))) {
       dir.create(file.path(ssn$path, "distance", predpts))
     }
-    ## Extract netgeometry data from predpts and format
+    ## Extract netgeom data from predpts and format
     tmp.df <- ssn_get_data(ssn, predpts)
-    n.geom <- ssn_get_netgeometry(ssn$preds[[predpts]])
+    n.geom <- ssn_get_netgeom(ssn$preds[[predpts]])
     colnames(n.geom)[4:6] <- paste0("ng.", colnames(n.geom[4:6]))
     n.geom$NetworkID <- as.factor(n.geom$NetworkID)
     n.geom$DistanceUpstream <- as.numeric(n.geom$DistanceUpstream)
@@ -208,9 +208,9 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
     rm(tmp.df, n.geom)
   }
 
-  ## Extract netgeometry and format obs data
+  ## Extract netgeom and format obs data
   tmp.df <- ssn_get_data(ssn)
-  n.geom <- ssn_get_netgeometry(ssn$obs)
+  n.geom <- ssn_get_netgeom(ssn$obs)
   colnames(n.geom)[4:6] <- paste0("ng.", colnames(n.geom[4:6]))
   n.geom$NetworkID <- as.factor(n.geom$NetworkID)
   n.geom$DistanceUpstream <- as.numeric(n.geom$DistanceUpstream)
@@ -229,8 +229,8 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   net.count <- length(site.nets)
   warned.overwrite <- FALSE
 
-  ## Extract netgeometry and format edges data
-  ssn$edges <- cbind(ssn$edges, ssn_get_netgeometry(ssn$edges))
+  ## Extract netgeom and format edges data
+  ssn$edges <- cbind(ssn$edges, ssn_get_netgeom(ssn$edges))
   ssn$edges$NetworkID <- as.factor(ssn$edges$NetworkID)
   ssn$edges$DistanceUpstream <- as.numeric(ssn$edges$DistanceUpstream)
 
@@ -368,7 +368,7 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       ## locID.obi<- ssn$obs$ng.locID
 
       ## Create data.frame for obs with columns pid, rid, locID
-      ob.i <- ssn_get_netgeometry(ssn$obs[ind.obs, ], c("pid", "SegmentID", "locID"),
+      ob.i <- ssn_get_netgeom(ssn$obs[ind.obs, ], c("pid", "SegmentID", "locID"),
                                   reformat = TRUE)
       ##ob.i <- as.data.frame(sapply(ob.i, as.numeric))
       colnames(ob.i) <- c("pid", "rid", "locID")

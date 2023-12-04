@@ -1,13 +1,13 @@
 # parent function to get the distance object
 get_dist_object <- function(ssn.object, initial_object, additive, anisotropy) {
-  # get netgeometry
-  netgeometry <- ssn_get_netgeometry(ssn.object$obs, reformat = TRUE)
+  # get netgeom
+  netgeom <- ssn_get_netgeom(ssn.object$obs, reformat = TRUE)
 
   # get network index
-  network_index <- netgeometry$NetworkID
+  network_index <- netgeom$NetworkID
 
   # get pid
-  pid <- netgeometry$pid # not needed now but can reorder by it later
+  pid <- netgeom$pid # not needed now but can reorder by it later
 
   # distance order
   dist_order <- order(network_index, pid)

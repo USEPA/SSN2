@@ -52,13 +52,13 @@
 #'   contents is provided in Peterson and Ver Hoef (2014).
 #'
 #'   The \command{ssn_import} imports the edges, observed sites, and
-#'   prediction sites as \code{sf data.frame} objects. A new column named 'netgeometry'
+#'   prediction sites as \code{sf data.frame} objects. A new column named 'netgeom'
 #'   is created to store important data that represents
 #'   topological relationships in a spatial stream network
 #'   model. These data are stored in character format, which is less
 #'   likely to be inadvertantly changed by users. See
-#'   \code{\link[SSN2]{ssn_get_netgeometry}} for a more detailed description of
-#'   the format and contents of 'netgeometry'.
+#'   \code{\link[SSN2]{ssn_get_netgeom}} for a more detailed description of
+#'   the format and contents of 'netgeom'.
 #'
 #'   The information contained in the netID text files is imported
 #'   into an SQLite database, binaryID.db, which is stored in the .ssn
@@ -90,9 +90,9 @@
 #'   with four elements containing:
 #'   \itemize{
 #'     \item{\code{edges}: An \code{sf data.frame} containing the stream network,
-#'     with an additional 'netgeometry' column.}
+#'     with an additional 'netgeom' column.}
 #'     \item{\code{obs}: An sf data.frame containing observed site locations,
-#'     with an additional 'netgeometry' column. NA if \code{include_obs =
+#'     with an additional 'netgeom' column. NA if \code{include_obs =
 #'     FALSE}.}
 #'     \item{\code{preds}: A list of sf data.frames containing prediction
 #'     site locations. The names of the preds list correspond to the
@@ -101,7 +101,7 @@
 #'     \item{path: The local file to the .ssn directory associated with the \code{SSN}
 #'     object.}
 #'   }
-#' @seealso [ssn_get_netgeometry]
+#' @seealso [ssn_get_netgeom]
 #' @references
 #' Kattwinkel, M., Szocs, E., Peterson, E., and Schafer,
 #'   R.B. (2020) Preparing GIS data for analysis of stream monitoring
@@ -172,7 +172,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
         stop("Observed sites do not have POINT geometry")
       }
       ## Add network geometry column
-      sfsites[, "netgeometry"] <- paste0("SNETWORK (", paste(
+      sfsites[, "netgeom"] <- paste0("SNETWORK (", paste(
         sfsites$netID, sfsites$rid, sfsites$upDist,
         sfsites$ratio, sfsites$pid, sfsites$locID
       ),
@@ -254,7 +254,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
         }
 
         ## Add network geometry column
-        tmp.preds[, "netgeometry"] <- paste0("SNETWORK (", paste(
+        tmp.preds[, "netgeom"] <- paste0("SNETWORK (", paste(
           tmp.preds$netID,
           tmp.preds$rid,
           tmp.preds$upDist,
@@ -312,7 +312,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts,
 
 
     ## Add network geometry column to edges
-    sfedges[, "netgeometry"] <- paste0("ENETWORK (", paste(
+    sfedges[, "netgeom"] <- paste0("ENETWORK (", paste(
       sfedges$netID,
       sfedges$rid,
       sfedges$upDist
