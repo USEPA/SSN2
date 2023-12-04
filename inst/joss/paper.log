@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2023.11.16)  17 NOV 2023 10:57
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2023.11.16)  1 DEC 2023 10:50
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -860,31 +860,31 @@ Package: framed 2011/10/22 v 0.96: framed or shaded text with page breaks
 (./paper.aux)
 \openout1 = `paper.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 277.
-LaTeX Font Info:    ... okay on input line 277.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 277.
-LaTeX Font Info:    ... okay on input line 277.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 277.
-LaTeX Font Info:    ... okay on input line 277.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 277.
-LaTeX Font Info:    ... okay on input line 277.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 277.
-LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 277.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 281.
+LaTeX Font Info:    ... okay on input line 281.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 281.
+LaTeX Font Info:    ... okay on input line 281.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 281.
+LaTeX Font Info:    ... okay on input line 281.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 281.
+LaTeX Font Info:    ... okay on input line 281.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 281.
+LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 281.
 (c:/Users/MDUMELLE/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 277.
-LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 277.
-LaTeX Font Info:    ... okay on input line 277.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 277.
-LaTeX Font Info:    ... okay on input line 277.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 277.
-LaTeX Font Info:    ... okay on input line 277.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 277.
-LaTeX Font Info:    ... okay on input line 277.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 277.
-LaTeX Font Info:    ... okay on input line 277.
-Package hyperref Info: Link coloring ON on input line 277.
+LaTeX Font Info:    ... okay on input line 281.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 281.
+LaTeX Font Info:    ... okay on input line 281.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 281.
+LaTeX Font Info:    ... okay on input line 281.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 281.
+LaTeX Font Info:    ... okay on input line 281.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 281.
+LaTeX Font Info:    ... okay on input line 281.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 281.
+LaTeX Font Info:    ... okay on input line 281.
+Package hyperref Info: Link coloring ON on input line 281.
 (./paper.out) (./paper.out)
 \@outlinefile=\write6
 \openout6 = `paper.out'.
@@ -905,8 +905,8 @@ Package biblatex Info: Automatic encoding selection.
 Package biblatex Info: Trying to load bibliographic data...
 Package biblatex Info: ... file 'paper.bbl' not found.
 No file paper.bbl.
-Package biblatex Info: Reference section=0 on input line 277.
-Package biblatex Info: Reference segment=0 on input line 277.
+Package biblatex Info: Reference section=0 on input line 281.
+Package biblatex Info: Reference segment=0 on input line 281.
 *geometry* driver: auto-detecting
 *geometry* detected driver: xetex
 *geometry* verbose mode - [ preamble ] result:
@@ -941,12 +941,12 @@ Package biblatex Info: Reference segment=0 on input line 277.
 * \@reversemargintrue
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Info: Redefining \microtypecontext on input line 277.
-Package microtype Info: Applying patch `item' on input line 277.
-Package microtype Info: Applying patch `toc' on input line 277.
-Package microtype Info: Applying patch `eqnum' on input line 277.
-Package microtype Info: Applying patch `footnote' on input line 277.
-Package microtype Info: Applying patch `verbatim' on input line 277.
+LaTeX Info: Redefining \microtypecontext on input line 281.
+Package microtype Info: Applying patch `item' on input line 281.
+Package microtype Info: Applying patch `toc' on input line 281.
+Package microtype Info: Applying patch `eqnum' on input line 281.
+Package microtype Info: Applying patch `footnote' on input line 281.
+Package microtype Info: Applying patch `verbatim' on input line 281.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using protrusion set `basicmath'.
 Package microtype Info: No adjustment of tracking.
@@ -962,26 +962,26 @@ Package microtype Info: Loading generic protrusion settings for font family
 (c:/Users/MDUMELLE/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/microtype/mt-cmr.cfg
 File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msa on input line 278.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 282.
 (c:/Users/MDUMELLE/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 ) (c:/Users/MDUMELLE/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 278.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 282.
 (c:/Users/MDUMELLE/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (c:/Users/MDUMELLE/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
 
-Package hyperref Warning: Suppressing link with empty target on input line 304.
+Package hyperref Warning: Suppressing link with empty target on input line 308.
 
 
-Package hyperref Warning: Suppressing link with empty target on input line 304.
+Package hyperref Warning: Suppressing link with empty target on input line 308.
 
 
-Package hyperref Warning: Suppressing link with empty target on input line 304.
+Package hyperref Warning: Suppressing link with empty target on input line 308.
 
 File: C:/Users/MDUMELLE/AppData/Local/R/win-library/4.2/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
 <C:/Users/MDUMELLE/AppData/Local/R/win-library/4.2/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
@@ -993,12 +993,12 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 LaTeX Font Info:    Font shape `TU/lmss/m/it' in size <8> not available
-(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 373.
+(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 361.
 [1
 
 ]
 LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 405.
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 382.
 File: paper_files/figure-latex/steamnetwork-1.pdf Graphic file (type pdf)
 <use paper_files/figure-latex/steamnetwork-1.pdf>
 File: C:/Users/MDUMELLE/AppData/Local/R/win-library/4.2/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
@@ -1021,7 +1021,7 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [3]
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 551--551
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 537--537
 []\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530805 ymin: 2527111 xmax: -1503079 ymax: 2537823[] 
  []
 
@@ -1035,7 +1035,7 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [4]
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 619--619
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 605--605
 []\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530631 ymin: 2521707 xmax: -1500020 ymax: 2540253[] 
  []
 
@@ -1080,12 +1080,12 @@ Package logreq Info: Writing requests to 'paper.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 36605 strings out of 476928
- 752503 string characters out of 5804830
+ 36576 strings out of 476928
+ 752048 string characters out of 5804830
  1945189 words of memory out of 5000000
- 57926 multiletter control sequences out of 15000+600000
- 567690 words of font info for 92 fonts, out of 8000000 for 9000
+ 57906 multiletter control sequences out of 15000+600000
+ 564933 words of font info for 83 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 84i,12n,87p,1002b,850s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,13n,87p,1002b,850s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on paper.pdf (7 pages).
