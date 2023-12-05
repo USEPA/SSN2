@@ -326,6 +326,9 @@ ssn_glm <- function(formula, ssn.object, family = "Gaussian",
   local <- NULL
 
   # fix family
+  if (missing(family)) {
+    stop("The family argument must be specified.", call. = FALSE)
+  }
   if (is.symbol(substitute(family))) { # or is.language
     family <- deparse1(substitute(family))
   }

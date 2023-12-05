@@ -208,6 +208,7 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
   x <- lapply(type, function(y) {
     x_sub <- x[[y]]
     x_sub[["type"]] <- y
+    x_sub <- x_sub[complete.cases(x_sub), , drop = FALSE]
     x_sub
   })
 
@@ -266,7 +267,7 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
     }))
   } else {
     do.call("plot", args = c(list(
-      x = x$dist, y = x$gamma, cex = x$cex, ylim = c(0, max(x$gamma) * 1.6),
+      x = x$dist, y = x$gamma, cex = x$cex, xlim = c(0, max(x$dist)), ylim = c(0, max(x$gamma) * 1.6),
       col = x$col
     ), dotlist))
     legend(0, max(x$gamma) * 1.6, legend = levels(x$type), col = col_key[levels(x$type)], pch = dotlist$pch)
