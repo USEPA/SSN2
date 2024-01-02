@@ -92,6 +92,7 @@ use_laploglik_known <- function(initial_object, data_object, estmethod) {
       taildown = initial_object$taildown_initial$is_known,
       euclid = initial_object$euclid_initial$is_known,
       nugget = initial_object$nugget_initial$is_known,
+      dispersion = initial_object$dispersion$is_known,
       randcov = initial_object$randcov_initial$is_known
     )
   )
