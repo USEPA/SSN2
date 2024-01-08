@@ -14,8 +14,10 @@ output:
     toc_depth: 3
 vignette: >
   %\VignetteIndexEntry{An Introduction to SSN2}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include = FALSE}
@@ -181,14 +183,11 @@ these values are accidentally (and unknowingly) altered by a user.
 ## The Middle Fork Data
 
 In this vignette, we will use the Middle Fork 2004 stream temperature data in `SSN2`. The raw input data are stored in the `lsndata/MiddleFork04.ssn` directory installed
-alongside `SSN2`. We must copy the data to a temporary directory before we can load it in by running
-```{r}
-copy_lsn_to_temp()
-```
+alongside `SSN2`. 
 
-We create a path to the temporary directory and read in the data using `ssn_import()`, naming the `SSN` object `mf04p`:
+We create a path to the directory and read in the data using `ssn_import()`, naming the `SSN` object `mf04p`:
 ```{r}
-temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
+temp_path <- system.file("lsndata/MiddleFork04.ssn", package = "SSN2")
 mf04p <- ssn_import(
   path = temp_path,
   predpts = c("pred1km", "CapeHorn", "Knapp"),
@@ -196,7 +195,7 @@ mf04p <- ssn_import(
 )
 ```
 
-The copying and reading in via the temporary directory is only required to work with the example Middle Fork 04 data installed alongside `SSN2`. When creating `.ssn` objects using `STARS` or `openSTARS`, users will only have to call `ssn_import()`, specifying the file path where the `.ssn` object is stored.
+When creating `.ssn` objects using `STARS` or `openSTARS`, users will only have to call `ssn_import()`, specifying the file path where the `.ssn` object is stored.
 
 We summarise the `mf04p` data by running
 ```{r}

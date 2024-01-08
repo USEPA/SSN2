@@ -38,6 +38,8 @@ bibliography: paper.bib
 output: rticles::joss_article
 csl: apa.csl
 journal: JOSS
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Summary
@@ -57,11 +59,10 @@ Before fitting SSN models using `SSN2`, stream network data must be pre-processe
 The `SSN2` packages comes with an example `.ssn` object that represents a stream network for the Middle Fork Basin of the Salmon River in Idaho, USA during 2004. To use this example data, we must copy the `.ssn` folder that comes shipped with `SSN2` to a temporary directory and store the temporary directory's file path:
 ```{r}
 library(SSN2)
-copy_lsn_to_temp()
-path <- paste0(tempdir(), "/MiddleFork04.ssn")
+path <- system.file("lsndata/MiddleFork04.ssn", package = "SSN2")
 ```
 
-Copying to the temporary directory is only used in this illustrative example, as users will read in the `.ssn` object from an appropriate file path stored on their computer (though file paths for SSN objects may be updated using `ssn_update_path()`). Next we import the observed data and prediction sites (`pred1km`):
+Next we import the observed data and prediction sites (`pred1km`):
 ```{r, message=FALSE, results='hide'}
 mf04p <- ssn_import(path, predpts = "pred1km")
 ```
@@ -123,9 +124,9 @@ Generalized linear models for binary, count, proportion, and skewed data are ava
 
 # Discussion
 
-SSN models are invaluable tools for statistical analysis of stream network data and help to maintain and improve vital services that stream ecosystems provide. They have been employed to better understand an manage water quality [@scown2017improving; @mcmanus2020variation], ecosystem metabolism [@rodriguez2019estimating], and climate change impacts on freshwater ecosystems [@ruesch2012projected; @isaak2017norwest], as well as generate aquatic population estimates [@isaak2017scalable], inform conservation planning [@rodriguez2019spatial; @sharma2021dendritic], and assess restoration activities [@fuller2022riparian], among other applications.
+SSN models are invaluable tools for statistical analysis of stream network data and help to maintain and improve vital services that stream ecosystems provide. They have been employed to better understand and manage water quality [@scown2017improving; @mcmanus2020variation], ecosystem metabolism [@rodriguez2019estimating], and climate change impacts on freshwater ecosystems [@ruesch2012projected; @isaak2017norwest], as well as generate aquatic population estimates [@isaak2017scalable], inform conservation planning [@rodriguez2019spatial; @sharma2021dendritic], and assess restoration activities [@fuller2022riparian], among other applications.
 
-There are several spatial modeling packages in **R**, including `geoR` [@ribiero2022geoR], `gstat` [@pebesma2004gstat], `FRK` [@sainsbury2002frk], `fields` [@nychka2021fields], and `R-INLA` [@lindgren2015bayesian], `spmodel` [@dumelle2023spmodel], among others. However, these packages fail to account for the intricacies of stream networks. `rtop`  [@skoien2014rtop] allows for spatial prediction on stream networks but fails to provide options for model fitting and diagnostics. Thus, `SSN2` is the most complete tool available in **R** for working with SSN models. To learn more about `SSN2`, visit our CRAN webpage at [https://CRAN.R-project.org/package=SSN2](https://CRAN.R-project.org/package=SSN2).
+There are several spatial modeling packages in **R**, including `geoR` [@ribiero2022geoR], `gstat` [@pebesma2004gstat], `FRK` [@sainsbury2002frk], `fields` [@nychka2021fields], `R-INLA` [@lindgren2015bayesian], and `spmodel` [@dumelle2023spmodel], among others. However, these packages fail to account for the intricacies of stream networks. `rtop`  [@skoien2014rtop] allows for spatial prediction on stream networks but fails to provide options for model fitting and diagnostics. Thus, `SSN2` is the most complete tool available in **R** for working with SSN models. To learn more about `SSN2`, visit our CRAN webpage at [https://CRAN.R-project.org/package=SSN2](https://CRAN.R-project.org/package=SSN2).
 
 # Acknowledgements
 
