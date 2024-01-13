@@ -111,6 +111,9 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
   if (length(SigInv_list) == 1) {
     while (iter < 50 && wdiffmax > 1e-4) {
       iter <- iter + 1
+      # if (family %in% c("binomial", "beta")) {
+      #   w <- pmax(pmin(w, 8), -8)
+      # }
       # compute the d vector
       d <- get_d(family, w, y, size, dispersion)
       # and then the gradient vector
@@ -133,6 +136,10 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
       # update w
       w <- wnew
     }
+
+    # if (family %in% c("binomial", "beta")) {
+    #   w <- pmax(pmin(w, 8), -8)
+    # }
 
     mHldet <- as.numeric(determinant(-H, logarithm = TRUE)$modulus)
     # mHldet <- 2 * sum(log(diag(mH_upchol)))
