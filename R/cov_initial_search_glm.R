@@ -4,10 +4,11 @@ cov_initial_search_glm <- function(initial_NA_object, ssn.object, data_object, e
   ns2 <- 1.2 * s2
 
   # create a grid of initial values for the covariance parameters
-  tailup_de <- pmax(ns2 * c(rep(9 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2)), 0.01)
-  taildown_de <- pmax(ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(9 / 10, 2), rep(1 / 3 * 1 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2)), 0.01)
-  euclid_de <- pmax(ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(9 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2)), 0.01)
-  nugget <- pmax(ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), 9 / 10, rep(1 / 4, 2)), 0.01)
+  var_min <- 0.05
+  tailup_de <- pmax(ns2 * c(rep(9 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2)), var_min)
+  taildown_de <- pmax(ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(9 / 10, 2), rep(1 / 3 * 1 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2)), var_min)
+  euclid_de <- pmax(ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(9 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2)), var_min)
+  nugget <- pmax(ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), 9 / 10, rep(1 / 4, 2)), var_min)
 
   # find the maximum tail and euclidean distances to consider
   tail_max <- data_object$tail_max
