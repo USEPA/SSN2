@@ -94,11 +94,12 @@ cov_vector.taildown_spherical <- function(params, dist_pred_object, ...) {
   flow_con <- b == 0
   dist_ratio_h <- h / params[["range"]]
   dist_ratio_a <- a / params[["range"]]
+  dist_ratio_b <- b / params[["range"]]
   dist_ratio_h_less1 <- dist_ratio_h <= 1
   dist_ratio_a_less1 <- dist_ratio_a <= 1
 
   h_cor_part <- (1 - 1.5 * dist_ratio_h + 0.5 * dist_ratio_h^3) * dist_ratio_h_less1 * flow_con
-  a_cor_part <- (1 - 1.5 * dist_ratio_a + 0.5 * dist_ratio_a) * (1 - dist_ratio_a)^2 * dist_ratio_a_less1 * (!flow_con)
+  a_cor_part <- (1 - 1.5 * dist_ratio_b + 0.5 * dist_ratio_a) * (1 - dist_ratio_a)^2 * dist_ratio_a_less1 * (!flow_con)
   m * params[["de"]] * (h_cor_part + a_cor_part)
 }
 
