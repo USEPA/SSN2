@@ -1,13 +1,13 @@
 # parent function to get the distance object
 get_dist_pred_object <- function(object, newdata_name, initial_object) {
-  # get netgeometry
-  netgeometry <- ssn_get_netgeometry(object$ssn.object$obs, reformat = TRUE)
+  # get netgeom
+  netgeom <- ssn_get_netgeom(object$ssn.object$obs, reformat = TRUE)
 
   # get network index
-  network_index <- netgeometry$NetworkID
+  network_index <- netgeom$NetworkID
 
   # get pid
-  pid <- netgeometry$pid
+  pid <- netgeom$pid
 
   # distance order
   dist_order <- order(network_index, pid)
@@ -15,14 +15,14 @@ get_dist_pred_object <- function(object, newdata_name, initial_object) {
   # inverse of distance order
   inv_dist_order <- order(dist_order)
 
-  # get netgeometry
-  netgeometry_pred <- ssn_get_netgeometry(object$ssn.object$preds[[newdata_name]], reformat = TRUE)
+  # get netgeom
+  netgeom_pred <- ssn_get_netgeom(object$ssn.object$preds[[newdata_name]], reformat = TRUE)
 
   # get network pred index
-  network_index_pred <- netgeometry_pred$NetworkID
+  network_index_pred <- netgeom_pred$NetworkID
 
   # get pid
-  pid_pred <- netgeometry_pred$pid
+  pid_pred <- netgeom_pred$pid
 
   # distance order
   dist_order_pred <- order(network_index_pred, pid_pred)

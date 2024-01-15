@@ -7,7 +7,7 @@
 ssn_glm(
   formula,
   ssn.object,
-  family = "Gaussian",
+  family,
   tailup_type = "none",
   taildown_type = "none",
   euclid_type = "none",
@@ -38,7 +38,9 @@ Available options include \code{"Gaussian"}, \code{"poisson"},
 \code{"nbinomial"} (negative binomial), \code{"binomial"}, \code{"beta"},
 \code{"Gamma"}, and \code{"invgauss"}. When \code{family}
 is \code{"Gaussian"}, arguments are passed to and evaluated by \code{\link[=ssn_lm]{ssn_lm()}}.
-The default is \code{"Gaussian"}. Can be quoted or unquoted.}
+Can be quoted or unquoted. Note that the \code{family} argument
+only takes a single value, rather than the list structure used by \link[stats:glm]{stats::glm}.
+See Details for more.}
 
 \item{tailup_type}{The tailup covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},

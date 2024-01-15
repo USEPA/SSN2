@@ -45,6 +45,9 @@
 #' @name SSN_to_SSN2
 #' @export
 SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
+
+  .Deprecated(new = "ssn_import")
+
   if (!requireNamespace("sp", quietly = TRUE)) {
     stop("Install the sp package before using SSN_to_SSN2", call. = FALSE)
   } else {
@@ -53,7 +56,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
     }
 
     ## ---------------------------------------------------
-    ## Convert edges to sf and add netgeometry column
+    ## Convert edges to sf and add netgeom column
     ## ---------------------------------------------------
 
     sl <- sp::SpatialLines(object@lines, proj4string = object@proj4string)
@@ -62,7 +65,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
 
     nl.coords <- object@network.line.coords
 
-    edges$netgeometry <- paste("ENETWORK",
+    edges$netgeom <- paste("ENETWORK",
       paste("(",
         paste(
           nl.coords$NetworkID,
@@ -100,7 +103,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
 
 
     ## ------------------------------------------------
-    ## Convert observed sites to sf and add netgeometry
+    ## Convert observed sites to sf and add netgeom
     ## ------------------------------------------------
     ## sites<- st_as_sf(sp::SpatialPointsDataFrame(object@obspoints@SSNPoints[[1]]@point.coords,
     ##       object@obspoints@SSNPoints[[1]]@point.data,
@@ -116,7 +119,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
     np.coords <- object@obspoints@SSNPoints[[1]]@network.point.coords
     np.coords <- cbind(np.coords, sites[, c("ratio", "locID")])
     np.coords$pid <- rownames(object@obspoints@SSNPoints[[1]]@network.point.coords)
-    sites$netgeometry <- paste(
+    sites$netgeom <- paste(
       "SNETWORK",
       paste(
         "(",
@@ -161,7 +164,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
 
     ## ------------------------------------------------------------- If
     ## prediction sites are present, convert to list of sf data.frames
-    ## and add netgeometry column
+    ## and add netgeom column
     ## -------------------------------------------------------------
 
     if (length(object@predpoints@ID) > 0) {
@@ -184,7 +187,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
           tmp.sf[, c("ratio", "locID")]
         )
         np.coords$pid <- rownames(object@predpoints@SSNPoints[[i]]@network.point.coords)
-        tmp.sf$netgeometry <- paste(
+        tmp.sf$netgeom <- paste(
           "SNETWORK",
           paste(
             "(",

@@ -109,7 +109,7 @@ Torgegram <- function(formula, ssn.object,
 
   # find cutoffs
   if (missing(cutoff) || is.null(cutoff)) {
-    cutoff <- 0.5
+    cutoff <- NULL
   }
 
   if (missing(type) || is.null(type)) {
@@ -136,12 +136,14 @@ Torgegram <- function(formula, ssn.object,
 }
 
 get_esv <- function(dist_vector, resid2_vector, bins, cutoff) {
-  cutoff_val <- max(dist_vector) * cutoff
-  index <- dist_vector > 0 & dist_vector <= cutoff_val
+  if (is.null(cutoff)) {
+    cutoff <- max(dist_vector) * 0.5
+  }
+  index <- dist_vector > 0 & dist_vector <= cutoff
   dist_vector <- dist_vector[index]
   resid2 <- resid2_vector[index]
 
-  dist_classes <- cut(dist_vector, breaks = seq(0, cutoff_val, length.out = bins + 1))
+  dist_classes <- cut(dist_vector, breaks = seq(0, cutoff, length.out = bins + 1))
 
   # compute squared differences within each class
   gamma <- tapply(resid2, dist_classes, function(x) mean(x) / 2)

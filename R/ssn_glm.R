@@ -12,7 +12,9 @@
 #'   \code{"nbinomial"} (negative binomial), \code{"binomial"}, \code{"beta"},
 #'   \code{"Gamma"}, and \code{"invgauss"}. When \code{family}
 #'   is \code{"Gaussian"}, arguments are passed to and evaluated by [ssn_lm()].
-#'   The default is \code{"Gaussian"}. Can be quoted or unquoted.
+#'   Can be quoted or unquoted. Note that the \code{family} argument
+#'   only takes a single value, rather than the list structure used by [stats::glm].
+#'   See Details for more.
 #' @param dispersion_initial An object from [dispersion_initial()] specifying initial and/or
 #'   known values for the tailup covariance parameters.
 #'
@@ -307,7 +309,7 @@
 #' statistical models of stream networks (with discussion).
 #' \emph{Journal of the American Statistical Association} \bold{105}, 6--18.
 #' DOI: 10.1198/jasa.2009.ap08248.  Rejoinder pgs. 22--24.
-ssn_glm <- function(formula, ssn.object, family = "Gaussian",
+ssn_glm <- function(formula, ssn.object, family,
                     tailup_type = "none", taildown_type = "none",
                     euclid_type = "none", nugget_type = "nugget",
                     tailup_initial, taildown_initial, euclid_initial, nugget_initial,
@@ -326,6 +328,9 @@ ssn_glm <- function(formula, ssn.object, family = "Gaussian",
   local <- NULL
 
   # fix family
+  if (missing(family)) {
+    stop("The family argument must be specified.", call. = FALSE)
+  }
   if (is.symbol(substitute(family))) { # or is.language
     family <- deparse1(substitute(family))
   }

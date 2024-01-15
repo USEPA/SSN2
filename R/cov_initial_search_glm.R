@@ -4,10 +4,11 @@ cov_initial_search_glm <- function(initial_NA_object, ssn.object, data_object, e
   ns2 <- 1.2 * s2
 
   # create a grid of initial values for the covariance parameters
-  tailup_de <- ns2 * c(rep(9 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2))
-  taildown_de <- ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(9 / 10, 2), rep(1 / 3 * 1 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2))
-  euclid_de <- ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(9 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2))
-  nugget <- ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), 9 / 10, rep(1 / 4, 2))
+  var_min <- 0.05
+  tailup_de <- pmax(ns2 * c(rep(9 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2)), var_min)
+  taildown_de <- pmax(ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(9 / 10, 2), rep(1 / 3 * 1 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2)), var_min)
+  euclid_de <- pmax(ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(9 / 10, 2), 1 / 3 * 1 / 10, rep(1 / 4, 2)), var_min)
+  nugget <- pmax(ns2 * c(rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), rep(1 / 3 * 1 / 10, 2), 9 / 10, rep(1 / 4, 2)), var_min)
 
   # find the maximum tail and euclidean distances to consider
   tail_max <- data_object$tail_max
@@ -25,6 +26,10 @@ cov_initial_search_glm <- function(initial_NA_object, ssn.object, data_object, e
     nugget = nugget, tailup_range = tailup_range, taildown_range = taildown_range,
     euclid_range = euclid_range, rotate = 0, scale = 1, dispersion = 1
   )
+
+  cov_grid2 <- cov_grid
+  cov_grid2$dispersion <- 100
+  cov_grid <- rbind(cov_grid, cov_grid2)
 
   # if there is anisotropy test midpoints
   if (data_object$anisotropy) {
@@ -79,7 +84,7 @@ cov_initial_search_glm <- function(initial_NA_object, ssn.object, data_object, e
   }
 
   # find the unique rows of the grid
-  cov_grid <- unique(cov_grid_replace(cov_grid, initial_NA_object, data_object))
+  cov_grid <- unique(cov_grid_replace_glm(cov_grid, initial_NA_object, data_object))
   # split into list
   cov_grid_splits <- split(cov_grid, seq_len(NROW(cov_grid)))
   # iterate through list

@@ -13,7 +13,7 @@ amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
   if (name != "obs") {
     ind.pids <- ssn$preds[[name]]$ng.pid %in% as.character(pids)
     locID.pid.data <- ssn$preds[[name]]$locID[ind.pids]
-    pid.data <- ssn_get_netgeometry(ssn$preds[[name]][ind.pids, ], c(
+    pid.data <- ssn_get_netgeom(ssn$preds[[name]][ind.pids, ], c(
       "pid", "SegmentID", "locID",
       "DistanceUpstream"
     ))
@@ -22,7 +22,7 @@ amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
   } else {
     ind.pids <- ssn$obs$ng.pid %in% as.character(pids)
     locID.pid.data <- ssn$obs$locID[ind.pids]
-    pid.data <- ssn_get_netgeometry(ssn$obs[ind.pids, ], c(
+    pid.data <- ssn_get_netgeom(ssn$obs[ind.pids, ], c(
       "pid", "SegmentID", "locID",
       "DistanceUpstream"
       ), reformat = TRUE)

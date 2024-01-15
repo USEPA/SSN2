@@ -1,9 +1,9 @@
-#' @title Extract netgeometry column
+#' @title Extract netgeom column
 #'
-#' @description Extract topological information from netgeometry column
+#' @description Extract topological information from netgeom column
 #'
 #' @param x An sf data.frame found in an \code{SSN} object or the
-#'   netgeometry column as a vector
+#'   netgeom column as a vector
 #'
 #' @param netvars Network coordinate variables to return. Default is
 #'   "all". For edges, valid column names include: "NetworkID",
@@ -13,17 +13,17 @@
 #' @param reformat Convert network coordinate variables from character to numeric.
 #'
 #' @details When an \code{SSN} object is generated using the
-#'   \code{importSSN} function, a text column named "netgeometry" is added
+#'   \code{importSSN} function, a text column named "netgeom" is added
 #'   to the edges, observed sites, and prediction sites (if they
-#'   exist) data.frames. The netgeometry column contains data used to
+#'   exist) data.frames. The netgeom column contains data used to
 #'   describe how edge and site features relate to one another in
-#'   topological space. For edges, netgeometry values contain the
+#'   topological space. For edges, netgeom values contain the
 #'   "ENETWORK" prefix, with 3 space delimited values in parentheses:
 #'   "ENETWORK (NetworkID SegmentID DistanceUpstream)". For point
 #'   datasets (observed and prediction sites), the values contain the
 #'   "SNETWORK" prefix, followed by 6 space delimited values in parentheses:
 #'   "SNETWORK (NetworkID SegmentID DistanceUpstream ratio pid locID)". The
-#'   \code{ssn_get_netgeometry} function extracts and converts these
+#'   \code{ssn_get_netgeom} function extracts and converts these
 #'   values from text to numeric, returning either a data.frame
 #'   (default) or vector containing the variables requested via
 #'   \code{netvars}.
@@ -32,7 +32,7 @@
 #'   function returns a data.frame (default). If only one column is
 #'   requested, the result is a vector.
 #'
-#' @name ssn_get_netgeometry
+#' @name ssn_get_netgeom
 #' @export
 #'
 #' @examples
@@ -43,9 +43,9 @@
 #' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
 #' mf04p <- ssn_import(temp_path, overwrite = TRUE)
 #'
-#' ssn_get_netgeometry(mf04p$obs)
-#' ssn_get_netgeometry(mf04p$edges, "DistanceUpstream")
-ssn_get_netgeometry <- function(x, netvars = "all", reformat = FALSE) {
+#' ssn_get_netgeom(mf04p$obs)
+#' ssn_get_netgeom(mf04p$edges, "DistanceUpstream")
+ssn_get_netgeom <- function(x, netvars = "all", reformat = FALSE) {
   # I think this should be an SSN obejct and we should have another column
   # for "type" which can be "edges", "obs", or a prediction name
   if (inherits(x, "SSN")) {
@@ -54,7 +54,7 @@ ssn_get_netgeometry <- function(x, netvars = "all", reformat = FALSE) {
 
 
   if (inherits(x, "data.frame")) {
-    x <- x$netgeometry
+    x <- x$netgeom
   }
 
   ## delete "network"

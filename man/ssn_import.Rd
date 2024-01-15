@@ -39,9 +39,9 @@ existing binaryID.db files.}
 with four elements containing:
 \itemize{
 \item{\code{edges}: An \code{sf data.frame} containing the stream network,
-with an additional 'netgeometry' column.}
+with an additional 'netgeom' column.}
 \item{\code{obs}: An sf data.frame containing observed site locations,
-with an additional 'netgeometry' column. NA if \code{include_obs =
+with an additional 'netgeom' column. NA if \code{include_obs =
     FALSE}.}
 \item{\code{preds}: A list of sf data.frames containing prediction
 site locations. The names of the preds list correspond to the
@@ -92,13 +92,13 @@ A more detailed description of the .ssn directory and its
 contents is provided in Peterson and Ver Hoef (2014).
 
 The \command{ssn_import} imports the edges, observed sites, and
-prediction sites as \code{sf data.frame} objects. A new column named 'netgeometry'
+prediction sites as \code{sf data.frame} objects. A new column named 'netgeom'
 is created to store important data that represents
 topological relationships in a spatial stream network
 model. These data are stored in character format, which is less
 likely to be inadvertantly changed by users. See
-\code{\link[SSN2]{ssn_get_netgeometry}} for a more detailed description of
-the format and contents of 'netgeometry'.
+\code{\link[SSN2]{ssn_get_netgeom}} for a more detailed description of
+the format and contents of 'netgeom'.
 
 The information contained in the netID text files is imported
 into an SQLite database, binaryID.db, which is stored in the .ssn
@@ -159,5 +159,5 @@ network data. \emph{Journal of Statistical Software}
 \bold{56(2)}, 1--17.
 }
 \seealso{
-\link{ssn_get_netgeometry}
+\link{ssn_get_netgeom}
 }

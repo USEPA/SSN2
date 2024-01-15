@@ -50,6 +50,8 @@ ssn_rnorm <- function(ssn.object, network = "obs",
     } else {
       anisotropy <- TRUE
     }
+  } else {
+    anisotropy <- FALSE
   }
 
   # compute the partition matrix

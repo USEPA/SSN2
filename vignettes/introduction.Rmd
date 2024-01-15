@@ -41,7 +41,7 @@ water flow, and differences in flow volume throughout the network
 within a spatial environment, which can also influence
 observations on the stream network. Traditional spatial
 statistical models, which are based solely on Eucliean distance, often fail to
-adequately describe these unique and complex spatial depedendencies. 
+adequately describe these unique and complex spatial dependencies. 
 
 Spatial stream network models are based on a moving-average
 construction [@ver2010moving] and are specifically designed to
@@ -108,7 +108,7 @@ existing streams data in vector format. The `openSTARS` R package
 [@kattwinkel2020openSTARS] provides an open source alternative to the
 STARS toolset, which depends on GRASS GIS. In contrast to `STARS`, `openSTARS` is
 designed to derive streams in raster format from a digital elevation
-model (DEM). Both tools output a `.ssn` directory which contains all
+model (DEM). Both tools output a non-proprietary `.ssn` folder (i.e., directory) which contains all
 of the spatial, topological and attribute information needed to fit a
 spatial stream network model using `SSN2`. This includes:
 
@@ -132,11 +132,11 @@ an `SSN` object, which has a special list structure with four elements:
 4.  `path`: A character string that represents the path to the relevant `.ssn`
     directory stored on your computer.
 	
-A `netgeometry` (short for "network geometry") column is also added to each of the `sf` objects
-stored within an `SSN` object. The `netgeometry` column contains a character string describing the position of each line (`edges`) and point (`obs` and `preds`)
-feature in relation to one another. The format of the `netgeometry` column
+A `netgeom` (short for "network geometry") column is also added to each of the `sf` objects
+stored within an `SSN` object. The `netgeom` column contains a character string describing the position of each line (`edges`) and point (`obs` and `preds`)
+feature in relation to one another. The format of the `netgeom` column
 differs depending on whether it is describing a feature with
-`LINESTRING` or `POINT` geometry. For edges, the format of `netgeometry`
+`LINESTRING` or `POINT` geometry. For edges, the format of `netgeom`
 is
 
 `"ENETWORK (netID rid upDist)"`,
@@ -145,7 +145,7 @@ and for sites
 
 `"SNETWORK (netID rid upDist ratio pid locID)"`,
 
-**The data used to define the `netgeometry` column are found in the edges,**
+**The data used to define the `netgeom` column are found in the edges,**
 **observed sites, and prediction sites shapefiles, which are created**
 **using the `STARS` or `openSTARS` software.**
 For edges, this includes a
@@ -153,7 +153,7 @@ unique network identifier (`netID`) and reach (i.e., edge) identifier
 (`rid`), as well as the distance between the most downstream location on
 the stream network (i.e., stream outlet) to the upstream node of each
 edge segment, when movement is restricted to the stream
-network (`upDist`). The `netgeometry` column for sites also
+network (`upDist`). The `netgeom` column for sites also
 contains the `netID` and `rid` for the edge on which the site resides. The
 point identifier (`pid`) is unique to each measurement, while the
 location identifier (`locID`) is unique to each spatial location. Note
@@ -171,32 +171,35 @@ most downstream node of the edge segment. Together
 these key pieces of data are used to describe which network and edge
 each site resides on, as well as where exactly the site is on
 each line segment. It may at first seem redundant to combine and store
-multiple numeric columns as text in the `netgeometry` column. However,
+multiple numeric columns as text in the `netgeom` column. However,
 these data dictate how the observed and prediction sites relate to one
 another in topological space, which impacts parameter estimates and
 predicted values generated from fitted models. Storing these data as
-text in the `netgeometry` column significantly reduces the chance that
+text in the `netgeom` column significantly reduces the chance that
 these values are accidentally (and unknowingly) altered by a user.
 
 ## The Middle Fork Data
 
 In this vignette, we will use the Middle Fork 2004 stream temperature data in `SSN2`. The raw input data are stored in the `lsndata/MiddleFork04.ssn` directory installed
-alongside `SSN2`. We must copy the data to a temporary directory before we can load it in by running
+alongside `SSN2`. We may store the file path to this example data:
 ```{r}
-copy_lsn_to_temp()
+path <- system.file("lsndata/MiddleFork04.ssn", package = "SSN2")
 ```
 
-We create a path to the temporary directory and read in the data using `ssn_import()`, naming the `SSN` object `mf04p`:
+Several functions in `SSN2` for reading and writing data (which we use shortly) directly manipulate the `.ssn` folder. If it is not desirable to directly manipulate the `MiddleFork04.ssn` data installed alongside `SSN2`, `MiddleFork04.ssn` may be copied it into a temporary directory and the relevant path to this alternative location can be stored:
 ```{r}
-temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
+copy_lsn_to_temp()
+path <- paste0(tempdir(), "/MiddleFork04.ssn")
+```
+
+After specifying `path` (using `system.file()` or `copy_lsn_to_temp()`), we import the stream reaches, observed sites, and prediction sites:
+```{r}
 mf04p <- ssn_import(
-  path = temp_path,
+  path = path,
   predpts = c("pred1km", "CapeHorn", "Knapp"),
   overwrite = TRUE
 )
 ```
-
-The copying and reading in via the temporary directory is only required to work with the example Middle Fork 04 data installed alongside `SSN2`. When creating `.ssn` objects using `STARS` or `openSTARS`, users will only have to call `ssn_import()`, specifying the file path where the `.ssn` object is stored.
 
 We summarise the `mf04p` data by running
 ```{r}
@@ -209,7 +212,7 @@ datasets. We will explore several of these variables throughout the rest of the 
 
 * `AREAWTMAP`: Precipitation (area-weighted in mm)
 * `ELEV_DEM`: Elevation (based on a 30m DEM)
-* `Summer_mn`: Mean summer temperature (Celsius)
+* `Summer_mn`: Summer mean stream temperature (Celsius)
 * `C16`: Number of times daily stream temperature exceeded 16 Celsius (in the summer)
 
 A more detailed description of all the variables in `mf04p` is available in the documentation and can be seen by running `?MiddleFork04.ssn` or `help(MiddleFork04.ssn, package = "SSN2")`. `SSN2` currently does not have a generic plotting function for `SSN` objects. Instead, we rely on the plotting functionality of `ggplot2`
@@ -229,17 +232,17 @@ names of the prediction datasets to the console
 names(mf04p$preds)
 ```
 
-We view the Middle Fork stream network, overlay the observed sites where data were collected using brown dots, and overlay the
-`pred1km` prediction locations using smaller, black dots by running
+We view the Middle Fork stream network, overlay the observed sites where data were collected using brown circles, and overlay the
+`pred1km` prediction locations using smaller, blue triangles by running
 ```{r}
 ggplot() +
   geom_sf(data = mf04p$edges) +
-  geom_sf(data = mf04p$preds$pred1km) +
-  geom_sf(data = mf04p$obs, color = "brown", size = 1.5) +
+  geom_sf(data = mf04p$preds$pred1km, pch = 17, color = "blue") +
+  geom_sf(data = mf04p$obs, color = "brown", size = 2) +
   theme_bw()
 ```
 
-Later we will fit models to stream network data. Before doing this, however, stream distance matrices must be calculated for the observed sites and prediction sites:
+Later we will fit models to stream network data. Before doing this, however, we supplement the .ssn object with hydrologic distance matrices that preserve directionality, which are required for statistical modeling:
 ```{r}
 ssn_create_distmat(
   ssn.object = mf04p,
@@ -277,7 +280,7 @@ Suppose we are interested in studying summer mean temperature (`Summer_mn`) on t
 ```{r}
 ggplot() +
   geom_sf(data = mf04p$edges) +
-  geom_sf(data = mf04p$obs, aes(color = Summer_mn), size = 1.5) +
+  geom_sf(data = mf04p$obs, aes(color = Summer_mn), size = 2) +
   scale_color_viridis_c(limits = c(-1.5, 17), option = "H") +
   theme_bw()
 ```
@@ -294,9 +297,9 @@ The `ssn_lm()` function is used to fit linear spatial stream network models and 
 
 It is important to note that the default for `tailup_type`, `taildown_type`, and `euclid_type` is `"none"`, which means that they must be specified if their relevant covariances are desired. The default for `nugget_type` is `"nugget"`, which specifies a nugget effect, useful because many ecological processes have localized variability that is important to capture.  Full parameterizations of each covariance function are given in `ssn_lm()`'s documentation, which can be viewed by running `help("ssn_lm", "SSN2")`. There are different approaches to choosing between covariance functions. One approach is to fit several models and compare their fits using statistics like AIC or cross-validation error. Another approach is to visualize the `Torgegram()` and choose functions appropriately. 
 
-The `Torgegram()` in SSN2 is essentially a semivariogram that describes variability in streams data based on flow-connected, flow-unconnected, and Euclidean spatial relationships. Like other semivariograms, the Torgegram describes how the semivariance (i.e. halved average squared difference) between observations changes with hydrologic or Euclidean distances. If there is strong dependence between sites based on flow-connected or flow-unconnected relationships, the semivariance will increase with respective distance. If, however, there is not strong dependence, the semivariance will be relatively flat. The Torgegram() output can be combined with `plot()` to better understand which covariance components may be most suitable in the model. For example, when the semivariance for flow-connected sites increases with hydrologic distance but the semivariance for flow-unconnected sites is flat, then a tail-up component may be sufficient for the model (i.e., a tail-down component is not needed). However, the model would likely benefit from a tail-down component or a combination of tail-up and tail-down models if the semivariance for both flow-connected and flow-unconnected sites increases with distance. Alternatively, if the semivariance is flat, then the model is unlikely to benefit from tail-up or tail-down components. SSN2 also allows users to visualize changes in semivariance based on Euclidean distance, which may provide additional insights about whether a Euclidean component or a mixture of tail-up, tail-down and/or Euclidean models will improve the model. Please see @zimmerman2017torgegram for a more in-depth review of Toregegrams, along with strategies for interpreting and using them to inform model fitting.  For a more formal comparison between models, use statistics like `AIC` or cross-validation error, which we discuss later.
+The `Torgegram()` in SSN2 is essentially a semivariogram that describes variability in streams data based on flow-connected, flow-unconnected, and Euclidean spatial relationships. Like other semivariograms, the Torgegram describes how the semivariance (i.e. halved average squared difference) between observations changes with hydrologic or Euclidean distances. If there is strong dependence between sites based on flow-connected or flow-unconnected relationships, the semivariance will increase with respective distance. If, however, there is not strong dependence, the semivariance will be relatively flat. The `Torgegram()` output can be combined with `plot()` to better understand which covariance components may be most suitable in the model. For example, when the semivariance for flow-connected sites increases with hydrologic distance but the semivariance for flow-unconnected sites is flat, then a tail-up component may be sufficient for the model (i.e., a tail-down component is not needed). However, the model would likely benefit from a tail-down component or a combination of tail-up and tail-down models if the semivariance for both flow-connected and flow-unconnected sites increases with distance. Alternatively, if the semivariance is flat, then the model is unlikely to benefit from tail-up or tail-down components. SSN2 also allows users to visualize changes in semivariance based on Euclidean distance, which may provide additional insights about whether a Euclidean component or a mixture of tail-up, tail-down and/or Euclidean models will improve the model. Please see @zimmerman2017torgegram for a more in-depth review of Toregegrams, along with strategies for interpreting and using them to inform model fitting.  For a more formal comparison between models, use statistics like `AIC` or cross-validation error, which we discuss later.
 
-Suppose that we want to model mean summer temperature as a function of elevation and precipitation. We can aid our understanding of what covariance components may be informative by visualizing a Torgegram:
+Suppose that we want to model summer mean stream temperature as a function of elevation and precipitation. We can aid our understanding of what covariance components may be informative by visualizing a Torgegram:
 ```{r}
 tg <- Torgegram(
   formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
@@ -305,7 +308,7 @@ tg <- Torgegram(
 )
 ```
 
-The first argument to `Torgegram` is `formula`. Residuals from a non-spatial linear model specified by `formula` are used by the Toregram to visualize remaining spatial dependence. The `type` argument specifies the Torgegram types and has a default value of `c("flowcon", "flowuncon")` for both flow-connected and flow-unconnected semivariances. Here we also desire to visualize Euclidean semivariance. We visualize all three components by running
+The first argument to `Torgegram()` is `formula`. Residuals from a non-spatial linear model specified by `formula` are used by the Toregram to visualize remaining spatial dependence. The `type` argument specifies the Torgegram types and has a default value of `c("flowcon", "flowuncon")` for both flow-connected and flow-unconnected semivariances. Here we also desire to visualize Euclidean semivariance. We visualize all three components by running
 
 ```{r}
 plot(tg)
@@ -313,7 +316,7 @@ plot(tg)
 
 The flow-connected semivariances seem to generally increase with distance, which suggests that the model will benefit from at least a tail-up component. The takeaway for flow-unconnected and Euclidean semivariances is less clear -- they seem to generally increase with distance but there are some low distances with high semivariances. This suggests that tail-down and Euclidean components may not be too impactful on the model fit. We investigate this next while we fit a model with all three components: tail-up, tail-down, and Euclidean.
 
-We fit a spatial stream network model regressing mean summer temperature on elevation, precipitation, and their interaction using an exponential tail-up covariance function with additive weights created using watershed area (`afvArea`), a spherical tail-down covariance function, a Gaussian Euclidean covariance function, and a nugget effect by running
+We fit a spatial stream network model regressing summer mean stream temperature on elevation and watershed-averaged precipitation using an exponential tail-up covariance function with additive weights created using watershed area (`afvArea`), a spherical tail-down covariance function, a Gaussian Euclidean covariance function, and a nugget effect by running
 
 ```{r}
 ssn_mod <- ssn_lm(
@@ -335,14 +338,14 @@ We summarize the fitted model by running
 summary(ssn_mod)
 ```
 
-Similar to summaries of `lm()` objects, summaries of `ssn_lm()` objects include the original function call, residuals, and a coefficients table of fixed effects. The `(Intercept)` represents the average summer mean temperature at sea level (an elevation of zero) and no precipitation, `ELEV_DEM` represents the decrease in average summer mean temperature with a one unit (meter) increase in elevation, and `AREAWTMAP` represents the decrease in average summer mean temperature with a one unit (mm) increase in precipitation. There is strong evidence that average summer mean temperature decreases with elevation ($p$-value $< 0.001$), while there is moderate evidence that average summer mean temperature decreases with precipitation ($p$-value $\approx$ 0.05). A pseudo r-squared is also returned, which quantifies the proportion of variability explained by the fixed effects. The coefficients table of covariance parameters describes the model's dependence. The larger the `de` parameter, the more variability in the process is attributed to the relevant effect. Here, most of the model's random variability comes from the tail-up portion of the model. The larger the `range` parameter, the more correlated nearby observations are with respect to the relevant effect.
+Similar to summaries of `lm()` objects, summaries of `ssn_lm()` objects include the original function call, residuals, and a coefficients table of fixed effects. The `(Intercept)` represents the average summer mean stream temperature at sea level (an elevation of zero) and no precipitation, `ELEV_DEM` represents the decrease in average summer mean stream temperature with a one unit (meter) increase in elevation, and `AREAWTMAP` represents the decrease in average summer mean stream temperature with a one unit (mm) increase in precipitation. There is strong evidence that average summer mean stream temperature decreases with elevation ($p$-value $< 0.001$), while there is moderate evidence that average summer mean stream temperature decreases with precipitation ($p$-value $\approx$ 0.05). A pseudo r-squared is also returned, which quantifies the proportion of variability explained by the fixed effects. The coefficients table of covariance parameters describes the model's dependence. The larger the `de` parameter, the more variability in the process is attributed to the relevant effect. Here, most of the model's random variability comes from the tail-up portion of the model. The larger the `range` parameter, the more correlated nearby observations are with respect to the relevant effect.
 
 We directly compare the sources of variability in the model using the `varcomp` function:
 ```{r}
 varcomp(ssn_mod)
 ```
 
-Most of the variability in mean summer temperature is
+Most of the variability in summer mean stream temperature is
 explained by the fixed effects of elevation and precipitation (`Covariates (PR-sq)`) as well as the tail-up component.  Note that the values in the `proportion` column sum to one.
 
 In the remainder of this subsection, we describe the broom [@robinson2021broom] functions `tidy()`, `glance()` and `augment()`. `tidy()` tidies coefficient output in a convenient `tibble`, `glance()` glances at model-fit statistics, and `augment()` augments the data with fitted model diagnostics.
@@ -413,7 +416,7 @@ loocv_mod2 <- loocv(ssn_mod2)
 loocv_mod2$RMSPE
 ```
 
-`ssn_mod` is the better model with respect to `AIC`, `AICc`, and `RMSPE` and shortly we use it to return model diagnostics and make predictions. `loocv()` predictions using `ssn_mod` are typically within `r round(loocv_mod$RMSPE, digits = 3)`. of the true mean summer temperature. Note that model comparison using `loocv()` does not depend on the estimation method (ML vs REML).
+`ssn_mod` is the better model with respect to `AIC`, `AICc`, and `RMSPE` and shortly we use it to return model diagnostics and make predictions. `loocv()` predictions using `ssn_mod` are typically within `r round(loocv_mod$RMSPE, digits = 3)`. of the true summer mean stream temperature. Note that model comparison using `loocv()` does not depend on the estimation method (ML vs REML).
 
 We augment the data with model diagnostics by running
 ```{r}
@@ -423,7 +426,7 @@ aug_ssn_mod
 
 The columns of this tibble represent:
 
--   `Summer_mn`: Mean summer temperature.
+-   `Summer_mn`: Summer mean stream temperature.
 -   `ELEV_DEM`: Elevation.
 -   `Precipitation`: Precipitation.
 -   `.fitted`: The fitted values (the estimated mean given the explanatory variable values).
@@ -450,7 +453,7 @@ There are 6 total diagnostic plots (specified via the `which` argument) that ret
 
 ### Prediction (Kriging)
 
-Commonly a goal of a data analysis is to make predictions at unobserved locations. In spatial contexts, prediction is often called Kriging. Next we make mean summer temperature predictions at each location in the `pred1km` data in `mf04p` by running
+Commonly a goal of a data analysis is to make predictions at unobserved locations. In spatial contexts, prediction is often called Kriging. Next we make summer mean stream temperature predictions at each location in the `pred1km` data in `mf04p` by running
 ```{r, results = "hide"}
 predict(ssn_mod, newdata = "pred1km")
 ```
@@ -467,7 +470,7 @@ We visualize these predictions (overlain onto the stream network) by running
 ```{r}
 ggplot() +
   geom_sf(data = mf04p$edges) +
-  geom_sf(data = aug_preds, aes(color = .fitted), size = 1.5) +
+  geom_sf(data = aug_preds, aes(color = .fitted), size = 2) +
   scale_color_viridis_c(limits = c(-1.5, 17), option = "H") +
   theme_bw()
 ```
@@ -578,7 +581,7 @@ The `C16` variable in `mf04p` represents the number of times daily summer stream
 ```{r}
 ggplot() +
   geom_sf(data = mf04p$edges) +
-  geom_sf(data = mf04p$obs, aes(color = C16), size = 1.5) +
+  geom_sf(data = mf04p$obs, aes(color = C16), size = 2) +
   scale_color_viridis_c(option = "H") +
   theme_bw()
 ```
@@ -717,8 +720,8 @@ Here we list some commonly used `SSN2` functions for manipulating `SSN` objects:
      for use with modeling functions.
 -   `ssn_get_data()`: Extract an `sf` `data.frame` of observed or
     prediction locations from the `SSN` object.
--   `ssn_get_netgeometry()`: Extract topological information from the
-    `netgeometry` column.
+-   `ssn_get_netgeom()`: Extract topological information from the
+    `netgeom` column.
 -   `ssn_get_stream_distmat()`: Extract the stream distance matrices for
     the observed or prediction locations in an `SSN` object.
 -   `ssn_import()`: Import an `SSN` object from an `.ssn` directory.
