@@ -45,6 +45,9 @@
 #' @name SSN_to_SSN2
 #' @export
 SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
+
+  .Deprecated(new = "ssn_import")
+
   if (!requireNamespace("sp", quietly = TRUE)) {
     stop("Install the sp package before using SSN_to_SSN2", call. = FALSE)
   } else {
