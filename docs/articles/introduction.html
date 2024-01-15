@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">SSN2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,7 @@ stream networks are embedded within a spatial environment, which can
 also influence observations on the stream network. Traditional spatial
 statistical models, which are based solely on Eucliean distance, often
 fail to adequately describe these unique and complex spatial
-depedendencies.</p>
+dependencies.</p>
 <p>Spatial stream network models are based on a moving-average
 construction <span class="citation">(J. M. Ver Hoef and Peterson
 2010)</span> and are specifically designed to describe two unique
@@ -200,9 +200,10 @@ vector format. The <code>openSTARS</code> R package <span class="citation">(Katt
 source alternative to the STARS toolset, which depends on GRASS GIS. In
 contrast to <code>STARS</code>, <code>openSTARS</code> is designed to
 derive streams in raster format from a digital elevation model (DEM).
-Both tools output a <code>.ssn</code> directory which contains all of
-the spatial, topological and attribute information needed to fit a
-spatial stream network model using <code>SSN2</code>. This includes:</p>
+Both tools output a non-proprietary <code>.ssn</code> folder (i.e.,
+directory) which contains all of the spatial, topological and attribute
+information needed to fit a spatial stream network model using
+<code>SSN2</code>. This includes:</p>
 <ol style="list-style-type: decimal">
 <li>edges: a shapefile of lines representing the linear geometry of the
 stream network(s).</li>
@@ -237,8 +238,8 @@ predictions will be made.</li>
 <code>path</code>: A character string that represents the path to
 the relevant <code>.ssn</code> directory stored on your computer.</li>
 </ol>
-<p>A <code>netgeom</code> (short for “network geometry”) column is
-also added to each of the <code>sf</code> objects stored within an
+<p>A <code>netgeom</code> (short for “network geometry”) column is also
+added to each of the <code>sf</code> objects stored within an
 <code>SSN</code> object. The <code>netgeom</code> column contains a
 character string describing the position of each line
 (<code>edges</code>) and point (<code>obs</code> and <code>preds</code>)
@@ -249,8 +250,8 @@ geometry. For edges, the format of <code>netgeom</code> is</p>
 <p><code>"ENETWORK (netID rid upDist)"</code>,</p>
 <p>and for sites</p>
 <p><code>"SNETWORK (netID rid upDist ratio pid locID)"</code>,</p>
-<p><strong>The data used to define the <code>netgeom</code> column
-are found in the edges,</strong> <strong>observed sites, and prediction
+<p><strong>The data used to define the <code>netgeom</code> column are
+found in the edges,</strong> <strong>observed sites, and prediction
 sites shapefiles, which are created</strong> <strong>using the
 <code>STARS</code> or <code>openSTARS</code> software.</strong> For
 edges, this includes a unique network identifier (<code>netID</code>)
@@ -277,40 +278,42 @@ is far from the most downstream node of the edge segment. Together these
 key pieces of data are used to describe which network and edge each site
 resides on, as well as where exactly the site is on each line segment.
 It may at first seem redundant to combine and store multiple numeric
-columns as text in the <code>netgeom</code> column. However, these
-data dictate how the observed and prediction sites relate to one another
-in topological space, which impacts parameter estimates and predicted
+columns as text in the <code>netgeom</code> column. However, these data
+dictate how the observed and prediction sites relate to one another in
+topological space, which impacts parameter estimates and predicted
 values generated from fitted models. Storing these data as text in the
-<code>netgeom</code> column significantly reduces the chance that
-these values are accidentally (and unknowingly) altered by a user.</p>
+<code>netgeom</code> column significantly reduces the chance that these
+values are accidentally (and unknowingly) altered by a user.</p>
 <div class="section level3">
 <h3 id="the-middle-fork-data">The Middle Fork Data<a class="anchor" aria-label="anchor" href="#the-middle-fork-data"></a>
 </h3>
 <p>In this vignette, we will use the Middle Fork 2004 stream temperature
 data in <code>SSN2</code>. The raw input data are stored in the
 <code>lsndata/MiddleFork04.ssn</code> directory installed alongside
-<code>SSN2</code>. We must copy the data to a temporary directory before
-we can load it in by running</p>
+<code>SSN2</code>. We may store the file path to this example data:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/copy_lsn_to_temp.html">copy_lsn_to_temp</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>We create a path to the temporary directory and read in the data
-using <code><a href="../reference/ssn_import.html">ssn_import()</a></code>, naming the <code>SSN</code> object
-<code>mf04p</code>:</p>
+<code class="sourceCode R"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"lsndata/MiddleFork04.ssn"</span>, package <span class="op">=</span> <span class="st">"SSN2"</span><span class="op">)</span></span></code></pre></div>
+<p>Several functions in <code>SSN2</code> for reading and writing data
+(which we use shortly) directly manipulate the <code>.ssn</code> folder.
+If it is not desirable to directly manipulate the
+<code>MiddleFork04.ssn</code> data installed alongside
+<code>SSN2</code>, <code>MiddleFork04.ssn</code> may be copied it into a
+temporary directory and the relevant path to this alternative location
+can be stored:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">temp_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/MiddleFork04.ssn"</span><span class="op">)</span></span>
-<span><span class="va">mf04p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_import.html">ssn_import</a></span><span class="op">(</span></span>
-<span>  path <span class="op">=</span> <span class="va">temp_path</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/copy_lsn_to_temp.html">copy_lsn_to_temp</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/MiddleFork04.ssn"</span><span class="op">)</span></span></code></pre></div>
+<p>After specifying <code>path</code> (using <code><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file()</a></code>
+or <code><a href="../reference/copy_lsn_to_temp.html">copy_lsn_to_temp()</a></code>), we import the stream reaches,
+observed sites, and prediction sites:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mf04p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_import.html">ssn_import</a></span><span class="op">(</span></span>
+<span>  path <span class="op">=</span> <span class="va">path</span>,</span>
 <span>  predpts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pred1km"</span>, <span class="st">"CapeHorn"</span>, <span class="st">"Knapp"</span><span class="op">)</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The copying and reading in via the temporary directory is only
-required to work with the example Middle Fork 04 data installed
-alongside <code>SSN2</code>. When creating <code>.ssn</code> objects
-using <code>STARS</code> or <code>openSTARS</code>, users will only have
-to call <code><a href="../reference/ssn_import.html">ssn_import()</a></code>, specifying the file path where the
-<code>.ssn</code> object is stored.</p>
 <p>We summarise the <code>mf04p</code> data by running</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mf04p</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Object of class SSN</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -322,30 +325,30 @@ to call <code><a href="../reference/ssn_import.html">ssn_import()</a></code>, sp
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Variable names are (found using names(object)):</span></span>
 <span><span class="co">#&gt; $obs</span></span>
-<span><span class="co">#&gt;  [1] "STREAMNAME"  "COMID"       "CDRAINAG"    "AREAWTMAP"   "SLOPE"      </span></span>
-<span><span class="co">#&gt;  [6] "ELEV_DEM"    "Source"      "Summer_mn"   "MaxOver20"   "C16"        </span></span>
-<span><span class="co">#&gt; [11] "C20"         "C24"         "FlowCMS"     "AirMEANc"    "AirMWMTc"   </span></span>
-<span><span class="co">#&gt; [16] "NEAR_X"      "NEAR_Y"      "rid"         "ratio"       "afvArea"    </span></span>
-<span><span class="co">#&gt; [21] "upDist"      "locID"       "netID"       "pid"         "geometry"   </span></span>
-<span><span class="co">#&gt; [26] "netgeom"</span></span>
+<span><span class="co">#&gt;  [1] "STREAMNAME" "COMID"      "CDRAINAG"   "AREAWTMAP"  "SLOPE"     </span></span>
+<span><span class="co">#&gt;  [6] "ELEV_DEM"   "Source"     "Summer_mn"  "MaxOver20"  "C16"       </span></span>
+<span><span class="co">#&gt; [11] "C20"        "C24"        "FlowCMS"    "AirMEANc"   "AirMWMTc"  </span></span>
+<span><span class="co">#&gt; [16] "NEAR_X"     "NEAR_Y"     "rid"        "ratio"      "afvArea"   </span></span>
+<span><span class="co">#&gt; [21] "upDist"     "locID"      "netID"      "pid"        "geometry"  </span></span>
+<span><span class="co">#&gt; [26] "netgeom"   </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $pred1km</span></span>
-<span><span class="co">#&gt;  [1] "COMID"       "GNIS_NAME"   "CDRAINAG"    "AREAWTMAP"   "SLOPE"      </span></span>
-<span><span class="co">#&gt;  [6] "ELEV_DEM"    "FlowCMS"     "AirMEANc"    "AirMWMTc"    "NEAR_X"     </span></span>
-<span><span class="co">#&gt; [11] "NEAR_Y"      "rid"         "ratio"       "afvArea"     "upDist"     </span></span>
-<span><span class="co">#&gt; [16] "locID"       "netID"       "pid"         "geometry"    "netgeom"</span></span>
+<span><span class="co">#&gt;  [1] "COMID"     "GNIS_NAME" "CDRAINAG"  "AREAWTMAP" "SLOPE"     "ELEV_DEM" </span></span>
+<span><span class="co">#&gt;  [7] "FlowCMS"   "AirMEANc"  "AirMWMTc"  "NEAR_X"    "NEAR_Y"    "rid"      </span></span>
+<span><span class="co">#&gt; [13] "ratio"     "afvArea"   "upDist"    "locID"     "netID"     "pid"      </span></span>
+<span><span class="co">#&gt; [19] "geometry"  "netgeom"  </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $CapeHorn</span></span>
-<span><span class="co">#&gt;  [1] "COMID"       "GNIS_NAME"   "CDRAINAG"    "AREAWTMAP"   "SLOPE"      </span></span>
-<span><span class="co">#&gt;  [6] "ELEV_DEM"    "FlowCMS"     "AirMEANc"    "AirMWMTc"    "NEAR_X"     </span></span>
-<span><span class="co">#&gt; [11] "NEAR_Y"      "rid"         "ratio"       "afvArea"     "upDist"     </span></span>
-<span><span class="co">#&gt; [16] "locID"       "netID"       "pid"         "geometry"    "netgeom"</span></span>
+<span><span class="co">#&gt;  [1] "COMID"     "GNIS_NAME" "CDRAINAG"  "AREAWTMAP" "SLOPE"     "ELEV_DEM" </span></span>
+<span><span class="co">#&gt;  [7] "FlowCMS"   "AirMEANc"  "AirMWMTc"  "NEAR_X"    "NEAR_Y"    "rid"      </span></span>
+<span><span class="co">#&gt; [13] "ratio"     "afvArea"   "upDist"    "locID"     "netID"     "pid"      </span></span>
+<span><span class="co">#&gt; [19] "geometry"  "netgeom"  </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $Knapp</span></span>
-<span><span class="co">#&gt;  [1] "COMID"       "GNIS_NAME"   "CDRAINAG"    "AREAWTMAP"   "SLOPE"      </span></span>
-<span><span class="co">#&gt;  [6] "ELEV_DEM"    "FlowCMS"     "AirMEANc"    "AirMWMTc"    "NEAR_X"     </span></span>
-<span><span class="co">#&gt; [11] "NEAR_Y"      "rid"         "ratio"       "afvArea"     "upDist"     </span></span>
-<span><span class="co">#&gt; [16] "locID"       "netID"       "pid"         "geometry"    "netgeom"</span></span></code></pre>
+<span><span class="co">#&gt;  [1] "COMID"     "GNIS_NAME" "CDRAINAG"  "AREAWTMAP" "SLOPE"     "ELEV_DEM" </span></span>
+<span><span class="co">#&gt;  [7] "FlowCMS"   "AirMEANc"  "AirMWMTc"  "NEAR_X"    "NEAR_Y"    "rid"      </span></span>
+<span><span class="co">#&gt; [13] "ratio"     "afvArea"   "upDist"    "locID"     "netID"     "pid"      </span></span>
+<span><span class="co">#&gt; [19] "geometry"  "netgeom"</span></span></code></pre>
 <p>We see that <code>mf04p</code> contains 45 observation sites and a
 total of 2102 prediction sites stored in three different prediction
 datasets. We will explore several of these variables throughout the rest
@@ -356,7 +359,8 @@ of the vignette:</p>
 <li>
 <code>ELEV_DEM</code>: Elevation (based on a 30m DEM)</li>
 <li>
-<code>Summer_mn</code>: Mean summer temperature (Celsius)</li>
+<code>Summer_mn</code>: Summer mean stream temperature
+(Celsius)</li>
 <li>
 <code>C16</code>: Number of times daily stream temperature exceeded
 16 Celsius (in the summer)</li>
@@ -371,7 +375,7 @@ objects. Instead, we rely on the plotting functionality of
 <code>sf</code> <span class="citation">(Pebesma 2018)</span>. This
 vignette focuses on the use of <code>ggplot2</code>, which we load by
 running</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
 <p>ggplot2 is only installed alongside <code>SSN2</code> when
 <code>dependencies = TRUE</code> in <code><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages()</a></code>, so
@@ -380,24 +384,25 @@ vignette.</p>
 <p>Prediction sites can be easily accessed in the <code>SSN</code>
 object using the list element number or names attribute. For example, we
 print the names of the prediction datasets to the console</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mf04p</span><span class="op">$</span><span class="va">preds</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; [1] "pred1km"  "CapeHorn" "Knapp"</span></span></code></pre>
 <p>We view the Middle Fork stream network, overlay the observed sites
-where data were collected using brown dots, and overlay the
-<code>pred1km</code> prediction locations using smaller, black dots by
-running</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+where data were collected using brown circles, and overlay the
+<code>pred1km</code> prediction locations using smaller, blue triangles
+by running</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">preds</span><span class="op">$</span><span class="va">pred1km</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, color <span class="op">=</span> <span class="st">"brown"</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">preds</span><span class="op">$</span><span class="va">pred1km</span>, pch <span class="op">=</span> <span class="fl">17</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, color <span class="op">=</span> <span class="st">"brown"</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
 <p>Later we will fit models to stream network data. Before doing this,
-however, stream distance matrices must be calculated for the observed
-sites and prediction sites:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+however, we supplement the .ssn object with hydrologic distance matrices
+that preserve directionality, which are required for statistical
+modeling:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ssn_create_distmat.html">ssn_create_distmat</a></span><span class="op">(</span></span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
 <span>  predpts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pred1km"</span>, <span class="st">"CapeHorn"</span>, <span class="st">"Knapp"</span><span class="op">)</span>,</span>
@@ -453,13 +458,13 @@ nugget (or nugget effect).</p>
 (<code>Summer_mn</code>) on the stream network. We can visualize the
 distribution of summer mean temperature (overlain onto the stream
 network) by running</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">Summer_mn</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">Summer_mn</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1.5</span>, <span class="fl">17</span><span class="op">)</span>, option <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
 <p>The <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> function is used to fit linear spatial
 stream network models and bears many similarities to
 base-<strong>R</strong>’s <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> function for non-spatial
@@ -521,45 +526,46 @@ with hydrologic or Euclidean distances. If there is strong dependence
 between sites based on flow-connected or flow-unconnected relationships,
 the semivariance will increase with respective distance. If, however,
 there is not strong dependence, the semivariance will be relatively
-flat. The Torgegram() output can be combined with <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> to
-better understand which covariance components may be most suitable in
-the model. For example, when the semivariance for flow-connected sites
-increases with hydrologic distance but the semivariance for
-flow-unconnected sites is flat, then a tail-up component may be
-sufficient for the model (i.e., a tail-down component is not needed).
-However, the model would likely benefit from a tail-down component or a
-combination of tail-up and tail-down models if the semivariance for both
-flow-connected and flow-unconnected sites increases with distance.
-Alternatively, if the semivariance is flat, then the model is unlikely
-to benefit from tail-up or tail-down components. SSN2 also allows users
-to visualize changes in semivariance based on Euclidean distance, which
-may provide additional insights about whether a Euclidean component or a
-mixture of tail-up, tail-down and/or Euclidean models will improve the
-model. Please see <span class="citation">Zimmerman and Ver Hoef
-(2017)</span> for a more in-depth review of Toregegrams, along with
-strategies for interpreting and using them to inform model fitting. For
-a more formal comparison between models, use statistics like
-<code>AIC</code> or cross-validation error, which we discuss later.</p>
-<p>Suppose that we want to model mean summer temperature as a function
-of elevation and precipitation. We can aid our understanding of what
-covariance components may be informative by visualizing a Torgegram:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+flat. The <code><a href="../reference/Torgegram.html">Torgegram()</a></code> output can be combined with
+<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> to better understand which covariance components may
+be most suitable in the model. For example, when the semivariance for
+flow-connected sites increases with hydrologic distance but the
+semivariance for flow-unconnected sites is flat, then a tail-up
+component may be sufficient for the model (i.e., a tail-down component
+is not needed). However, the model would likely benefit from a tail-down
+component or a combination of tail-up and tail-down models if the
+semivariance for both flow-connected and flow-unconnected sites
+increases with distance. Alternatively, if the semivariance is flat,
+then the model is unlikely to benefit from tail-up or tail-down
+components. SSN2 also allows users to visualize changes in semivariance
+based on Euclidean distance, which may provide additional insights about
+whether a Euclidean component or a mixture of tail-up, tail-down and/or
+Euclidean models will improve the model. Please see <span class="citation">Zimmerman and Ver Hoef (2017)</span> for a more
+in-depth review of Toregegrams, along with strategies for interpreting
+and using them to inform model fitting. For a more formal comparison
+between models, use statistics like <code>AIC</code> or cross-validation
+error, which we discuss later.</p>
+<p>Suppose that we want to model summer mean stream temperature as a
+function of elevation and precipitation. We can aid our understanding of
+what covariance components may be informative by visualizing a
+Torgegram:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Torgegram.html">Torgegram</a></span><span class="op">(</span></span>
 <span>  formula <span class="op">=</span> <span class="va">Summer_mn</span> <span class="op">~</span> <span class="va">ELEV_DEM</span> <span class="op">+</span> <span class="va">AREAWTMAP</span>,</span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"flowcon"</span>, <span class="st">"flowuncon"</span>, <span class="st">"euclid"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The first argument to <code>Torgegram</code> is <code>formula</code>.
-Residuals from a non-spatial linear model specified by
-<code>formula</code> are used by the Toregram to visualize remaining
-spatial dependence. The <code>type</code> argument specifies the
-Torgegram types and has a default value of
+<p>The first argument to <code><a href="../reference/Torgegram.html">Torgegram()</a></code> is
+<code>formula</code>. Residuals from a non-spatial linear model
+specified by <code>formula</code> are used by the Toregram to visualize
+remaining spatial dependence. The <code>type</code> argument specifies
+the Torgegram types and has a default value of
 <code>c("flowcon", "flowuncon")</code> for both flow-connected and
 flow-unconnected semivariances. Here we also desire to visualize
 Euclidean semivariance. We visualize all three components by running</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tg</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
 <p>The flow-connected semivariances seem to generally increase with
 distance, which suggests that the model will benefit from at least a
 tail-up component. The takeaway for flow-unconnected and Euclidean
@@ -568,13 +574,13 @@ distance but there are some low distances with high semivariances. This
 suggests that tail-down and Euclidean components may not be too
 impactful on the model fit. We investigate this next while we fit a
 model with all three components: tail-up, tail-down, and Euclidean.</p>
-<p>We fit a spatial stream network model regressing mean summer
-temperature on elevation, precipitation, and their interaction using an
+<p>We fit a spatial stream network model regressing summer mean stream
+temperature on elevation and watershed-averaged precipitation using an
 exponential tail-up covariance function with additive weights created
 using watershed area (<code>afvArea</code>), a spherical tail-down
 covariance function, a Gaussian Euclidean covariance function, and a
 nugget effect by running</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ssn_mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_lm.html">ssn_lm</a></span><span class="op">(</span></span>
 <span>  formula <span class="op">=</span> <span class="va">Summer_mn</span> <span class="op">~</span> <span class="va">ELEV_DEM</span> <span class="op">+</span> <span class="va">AREAWTMAP</span>,</span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
@@ -599,7 +605,7 @@ that is not likelihood-based, such as cross validation via
 <h4 id="model-summaries">Model Summaries<a class="anchor" aria-label="anchor" href="#model-summaries"></a>
 </h4>
 <p>We summarize the fitted model by running</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ssn_mod</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Call:</span></span>
@@ -633,15 +639,15 @@ that is not likelihood-based, such as cross validation via
 <p>Similar to summaries of <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> objects, summaries of
 <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> objects include the original function call,
 residuals, and a coefficients table of fixed effects. The
-<code>(Intercept)</code> represents the average summer mean temperature
-at sea level (an elevation of zero) and no precipitation,
+<code>(Intercept)</code> represents the average summer mean stream
+temperature at sea level (an elevation of zero) and no precipitation,
 <code>ELEV_DEM</code> represents the decrease in average summer mean
-temperature with a one unit (meter) increase in elevation, and
+stream temperature with a one unit (meter) increase in elevation, and
 <code>AREAWTMAP</code> represents the decrease in average summer mean
-temperature with a one unit (mm) increase in precipitation. There is
-strong evidence that average summer mean temperature decreases with
-elevation (<span class="math inline">\(p\)</span>-value <span class="math inline">\(&lt; 0.001\)</span>), while there is moderate
-evidence that average summer mean temperature decreases with
+stream temperature with a one unit (mm) increase in precipitation. There
+is strong evidence that average summer mean stream temperature decreases
+with elevation (<span class="math inline">\(p\)</span>-value <span class="math inline">\(&lt; 0.001\)</span>), while there is moderate
+evidence that average summer mean stream temperature decreases with
 precipitation (<span class="math inline">\(p\)</span>-value <span class="math inline">\(\approx\)</span> 0.05). A pseudo r-squared is also
 returned, which quantifies the proportion of variability explained by
 the fixed effects. The coefficients table of covariance parameters
@@ -653,7 +659,7 @@ parameter, the more correlated nearby observations are with respect to
 the relevant effect.</p>
 <p>We directly compare the sources of variability in the model using the
 <code>varcomp</code> function:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://usepa.github.io/spmodel/reference/varcomp.html" class="external-link">varcomp</a></span><span class="op">(</span><span class="va">ssn_mod</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 2</span></span></span>
 <span><span class="co">#&gt;   varcomp            proportion</span></span>
@@ -663,8 +669,8 @@ the relevant effect.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> taildown_de           0.040<span style="text-decoration: underline;">5</span> </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> euclid_de             0.001<span style="text-decoration: underline;">37</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> nugget                0.001<span style="text-decoration: underline;">89</span></span></span></code></pre>
-<p>Most of the variability in mean summer temperature is explained by
-the fixed effects of elevation and precipitation
+<p>Most of the variability in summer mean stream temperature is
+explained by the fixed effects of elevation and precipitation
 (<code>Covariates (PR-sq)</code>) as well as the tail-up component. Note
 that the values in the <code>proportion</code> column sum to one.</p>
 <p>In the remainder of this subsection, we describe the broom <span class="citation">(Robinson, Hayes, and Couch 2021)</span> functions
@@ -675,7 +681,7 @@ statistics, and <code><a href="https://generics.r-lib.org/reference/augment.html
 model diagnostics.</p>
 <p>We tidy the fixed effects (and add confidence intervals) by
 running</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">ssn_mod</span>, conf.int <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 7</span></span></span>
 <span><span class="co">#&gt;   term        estimate std.error statistic  p.value conf.low conf.high</span></span>
@@ -684,7 +690,7 @@ running</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> AREAWTMAP   -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">10</span>   0.004<span style="text-decoration: underline;">46</span>     -<span style="color: #BB0000;">2.04</span> 4.14<span style="color: #949494;">e</span><span style="color: #BB0000;">- 2</span>  -<span style="color: #BB0000;">0.017</span><span style="color: #BB0000; text-decoration: underline;">8</span> -<span style="color: #BB0000;">0.000</span><span style="color: #BB0000; text-decoration: underline;">356</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ELEV_DEM    -<span style="color: #BB0000;">0.026</span><span style="color: #BB0000; text-decoration: underline;">9</span>    0.003<span style="text-decoration: underline;">65</span>     -<span style="color: #BB0000;">7.38</span> 1.60<span style="color: #949494;">e</span><span style="color: #BB0000;">-13</span>  -<span style="color: #BB0000;">0.034</span><span style="color: #BB0000; text-decoration: underline;">1</span> -<span style="color: #BB0000;">0.019</span><span style="color: #BB0000; text-decoration: underline;">8</span></span></span></code></pre>
 <p>We glance at the model-fit statistics by running</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">ssn_mod</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
 <span><span class="co">#&gt;       n     p  npar value   AIC  AICc logLik deviance pseudo.r.squared</span></span>
@@ -718,7 +724,7 @@ used when fitting the model.</li>
 models at once. Suppose we wanted to compare the current model to a new
 model that omits the tail-up and Euclidean components. We do this using
 <code><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances()</a></code> by running</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ssn_mod2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_lm.html">ssn_lm</a></span><span class="op">(</span></span>
 <span>  formula <span class="op">=</span> <span class="va">Summer_mn</span> <span class="op">~</span> <span class="va">ELEV_DEM</span> <span class="op">+</span> <span class="va">AREAWTMAP</span>,</span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
@@ -744,7 +750,7 @@ only changing the covariance structure, not the fixed effects structure.
 To compare <code>AIC</code> and <code>AICc</code> for models with
 varying fixed effect and covariance structures, use ML. For example, we
 compare a model with and without elevation to assess its importance:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ml_mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_lm.html">ssn_lm</a></span><span class="op">(</span></span>
 <span>  formula <span class="op">=</span> <span class="va">Summer_mn</span> <span class="op">~</span> <span class="va">ELEV_DEM</span> <span class="op">+</span> <span class="va">AREAWTMAP</span>,</span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
@@ -788,11 +794,11 @@ root-mean-squared-prediction error, which captures the typical absolute
 error associated with a prediction. We can compare the
 mean-squared-prediction error between <code>ssn_mod</code>,
 <code>ssn_mod2</code>:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loocv_mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv</a></span><span class="op">(</span><span class="va">ssn_mod</span><span class="op">)</span></span>
 <span><span class="va">loocv_mod</span><span class="op">$</span><span class="va">RMSPE</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; [1] 0.4365597</span></span></code></pre>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loocv_mod2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv</a></span><span class="op">(</span><span class="va">ssn_mod2</span><span class="op">)</span></span>
 <span><span class="va">loocv_mod2</span><span class="op">$</span><span class="va">RMSPE</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; [1] 0.8150283</span></span></code></pre>
@@ -800,11 +806,11 @@ mean-squared-prediction error between <code>ssn_mod</code>,
 <code>AIC</code>, <code>AICc</code>, and <code>RMSPE</code> and shortly
 we use it to return model diagnostics and make predictions.
 <code><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv()</a></code> predictions using <code>ssn_mod</code> are
-typically within 0.437. of the true mean summer temperature. Note that
-model comparison using <code><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv()</a></code> does not depend on the
+typically within 0.437. of the true summer mean stream temperature. Note
+that model comparison using <code><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv()</a></code> does not depend on the
 estimation method (ML vs REML).</p>
 <p>We augment the data with model diagnostics by running</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">aug_ssn_mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">ssn_mod</span><span class="op">)</span></span>
 <span><span class="va">aug_ssn_mod</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Simple feature collection with 45 features and 9 fields</span></span>
@@ -830,7 +836,7 @@ estimation method (ML vs REML).</p>
 <p>The columns of this tibble represent:</p>
 <ul>
 <li>
-<code>Summer_mn</code>: Mean summer temperature.</li>
+<code>Summer_mn</code>: Summer mean stream temperature.</li>
 <li>
 <code>ELEV_DEM</code>: Elevation.</li>
 <li>
@@ -858,15 +864,15 @@ data used by the model. All variables from the original data are
 returned by setting <code>drop = FALSE</code>. We can write the
 augmented data to a shapefile by loading <code>sf</code> (which comes
 installed alongside <code>SSN2</code>) and running</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_write.html" class="external-link">st_write</a></span><span class="op">(</span><span class="va">aug_ssn_mod</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/aug_ssn_mod.shp"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Many of the model diagnostics returned by <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> can
 be visualized by running using <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>. For example, we plot
 the fitted values against the standardized residuals by running</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ssn_mod</span>, which <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-23-1.png" width="700"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-24-1.png" width="700"></p>
 <p>There are 6 total diagnostic plots (specified via the
 <code>which</code> argument) that return the same information returned
 from running <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on an <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> object.</p>
@@ -876,15 +882,15 @@ from running <code><a href="https://rdrr.io/r/graphics/plot.default.html" class=
 </h4>
 <p>Commonly a goal of a data analysis is to make predictions at
 unobserved locations. In spatial contexts, prediction is often called
-Kriging. Next we make mean summer temperature predictions at each
+Kriging. Next we make summer mean stream temperature predictions at each
 location in the <code>pred1km</code> data in <code>mf04p</code> by
 running</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">ssn_mod</span>, newdata <span class="op">=</span> <span class="st">"pred1km"</span><span class="op">)</span></span></code></pre></div>
 <p>While <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> was previously used to augment the
 original data with model diagnostics, it can also be used to augment the
 <code>newdata</code> with predictions:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">aug_preds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">ssn_mod</span>, newdata <span class="op">=</span> <span class="st">"pred1km"</span><span class="op">)</span></span>
 <span><span class="va">aug_preds</span><span class="op">[</span>, <span class="st">".fitted"</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Simple feature collection with 175 features and 1 field</span></span>
@@ -920,24 +926,24 @@ arguments for an <code><a href="https://rdrr.io/r/stats/lm.html" class="external
 <code><a href="../reference/augment.SSN2.html">help("augment.SSN2", "SSN2")</a></code>.</p>
 <p>We visualize these predictions (overlain onto the stream network) by
 running</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">aug_preds</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">.fitted</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">aug_preds</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">.fitted</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1.5</span>, <span class="fl">17</span><span class="op">)</span>, option <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-26-1.png" width="700"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-27-1.png" width="700"></p>
 <p>Previously we wrote out model diagnostics to a shapefile. Now we
 write out predictions to a geopackage (recall <code>sf</code> must be
 loaded) by running</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_write.html" class="external-link">st_write</a></span><span class="op">(</span><span class="va">aug_preds</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/aug_preds.gpkg"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>When performing prediction in <code>SSN2</code>, the name of
 <code>newdata</code> must be the name of a prediction data set contained
 in <code>ssn.object$preds</code>. If <code>newdata</code> is omitted or
 has the value <code>"all"</code>, prediction is performed for all
 prediction data sets in <code>ssn.object</code>. For example,</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">ssn_mod</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">ssn_mod</span>, newdata <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span></code></pre></div>
 <p>makes predictions for <code>pred1km</code>, <code>Knapp</code>, and
@@ -951,10 +957,10 @@ locations.</p>
 Prediction (instead of making point predictions). We predict the average
 summer mean temperature throughout the Middle Fork stream network by
 running</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">ssn_mod</span>, newdata <span class="op">=</span> <span class="st">"pred1km"</span>, block <span class="op">=</span> <span class="cn">TRUE</span>, interval <span class="op">=</span> <span class="st">"prediction"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt;        fit      lwr      upr</span></span>
-<span><span class="co">#&gt; 1 10.79115 9.996617 11.58567</span></span></code></pre>
+<span><span class="co">#&gt; 1 10.73479 9.987173 11.48241</span></span></code></pre>
 </div>
 <div class="section level4">
 <h4 id="sec:advanced">Advanced Features<a class="anchor" aria-label="anchor" href="#sec:advanced"></a>
@@ -976,7 +982,7 @@ function, respectively. For example, suppose we want to fix the
 Euclidean dependent error variance parameter at 1, forcing this
 component to have a moderate effect on the covariance. First, we specify
 the appropriate object by running</p>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">euclid_init</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_initial.html">euclid_initial</a></span><span class="op">(</span><span class="st">"gaussian"</span>, de <span class="op">=</span> <span class="fl">1</span>, known <span class="op">=</span> <span class="st">"de"</span><span class="op">)</span></span>
 <span><span class="va">euclid_init</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; $initial</span></span>
@@ -993,7 +999,7 @@ the appropriate object by running</p>
 parameter has an initial value of 1 that is assumed known. The
 <code>range</code> parameter will still be estimated. Next the model is
 fit:</p>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ssn_init</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_lm.html">ssn_lm</a></span><span class="op">(</span></span>
 <span>  formula <span class="op">=</span> <span class="va">Summer_mn</span> <span class="op">~</span> <span class="va">ELEV_DEM</span> <span class="op">+</span> <span class="va">AREAWTMAP</span>,</span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
@@ -1034,7 +1040,7 @@ using similar syntax as for random effects in the <code>nlme</code>
 <strong>R</strong> packages, being specified via a formula passed to the
 <code>random</code> argument. We model random intercepts for each of the
 two networks in the data by running</p>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ssn_rand</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_lm.html">ssn_lm</a></span><span class="op">(</span></span>
 <span>  formula <span class="op">=</span> <span class="va">Summer_mn</span> <span class="op">~</span> <span class="va">ELEV_DEM</span> <span class="op">+</span> <span class="va">AREAWTMAP</span>,</span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
@@ -1076,7 +1082,7 @@ despite their adjacency because of a significant land mass or similar
 obstruction. Partition factors are modeled using a formula that contains
 a single variable passed to the <code>partition_factor</code> argument.
 We model the two networks as uncorrelated by running</p>
-<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ssn_part</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_lm.html">ssn_lm</a></span><span class="op">(</span></span>
 <span>  formula <span class="op">=</span> <span class="va">Summer_mn</span> <span class="op">~</span> <span class="va">ELEV_DEM</span> <span class="op">+</span> <span class="va">AREAWTMAP</span>,</span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
@@ -1226,18 +1232,18 @@ relevant link scale and should be interpreted accordingly.</p>
 </table>
 <p>The <code>C16</code> variable in <code>mf04p</code> represents the
 number of times daily summer stream temperature exceeded 16 Celsius:</p>
-<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">C16</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">C16</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-34-1.png" width="700"></p>
+<p><img src="introduction_files/figure-html/unnamed-chunk-35-1.png" width="700"></p>
 <p>Suppose we want to model <code>C16</code> as a function of elevation
 and precipitation. Often count data are modeled using Poisson
 regression. Using tail-up, tail-down, and nugget components, we fit this
 Poisson model by running</p>
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ssn_pois</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_glm.html">ssn_glm</a></span><span class="op">(</span></span>
 <span>  formula <span class="op">=</span> <span class="va">C16</span> <span class="op">~</span> <span class="va">ELEV_DEM</span> <span class="op">+</span> <span class="va">AREAWTMAP</span>,</span>
 <span>  family <span class="op">=</span> <span class="st">"poisson"</span>,</span>
@@ -1250,7 +1256,7 @@ Poisson model by running</p>
 spatial stream network models are also available for generalized linear
 spatial stream network models. For example, we can summarize the model
 using <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>:</p>
-<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ssn_pois</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Call:</span></span>
@@ -1258,27 +1264,27 @@ using <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">
 <span><span class="co">#&gt;     family = "poisson", tailup_type = "epa", taildown_type = "mariah", </span></span>
 <span><span class="co">#&gt;     additive = "afvArea")</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residuals:</span></span>
-<span><span class="co">#&gt;    Min     1Q Median     3Q    Max </span></span>
-<span><span class="co">#&gt; -9.481 -1.368 -0.457  1.530  6.918 </span></span>
+<span><span class="co">#&gt; Deviance Residuals:</span></span>
+<span><span class="co">#&gt;      Min       1Q   Median       3Q      Max </span></span>
+<span><span class="co">#&gt; -2.12277 -0.43689 -0.07905  0.26269  1.28473 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients (fixed):</span></span>
 <span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
-<span><span class="co">#&gt; (Intercept) 45.965557  10.042753   4.577 4.72e-06 ***</span></span>
-<span><span class="co">#&gt; ELEV_DEM    -0.017737   0.004521  -3.923 8.74e-05 ***</span></span>
-<span><span class="co">#&gt; AREAWTMAP   -0.007659   0.003473  -2.205   0.0274 *  </span></span>
+<span><span class="co">#&gt; (Intercept) 45.549245  10.025635   4.543 5.54e-06 ***</span></span>
+<span><span class="co">#&gt; ELEV_DEM    -0.017567   0.004544  -3.866 0.000111 ***</span></span>
+<span><span class="co">#&gt; AREAWTMAP   -0.007586   0.003413  -2.222 0.026253 *  </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Pseudo R-squared: 0.2504</span></span>
+<span><span class="co">#&gt; Pseudo R-squared: 0.2443</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients (covariance):</span></span>
 <span><span class="co">#&gt;            Effect     Parameter   Estimate</span></span>
-<span><span class="co">#&gt;        tailup epa  de (parsill)  1.021e+00</span></span>
-<span><span class="co">#&gt;        tailup epa         range  4.644e+04</span></span>
-<span><span class="co">#&gt;   taildown mariah  de (parsill)  2.097e-03</span></span>
-<span><span class="co">#&gt;   taildown mariah         range  1.783e+07</span></span>
-<span><span class="co">#&gt;            nugget        nugget  3.879e-04</span></span>
+<span><span class="co">#&gt;        tailup epa  de (parsill)  9.484e-01</span></span>
+<span><span class="co">#&gt;        tailup epa         range  4.290e+04</span></span>
+<span><span class="co">#&gt;   taildown mariah  de (parsill)  1.774e-02</span></span>
+<span><span class="co">#&gt;   taildown mariah         range  9.782e+06</span></span>
+<span><span class="co">#&gt;            nugget        nugget  1.008e-04</span></span>
 <span><span class="co">#&gt;        dispersion    dispersion  1.000e+00</span></span></code></pre>
 <p>Similar to summaries of <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> objects, summaries of
 <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> objects include the original function call,
@@ -1299,7 +1305,7 @@ are equal. Often with ecological or environmental data, the variance is
 larger than the mean – this is called overdispersion. The negative
 binomial model accommodates overdispersion for count data. We fit a
 negative binomial model by running</p>
-<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ssn_nb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_glm.html">ssn_glm</a></span><span class="op">(</span></span>
 <span>  formula <span class="op">=</span> <span class="va">C16</span> <span class="op">~</span> <span class="va">ELEV_DEM</span> <span class="op">+</span> <span class="va">AREAWTMAP</span>,</span>
 <span>  family <span class="op">=</span> <span class="st">"nbinomial"</span>,</span>
@@ -1310,14 +1316,14 @@ negative binomial model by running</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>We can compare the fit of these models using leave-one-out cross
 validation by running</p>
-<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loocv_pois</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv</a></span><span class="op">(</span><span class="va">ssn_pois</span><span class="op">)</span></span>
 <span><span class="va">loocv_pois</span><span class="op">$</span><span class="va">RMSPE</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; [1] 5.248053</span></span></code></pre>
-<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
+<pre><code><span><span class="co">#&gt; [1] 5.249275</span></span></code></pre>
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loocv_nb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv</a></span><span class="op">(</span><span class="va">ssn_nb</span><span class="op">)</span></span>
 <span><span class="va">loocv_nb</span><span class="op">$</span><span class="va">RMSPE</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; [1] 5.373097</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; [1] 5.255264</span></span></code></pre>
 <p>The Poisson has a lower <code>RMSPE</code>, which suggests no
 evidence of overdispersion.</p>
 <p>All advanced modeling features discussed for linear spatial stream
@@ -1331,7 +1337,7 @@ spatial stream network models.</p>
 <p>The <code><a href="../reference/ssn_simulate.html">ssn_simulate()</a></code> function is used to simulate data on
 a stream network. First, covariance parameter values are specified and a
 seed set:</p>
-<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tu_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_params.html">tailup_params</a></span><span class="op">(</span><span class="st">"exponential"</span>, de <span class="op">=</span> <span class="fl">0.4</span>, range <span class="op">=</span> <span class="fl">1e5</span><span class="op">)</span></span>
 <span><span class="va">td_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_params.html">taildown_params</a></span><span class="op">(</span><span class="st">"spherical"</span>, de <span class="op">=</span> <span class="fl">0.1</span>, range <span class="op">=</span> <span class="fl">1e6</span><span class="op">)</span></span>
 <span><span class="va">euc_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_params.html">euclid_params</a></span><span class="op">(</span><span class="st">"gaussian"</span>, de <span class="op">=</span> <span class="fl">0.2</span>, range <span class="op">=</span> <span class="fl">1e3</span><span class="op">)</span></span>
@@ -1341,7 +1347,7 @@ seed set:</p>
 <code>family</code> argument depending on the type of simulated data
 desired (here, Gaussian), the <code>ssn.object</code> and the network
 (here, the observed network):</p>
-<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_simulate.html">ssn_simulate</a></span><span class="op">(</span></span>
 <span>  family <span class="op">=</span> <span class="st">"gaussian"</span>,</span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
@@ -1357,7 +1363,7 @@ desired (here, Gaussian), the <code>ssn.object</code> and the network
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sims</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; [1] -0.8022248 -0.2953168  0.7179851 -0.2965733 -0.2811469 -0.1010336</span></span></code></pre>
 <p>We simulate binomial (presence/absence) data by running</p>
-<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_simulate.html">ssn_simulate</a></span><span class="op">(</span></span>
 <span>  family <span class="op">=</span> <span class="st">"binomial"</span>,</span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
@@ -1470,8 +1476,8 @@ manipulating <code>SSN</code> objects:</p>
 <code>data.frame</code> of observed or prediction locations from the
 <code>SSN</code> object.</li>
 <li>
-<code><a href="../reference/ssn_get_netgeom.html">ssn_get_netgeom()</a></code>: Extract topological information
-from the <code>netgeom</code> column.</li>
+<code><a href="../reference/ssn_get_netgeom.html">ssn_get_netgeom()</a></code>: Extract topological information from
+the <code>netgeom</code> column.</li>
 <li>
 <code><a href="../reference/ssn_get_stream_distmat.html">ssn_get_stream_distmat()</a></code>: Extract the stream distance
 matrices for the observed or prediction locations in an <code>SSN</code>
@@ -1671,13 +1677,14 @@ changes may occur until we are ready to release version 1.0.0.</p>
 <div class="section level2">
 <h2 class="unnumbered" id="r-code-appendix">R Code Appendix<a class="anchor" aria-label="anchor" href="#r-code-appendix"></a>
 </h2>
-<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/SSN2/" class="external-link">SSN2</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"SSN2"</span><span class="op">)</span></span>
+<span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"lsndata/MiddleFork04.ssn"</span>, package <span class="op">=</span> <span class="st">"SSN2"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/copy_lsn_to_temp.html">copy_lsn_to_temp</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">temp_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/MiddleFork04.ssn"</span><span class="op">)</span></span>
+<span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/MiddleFork04.ssn"</span><span class="op">)</span></span>
 <span><span class="va">mf04p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_import.html">ssn_import</a></span><span class="op">(</span></span>
-<span>  path <span class="op">=</span> <span class="va">temp_path</span>,</span>
+<span>  path <span class="op">=</span> <span class="va">path</span>,</span>
 <span>  predpts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pred1km"</span>, <span class="st">"CapeHorn"</span>, <span class="st">"Knapp"</span><span class="op">)</span>,</span>
 <span>  overwrite <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
@@ -1686,8 +1693,8 @@ changes may occur until we are ready to release version 1.0.0.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mf04p</span><span class="op">$</span><span class="va">preds</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">preds</span><span class="op">$</span><span class="va">pred1km</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, color <span class="op">=</span> <span class="st">"brown"</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">preds</span><span class="op">$</span><span class="va">pred1km</span>, pch <span class="op">=</span> <span class="fl">17</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, color <span class="op">=</span> <span class="st">"brown"</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/ssn_create_distmat.html">ssn_create_distmat</a></span><span class="op">(</span></span>
 <span>  ssn.object <span class="op">=</span> <span class="va">mf04p</span>,</span>
@@ -1697,7 +1704,7 @@ changes may occur until we are ready to release version 1.0.0.</p>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">Summer_mn</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">Summer_mn</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1.5</span>, <span class="fl">17</span><span class="op">)</span>, option <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">tg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Torgegram.html">Torgegram</a></span><span class="op">(</span></span>
@@ -1757,7 +1764,7 @@ changes may occur until we are ready to release version 1.0.0.</p>
 <span><span class="va">aug_preds</span><span class="op">[</span>, <span class="st">".fitted"</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">aug_preds</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">.fitted</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">aug_preds</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">.fitted</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1.5</span>, <span class="fl">17</span><span class="op">)</span>, option <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_write.html" class="external-link">st_write</a></span><span class="op">(</span><span class="va">aug_preds</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/aug_preds.gpkg"</span><span class="op">)</span><span class="op">)</span></span>
@@ -1797,7 +1804,7 @@ changes may occur until we are ready to release version 1.0.0.</p>
 <span><span class="va">ssn_part</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">C16</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">mf04p</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">C16</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">ssn_pois</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_glm.html">ssn_glm</a></span><span class="op">(</span></span>

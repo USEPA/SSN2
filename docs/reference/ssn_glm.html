@@ -18,7 +18,7 @@ and Peterson and Ver Hoef (2010)."><!-- mathjax --><script src="https://cdnjs.cl
     
     <a class="navbar-brand me-2" href="../index.html">SSN2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,7 @@ and Peterson and Ver Hoef (2010).</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ssn_glm</span><span class="op">(</span></span>
 <span>  <span class="va">formula</span>,</span>
 <span>  <span class="va">ssn.object</span>,</span>
-<span>  family <span class="op">=</span> <span class="st">"Gaussian"</span>,</span>
+<span>  <span class="va">family</span>,</span>
 <span>  tailup_type <span class="op">=</span> <span class="st">"none"</span>,</span>
 <span>  taildown_type <span class="op">=</span> <span class="st">"none"</span>,</span>
 <span>  euclid_type <span class="op">=</span> <span class="st">"none"</span>,</span>
@@ -110,7 +110,9 @@ Available options include <code>"Gaussian"</code>, <code>"poisson"</code>,
 <code>"nbinomial"</code> (negative binomial), <code>"binomial"</code>, <code>"beta"</code>,
 <code>"Gamma"</code>, and <code>"invgauss"</code>. When <code>family</code>
 is <code>"Gaussian"</code>, arguments are passed to and evaluated by <code><a href="ssn_lm.html">ssn_lm()</a></code>.
-The default is <code>"Gaussian"</code>. Can be quoted or unquoted.</p></dd>
+Can be quoted or unquoted. Note that the <code>family</code> argument
+only takes a single value, rather than the list structure used by <a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm</a>.
+See Details for more.</p></dd>
 
 
 <dt>tailup_type</dt>
@@ -475,25 +477,25 @@ DOI: 10.1198/jasa.2009.ap08248.  Rejoinder pgs. 22--24.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ssn_glm(formula = Summer_mn ~ ELEV_DEM, ssn.object = mf04p, family = "Gamma", </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     tailup_type = "exponential", additive = "afvArea")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Residuals:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Deviance Residuals:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        Min         1Q     Median         3Q        Max </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -1.613e-03 -1.676e-04 -5.815e-05  2.332e-04  2.579e-03 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -0.0125918 -0.0028720 -0.0006556  0.0027528  0.0157742 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Coefficients (fixed):</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               Estimate Std. Error z value Pr(&gt;|z|)    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  7.1045136  0.7143946   9.945  &lt; 2e-16 ***</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ELEV_DEM    -0.0022450  0.0003582  -6.267 3.68e-10 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  7.4233120  0.5207267  14.256   &lt;2e-16 ***</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ELEV_DEM    -0.0024085  0.0002589  -9.301   &lt;2e-16 ***</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Pseudo R-squared: 0.1919</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Pseudo R-squared: 0.6477</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Coefficients (covariance):</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               Effect     Parameter   Estimate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   tailup exponential  de (parsill)  3.226e-02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   tailup exponential         range  1.676e+05</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               nugget        nugget  1.454e-10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           dispersion    dispersion  1.546e+06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   tailup exponential  de (parsill)  3.265e-02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   tailup exponential         range  1.006e+06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               nugget        nugget  2.110e-05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           dispersion    dispersion  8.114e+03</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
