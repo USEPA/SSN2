@@ -1,4 +1,4 @@
-# SSN 0.1.1
+# SSN2 0.1.1
 
 ## Minor Updates
 
