@@ -1,0 +1,147 @@
+---
+title: 'SSN2: The next generation of spatial stream network modeling in R'
+tags:
+  - R
+  - Spatial stream network
+  - Spatial correlation
+  - Spatial prediction
+  - Geostatistics
+  - Generalized linear model
+  - Torgegram
+authors:
+  - name: Michael Dumelle
+    orcid: 0000-0002-3393-5529
+    affiliation: "1" # (Multiple affiliations must be quoted)
+  - name: Erin E. Peterson
+    affiliation: 2
+  - name: Jay M. Ver Hoef
+    affiliation: 3
+  - name: Alan Pearse
+    affiliation: 4
+  - name: Daniel J. Isaak
+    affiliation: 5
+affiliations:
+ - name: Office of Research and Development, United States Environmental Protection Agency (USEPA)
+   index: 1
+ - name: EP Consulting and Queensland University of Technology, Centre for Data Science Brisbane Australia 4000 
+   index: 2
+ - name: NMFS Alaska Fisheries Science Center, United States National Oceanic and Atmospheric Administration (NOAA)
+   index: 3
+ - name: NIASRA, School of Mathematics and Applied Statistics, University of Wollongong
+   index: 4
+ - name: Rocky Mountain Research Station, United States Forest Service (USFS)
+   index: 5
+citation_author: Dumelle et. al.
+date: 11 November 2023
+year: 2023
+bibliography: paper.bib
+output: rticles::joss_article
+csl: apa.csl
+journal: JOSS
+editor_options: 
+  chunk_output_type: console
+---
+
+# Summary
+
+The `SSN2` **R** package provides tools for spatial statistical modeling, parameter estimation, and prediction on stream (river) networks. `SSN2` is the successor to the `SSN` **R** package [@ver2014ssn], which was archived alongside broader changes in the **R**-spatial ecosystem [@nowosad2023] that included 1) the retirement of `rgdal` [@bivand2021rgdal], `rgeos` [@bivand2020rgeos], and `maptools` [@bivand2021maptools] and 2) the lack of active development of `sp` [@bivand2013applied]. `SSN2` maintains compatibility with the input data file structures used by `SSN` but leverages modern **R**-spatial tools like `sf` [@pebesma2018sf] and provides many useful modeling features that were not available in `SSN`, including new modeling functions, updated fitting algorithms, and simplified syntax consistent with other **R** generic functions.
+
+# Statement of Need
+
+Streams provide vital aquatic services that sustain wildlife, provide drinking and irrigation water, and support recreational and cultural activities.  Data are often collected at various locations on a stream network and used to characterize spatial patterns in stream phenomena. For example, a manager may need to know how the amount of a hazardous chemical changes throughout a stream network to inform mitigation efforts. Comprehensive formulations of spatial stream network (SSN) models are provided by @ver2010moving, @peterson2010mixed, and @ver2014ssn. 
+
+SSN models use a spatial statistical modeling framework [@cressie1993statistics] to describe unique and complex dependencies on a stream network resulting from a branching network structure, directional water flow, and differences in flow volume. SSN models relate a continuous or discrete response variable to one or more explanatory variables, a spatially independent error term (i.e., nugget), and up to three spatially dependent error terms: tail-up errors, tail-down errors, and Euclidean errors. Tail-up errors restrict spatial dependence to flow-connected sites (i.e., water flows from an upstream to a downstream site) and incorporate spatial weights through an additive function to describe the branching network between sites. Tail-down errors describe spatial dependence between both flow-connected and flow-unconnected (i.e., sites that share a common downstream junction but not flow) sites, but spatial weights are not required. Euclidean errors describe spatial dependence between sites based on straight-line distance and are governed by factors not confined to the stream network like regional geology. The length-scales of spatial dependence in the tail-up, tail-down, and Euclidean errors are controlled by separate range parameters. In this paper, we show how to use the `SSN2` **R** package to fit and inspect SSN models and make predictions at unobserved locations on a stream network.
+
+# Package Overview
+
+Before fitting SSN models using `SSN2`, stream network and observation data sets must be pre-processed either by using the STARS toolset for ArcGIS Desktop versions 9.3x - 10.8x [@peterson2014stars] or by using the `openSTARS` **R** package [@kattwinkel2020preparing], which leverages open-source GRASS GIS. Pre-processing using STARS or `openSTARS` ends with the creation of an `.ssn` folder, which is non-proprietary and contains all the spatial, topological, and attribute information needed to fit models to data on a stream network using `SSN2`. Shapefiles and text files residing in the `.ssn` folder are read into **R** (using `ssn_import()`) and placed into a special list we call an SSN object. The SSN object contains geometry and topological information about the stream reaches and sites, as well as observed data and data for prediction at unsampled sites. 
+
+We first load `SSN2` into our current **R** session:
+```{r, warning = FALSE}
+library(SSN2)
+```
+
+The `SSN2` packages comes with an example `.ssn` folder called `MiddleFork04.ssn` that represents water temperatures recorded from a stream network in the Middle Fork of the Salmon River in Idaho, USA during 2004. We may store the file path to this example data:
+```{r}
+path <- system.file("lsndata/MiddleFork04.ssn", package = "SSN2")
+```
+
+Several functions in `SSN2` for reading and writing data (which we use shortly) directly manipulate the `.ssn` folder. If it is not desirable to directly manipulate the `MiddleFork04.ssn` data installed alongside `SSN2`, `MiddleFork04.ssn` may be copied it into a temporary directory and the relevant path to this alternative location can be stored:
+```{r}
+copy_lsn_to_temp()
+path <- paste0(tempdir(), "/MiddleFork04.ssn")
+```
+
+After specifying `path` (using `system.file()` or `copy_lsn_to_temp()`), we import the stream reaches, observed sites, and prediction sites (`pred1km`):
+```{r, message=FALSE, results='hide'}
+mf04p <- ssn_import(path, predpts = "pred1km")
+```
+
+We visualize the stream network, observed sites, and prediction sites (Figure$~$\ref{fig:steamnetwork}) using `ggplot2` [@wickham2016ggplot2]:
+```{r steamnetwork, fig.cap="Middle Fork 2004 stream networks. Observed sites are represented by brown, closed circles. Prediction sites are represented by blue, closed triangles.", out.width="75%", fig.align="center", warning=FALSE}
+library(ggplot2)
+ggplot() +
+  geom_sf(data = mf04p$edges) +
+  geom_sf(data = mf04p$preds$pred1km, pch = 17, color = "blue") +
+  geom_sf(data = mf04p$obs, color = "brown", size = 2) +
+  theme_bw()
+```
+
+We supplement the `.ssn` object with hydrologic distance matrices that preserve directionality, which are required for statistical modeling:
+```{r}
+ssn_create_distmat(mf04p, predpts = "pred1km", overwrite = TRUE)
+```
+
+Next, summer mean stream temperature (`Summer_mn`) is modeled as a function of elevation (`ELEV_DEM`) and watershed-averaged precipitation (`AREAWTMAP`) with exponential, spherical, and Gaussian structures for the tail-up, tail-down, and Euclidean errors, respectively. We fit and summarize this model:
+```{r}
+ssn_mod <- ssn_lm(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  ssn.object = mf04p,
+  tailup_type = "exponential",
+  taildown_type = "spherical",
+  euclid_type = "gaussian",
+  additive = "afvArea"
+)
+```
+
+A summary of the fitted model looks similar to a summary returned by `lm()` but also returns spatial dependence parameter estimates:
+```{r}
+summary(ssn_mod)
+```
+
+`SSN2` leverages the `tidy()`, `glance()`, and `augment()` functions [@robinson2021broom] to inspect the fitted model and provide diagnostics:
+```{r}
+tidy(ssn_mod, conf.int = TRUE)
+glance(ssn_mod)
+aug_mod <- augment(ssn_mod)
+subset(aug_mod, select = c(Summer_mn, .fitted, .resid, .hat, .cooksd))
+```
+
+Specific helper functions (e.g., `coef()`, `AIC()`, `residuals()`) can be used to obtain the same quantities returned by `tidy()`, `glance()`, and `augment()`:
+```{r}
+coef(ssn_mod)
+AIC(ssn_mod)
+head(residuals(ssn_mod))
+```
+
+Prediction at the unobserved sites is performed using `augment` (or `predict()`):
+```{r}
+aug_pred <- augment(ssn_mod, newdata = "pred1km", interval = "prediction")
+subset(aug_pred, select = c(.fitted, .lower, .upper))
+```
+
+Here, `.fitted` are the predictions, `.lower` are the lower bounds of 95% prediction intervals, and `.upper` are the upper bounds of 95% prediction intervals.
+
+Generalized spatial linear models for binary, count, proportion, and skewed data are available via the `ssn_glm()` function. Simulating data on a stream network is performed via `ssn_simulate()`.
+
+# Discussion
+
+SSN models are valuable tools for statistical analysis of data collected on stream networks and help improve inference about vital stream ecosystems. These models have been employed (using `SSN`) to better understand and manage water quality [@scown2017improving; @mcmanus2020variation], ecosystem metabolism [@rodriguez2019estimating], and climate change impacts on freshwater ecosystems [@ruesch2012projected; @isaak2017norwest], as well as generate aquatic population estimates [@isaak2017scalable], inform conservation planning [@rodriguez2019spatial; @sharma2021dendritic], and assess restoration activities [@fuller2022riparian], among other applications. The breadth and applicability of SSN models are further enhanced by data aggregation tools like the National Hydrography Dataset [@mckay2012nhdplus], National Stream Internet Project [@nagel2015national] and StreamCat [@hill2016stream].
+
+There are several spatial modeling packages in **R**, including `geoR` [@ribiero2022geoR], `gstat` [@pebesma2004gstat], `FRK` [@sainsbury2002frk], `fields` [@nychka2021fields], `R-INLA` [@lindgren2015bayesian], and `spmodel` [@dumelle2023spmodel], among others. However, these packages fail to account for the intricacies of stream networks. `rtop`  [@skoien2014rtop] allows for spatial prediction on stream networks but fails to provide options for model fitting and diagnostics. Thus, `SSN2` is the most complete tool available in **R** for working with SSN models. To learn more about `SSN2`, visit our CRAN webpage at [https://CRAN.R-project.org/package=SSN2](https://CRAN.R-project.org/package=SSN2).
+
+# Acknowledgements
+
+The views expressed in this manuscript are those of the authors and do not necessarily represent the views or policies of USEPA, NOAA, or USFS. Any mention of trade names, products, or services does not imply an endorsement by the U.S. government, USEPA, NOAA, or USFS. USEPA, NOAA, or USFS do not endorse any commercial products, services or enterprises.
+
+# References
