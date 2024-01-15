@@ -7,7 +7,7 @@
 ssn_glm(
   formula,
   ssn.object,
-  family = "Gaussian",
+  family,
   tailup_type = "none",
   taildown_type = "none",
   euclid_type = "none",
