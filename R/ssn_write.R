@@ -38,6 +38,7 @@
 #' ), overwrite = TRUE, import = TRUE)
 ssn_write <- function(ssn, path, overwrite = FALSE,
                       copy_dist = FALSE, import = FALSE) {
+
   file <- path
 
   suppressWarnings({

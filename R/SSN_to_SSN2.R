@@ -237,6 +237,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
     ## -----------------------------------------------
     ## Construct SSN object
     ## -----------------------------------------------
+    
     ssnlist <- list(
       edges = edges,
       obs = sites
@@ -245,7 +246,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
     if (exists("pred.list")) {
       ssnlist$preds <- pred.list
     } else {
-      ssnlist$preds <- NA
+      ssnlist$preds <- list()
     }
 
     ssnlist$path <- object@path
