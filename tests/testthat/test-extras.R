@@ -252,6 +252,7 @@ test_that("print an ssn", {
   expect_output(print(mf04p))
   expect_output(print(summary(mf04p)))
   expect_output(print(names(mf04p)))
+  expect_output(print(ssn_names(mf04p)))
 })
 
 

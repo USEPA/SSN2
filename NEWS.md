@@ -1,3 +1,14 @@
+# SSN2 0.1.2
+
+## Minor Updates
+
+* Added `ssn_names()` to return column names in the `edges`, `obs`, and `preds` elements of an SSN object.
+
+## Bug Fixes
+
+* Fixed a bug in `SSN_to_SSN2()` that caused an error using `ssn_write()` with no prediction sites.
+* Replaced `names.SSN()` with `ssn_names()`, as `names.SSN()` prevented proper naming of elements in the SSN object.
+
 # SSN2 0.1.1
 
 ## Minor Updates

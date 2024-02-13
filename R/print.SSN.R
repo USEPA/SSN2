@@ -31,7 +31,7 @@ print.SSN <- function(x, ...) {
   } else if (nrow(nobs) > 2) {
     cat("Object also includes", nrow(nobs) - 1, "sets of prediction points with a total of", sum(nobs[, 1]) - nobs[1, 1], "locations\n\n")
   }
-  cat("Variable names are (found using names(object)):\n")
+  cat("Variable names are (found using ssn_names(object)):\n")
   ## print(names(x$preds))
-  print(names(x))
+  print(ssn_names(x))
 }
