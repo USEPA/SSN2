@@ -3,6 +3,8 @@
 ## Minor Updates
 
 * Added `ssn_names()` to return column names in the `edges`, `obs`, and `preds` elements of an SSN object.
+* Changed `Matrix::rankMatrix(X, method = "tolNorm2")` to `Matrix::rankMatrix(X, method = "qr")` to enhance stability when determining linear independence in `X`, the design matrix of explanatory variables.
+* Replaced an error message with a warning message when `X` has perfect collinearities (i.e., is not full rank).
 
 ## Bug Fixes
 
