@@ -4,7 +4,9 @@
 #'
 #' @param object A fitted model object from [ssn_lm()] or [ssn_glm()].
 #' @param newdata A character vector that indicates the name of the prediction data set
-#'   in the SSN object for which predictions are desired. If omitted, predictions
+#'   for which predictions are desired (accessible via \code{object$ssn.object$preds}).
+#'   Note that the prediction data must be in the original SSN object used to fit the model.
+#'   If \code{newdata} is omitted, predictions
 #'   for all prediction data sets are returned. Note that the name \code{".missing"}
 #'   indicates the prediction data set that contains the missing observations in the data used
 #'   to fit the model.
