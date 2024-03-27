@@ -40,7 +40,7 @@ water flow, and differences in flow volume throughout the network
 [@peterson2013modelling]. In addition, stream networks are embedded
 within a spatial environment, which can also influence
 observations on the stream network. Traditional spatial
-statistical models, which are based solely on Eucliean distance, often fail to
+statistical models, which are based solely on Euclidean distance, often fail to
 adequately describe these unique and complex spatial dependencies. 
 
 Spatial stream network models are based on a moving-average
