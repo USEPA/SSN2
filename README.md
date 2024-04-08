@@ -3,6 +3,7 @@
 [![cran checks](https://badges.cranchecks.info/worst/SSN2.svg)](https://cran.r-project.org/web/checks/check_results_SSN2.html)
 [![R-CMD-check](https://github.com/USEPA/SSN2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/USEPA/SSN2/actions/workflows/R-CMD-check.yaml)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![status](https://joss.theoj.org/papers/66fd932526762f8ccd8bd9c3954e0e3d/status.svg)](https://joss.theoj.org/papers/66fd932526762f8ccd8bd9c3954e0e3d)
 <!-- badges: end -->
 
 # SSN2: Spatial Modeling on Stream Networks
