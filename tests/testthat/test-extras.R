@@ -1,11 +1,3 @@
-copy_lsn_to_temp()
-temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-mf04p <- ssn_import(
-  temp_path,
-  predpts = c("pred1km"),
-  overwrite = TRUE
-)
-
 test_that("covariance matrix functions run", {
 
 

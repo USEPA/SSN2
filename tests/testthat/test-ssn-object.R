@@ -2,14 +2,14 @@ test_that("ssn manipulation functions work", {
 
   expect_no_error(copy_lsn_to_temp())
 
-  mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-                      predpts = c("pred1km", "Knapp"),
-                      overwrite = TRUE
-  )
   expect_s3_class(mf04p, "SSN")
 
+  mf04p_new <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+                      predpts = c("pred1km", "Knapp"),
+                      overwrite = TRUE
 
-  expect_no_error(ssn_import_predpts(mf04p, predpts = "CapeHorn"))
+  )
+  expect_no_error(ssn_import_predpts(mf04p_new, predpts = "CapeHorn"))
 
   expect_no_error(ssn_update_path(mf04p, mf04p$path))
 
