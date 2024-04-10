@@ -76,7 +76,15 @@ library(SSN2)
 
 ## Contributing to `SSN2`
 
-We encourage users to propose changes to `SSN2`. Please see our contributing guide (`CONTRIBUTING.md`) for more detail.
+We encourage users to report bugs and/or contribute to `SSN2`. For more detail on how to do this, please see our contributing guide (`CONTRIBUTING.md`).
+
+## Getting Help
+
+There are several ways to get help with `SSN2`:
+
+1. Open a GitHub issue [link here](https://github.com/USEPA/SSN2/issues).
+2. Email the SSN support team (support@spatialstreamnetworks.com or Dumelle.Michael@epa.gov)
+3. Post on a support website like Stack Overflow or Cross Validated. 
 
 ## Example Usage
 
