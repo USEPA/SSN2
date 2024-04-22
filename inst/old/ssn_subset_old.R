@@ -40,12 +40,11 @@
 #'   directory.
 #'
 #' @name ssn_subset
-#' @export
 #' @examples
 #' ## Import SSN object
 #' copy_lsn_to_temp() ## Only needed for this example
 #' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-#'   predpts = c("pred1km", "Knapp"),
+#'   predpts = c("pred1km.shp", "Knapp"),
 #'   overwrite = TRUE
 #' )
 #'
@@ -63,13 +62,6 @@
 #'   overwrite = TRUE
 #' )
 ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
-
-  ## Add .ssn extension if necessary
-  if(substr(path, nchar(path)-3, nchar(path)) != ".ssn") {   
-    print(paste0("path must include .ssn extension. ", path, " updated to ", paste0(path, ".ssn")))
-    path <- paste0(path, ".ssn")
-  }
-  
   file <- path
 
   suppressWarnings({
@@ -147,8 +139,8 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
       rm(ind, ind2)
     }
 
-    ## Write sites to file
-    st_write(ssn.tmp$obs, paste0(file, "/sites.gpkg"), quiet = TRUE)
+    ## Write sites shapefile
+    st_write(ssn.tmp$obs, paste0(file, "/sites.shp"), quiet = TRUE)
 
 
     if (clip == FALSE) {
@@ -179,6 +171,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
 
       ## Subset edges
       ind.edges <- eval(substitute(subset), ssn.tmp$edges)
+      ## ind.edges<- eval(substitute(netID == 2), ssn.tmp$edges)
       ind.na <- is.na(ind.edges)
       ind.edges[ind.na] <- FALSE
       rm(ind.na)
@@ -207,7 +200,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
       edges.sub <- ssn.tmp$edges[ind.edges, ]
 
       ## Save subset of edges
-      st_write(edges.sub, paste0(ssn.tmp$path, "/edges.gpkg"), quiet = TRUE)
+      st_write(edges.sub, paste0(ssn.tmp$path, "/edges.shp"), quiet = TRUE)
 
 
       ## Subset prediction points
@@ -226,6 +219,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
           }
 
           ind.preds <- eval(substitute(subset), ssn.tmp$preds[[pred.name]])
+          ## ind.preds <- eval(substitute(netID == 2), ssn.tmp$preds[[pred.name]])
           ind.na <- is.na(ind.preds)
           ind.preds[ind.na] <- FALSE
           rm(ind.na)
@@ -249,7 +243,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
             }
             ## Subset predictions
             preds.sub <- ssn.tmp$preds[[pred.name]][ind.preds, ]
-            st_write(preds.sub, paste0(ssn.tmp$path, "/", pred.name, ".gpkg"),
+            st_write(preds.sub, paste0(ssn.tmp$path, "/", pred.name, ".shp"),
               quiet = TRUE
             )
             rm(preds.sub)
@@ -265,7 +259,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
       ind.dup <- !duplicated(edges.sub$netID)
       netID.list <- edges.sub$netID[ind.dup]
 
-      ## copy netID files
+      # copy netID files
       for (i in seq_len(length(netID.list))) {
         fn.old <- file.path(ssn$path, paste("netID", netID.list[i], ".dat", sep = ""))
         fn.new <- file.path(ssn.tmp$path, paste("netID", netID.list[i], ".dat", sep = ""))
