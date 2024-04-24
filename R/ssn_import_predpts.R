@@ -7,13 +7,6 @@
 #'   \code{ssn_glm}.
 #' @param predpts Name of the prediction point dataset to import in
 #'   character format. See details.
-#' @param format_additive Logical indicating whether the columns containing
-#'   the addtive function values should be formated for
-#'   \code{SSN2}. Default = \code{FALSE}.
-#' @param names_additive Character vector of column names in observed and
-#'   prediction site datasets containing additive function
-#'   values. Must be defined if \code{format_additive = TRUE}. Default =
-#'   \code{NULL}.
 #'
 #' @details \command{ssn_import_predpts} imports one set of prediction
 #'   points residing in the .ssn directory into an existing
@@ -25,16 +18,16 @@
 #'   datasets. The argument \code{predpts} accepts the name of the
 #'   prediction point dataset, with or without the file extension. If
 #'   it is passed as a named vector (of length 1), then the name
-#'   provided is used as the name for prediction dataset in the
-#'   \code{SSN} object prediction sites list
-#'   (e.g. \code{names(ssn.obj$preds)}). See
+#'   provided is used as the prediction dataset name in the \code{SSN}
+#'   object prediction sites list
+#'   (e.g. \code{names(ssn.obj$preds)}). Otherwise, the file basename
+#'   is used in the names attribute. See
 #'   \code{\link[SSN2]{ssn_import}} for a detailed description of the
-#'   prediction dataset format within the \code{SSN} class
-#'   object.
+#'   prediction dataset format within the \code{SSN} class object.
 #'
 #'   The prediction dataset specified in \code{predpts} must contain the
 #'   spatial, topological and attribute information needed to make
-#'   predictions using an ssn_lm or ssn_glm object.  This information
+#'   predictions using an ssn_lm or ssn_glm object. This information
 #'   is generated using the \code{SSNbler} package, which makes use of
 #'   the functionality found in the \code{sf} and \code{igraph}
 #'   packages to process streams data in vector format.
@@ -67,8 +60,7 @@
 #' ssn_gmod <- ssn_import_predpts(ssn_gmod, predpts = "CapeHorn")
 #' names(ssn_gmod$ssn.object$preds)
 #' 
-ssn_import_predpts <- function(x, predpts,
-                                format_additive = FALSE, names_additive = NULL) {
+ssn_import_predpts <- function(x, predpts) {
   
   obj.type <- class(x)
 
@@ -157,30 +149,6 @@ ssn_import_predpts <- function(x, predpts,
   if (sum(st_geometry_type(predpoints, by_geometry = TRUE) == "POINT") != nrow(predpoints)) {
     stop(paste0(predpts, " does not have POINT geometry"))
   }
-
-  ## if (format_additive == TRUE) {
-  ##   if (is.null(names_additive)) {
-  ##     stop("names_additive is required when format_additive = TRUE")
-  ##   }
-  ##   for (q in seq_len(length(names_additive))) {
-  ##     if (!names_additive[q] %in% colnames(predpoints)) {
-  ##       warning(paste0(names_additive[q], " is not found in ", predpts), call. = FALSE)
-  ##     } else {
-  ##       ## Extract afv column
-  ##       tmp.col <- st_drop_geometry(predpoints[, names_additive[q]])
-  ##       ## convert to character if column is numeric
-  ##       if (!inherits(tmp.col[, 1], "numeric")) {
-  ##         message(paste0(names_additive[q], " is not numeric. AFV values were not modified"))
-  ##       } else {
-  ##         tmp.col2 <- formatC(tmp.col[, 1],
-  ##           digits = 254, format = "f",
-  ##           drop0trailing = TRUE
-  ##         )
-  ##         predpoints[, names_additive[q]] <- tmp.col2
-  ##       }
-  ##     }
-  ##   }
-  ## }
 
   ## Add netgeom column
   predpoints[, "netgeom"] <- paste0("SNETWORK (", paste(
