@@ -4,7 +4,7 @@
 \alias{ssn_import_predpts}
 \title{Import prediction points into an SSN, ssn_lm, or ssn_glm object}
 \usage{
-ssn_import_predpts(x, predpts, format_additive = FALSE, names_additive = NULL)
+ssn_import_predpts(x, predpts)
 }
 \arguments{
 \item{x}{An object of class\code{SSN}, \code{ssn_lm}, or
@@ -12,15 +12,6 @@ ssn_import_predpts(x, predpts, format_additive = FALSE, names_additive = NULL)
 
 \item{predpts}{Name of the prediction point dataset to import in
 character format. See details.}
-
-\item{format_additive}{Logical indicating whether the columns containing
-the addtive function values should be formated for
-\code{SSN2}. Default = \code{FALSE}.}
-
-\item{names_additive}{Character vector of column names in observed and
-prediction site datasets containing additive function
-values. Must be defined if \code{format_additive = TRUE}. Default =
-\code{NULL}.}
 }
 \value{
 an object of class \code{SSN}, \code{ssn_lm}, or
@@ -42,16 +33,16 @@ directory. The path for an \code{SSN} object can be updated using
 datasets. The argument \code{predpts} accepts the name of the
 prediction point dataset, with or without the file extension. If
 it is passed as a named vector (of length 1), then the name
-provided is used as the name for prediction dataset in the
-\code{SSN} object prediction sites list
-(e.g. \code{names(ssn.obj$preds)}). See
+provided is used as the prediction dataset name in the \code{SSN}
+object prediction sites list
+(e.g. \code{names(ssn.obj$preds)}). Otherwise, the file basename
+is used in the names attribute. See
 \code{\link[SSN2]{ssn_import}} for a detailed description of the
-prediction dataset format within the \code{SSN} class
-object.
+prediction dataset format within the \code{SSN} class object.
 
 The prediction dataset specified in \code{predpts} must contain the
 spatial, topological and attribute information needed to make
-predictions using an ssn_lm or ssn_glm object.  This information
+predictions using an ssn_lm or ssn_glm object. This information
 is generated using the \code{SSNbler} package, which makes use of
 the functionality found in the \code{sf} and \code{igraph}
 packages to process streams data in vector format.

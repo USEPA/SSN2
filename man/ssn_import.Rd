@@ -108,9 +108,9 @@ mf04 <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
 ## Import SSN object with 3 sets of prediction sites
 mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
   predpts = c(
-    "pred1km.shp",
-    "CapeHorn.shp",
-    "Knapp.shp"
+    "pred1km",
+    "CapeHorn",
+    "Knapp"
   ),
   overwrite = TRUE
 )
