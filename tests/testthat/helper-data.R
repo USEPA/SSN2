@@ -8,3 +8,9 @@ mf04p <- ssn_import(
   predpts = c("pred1km", "CapeHorn", "Knapp"),
   overwrite = TRUE
 )
+ssn_create_distmat(
+  mf04p,
+  predpts = c("pred1km", "CapeHorn", "Knapp"),
+  overwrite = TRUE,
+  among_predpts = TRUE
+)
