@@ -7,8 +7,8 @@
 \source{
 \code{edges} are a modified version of the United States
 National Hydrography Dataset
-(http://nhd.usgs.gov/). \code{sites}, \code{pred1km}, \code{CapeHorn}
-and \code{Knapp} are unpublished United States Forest Service data.
+(http://nhd.usgs.gov/). \code{sites}, \code{pred1km} and \code{CapeHorn}
+are unpublished United States Forest Service data.
 }
 \description{
 The \code{MiddleFork04.ssn} data folder contains the spatial, attribute,
@@ -23,7 +23,6 @@ The \code{MiddleFork04.ssn} folder contains five geopackages:
 \item sites: geopackage with POINT geometry representing the observed site locations
 \item pred1km: geopackage with POINT geometry prediction site locations at
 approximately 1km intervals throughout the stream network
-\item Knapp: geopackage with POINT geometry representing prediction site locations on the Knapp River
 \item CapeHorn: geopackage with POINT geometry representing prediction site locations on the Cape Horn River
 }
 
@@ -32,8 +31,7 @@ topological information for the two stream networks in the Middle Fork 2004
 dataset.
 
 The distance folder contains four folders that store the hydrologic
-distance matrices for each of the point datasets (\code{obs}, \code{CapeHorn},
-\code{Knapp}, and \code{pred1km}). See \code{\link[=ssn_create_distmat]{ssn_create_distmat()}} for a
+distance matrices for each of the point datasets (\code{obs}, \code{CapeHorn}, and \code{pred1km}). See \code{\link[=ssn_create_distmat]{ssn_create_distmat()}} for a
 detailed description of the distance matrix file structure.
 
 Attribute data is also stored within each of the spatial
@@ -92,7 +90,7 @@ MWMT = maximum 7-day moving average of the maximum daily temperature
 \item snapdist: Distance (m) that site was moved when it was snapped to the edges
 }
 
-\code{pred1km}, \code{CapeHorn}, and \code{Knapp}:
+\code{pred1km} and \code{CapeHorn}:
 \itemize{
 \item rid: Reach identifier of the edge the site resides on
 \item pid: Point identifier
