@@ -1,10 +1,3 @@
-ssn_create_distmat(
-  ssn.object = mf04p,
-  predpts = c("pred1km"),
-  overwrite = TRUE,
-  among_predpts = TRUE
-)
-
 # fit an example model
 ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p, tailup_type = "exponential", additive = "afvArea")
 
@@ -21,6 +14,7 @@ initial_object_val <- get_initial_object(
 )
 
 test_that("dist object output appropriate", {
+
   # create distance object
   object <- get_dist_object(
     ssn.object = mf04p,
@@ -39,7 +33,7 @@ test_that("dist object output appropriate", {
   n_obs_dim <- c(n_obs, n_obs)
 
   # run test on object structure
-  expect_true(identical(names(object), names_vec))
+  expect_equal(names(object), names_vec)
   expect_equal(dim(object$distjunc_mat), n_obs_dim)
   expect_equal(dim(object$mask_mat), n_obs_dim)
   expect_equal(dim(object$a_mat), n_obs_dim)
@@ -47,13 +41,14 @@ test_that("dist object output appropriate", {
   expect_equal(dim(object$hydro_mat), n_obs_dim)
   expect_equal(dim(object$w_mat), n_obs_dim)
   expect_equal(dim(object$euclid_mat), n_obs_dim)
-  expect_true(is.vector(object$network_index))
-  expect_true(is.vector(object$pid))
-  expect_true(is.vector(object$dist_order))
-  expect_true(is.vector(object$inv_dist_order))
+  expect_equal(object$network_index, c(rep(2, 30), rep(1, 13), rep(2, 2)))
+  expect_equal(object$pid, seq_len(45))
+  expect_equal(object$dist_order, c(31:43, 1:30, 44:45))
+  expect_equal(object$inv_dist_order, c(14:43, 1:13, 44:45))
 })
 
 test_that("dist pred object output appropriate", {
+
   # create distance object
   dist_pred_object <- get_dist_pred_object(
     object = ssn_mod,
@@ -75,7 +70,7 @@ test_that("dist pred object output appropriate", {
   n_dim <- c(n_pred, n_obs)
 
   # run test on object structure
-  expect_true(identical(names(dist_pred_object), names_vec))
+  expect_equal(names(dist_pred_object), names_vec)
   expect_equal(dim(dist_pred_object$distjunca_pred_mat), n_dim)
   expect_equal(dim(t(dist_pred_object$distjuncb_pred_mat)), n_dim)
   expect_equal(dim(dist_pred_object$mask_pred_mat), n_dim)
@@ -84,17 +79,18 @@ test_that("dist pred object output appropriate", {
   expect_equal(dim(dist_pred_object$hydro_pred_mat), n_dim)
   expect_equal(dim(dist_pred_object$w_pred_mat), n_dim)
   expect_equal(dim(dist_pred_object$euclid_pred_mat), n_dim)
-  expect_true(is.vector(dist_pred_object$network_index))
-  expect_true(is.vector(dist_pred_object$pid))
-  expect_true(is.vector(dist_pred_object$dist_order))
-  expect_true(is.vector(dist_pred_object$inv_dist_order))
-  expect_true(is.vector(dist_pred_object$network_index_pred))
-  expect_true(is.vector(dist_pred_object$pid_pred))
-  expect_true(is.vector(dist_pred_object$dist_order_pred))
-  expect_true(is.vector(dist_pred_object$inv_dist_order_pred))
+  expect_equal(dist_pred_object$network_index, c(rep(2, 30), rep(1, 13), rep(2, 2)))
+  expect_equal(dist_pred_object$pid, seq_len(45))
+  expect_equal(dist_pred_object$dist_order, c(31:43, 1:30, 44:45))
+  expect_equal(dist_pred_object$inv_dist_order, c(14:43, 1:13, 44:45))
+  expect_equal(dist_pred_object$network_index_pred, mf04p$preds$pred1km$netID)
+  expect_equal(dist_pred_object$pid_pred, 46:220)
+  expect_equal(dist_pred_object$dist_order_pred, c(1:28, 71:85, 96, 121:122, 125:127, 134:136, 145:146, 156:158, 29:70, 86:95, 97:120, 123:124, 128:133, 137:144, 147:155, 159:175))
+  expect_equal(dist_pred_object$inv_dist_order_pred, c(1:28, 58:99, 29:43, 100:109, 44, 110:133, 45:46, 134:135, 47:49, 136:141, 50:52, 142:149, 53:54, 150:158, 55:57, 159:175))
 })
 
 test_that("dist pred bk object output appropriate", {
+
   # create distance object
   object <- get_dist_predbk_object(
     object = ssn_mod,
@@ -112,7 +108,7 @@ test_that("dist pred bk object output appropriate", {
   n_pred_dim <- c(n_pred, n_pred)
 
   # run test on object structure
-  expect_true(identical(names(object), names_vec))
+  expect_equal(names(object), names_vec)
   expect_equal(dim(object$distjunc_mat), n_pred_dim)
   expect_equal(dim(object$mask_mat), n_pred_dim)
   expect_equal(dim(object$a_mat), n_pred_dim)
@@ -120,8 +116,8 @@ test_that("dist pred bk object output appropriate", {
   expect_equal(dim(object$hydro_mat), n_pred_dim)
   expect_equal(dim(object$w_mat), n_pred_dim)
   expect_equal(dim(object$euclid_mat), n_pred_dim)
-  expect_true(is.vector(object$network_index))
-  expect_true(is.vector(object$pid))
-  expect_true(is.vector(object$dist_order))
-  expect_true(is.vector(object$inv_dist_order))
+  expect_equal(object$network_index, mf04p$preds$pred1km$netID)
+  expect_equal(object$pid, 46:220)
+  expect_equal(object$dist_order, c(1:28, 71:85, 96, 121:122, 125:127, 134:136, 145:146, 156:158, 29:70, 86:95, 97:120, 123:124, 128:133, 137:144, 147:155, 159:175))
+  expect_equal(object$inv_dist_order, c(1:28, 58:99, 29:43, 100:109, 44, 110:133, 45:46, 134:135, 47:49, 136:141, 50:52, 142:149, 53:54, 150:158, 55:57, 159:175))
 })
