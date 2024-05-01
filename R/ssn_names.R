@@ -10,19 +10,36 @@
 #' @name ssn_names
 #' @export
 ssn_names <- function(ssn.object) {
-  d <- ssn.object$obs
-  no <- names(d)
+
+  if (length(ssn.object$obs) == 0) {
+    no <- 0
+    nameso <- NULL
+  } else {
+    # is obs present
+    no <- 1
+    nameso <- names(ssn.object$obs)
+  }
   np <- length(ssn.object$preds)
-  namesList <- vector("list", np + 1)
-  namesList[[1]] <- no
-  names4List <- "obs"
+  nt <- no + np
+  if (nt == 0) {
+    return(cat("There are no observed or prediction data and hence, no variables names."))
+  }
+
+  namesList <- vector("list", nt)
+  if (no == 1) {
+    namesList[[1]] <- nameso
+    names4List <- "obs"
+  } else {
+    names4List <- NULL
+  }
   if (np > 0) {
+    prednames <- names(ssn.object$preds)
     for (i in seq_len(np)) {
-      names4List <- c(names4List, names(ssn.object$preds)[[i]])
-      d <- ssn.object$preds[[i]]
-      namesList[[i + 1]] <- names(d)
+      namespi <- names(ssn.object$preds[[i]])
+      names4List <- c(names4List, prednames[i])
+      namesList[[i + no]] <- namespi
     }
   }
   names(namesList) <- names4List
-  return(namesList)
+  print(namesList)
 }
