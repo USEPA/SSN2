@@ -9,10 +9,10 @@
 #'   found within the .ssn folder. See details.
 #' @param overwrite default = \code{FALSE}. If \code{TRUE}, overwrite
 #'   existing binaryID.db files.
-#' 
+#'
 #' @details The \command{ssn_import} function imports spatial data (shapefile or geopackage format)
 #'   from a .ssn folder generated using the
-#'   \code{SSNbler} package function \code{\link[SSNbler]{lsn_to_ssn}}. The .ssn folder contains all of the spatial, topological and
+#'   \code{SSNbler} package function \code{SSNbler::lsn_to_ssn}. The .ssn folder contains all of the spatial, topological and
 #'   attribute data needed to fit a spatial statistical stream network
 #'   model to streams data.  This includes:
 #' \itemize{
@@ -80,7 +80,7 @@
 #'     \item{path: The local filepath for the .ssn directory associated with the \code{SSN}
 #'     object.}
 #'   }
-#' 
+#'
 #' @references
 #' Peterson, E., and Ver Hoef, J.M. (2014) STARS: An
 #'   ArcGIS toolset used to calculate the spatial information needed
@@ -111,15 +111,15 @@
 
 ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
                         overwrite = FALSE) {
-  
+
   if(!dir.exists(path)) stop("Cannot find the .ssn folder.")
- 
+
   # Get wd
   old_wd <- getwd()
   on.exit(setwd(old_wd)) # if the function crashes or finishes, it will restore the initial working directory
-  
+
   local_dir(path)
-  
+
   ## Adjust if relative pathname is supplied in path
   if(substr(path, start = 1, stop = 2) == "./") {
     rel.path <- substr(path, start = 2, stop = nchar(path))
@@ -140,16 +140,16 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
     p.names <- NULL
 
     for(d in 1:length(predpts)) {
-      
+
       shp.ext<- substr(predpts[d], nchar(predpts[d])-3, nchar(predpts[d])) == ".shp"
       gpkg.ext <- substr(predpts[d], nchar(predpts[d])-4, nchar(predpts[d])) == ".gpkg"
-      
+
       p.names[d] <- ifelse(
         shp.ext == TRUE, substr(predpts[d], 1, nchar(predpts[d])-4),
 
                  ifelse(gpkg.ext == TRUE,
                         substr(predpts[d], 1, nchar(predpts[d])-5),
-                        
+
                  ifelse(shp.ext == FALSE & gpkg.ext == FALSE, predpts[d])))
     }
   }
@@ -159,13 +159,13 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   if(!is.null(predpts)) {
     predpts<- basename(predpts)
   }
-  
-   
+
+
   ## ----------------------------------------------------
   ## Import edges
   ## ----------------------------------------------------
   sfedges <- get_sf_obj("edges")
-  
+
   if(exists("sfedges")) {
     ## Check geometry type
     if(sum(st_geometry_type(sfedges, by_geometry = TRUE) ==
@@ -177,7 +177,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
     if(!"geometry" %in% colnames(sfedges)) {
       sf::st_geometry(sfedges) <- "geometry"
     }
-    
+
     ## Add network geometry column to edges
     sfedges[, "netgeom"] <-
       paste0("ENETWORK (", paste(
@@ -185,21 +185,21 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
                              sfedges$rid,
                              sfedges$upDist),
              ")", sep = "")
-    
+
   } else {
     stop(paste0("Edges is missing from ", path))
   }
-  
+
   ## ----------------------------------------------------
   ## Import obs
   ## ----------------------------------------------------
-  
+
   ## Check observation sites exist and import
-  if(include_obs == TRUE) {   
-    
+  if(include_obs == TRUE) {
+
     ## Check the file exists and then ingest, process
     sfsites <- get_sf_obj("sites")
-      
+
     ## Check geometry type
     if(sum(st_geometry_type(sfsites, by_geometry = TRUE) ==
            "POINT") != nrow(sfsites)) {
@@ -210,8 +210,8 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
     if(!"geometry" %in% colnames(sfsites)) {
       sf::st_geometry(sfsites) <- "geometry"
     }
-    
-    ## ## Add network geometry column  
+
+    ## ## Add network geometry column
     ##sfsites<- create_netgeom2(sfsites, type = "point")
     sfsites[, "netgeom"] <- paste0("SNETWORK (",
                                    paste(
@@ -221,7 +221,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   } else {
     sfsites <- NA
   }
-  
+
   ## ----------------------------------------------------
   ## Import preds
   ## ----------------------------------------------------
@@ -247,7 +247,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
                                                        tmp.preds$locID
                                                      ),")",sep = "")
 
-      
+
       sfpreds[[m]] <- tmp.preds
       ## names(sfpreds)[m] <- substr(basename(predpts[m]),
       ##                             start = 1,
@@ -262,11 +262,11 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   } else {
     sfpreds <- list()
   }
-  
+
 
   #################################
   ##if(preds.exist) {
-    
+
   ##   ## Check the files exist and then import prediction points
   ##   if(all(file.exists(unlist(predpts)))) {
 
@@ -278,7 +278,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   ##     } else {
   ##       names(sfpreds) <- names(predpts)
   ##     }
-      
+
   ##     for(m in seq_len(length(predpts))) {
   ##       ## Check filename
   ##       if(grepl(".gpkg", predpts[m])) {
@@ -287,12 +287,12 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   ##       if(grepl(".shp", predpts[m])) {
   ##         pred.format = ".shp"
   ##       }
-  ##       if(!exists("pred.format")) { 
+  ##       if(!exists("pred.format")) {
   ##         stop("All predpts must be in shapefile or geopackage format and include the file extension")
   ##       }
 
   ##       tmp.preds <- st_read(paste0(path, "/", predpts[[m]]), quiet = TRUE)
-        
+
   ##       ## Check geometry type
   ##       if(sum(st_geometry_type(tmp.preds, by_geometry = TRUE) == "POINT") != nrow(tmp.preds)) {
   ##         stop(paste0(predpts[[m]], " do not have POINT geometry"))
@@ -302,12 +302,12 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   ##       if(!"geometry" %in% colnames(tmp.preds)) {
   ##         sf::st_geometry(tmp.preds) <- "geometry"
   ##       }
-                
+
   ##       ## Add network geometry column
   ##       tmp.preds<- create_netgeom2(tmp.preds, type = "point")
-        
+
   ##       sfpreds[[m]] <- tmp.preds
-        
+
   ##       rm(tmp.preds)
   ##     }
   ##   } else {
@@ -316,22 +316,22 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   ## } else {
   ##   sfpreds <- list()
   ## }
-  
+
   ## ---------------------------------------------------------
   ## Create SSN object and return
   ## ---------------------------------------------------------
   ssnlist <- list(edges = sfedges, obs = sfsites, preds = sfpreds, path = path)
   class(ssnlist) <- "SSN"
-  
+
   ## Create Binary ID database
   createBinaryID(ssnlist, overwrite = overwrite)
-  
+
   ## Warning when observation sites are not included in SSN
   if(is.logical(ssnlist$obs)) {
     warning("SSN does not include observed sites, which are needed to fit models. If this was a mistake, run ssn_import2 with obs correctly defined")
   }
-  
+
   ## Return
   return(ssnlist)
 }
-  
+

@@ -38,7 +38,7 @@ This function writes an \code{SSN} object to a local
 copy_lsn_to_temp()
 ## Import SSN object with prediction sites
 mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-  predpts = c("pred1km.shp"),
+  predpts = "pred1km",
   overwrite = TRUE
 )
 

@@ -40,7 +40,7 @@ and creates an \code{SSN} object.
 \details{
 The \command{ssn_import} function imports spatial data (shapefile or geopackage format)
 from a .ssn folder generated using the
-\code{SSNbler} package function \code{\link[SSNbler]{lsn_to_ssn}}. The .ssn folder contains all of the spatial, topological and
+\code{SSNbler} package function \code{SSNbler::lsn_to_ssn}. The .ssn folder contains all of the spatial, topological and
 attribute data needed to fit a spatial statistical stream network
 model to streams data.  This includes:
 \itemize{

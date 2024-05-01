@@ -131,7 +131,7 @@ locations will also be calculated if \code{among_predpts = TRUE}.
 copy_lsn_to_temp()
 ## Import SSN data
 mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-  predpts = c("pred1km.shp", "Knapp"),
+  predpts = c("pred1km.gpkg", "Knapp"),
   overwrite = TRUE
 )
 

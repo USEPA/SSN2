@@ -26,7 +26,7 @@
 #' copy_lsn_to_temp()
 #' ## Import SSN object with prediction sites
 #' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-#'   predpts = c("pred1km.shp"),
+#'   predpts = "pred1km",
 #'   overwrite = TRUE
 #' )
 #'
@@ -43,11 +43,11 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
                       copy_dist = FALSE, import = FALSE) {
 
   ## Add .ssn extension if necessary
-  if(substr(path, nchar(path)-3, nchar(path)) != ".ssn") {   
+  if(substr(path, nchar(path)-3, nchar(path)) != ".ssn") {
     print(paste0("path must include .ssn extension. ",
                  path, " updated to ", paste0(path, ".ssn")))
     path <- paste0(path, ".ssn")
-  } 
+  }
 
   suppressWarnings({
     if (!file.exists(path)) {
@@ -72,12 +72,12 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
     ssn.tmp$path <- getwd()
 
     ssn.files <- list.files(ssn$path)
-    
-    ind.gpkg <- substr(ssn.files, nchar(ssn.files) - 4, nchar(ssn.files)) == ".gpkg" 
-    ind.shp <- substr(ssn.files, nchar(ssn.files) - 3, nchar(ssn.files)) == ".shp"  
+
+    ind.gpkg <- substr(ssn.files, nchar(ssn.files) - 4, nchar(ssn.files)) == ".gpkg"
+    ind.shp <- substr(ssn.files, nchar(ssn.files) - 3, nchar(ssn.files)) == ".shp"
 
     sub.list <- substr(ssn.files[ind.gpkg], 1, nchar(ssn.files[ind.gpkg]) - 5)
-    sub.list <- c(sub.list, substr(ssn.files[ind.shp], 1, nchar(ssn.files[ind.shp]) - 4))    
+    sub.list <- c(sub.list, substr(ssn.files[ind.shp], 1, nchar(ssn.files[ind.shp]) - 4))
 
     ind.list <- vector(mode = "logical", length = length(ssn.files))
 
@@ -97,7 +97,7 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
       }
     }
     rm(fn.old, fn.new)
-   
+
     ## Copy distance matrices
     if (copy_dist == TRUE & ("distance" %in% ssn.files)) {
       file.copy(paste0(ssn$path, "/distance"), getwd(), recursive = TRUE)
