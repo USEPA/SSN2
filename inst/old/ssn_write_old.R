@@ -14,12 +14,9 @@
 #'
 #' @return{ssn_write} creates an .ssn directory that contains the
 #'   spatial, topological, and attribute information stored in the
-#'   original \code{SSN} object. Spatial datasets found in the
-#'   \code{SSN} object (e.g. edges, obs, and prediction sites) are
-#'   saved in geopackage format. When \code{import = TRUE}, the
+#'   original \code{SSN} object. When \code{import = TRUE}, the
 #'   \code{SSN} object is imported and returned.
 #'
-#' @export
 #' @examples
 #' ## For examples only, copy MiddleFork04.ssn directory to R's
 #' # temporary directory
@@ -31,8 +28,7 @@
 #' )
 #'
 #' ## Write SSN to new .ssn directory
-#' ssn_write(mf04p, path = paste0(tempdir(), "/tempSSN.ssn"),
-#'   overwrite = TRUE)
+#' ssn_write(mf04p, path = paste0(tempdir(), "/tempSSN.ssn"))
 #'
 #' ## Write SSN to .ssn directory and return SSN object
 #' tempSSN <- ssn_write(mf04p, path = paste0(
@@ -42,42 +38,33 @@
 ssn_write <- function(ssn, path, overwrite = FALSE,
                       copy_dist = FALSE, import = FALSE) {
 
-  ## Add .ssn extension if necessary
-  if(substr(path, nchar(path)-3, nchar(path)) != ".ssn") {   
-    print(paste0("path must include .ssn extension. ",
-                 path, " updated to ", paste0(path, ".ssn")))
-    path <- paste0(path, ".ssn")
-  } 
+  file <- path
 
   suppressWarnings({
-    if (!file.exists(path)) {
-      dir.create(path)
+    if (!file.exists(file)) {
+      dir.create(file)
     } else {
-      if (overwrite == FALSE) stop(paste0(path, " exists and overwrite = FALSE"))
+      if (overwrite == FALSE) stop("file exists and overwrite = FALSE")
       if (overwrite == TRUE) {
-        unlink(path, recursive = TRUE)
-        dir.create(path)
+        unlink(file, recursive = TRUE)
+        dir.create(file)
       }
     }
 
     old_wd <- getwd()
     on.exit(setwd(old_wd))
-    setwd(path)
+    setwd(file)
 
-    #######################################################################
-    ## Get vector of filenames not associated with shapefiles or geopackages
+    ## Get list of files NOT associated with shapefiles
     ssn.tmp <- ssn
     pred.len <- length(ssn.tmp$preds)
 
     ssn.tmp$path <- getwd()
 
     ssn.files <- list.files(ssn$path)
-    
-    ind.gpkg <- substr(ssn.files, nchar(ssn.files) - 4, nchar(ssn.files)) == ".gpkg" 
-    ind.shp <- substr(ssn.files, nchar(ssn.files) - 3, nchar(ssn.files)) == ".shp"  
+    ind.shp <- substr(ssn.files, nchar(ssn.files) - 3, nchar(ssn.files)) == ".shp"
 
-    sub.list <- substr(ssn.files[ind.gpkg], 1, nchar(ssn.files[ind.gpkg]) - 5)
-    sub.list <- c(sub.list, substr(ssn.files[ind.shp], 1, nchar(ssn.files[ind.shp]) - 4))    
+    sub.list <- substr(ssn.files[ind.shp], 1, nchar(ssn.files[ind.shp]) - 4)
 
     ind.list <- vector(mode = "logical", length = length(ssn.files))
 
@@ -85,7 +72,6 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
       tmp <- unlist(strsplit(ssn.files[j], "[.]"))
       if ((tmp[1] %in% sub.list) == TRUE) ind.list[j] <- TRUE
     }
-
     ssn.files <- ssn.files[!ind.list]
 
     ## Copy files to new .ssn directory
@@ -97,7 +83,7 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
       }
     }
     rm(fn.old, fn.new)
-   
+
     ## Copy distance matrices
     if (copy_dist == TRUE & ("distance" %in% ssn.files)) {
       file.copy(paste0(ssn$path, "/distance"), getwd(), recursive = TRUE)
@@ -105,11 +91,11 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
 
     ## Copy observed sites if they exist
     if (class(ssn.tmp$obs)[1] == c("sf")) {
-      st_write(ssn$obs, paste0(ssn.tmp$path, "/sites.gpkg"), quiet = TRUE)
+      st_write(ssn$obs, paste0(ssn.tmp$path, "/sites.shp"), quiet = TRUE)
     }
 
     ## Copy edges
-    st_write(ssn$edges, paste0(ssn.tmp$path, "/edges.gpkg"), quiet = TRUE)
+    st_write(ssn$edges, paste0(ssn.tmp$path, "/edges.shp"), quiet = TRUE)
 
     ## Copy prediction sites
     if (pred.len > 0) {
@@ -122,7 +108,7 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
         pred.name <- pred.name.vec[i]
         st_write(ssn$preds[[pred.name]], paste0(
           ssn.tmp$path, "/",
-          pred.name, ".gpkg"
+          pred.name, ".shp"
         ),
         quiet = TRUE
         )
@@ -132,7 +118,7 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
 
     ## Import SSN without prediction sites
     if (import == TRUE & pred.len == 0) {
-      ssn.tmp <- ssn_import(ssn.tmp$path, overwrite = FALSE)
+      ssn.tmp2 <- ssn_import(ssn.tmp$path, overwrite = FALSE)
       return(ssn.tmp2)
     }
     ## Import SSN with all prediction sites

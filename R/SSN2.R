@@ -18,4 +18,5 @@
 #'   reformulate rbeta rgamma rnbinom rnorm rpois rstandard terms var vcov
 #' @importFrom tibble tibble as_tibble
 #' @importFrom utils read.table tail
+#' @importFrom withr local_dir
 NULL
