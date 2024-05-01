@@ -328,7 +328,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
 
   ## Warning when observation sites are not included in SSN
   if(is.logical(ssnlist$obs)) {
-    warning("SSN does not include observed sites, which are needed to fit models. If this was a mistake, run ssn_import2 with obs correctly defined")
+    warning("SSN does not include observed sites, which are needed to fit models. If this was a mistake, run ssn_import() with obs correctly defined")
   }
 
   ## Return
