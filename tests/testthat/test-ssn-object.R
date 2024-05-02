@@ -5,7 +5,7 @@ test_that("ssn manipulation functions work", {
   expect_s3_class(mf04p, "SSN")
 
   mf04p_new <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-                      predpts = c("pred1km", "Knapp"),
+                      predpts = c("pred1km"),
                       overwrite = TRUE
 
   )
@@ -15,7 +15,7 @@ test_that("ssn manipulation functions work", {
 
   expect_message(ssn_create_distmat(mf04p, predpts = c("pred1km")))
   expect_no_error(ssn_create_distmat(mf04p, overwrite = TRUE))
-  expect_no_error(ssn_create_distmat(mf04p, predpts = c("pred1km", "Knapp"),
+  expect_no_error(ssn_create_distmat(mf04p, predpts = c("pred1km"),
                      overwrite = TRUE, among_predpts = TRUE, only_predpts = TRUE))
 
 

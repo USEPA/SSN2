@@ -96,7 +96,7 @@ predictions can be made.
 ## Import SSN object
 copy_lsn_to_temp() ## Only needed for this example
 ssn <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-  predpts = c("pred1km", "Knapp", "CapeHorn"),
+  predpts = c("pred1km", "CapeHorn"),
   overwrite = TRUE
 )
 
