@@ -102,8 +102,7 @@
 #' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
 #'   predpts = c(
 #'     "pred1km",
-#'     "CapeHorn",
-#'     "Knapp"
+#'     "CapeHorn"
 #'   ),
 #'   overwrite = TRUE
 #' )

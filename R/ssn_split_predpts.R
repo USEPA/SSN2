@@ -9,7 +9,7 @@
 #'
 #' @param ssn An \code{SSN} object.
 #' @param predpts A character string representing the name of the
-#'   prediction dataset. 
+#'   prediction dataset.
 #' @param size_predpts numeric value representing the size of the new
 #'   prediction sets. The existing prediction set is split equally to
 #'   produce multiple prediction sets of this size
@@ -70,7 +70,7 @@
 #' ## Import SSN object
 #' copy_lsn_to_temp() ## Only needed for this example
 #' ssn <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-#'   predpts = c("pred1km", "Knapp", "CapeHorn"),
+#'   predpts = c("pred1km", "CapeHorn"),
 #'   overwrite = TRUE
 #' )
 #'

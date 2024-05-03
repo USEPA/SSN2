@@ -196,7 +196,7 @@ After specifying `path` (using `system.file()` or `copy_lsn_to_temp()`), we impo
 ```{r}
 mf04p <- ssn_import(
   path = path,
-  predpts = c("pred1km", "CapeHorn", "Knapp"),
+  predpts = c("pred1km", "CapeHorn"),
   overwrite = TRUE
 )
 ```
@@ -246,7 +246,7 @@ Later we will fit models to stream network data. Before doing this, however, we 
 ```{r}
 ssn_create_distmat(
   ssn.object = mf04p,
-  predpts = c("pred1km", "CapeHorn", "Knapp"),
+  predpts = c("pred1km", "CapeHorn"),
   among_predpts = TRUE,
   overwrite = TRUE
 )
@@ -488,7 +488,7 @@ predict(ssn_mod)
 predict(ssn_mod, newdata = "all")
 ```
 
-makes predictions for `pred1km`, `Knapp`, and `CapeHorn` (the names of `mf04p$preds`). Lastly, if there are observations (in the `obs` object) whose response is missing (`NA`), these observations are removed from model fitting and moved to a prediction data set named `.missing`. Then predictions can be obtained at these locations.
+makes predictions for `pred1km` and `CapeHorn` (the names of `mf04p$preds`). Lastly, if there are observations (in the `obs` object) whose response is missing (`NA`), these observations are removed from model fitting and moved to a prediction data set named `.missing`. Then predictions can be obtained at these locations.
 
 We can also predict the average value in a region using block Prediction (instead of making point predictions). We predict the average summer mean temperature throughout the Middle Fork stream network by running
 ```{r}

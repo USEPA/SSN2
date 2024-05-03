@@ -114,7 +114,7 @@
 #' copy_lsn_to_temp()
 #' ## Import SSN data
 #' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-#'   predpts = c("pred1km.gpkg", "Knapp"),
+#'   predpts = c("pred1km.gpkg", "CapeHorn"),
 #'   overwrite = TRUE
 #' )
 #'
@@ -129,7 +129,7 @@
 #' ## Distance matrices for observations and pred1km prediction sites are
 #' ## not recalculated.
 #' ssn_create_distmat(mf04p,
-#'   predpts = "Knapp", overwrite = TRUE,
+#'   predpts = "CapeHorn", overwrite = TRUE,
 #'   among_predpts = TRUE, only_predpts = TRUE
 #' )
 ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,

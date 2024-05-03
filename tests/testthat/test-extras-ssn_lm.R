@@ -4,7 +4,7 @@ if (test_local) {
 
   ssn_create_distmat(
     ssn.object = mf04p,
-    predpts = c("pred1km", "CapeHorn", "Knapp"),
+    predpts = c("pred1km", "CapeHorn"),
     overwrite = TRUE
   )
 
