@@ -11,7 +11,7 @@
 #' @export
 ssn_names <- function(ssn.object) {
 
-  if (length(ssn.object$obs) == 0) {
+  if (identical(ssn.object$obs, NA)) {
     no <- 0
     nameso <- NULL
   } else {

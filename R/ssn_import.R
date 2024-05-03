@@ -219,8 +219,8 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
                                      sfsites$ratio, sfsites$pid, sfsites$locID),
                                    ")", sep = "")
   } else {
-    # sfsites <- NA
-    sfsites <- list()
+    sfsites <- NA
+    # sfsites <- list()
   }
 
   ## ----------------------------------------------------
