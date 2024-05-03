@@ -797,5 +797,4 @@ labs <- setdiff(labs, c("setup", "get-labels"))
 
 # References {.unnumbered}
 
-::: {#refs}
-:::
+<div id="refs"></div>
