@@ -13,3 +13,4 @@
 ^CRAN-SUBMISSION$
 ^CONTRIBUTING\.md$
 ^inst/joss$
+^inst/tutorials$

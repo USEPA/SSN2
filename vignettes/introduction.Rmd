@@ -309,7 +309,7 @@ The first argument to `Torgegram()` is `formula`. Residuals from a non-spatial l
 plot(tg)
 ```
 
-The flow-connected semivariances seem to generally increase with distance, which suggests that the model will benefit from at least a tail-up component. The takeaway for flow-unconnected and Euclidean semivariances is less clear -- they seem to generally increase with distance but there are some short distances with high semivariances. This suggests that tail-down and Euclidean components may not be too impactful on the model fit. We investigate this next while we fit a model with all three components: tail-up, tail-down, and Euclidean.
+The flow-connected semivariances seem to generally increase with distance, which suggests that the model will benefit from at least a tail-up component. The takeaway for flow-unconnected and Euclidean semivariances is less clear -- they seem to generally increase with distance but there are some short distances with high semivariances. We more empirically investigate the impact of each dependence structure next while we fit a model with all three components: tail-up, tail-down, and Euclidean.
 
 We fit a spatial stream network model regressing summer mean stream temperature on elevation and watershed-averaged precipitation using an exponential tail-up covariance function with additive weights created using watershed area (`afvArea`), a spherical tail-down covariance function, a Gaussian Euclidean covariance function, and a nugget effect by running
 
