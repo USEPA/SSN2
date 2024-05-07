@@ -1,6 +1,6 @@
 Package: SSN2
 Title: Spatial Modeling on Stream Networks
-Version: 0.1.2
+Version: 0.2.0
 Authors@R: c(
     person(given = "Michael",
            family = "Dumelle",

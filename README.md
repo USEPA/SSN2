@@ -25,7 +25,7 @@ citation(package = "SSN2")
 #> 
 #> To cite SSN2 in publications use:
 #> 
-#>   Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023). SSN2: Spatial Modeling on Stream Networks in R. R package version 0.1.0
+#>   Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023). SSN2: Spatial Modeling on Stream Networks in R. R package version 0.2.0
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
@@ -33,7 +33,7 @@ citation(package = "SSN2")
 #>     title = {{SSN2}: Spatial Modeling on Stream Networks in {R}},
 #>     author = {Michael Dumelle and Erin Peterson and Jay M. {Ver Hoef} and Alan Pearse and Dan Isaak},
 #>     year = {2023},
-#>     note = {{R} package version 0.1.0},
+#>     note = {{R} package version 0.2.0},
 #>   }
 ```
 

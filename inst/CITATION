@@ -14,11 +14,11 @@ bibentry(
                           family = "Isaak")
                           ),
   year         = "2023",
-  note         = "{R} package version 0.1.0",
+  note         = "{R} package version 0.2.0",
 
   header       = "To cite SSN2 in publications use:",
   textVersion  =
   paste("Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023).",
         "SSN2: Spatial Modeling on Stream Networks in R.",
-        "R package version 0.1.0")
+        "R package version 0.2.0")
 )
