@@ -142,7 +142,7 @@ and for sites
 
 **The data used to define the `netgeom` column are found in the edges,**
 **observed sites, and prediction sites geopackages, which are created**
-**using the `STARS` or `openSTARS` software.**
+**using the `SSNbler` (recommended), `STARS`, or `openSTARS` software.**
 For edges, this includes a
 unique network identifier (`netID`) and reach (i.e., edge) identifier
 (`rid`), as well as the distance between the most downstream location on

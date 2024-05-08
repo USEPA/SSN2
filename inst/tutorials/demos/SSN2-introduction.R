@@ -68,6 +68,8 @@ tg <- Torgegram(
   type = c("flowcon", "flowuncon", "euclid")
 )
 ## Visualize Torgegram
+## all types seem to be increasing with distance, suggesting at least some
+## form of spatial dependence
 plot(tg)
 
 # Model Building ####
@@ -105,7 +107,7 @@ ssn_mod3 <- ssn_lm(
 ## Glance at all model fits (look for lowest AIC)
 glances(ssn_mod, ssn_mod2, ssn_mod3)
 
-## leave-one-out cross validation for each model; find RMSPE
+## leave-one-out cross validation for each model (look for lowest RMSPE)
 loocv_mod <- loocv(ssn_mod)
 loocv_mod
 loocv_mod$RMSPE
@@ -133,14 +135,14 @@ ml_mod2 <- ssn_lm(
   estmethod = "ml"
 )
 
-## glance at model fit and leave-one-out
+## glance at model fit and leave-one-out (look for lower AIC, RMSPE)
 glances(ml_mod, ml_mod2)
 loocv_mod_ml <- loocv(ml_mod)
 loocv_mod_ml$RMSPE
 loocv_mod_ml2 <- loocv(ml_mod2)
 loocv_mod_ml2$RMSPE
 
-## Refit final model using REML
+## Refit final model using REML (look for lower RMSPE)
 loocv_mod$RMSPE
 loocv_mod_ml$RMSPE
 
@@ -174,14 +176,14 @@ predict(ssn_mod, newdata = "pred1km")
 aug_preds <- augment(ssn_mod, newdata = "pred1km")
 aug_preds[, ".fitted"]
 
-## Visualize predictions ont he network
+## Visualize predictions on the network
 ggplot() +
   geom_sf(data = mf04p$edges) +
   geom_sf(data = aug_preds, aes(color = .fitted), size = 2) +
   scale_color_viridis_c(limits = c(-1.5, 17), option = "H") +
   theme_bw()
 
-## Write out augmented prediction data to a geopackage
+## Write out augmented prediction data to a GeoPackage
 st_write(aug_preds, paste0(tempdir(), "/aug_preds.gpkg"))
 
 ## Predict for all prediction data
@@ -209,7 +211,7 @@ ssn_init <- ssn_lm(
   euclid_initial = euclid_init,
   additive = "afvArea"
 )
-ssn_init
+summary(ssn_init)
 
 # Random Effects ####
 
@@ -223,7 +225,7 @@ ssn_rand <- ssn_lm(
   additive = "afvArea",
   random = ~ as.factor(netID)
 )
-ssn_rand
+summary(ssn_rand)
 
 # Partition Factors ####
 
@@ -238,9 +240,9 @@ ssn_part <- ssn_lm(
   additive = "afvArea",
   partition_factor = ~ as.factor(netID)
 )
-ssn_part
+summary(ssn_part)
 
-# Generalized Linear Models
+# Generalized Linear Models ####
 
 ## Visualize C16, the number of days the temperature exceeded 16 C
 ## This is a count variable
@@ -273,14 +275,14 @@ ssn_nb <- ssn_glm(
   additive = "afvArea"
 )
 
-# Compare via AIC, loocv
+# Compare via AIC, loocv (look for lower AIC, RMSPE)
 glances(ssn_pois, ssn_nb)
 loocv_pois <- loocv(ssn_pois)
 loocv_pois$RMSPE
 loocv_nb <- loocv(ssn_nb)
 loocv_nb$RMSPE
 
-# Simulating Data on a Stream Network
+# Simulating Data on a Stream Network ####
 
 ## Specify covariance parameters
 tu_params <- tailup_params("exponential", de = 0.4, range = 1e5)
