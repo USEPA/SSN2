@@ -2,6 +2,11 @@
 # Data Processing ####
 #:::::::::::::::::::::::::::::::::::::
 
+# Install packages ####
+# Remove comment (#) to install packages
+# remotes::install_github("USEPA/SSN2", ref = "develop")
+# install.packages("ggplot2")
+# install.packages("sf")
 
 # Load packages ####
 library(SSN2)
@@ -73,7 +78,17 @@ tg <- Torgegram(
 plot(tg)
 
 # Model Building ####
-## Create a model with all possible covariance components
+
+## Fit a nonspatial model using lm()
+lmod <- lm(
+  formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
+  data = mf04p$obs
+)
+
+## Summarize the model
+summary(lmod)
+
+## Fit a model with all possible covariance components
 ssn_mod <- ssn_lm(
   formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
   ssn.object = mf04p,
@@ -98,7 +113,7 @@ ssn_mod2 <- ssn_lm(
   taildown_type = "spherical"
 )
 
-## Fit a model with just nugget (equivalent to lm)
+## Fit a nonspatial (i.e., just nugget) model using ssn_lm() (equivalent to lm())
 ssn_mod3 <- ssn_lm(
   formula = Summer_mn ~ ELEV_DEM + AREAWTMAP,
   ssn.object = mf04p
