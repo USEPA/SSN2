@@ -230,7 +230,9 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
 
     for (m in seq_len(length(predpts))) {
       ##tmp.preds <- st_read(paste0(file, "/", predpts[m]), quiet = TRUE)
-      tmp.preds <- get_sf_obj(paste0(path, "/", predpts[m]))
+      tmp.preds <- get_sf_obj(predpts[m]) # fixes bug that occurs below when
+      # relative paths in a project are used
+      # tmp.preds <- get_sf_obj(paste0(path, "/", predpts[m]))
 
        ## Check geometry type
        if (sum(st_geometry_type(tmp.preds, by_geometry = TRUE) == "POINT") != nrow(tmp.preds)) {
