@@ -79,13 +79,13 @@ of spatial stream network models and their covariance components, see
 @cressie2006spatial, @ver2006spatial, @ver2010moving,
 @peterson2010mixed, and @isaak2014applications.
 
-The `SSN2` **R** package is used to fit and summarize spatial stream network models and make predictions at unobserved locations (Kriging). `SSN2` is an updated version of the `SSN` **R** package [@ver2014ssn].  Why did we create `SSN2` to replace `SSN`? There are two main reasons:
+The `SSN2` **R** package is used to fit and summarize spatial stream network models and make predictions at unobserved locations (Kriging). `SSN2` is an updated version of the `SSN` **R** package [@ver2014ssn].  Why did we create `SSN2` to replace the `SSN` **R** package? There are two main reasons:
 
-1.  `SSN` depends on the `rgdal` [@bivand2021rgdal], `rgeos` [@bivand2020rgeos], and `maptools` [@bivand2021maptools] **R** packages, which were retired in October, 2023. Their functionality has been replaced and modernized by the `sf` package [@pebesma2018sf]. `SSN2` depends on `sf` instead of `rgdal`, `rgeos`, and `maptools`, reflecting this broader change regarding handling spatial data in **R**.
+1.  The `SSN` **R** package depends on the `rgdal` [@bivand2021rgdal], `rgeos` [@bivand2020rgeos], and `maptools` [@bivand2021maptools] **R** packages, which were retired in October, 2023. Their functionality has been replaced and modernized by the `sf` package [@pebesma2018sf]. `SSN2` depends on `sf` instead of `rgdal`, `rgeos`, and `maptools`, reflecting this broader change regarding handling spatial data in **R**.
     
     * See @nowosad2023 for more information regarding the retirement of `rgdal`, `rgeos`, and `maptools`, available at [this link](https://geocompx.org//post/2023/rgdal-retirement).
 
-2.  There are features added to `SSN2` that would have been difficult to implement in `SSN` without a massive restructuring of `SSN`'s foundation, so a new package was created. For example, the `SSN` objects in `SSN2` are S3 objects but the `SSN` objects in `SSN` were S4 objects. Additionally, many functions were rewritten and/or repurposed in `SSN2` to use generic functions (e.g., block prediction in `SSN2` is performed using `predict()` while in `SSN` it was performed using `BlockPredict()`). Moreover, `SSN2` leverages many of the tools in the `spmodel` **R** package for spatial statistical modeling [@dumelle2023spmodel].
+2.  There are features added to `SSN2` that would have been difficult to implement in the `SSN` **R** package without a massive restructuring of its foundation, so a new package was created. For example, the `SSN` objects in `SSN2` are S3 objects but the `SSN` objects in the `SSN` **R** package were S4 objects. Additionally, many functions were rewritten and/or repurposed in `SSN2` to use generic functions (e.g., block prediction in `SSN2` is performed using `predict()` while in the `SSN` **R** package it was performed using `BlockPredict()`). Moreover, `SSN2` leverages many of the tools in the `spmodel` **R** package for spatial statistical modeling [@dumelle2023spmodel].
 
 This vignette provides an overview of basic features in `SSN2`. We load `SSN2` by running
 ```{r, eval = FALSE}
@@ -103,7 +103,7 @@ Spatial input data must be pre-processed before it can be used to fit spatial st
 network models in the `SSN2` package. We recommend pre-processing data directly in **R** via the new `SSNbler` **R** package, which you can learn more about by visiting the `SSNbler` GitHub page at [this link](https://github.com/pet221/SSNbler). Legacy options for pre-processing data include the Spatial Tools for the Analysis of River Systems
 (STARS) toolset for ArcGIS Desktop versions 9.3x-10.8x
 [@peterson2014stars] and the `openSTARS` R package
-[@kattwinkel2020openSTARS], which leveraged GRASS GIS. The pre-processing yields a non-proprietary `.ssn` folder (i.e., directory) which contains all
+[@kattwinkel2020openSTARS], which leveraged GRASS GIS. Pre-processing using either `SSNbler`, STARS, or `openSTARS` yields a non-proprietary `.ssn` folder (i.e., directory) which contains all
 of the spatial, topological and attribute information needed to fit a
 spatial stream network model using `SSN2`. This includes:
 
@@ -184,7 +184,7 @@ path <- system.file("lsndata/MiddleFork04.ssn", package = "SSN2")
 Several functions in `SSN2` for reading and writing data (which we use shortly) directly manipulate the `.ssn` folder. If it is not desirable to directly manipulate the `MiddleFork04.ssn` data installed alongside `SSN2`, `MiddleFork04.ssn` may be copied it into a temporary directory and the relevant path to this alternative location can be stored:
 ```{r}
 copy_lsn_to_temp()
-path <- paste0(tempdir(), "/MiddleFork04.ssn")
+path <- file.path(tempdir(), "MiddleFork04.ssn")
 ```
 
 After specifying `path` (using `system.file()` or `copy_lsn_to_temp()`), we import the stream reaches, observed sites, and prediction sites:
