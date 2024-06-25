@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  4 MAR 2024 10:00
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  24 JUN 2024 22:00
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -999,12 +999,10 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 LaTeX Font Info:    Font shape `TU/lmss/m/it' in size <8> not available
-(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 364.
+(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 366.
 [1
 
 ]
-File: paper_files/figure-latex/steamnetwork-1.pdf Graphic file (type pdf)
-<use paper_files/figure-latex/steamnetwork-1.pdf>
 File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
 <C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
@@ -1015,6 +1013,10 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [2]
+File: paper_files/figure-latex/steam-network-1.pdf Graphic file (type pdf)
+<use paper_files/figure-latex/steam-network-1.pdf>
+File: paper_files/figure-latex/steam-obs-1.pdf Graphic file (type pdf)
+<use paper_files/figure-latex/steam-obs-1.pdf>
 File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
 <C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
@@ -1025,8 +1027,18 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [3]
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 563--563
-[]\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530805 ymin: 2527111 xmax: -1503079 ymax: 2537823[] 
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 569--569
+[]\TU/lmtt/m/n/10 ##   term        estimate std.error statistic  p.value conf.low   conf.high[] 
+ []
+
+
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 570--570
+[]\TU/lmtt/m/n/10 ##   <chr>          <dbl>     <dbl>     <dbl>    <dbl>    <dbl>       <dbl>[] 
+ []
+
+
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 572--572
+[]\TU/lmtt/m/n/10 ## 2 AREAWTMAP   -0.00807   0.00413     -1.96 5.05e- 2  -0.0162   0.0000187[] 
  []
 
 File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
@@ -1039,8 +1051,23 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [4]
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 631--631
-[]\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530631 ymin: 2521707 xmax: -1500020 ymax: 2540253[] 
+Overfull \hbox (16.91139pt too wide) in paragraph at lines 600--600
+[]\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530805 ymin: 920324.3 xmax: -1503079 ymax: 931036.6[] 
+ []
+
+
+Overfull \hbox (1.16139pt too wide) in paragraph at lines 651--651
+[]\TU/lmtt/m/n/10 ##           1           2           3           4           5           6 
+ []
+
+
+Overfull \hbox (1.16139pt too wide) in paragraph at lines 652--652
+[]\TU/lmtt/m/n/10 ##  0.77010720  0.71389871  0.77644852  0.42749165 -0.04368363  1.00936419[] 
+ []
+
+
+Overfull \hbox (16.91139pt too wide) in paragraph at lines 669--669
+[]\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530631 ymin: 914920.7 xmax: -1500020 ymax: 933466.4[] 
  []
 
 File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
@@ -1053,6 +1080,8 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [5]
+File: paper_files/figure-latex/steam-preds-1.pdf Graphic file (type pdf)
+<use paper_files/figure-latex/steam-preds-1.pdf>
 File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
 <C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
@@ -1082,24 +1111,34 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                You might also make \topmargin smaller to compensate:
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
-[8] (./paper.aux)
+[8]
+File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+
+Package fancyhdr Warning: \headheight is too small (62.59596pt): 
+(fancyhdr)                Make it at least 63.55022pt, for example:
+(fancyhdr)                \setlength{\headheight}{63.55022pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
+
+[9] (./paper.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
  ***********
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: D40F8E1AE01AE66BCE9BEE71B02161BA;653.
+(rerunfilecheck)             Checksum: 44BAF6B9216D6DC2E1FA2B96B76B72BA;653.
 Package logreq Info: Writing requests to 'paper.run.xml'.
 \openout1 = `paper.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 36711 strings out of 476752
- 755994 string characters out of 5799757
+ 36735 strings out of 476752
+ 757026 string characters out of 5799757
  1948842 words of memory out of 5000000
- 58197 multiletter control sequences out of 15000+600000
+ 58219 multiletter control sequences out of 15000+600000
  564925 words of font info for 82 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 84i,13n,87p,1194b,850s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,12n,87p,1194b,850s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on paper.pdf (8 pages).
+Output written on paper.pdf (9 pages).
