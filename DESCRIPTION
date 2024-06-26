@@ -36,7 +36,6 @@ Imports:
     generics,
     tibble,
     graphics,
-    parallel,
     spmodel,
     RSQLite,
     utils,
