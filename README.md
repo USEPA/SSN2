@@ -212,6 +212,31 @@ head(preds)
 #> 6 15.12783 14.76358 15.49208
 ```
 
+## Imported Packages
+
+`SSN2` imports the following **R** packages:
+
+* generics: For exporting generic functions.
+* graphics: For visualizations (e.g., `plot()`).
+* Matrix: For efficient matrix manipulations.
+* RSQlite: For various functions that read and write (e.g., `ssn_create_distmat()`).
+* sf: For handling spatial data.
+* spmodel: For various modeling functions (e.g., `randcov_initial()`) and generic functions (e.g., `loocv()`).
+* stats: For various modeling functions (e.g., `confint()`).
+* tibble: For creating tibbles as output for various functions (e.g., `tidy()`).
+* utils: For various utility functions.
+* withr: For path handling while reading and writing.
+
+## Suggested Packages
+
+`SSN2` suggests the following **R** packages:
+
+* ggplot2: For vignette visualizations.
+* knitr: For vignette building.
+* rmarkdown: For vignette building.
+* sp: For making `SSN` objects from the `SSN` **R** package compatible with `SSN2`.
+* statmod: For modeling and simulation of inverse Gaussian data.
+* testthat: For unit testing.
 
 ## License
 

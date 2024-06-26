@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  24 JUN 2024 22:00
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  25 JUN 2024 20:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -999,10 +999,12 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 LaTeX Font Info:    Font shape `TU/lmss/m/it' in size <8> not available
-(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 366.
+(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 367.
 [1
 
 ]
+File: paper_files/figure-latex/steam-network-1.pdf Graphic file (type pdf)
+<use paper_files/figure-latex/steam-network-1.pdf>
 File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
 <C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
@@ -1013,8 +1015,6 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [2]
-File: paper_files/figure-latex/steam-network-1.pdf Graphic file (type pdf)
-<use paper_files/figure-latex/steam-network-1.pdf>
 File: paper_files/figure-latex/steam-obs-1.pdf Graphic file (type pdf)
 <use paper_files/figure-latex/steam-obs-1.pdf>
 File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
@@ -1027,18 +1027,13 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [3]
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 569--569
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 578--578
 []\TU/lmtt/m/n/10 ##   term        estimate std.error statistic  p.value conf.low   conf.high[] 
  []
 
 
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 570--570
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 579--579
 []\TU/lmtt/m/n/10 ##   <chr>          <dbl>     <dbl>     <dbl>    <dbl>    <dbl>       <dbl>[] 
- []
-
-
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 572--572
-[]\TU/lmtt/m/n/10 ## 2 AREAWTMAP   -0.00807   0.00413     -1.96 5.05e- 2  -0.0162   0.0000187[] 
  []
 
 File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
@@ -1051,22 +1046,27 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [4]
-Overfull \hbox (16.91139pt too wide) in paragraph at lines 600--600
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 581--581
+[]\TU/lmtt/m/n/10 ## 2 AREAWTMAP   -0.00807   0.00413     -1.96 5.05e- 2  -0.0162   0.0000187[] 
+ []
+
+
+Overfull \hbox (16.91139pt too wide) in paragraph at lines 609--609
 []\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530805 ymin: 920324.3 xmax: -1503079 ymax: 931036.6[] 
  []
 
 
-Overfull \hbox (1.16139pt too wide) in paragraph at lines 651--651
+Overfull \hbox (1.16139pt too wide) in paragraph at lines 660--660
 []\TU/lmtt/m/n/10 ##           1           2           3           4           5           6 
  []
 
 
-Overfull \hbox (1.16139pt too wide) in paragraph at lines 652--652
+Overfull \hbox (1.16139pt too wide) in paragraph at lines 661--661
 []\TU/lmtt/m/n/10 ##  0.77010720  0.71389871  0.77644852  0.42749165 -0.04368363  1.00936419[] 
  []
 
 
-Overfull \hbox (16.91139pt too wide) in paragraph at lines 669--669
+Overfull \hbox (16.91139pt too wide) in paragraph at lines 678--678
 []\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530631 ymin: 914920.7 xmax: -1500020 ymax: 933466.4[] 
  []
 
@@ -1139,6 +1139,6 @@ Here is how much of TeX's memory you used:
  58219 multiletter control sequences out of 15000+600000
  564925 words of font info for 82 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 84i,12n,87p,1194b,850s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,13n,87p,1194b,850s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on paper.pdf (9 pages).
