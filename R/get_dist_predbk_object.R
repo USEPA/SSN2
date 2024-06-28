@@ -1,4 +1,10 @@
-# parent function to get the distance object
+#' Get prediction by prediction distance matrix for block Kriging
+#'
+#' @param object Model object.
+#' @param newdata_name Name of prediction data set.
+#' @param initial_object Initial value object.
+#'
+#' @noRd
 get_dist_predbk_object <- function(object, newdata_name, initial_object) {
   # get netgeom
   netgeom <- ssn_get_netgeom(object$ssn.object$preds[[newdata_name]], reformat = TRUE)
@@ -62,6 +68,7 @@ get_dist_predbk_object <- function(object, newdata_name, initial_object) {
   dist_object
 }
 
+# vectorized version of get_dist_predbk_object
 get_dist_predbk_matlist <- function(ssn.object, newdata_name, initial_object, additive,
                                     order_list) {
   network_index <- order_list$network_index

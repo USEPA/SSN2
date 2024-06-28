@@ -298,6 +298,30 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response"), se.fi
 
 
 
+#' Get a prediction (and its standard error) for glms
+#'
+#' @param newdata_list A row of prediction data
+#' @param se.fit Whether standard errors should be returned
+#' @param interval The interval type
+#' @param formula Model formula
+#' @param obdata Observed data
+#' @param cov_matrix_val Covariance matrix
+#' @param total_var Total variance in the process
+#' @param cov_lowchol Lower triangular of Cholesky decomposition matrix
+#' @param Xmat Model matrix
+#' @param y Response variable
+#' @param betahat Fixed effect estimates
+#' @param cov_betahat Covariance of fixed effects
+#' @param contrasts Possible contrasts
+#' @param local Local neighborhood options (not yet implemented)
+#' @param family glm family
+#' @param w Latent effects
+#' @param size Number of binomial trials
+#' @param dispersion Dispersion parameter
+#' @param predvar_adjust_ind Whether prediction variance should be adjusted for uncertainty in w
+#' @param xlevels Levels of explanatory variables
+#'
+#' @noRd
 get_pred_glm <- function(newdata_list, se.fit, interval,
                          formula, obdata, cov_matrix_val, total_var, cov_lowchol,
                          Xmat, y, betahat, cov_betahat, contrasts, local,
@@ -342,6 +366,19 @@ get_pred_glm <- function(newdata_list, se.fit, interval,
   pred_list
 }
 
+#' Get weights by which to adjust variances involving w
+#'
+#' @param family glm family
+#' @param Xmat Model matrix
+#' @param y Response variable
+#' @param w Latent effects
+#' @param size Number of binomial trials
+#' @param dispersion Dispersion parameter
+#' @param cov_lowchol Lower triangular of Cholesky decomposition matrix
+#' @param x0 Explanatory variable values for newdata
+#' @param c0 Covariance between observed and newdata
+#'
+#' @noRd
 get_wts_varw <- function(family, Xmat, y, w, size, dispersion, cov_lowchol, x0, c0) {
   SigInv <- chol2inv(t(cov_lowchol)) # works on upchol
   SigInv_X <- SigInv %*% Xmat

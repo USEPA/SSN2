@@ -162,6 +162,11 @@ get_params_object <- function(classes, cov_orig_val) {
   params_object
 }
 
+#' Get the initial values that are known
+#'
+#' @param initial_object Initial value object
+#'
+#' @noRd
 get_params_object_known <- function(initial_object) {
   classes <- c(
     tailup = class(initial_object$tailup_initial), taildown = class(initial_object$taildown_initial),
@@ -208,6 +213,12 @@ get_params_object_known <- function(initial_object) {
   params_object
 }
 
+#' Get the parameter object for glms
+#'
+#' @param initial_object Initial value object
+#' @param cov_orig_val The original covariance parameter values
+#'
+#' @noRd
 get_params_object_glm <- function(classes, cov_orig_val) {
   classes <- remove_covtype(classes)
 
@@ -266,6 +277,11 @@ get_params_object_glm <- function(classes, cov_orig_val) {
   params_object
 }
 
+#' Get known parameters for glms
+#'
+#' @param initial_object Initial value object
+#'
+#' @noRd
 get_params_object_glm_known <- function(initial_object) {
   classes <- c(
     tailup = class(initial_object$tailup_initial), taildown = class(initial_object$taildown_initial),
@@ -319,6 +335,12 @@ get_params_object_glm_known <- function(initial_object) {
   params_object
 }
 
+#' Get grid of possible initial values
+#'
+#' @param cov_grid_vector A configuration of initial covariance parameters
+#' @param initial_NA_object The inital NA object (which has information on the known parameters)
+#'
+#' @noRd
 get_params_object_grid <- function(cov_grid_vector, initial_NA_object) {
   classes <- c(
     tailup = class(initial_NA_object$tailup_initial), taildown = class(initial_NA_object$taildown_initial),
@@ -368,6 +390,12 @@ get_params_object_grid <- function(cov_grid_vector, initial_NA_object) {
   )
 }
 
+#' Get grid of possible initial values for glms
+#'
+#' @param cov_grid_vector A configuration of initial covariance parameters
+#' @param initial_NA_object The inital NA object (which has information on the known parameters)
+#'
+#' @noRd
 get_params_object_grid_glm <- function(cov_grid_vector, initial_NA_object) {
   classes <- c(
     tailup = class(initial_NA_object$tailup_initial), taildown = class(initial_NA_object$taildown_initial),

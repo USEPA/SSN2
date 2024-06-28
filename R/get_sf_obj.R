@@ -1,5 +1,8 @@
-
-
+#' Read relevant sf objects from user shalpefiles or geopackages
+#'
+#' @param fn Path to shapefile or geopackage
+#'
+#' @noRd
 get_sf_obj <- function(fn) {
 
   f.ext.shp <- substr(fn, nchar(fn)-3, nchar(fn)) == ".shp"
@@ -27,7 +30,7 @@ get_sf_obj <- function(fn) {
     shp.exists <- file.exists(paste0(fn, ".shp"))
     gpkg.exists <- file.exists(paste0(fn, ".gpkg"))
   }
-  
+
   ## If both exist without file extension, return error
   if(gpkg.exists & shp.exists) {
     ##sfobj<- st_read(paste0(fn, ".gpkg"), quiet = TRUE)
@@ -49,6 +52,6 @@ get_sf_obj <- function(fn) {
   }
 
   return(sfobj)
-  
+
 }
 

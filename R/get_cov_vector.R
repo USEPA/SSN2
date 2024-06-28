@@ -1,3 +1,13 @@
+#' A helper to get the overall covariance matrix.
+#'
+#' @param params_object Parameter object.
+#' @param dist_pred_object The distance matrices between observed and prediction data.
+#' @param data The data.
+#' @param newdata The prediction data.
+#' @param partition_factor The name of the partition factor.
+#' @param anisotropy Whether there is anisotropy.
+#'
+#' @noRd
 get_cov_vector <- function(params_object, dist_pred_object, data, newdata, partition_factor = NULL, anisotropy) {
   tailup_none <- inherits(params_object$tailup, "tailup_none")
   taildown_none <- inherits(params_object$taildown, "taildown_none")
@@ -20,6 +30,13 @@ get_cov_vector <- function(params_object, dist_pred_object, data, newdata, parti
   cov_vector
 }
 
+#' Compute Euclidean covariance for prediction and a possible adjustment to Euclidean covariance for anisotropy
+#'
+#' @param params The Euclidean covariance parameters
+#' @param dist_pred_object The distance matrices between observed and prediction data.
+#' @param anisotropy Whether there is anisotropy.
+#'
+#' @noRd
 get_euclid_pred <- function(params, dist_pred_object, anisotropy) {
   if (anisotropy) {
     new_coords_observed <- transform_anis(

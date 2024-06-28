@@ -1,3 +1,14 @@
+#' Get spatial relationships for prediction points
+#'
+#' @param ssn SSN object
+#' @param predpts Index of predpts
+#' @param ind Index for pred values on the network
+#' @param bin binaryID table for the network
+#' @param ob Data frame  with pid, rid, locID, and binaryID for sites on the
+#'   network ordered by pid (ob.i)
+#' @param j Row j of data.frame ob
+#'
+#' @noRd
 getPredRelationshipsDF <- function(ssn, predpts, ind, bin, ob, j) {
   ## ssn = SpatialStreamNetwork object
   ## num = index of predpts in SSN

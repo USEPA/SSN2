@@ -19,12 +19,29 @@ get_randcov_list <- function(index, randcov_Zs = NULL, randcov_names = NULL) {
   randcov_list
 }
 
+#' Get list of random effects
+#'
+#' @param index_val A spatial index (not yet functional) to compare
+#' @param index A spatial index (not yet functional)
+#' @param randcov_Zs Random effect design matrices
+#' @param randcov_names Random effect names
+#'
+#' @noRd
 get_randcov_index_list <- function(index_val, index, randcov_Zs, randcov_names) {
   Z_lists <- lapply(randcov_names, function(x) get_randcov_var_list(x, index_val, index, randcov_Zs))
   names(Z_lists) <- randcov_names
   Z_lists
 }
 
+#' Get list of random effect variances
+#'
+#'
+#' @param randcov_name Random effect name
+#' @param index_val A spatial index (not yet functional) to compare
+#' @param index A spatial index (not yet functional)
+#' @param randcov_Zs Random effect design matrices
+#'
+#' @noRd
 get_randcov_var_list <- function(randcov_name, index_val, index, randcov_Zs) {
   Z_list <- randcov_Zs[[randcov_name]][["Z"]][index_val, , drop = FALSE]
   if (is.null(randcov_Zs[[randcov_name]][["ZZt"]])) {
@@ -40,6 +57,15 @@ get_randcov_var_list <- function(randcov_name, index_val, index, randcov_Zs) {
   list(Z = Z_list, ZZt = ZZt_list, ZtZ = ZtZ_list)
 }
 
+#' Get random effect design matrices
+#'
+#' @param data Data
+#' @param randcov_names Random effect names
+#' @param ZZt Product of random effect design matrix and its transpose
+#' @param ZtZ Transpose of ZZt
+#' @param xlev_list Levels of random effects
+#'
+#' @noRd
 get_randcov_Zs <- function(data, randcov_names = NULL, ZZt = TRUE, ZtZ = FALSE, xlev_list = NULL) {
   if (is.null(randcov_names)) {
     randcov_Zs <- NULL
@@ -50,6 +76,15 @@ get_randcov_Zs <- function(data, randcov_names = NULL, ZZt = TRUE, ZtZ = FALSE, 
   randcov_Zs
 }
 
+#' Get a random effect design matrix
+#'
+#' @param randcov_name Random effect name
+#' @param randcov_names Random effect names
+#' @param ZZt Product of random effect design matrix and its transpose
+#' @param ZtZ Transpose of ZZt
+#' @param xlev_list Levels of random effects
+#'
+#' @noRd
 get_randcov_Z <- function(randcov_name, data, ZZt = TRUE, ZtZ = FALSE, xlev_list = NULL) {
   bar_split <- unlist(strsplit(randcov_name, " | ", fixed = TRUE))
   Z_reform <- reformulate(bar_split[[2]], intercept = FALSE)
@@ -112,6 +147,11 @@ get_randcov_names <- function(random = NULL) {
   new_labels
 }
 
+#' Adjust a single name of a random effect
+#'
+#' @param label Name of a random effect
+#'
+#' @noRd
 get_randcov_name <- function(label) {
   if (grepl("|", label, fixed = TRUE)) {
     new_label <- label

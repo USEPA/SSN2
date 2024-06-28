@@ -1,4 +1,10 @@
-## Add netgeom column to sf data.frame sf_data
+#' Create and add network geometry column to sf data frame
+#'
+#' @param sf_data sf data frame.
+#' @param type The object type (point or linestring)
+#'
+#' @return Network geometry column
+#' @noRd
 create_netgeom <- function(sf_data, type = NULL) {
   if (type == "point") {
     sf_data[, "netgeom"] <- paste0("SNETWORK (", paste(

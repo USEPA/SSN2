@@ -112,6 +112,15 @@ loocv.ssn_lm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
     return(loocv_out)
   }
 }
+
+#' A helper to get the leave one out predictions
+#'
+#' @param object Model object
+#' @param cv_predict Whether cross validation predictions should be returned
+#' @param se.fit Whether the standard error should be returned
+#' @param ... Additional arguments
+#'
+#' @noRd
 get_loocv.ssn_lm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
   # local stuff (save for later)
   # if (missing(local)) local <- NULL
@@ -206,6 +215,7 @@ get_loocv.ssn_lm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
   cv_output
 }
 
+# not currently used (but will be later when local prediction implemented)
 loocv_local <- function(row, se.fit, cov_matrix_val, total_var, Xmat, y, betahat, cov_betahat, local) {
   # new_cov_matrix_val <- cov_matrix_val[-row, -row, drop = FALSE]
   # new_cov_vector_val <- cov_matrix_val[row, -row, drop = FALSE]
@@ -241,6 +251,18 @@ loocv_local <- function(row, se.fit, cov_matrix_val, total_var, Xmat, y, betahat
   # pred_list
 }
 
+#' Get leave one out cross validation value
+#'
+#' @param obs Index of observed data
+#' @param Sig Covariance matrix
+#' @param SigInv Inverse covariance matrix
+#' @param Xmat Model matrix
+#' @param y response
+#' @param yX Matrix containing model matrix and response
+#' @param SigInv_yX Product of inverse covariance matrix with model matrix and response
+#' @param se.fit Whether to return standard errors of leave one out predictions
+#'
+#' @noRd
 get_loocv <- function(obs, Sig, SigInv, Xmat, y, yX, SigInv_yX, se.fit) {
   SigInv_mm <- SigInv[obs, obs] # a constant
   SigInv_om <- SigInv[-obs, obs, drop = FALSE]

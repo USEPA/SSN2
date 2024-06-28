@@ -1,3 +1,19 @@
+#' Get the data object for use with many other functions.
+#'
+#' @param formula Model formula.
+#' @param ssn.object SSN object.
+#' @param additive Name of the additive function value column.
+#' @param anisotropy Whether there is anisotropy.
+#' @param initial_object The initial value object.
+#' @param random Random effect formula.
+#' @param randcov_initial The initial random effect object.
+#' @param partition_factor Partition factor formula.
+#' @param local Spatial indexing argument (not yet implemented)
+#' @param ... Additional arguments
+#'
+#' @return The data object that contains various pieces of important information
+#'   required for modeling.
+#' @noRd
 get_data_object <- function(formula, ssn.object, additive, anisotropy,
                             initial_object, random, randcov_initial, partition_factor, local, ...) {
   sf_column_name <- attributes(ssn.object$obs)$sf_column

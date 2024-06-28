@@ -1,3 +1,10 @@
+#' Get products needed to evaluate log likelihood
+#'
+#' @param params_object Object with covariance parameters.
+#' @param data_object Data object
+#' @param estmethod Estimation Method
+#'
+#' @noRd
 gloglik_products <- function(params_object, data_object, estmethod) {
   cov_matrix_list <- get_cov_matrix_list(params_object, data_object)
   # cholesky products (no local)
@@ -60,6 +67,13 @@ gloglik_products <- function(params_object, data_object, estmethod) {
   }
 }
 
+#' Get minus twice the log likelihood
+#'
+#' @param gloglik_products The relevant log likelihood products
+#' @param data_object Data object
+#' @param estmethod Estimation method
+#'
+#' @noRd
 get_minustwologlik <- function(gloglik_products, data_object, estmethod) {
   if (estmethod == "reml") {
     minustwologlik <- as.numeric(gloglik_products$l1 + gloglik_products$l2 + gloglik_products$l3 + (data_object$n - data_object$p) * log(2 * pi))

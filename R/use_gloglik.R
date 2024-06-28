@@ -1,3 +1,11 @@
+#' Get covariance parameter output using log likelihood
+#'
+#' @param initial_object Initial value object
+#' @param data_object Data object
+#' @param estmethod Estimation method
+#' @param optim_dotlist Additional optim arguments
+#'
+#' @noRd
 use_gloglik <- function(initial_object, data_object, estmethod, optim_dotlist) {
   # take original parameter values and put them on optim scale
   orig2optim_object <- orig2optim(initial_object)
@@ -73,6 +81,13 @@ use_gloglik <- function(initial_object, data_object, estmethod, optim_dotlist) {
 
 
 
+#' Get covariance parameter output from log likelihood when all parameters are known
+#'
+#' @param initial_object Initial value object
+#' @param data_object Data object
+#' @param estmethod Estimation method
+#'
+#' @noRd
 use_gloglik_known <- function(initial_object, data_object, estmethod) {
   # all parameters known
 

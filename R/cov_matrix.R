@@ -2,6 +2,15 @@
 # GENERIC SETUP
 ###############################################################################
 
+
+#' Create a covariance matrix
+#'
+#' @param params Parameter object.
+#' @param dist_object Distance matrix object.
+#' @param ... Additional arguments
+#'
+#' @return A covariance matrix
+#' @noRd
 cov_matrix <- function(params, dist_object, ...) {
   UseMethod("cov_matrix", params)
 }

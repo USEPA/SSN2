@@ -1,3 +1,13 @@
+#' Get eigenproducts for relevant covariance computations
+#'
+#' @param cov_matrix A covariance matrix.
+#' @param X Data model matrix.
+#' @param y Data response value.
+#' @param ones A vector of ones with the same dimension as y
+#'
+#' @return A list with various products with eigenvectors and eigenvalues that
+#'   return products with square root matrices.
+#' @noRd
 get_eigenprods <- function(cov_matrix, X, y, ones) {
   eig <- eigen(Matrix::forceSymmetric(cov_matrix))
   SigInv_p1 <- t(t(eig$vectors) * 1 / eig$values)
@@ -17,6 +27,7 @@ get_eigenprods <- function(cov_matrix, X, y, ones) {
   )
 }
 
+# a vectorized version of get_eigenprods
 get_eigenprods_parallel <- function(cluster_list) {
   cov_matrix <- cluster_list$c
   X <- cluster_list$x
@@ -25,6 +36,16 @@ get_eigenprods_parallel <- function(cluster_list) {
   get_eigenprods(cov_matrix, X, y, o)
 }
 
+#' Get eigenproducts for relevant covariance computations (for glms)
+#'
+#' @param cov_matrix A covariance matrix.
+#' @param X Data model matrix.
+#' @param y Data response value.
+#' @param ones A vector of ones with the same dimension as y
+#'
+#' @return A list with various products with eigenvectors and eigenvalues that
+#'   return products with square root matrices.
+#' @noRd
 get_eigenprods_glm <- function(cov_matrix, X, y, ones) {
   eig <- eigen(Matrix::forceSymmetric(cov_matrix))
   SigInv_p1 <- t(t(eig$vectors) * 1 / eig$values)
@@ -46,6 +67,7 @@ get_eigenprods_glm <- function(cov_matrix, X, y, ones) {
   )
 }
 
+# a vectorized version of get_eigenprods_glm
 get_eigenprods_glm_parallel <- function(cluster_list) {
   cov_matrix <- cluster_list$c
   X <- cluster_list$x

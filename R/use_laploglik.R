@@ -1,3 +1,11 @@
+#' Get covariance parameter output using Laplace log likelihood (for glms)
+#'
+#' @param initial_object Initial value object
+#' @param data_object Data object
+#' @param estmethod Estimation method
+#' @param optim_dotlist Additional optim arguments
+#'
+#' @noRd
 use_laploglik <- function(initial_object, data_object, estmethod, optim_dotlist) {
   orig2optim_object <- orig2optim_glm(initial_object)
 
@@ -67,7 +75,13 @@ use_laploglik <- function(initial_object, data_object, estmethod, optim_dotlist)
 
 
 
-
+#' Get covariance parameter output from Laplace log likelihood (for glms) when all parameters are known
+#'
+#' @param initial_object Initial value object
+#' @param data_object Data object
+#' @param estmethod Estimation method
+#'
+#' @noRd
 use_laploglik_known <- function(initial_object, data_object, estmethod) {
   params_object <- get_params_object_glm_known(initial_object)
 

@@ -1,7 +1,13 @@
+#' Helper function to determining distance matrices among sites
+#'
+#' @param ssn An SSN object.
+#' @param pids A list of pid values for prediction sites
+#' @param name The network name (obs or prediction name)
+#' @param bin.table A binaryID table for the network.
+#'
+#' @return A distance matrix
+#' @noRd
 amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
-  ## ssn = SSN object
-  ## pids = list of pid values for prediction sites
-  ## bin.table = binaryID table for the network
 
   site.no <- length(pids)
 

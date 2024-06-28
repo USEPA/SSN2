@@ -1,3 +1,10 @@
+#' Create the binary ID database.
+#'
+#' @param ssn SSN object
+#' @param overwrite Should binaryID.db be deleted if it already exists?
+#'
+#' @return binary ID database
+#' @noRd
 createBinaryID <- function(ssn, overwrite) {
   ## If binaryID.db exists
   if (file.exists("binaryID.db") == TRUE) {

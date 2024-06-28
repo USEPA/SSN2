@@ -135,6 +135,14 @@ Torgegram <- function(formula, ssn.object,
   new_esv_list
 }
 
+#' Get a single empirical semivariogram for flow-connected, flow-unconnected, or Euclidean distance
+#'
+#' @param dist_vector Distance vector
+#' @param resid2_vector Residual squared vector
+#' @param bins Distance bins
+#' @param cutoff Distance cutoff
+#'
+#' @noRd
 get_esv <- function(dist_vector, resid2_vector, bins, cutoff) {
   if (is.null(cutoff)) {
     cutoff <- max(dist_vector) * 0.5

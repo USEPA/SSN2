@@ -1,3 +1,10 @@
+#' Get relevant model fit statistics and diagnostics for glms
+#'
+#' @param cov_est_object Covariance parameter estimation object.
+#' @param data_object Data object.
+#' @param estmethod Estimation method.
+#'
+#' @noRd
 get_model_stats_glm <- function(cov_est_object, data_object, estmethod) {
   cov_matrix_list <- get_cov_matrix_list(cov_est_object$params_object, data_object)
 
@@ -211,6 +218,10 @@ get_model_stats_glm <- function(cov_est_object, data_object, estmethod) {
     size = size
   )
 }
+
+###############################################################################
+############### helpers to store relevant statistics as list objects
+###############################################################################
 
 get_coefficients_glm <- function(betahat, params_object) {
   list(fixed = betahat, params_object = params_object)

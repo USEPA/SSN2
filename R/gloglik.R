@@ -1,3 +1,11 @@
+#' Compute log likeihood
+#'
+#' @param par Optimization parameters
+#' @param orig2optim_object An optimization object that performs necessary transformations
+#' @param data_object Data object
+#' @param estmethod Estimation method
+#'
+#' @noRd
 gloglik <- function(par, orig2optim_object, data_object, estmethod) {
   # find parameters on the original scale
   cov_orig_val <- optim2orig(orig2optim_object, par)

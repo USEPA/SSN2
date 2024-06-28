@@ -286,6 +286,26 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
   }
 }
 
+#' Title
+#'
+#' @param newdata_list A row of prediction data
+#' @param se.fit Whether standard errors should be returned
+#' @param interval The interval type
+#' @param formula Model formula
+#' @param obdata Observed data
+#' @param cov_matrix_val Covariance matrix
+#' @param total_var Total variance in the process
+#' @param cov_lowchol Lower triangular of Cholesky decomposition matrix
+#' @param Xmat Model matrix
+#' @param y Response variable
+#' @param offset A possible offset
+#' @param betahat Fixed effect estimates
+#' @param cov_betahat Covariance of fixed effects
+#' @param contrasts Possible contrasts
+#' @param local Local neighborhood options (not yet implemented)
+#' @param xlevels Levels of explanatory variables
+#'
+#' @noRd
 get_pred <- function(newdata_list, se.fit, interval, formula, obdata, cov_matrix_val, total_var, cov_lowchol,
                      Xmat, y, offset, betahat, cov_betahat, contrasts, local, xlevels) {
   cov_vector_val <- newdata_list$c0
