@@ -1,11 +1,12 @@
 test_that("generics work ssn_lm point data", {
 
-  ssn_mod1 <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
+  form <- Summer_mn ~ ELEV_DEM
+  ssn_mod1 <- ssn_lm(form, mf04p,
     tailup_type = "exponential",
     taildown_type = "exponential", euclid_type = "exponential",
     nugget_type = "nugget", additive = "afvArea"
   )
-  ssn_mod2 <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
+  ssn_mod2 <- ssn_lm(form, mf04p,
     tailup_type = "exponential",
     taildown_type = "none", euclid_type = "none",
     nugget_type = "nugget", additive = "afvArea"
@@ -13,69 +14,109 @@ test_that("generics work ssn_lm point data", {
 
   # AIC
   expect_vector(AIC(ssn_mod1))
-  expect_s3_class(AIC(ssn_mod1, ssn_mod2), "data.frame") # turn reml fixed effects warning off
+  expect_equal(AIC(ssn_mod1), 84.934, tolerance = 0.01)
+  expect_s3_class(AIC(ssn_mod1, ssn_mod2), "data.frame")
+  expect_equal(AIC(ssn_mod1, ssn_mod2)$AIC, c(84.934, 82.893), tolerance = 0.01)
 
   # anova
-  expect_s3_class(anova(ssn_mod1), "data.frame")
-  expect_s3_class(anova(ssn_mod1), "anova.ssn_lm")
-  expect_s3_class(tidy(anova(ssn_mod1)), "data.frame")
-  expect_s3_class(anova(ssn_mod1, ssn_mod2), "data.frame")
-  expect_s3_class(anova(ssn_mod1, ssn_mod2), "anova.ssn_lm")
-  expect_s3_class(tidy(anova(ssn_mod1, ssn_mod2)), "data.frame")
+  anova1 <- anova(ssn_mod1)
+  expect_s3_class(anova1, "data.frame")
+  expect_s3_class(anova1, "anova.ssn_lm")
+  expect_s3_class(tidy(anova1), "data.frame")
+  expect_equal(tidy(anova1)$statistic, c(30.6, 21.1), tolerance = 0.01)
+  anova12 <- anova(ssn_mod1, ssn_mod2)
+  expect_s3_class(anova12, "data.frame")
+  expect_s3_class(anova12, "anova.ssn_lm")
+  expect_s3_class(tidy(anova12), "data.frame")
+  expect_equal(tidy(anova12)$statistic, 5.96, tolerance = 0.01)
 
   # augment
-  expect_s3_class(augment(ssn_mod1), "data.frame")
-  expect_s3_class(augment(ssn_mod1, newdata = "pred1km"), "data.frame")
+  aug_ssn_mod1 <- augment(ssn_mod1)
+  expect_s3_class(aug_ssn_mod1, "sf")
+  expect_equal(aug_ssn_mod1$.fitted[1], 14.261, tolerance = 0.01)
+  aug_pred_ssn_mod1 <- augment(ssn_mod1, newdata = "pred1km")
+  expect_s3_class(aug_pred_ssn_mod1, "sf")
+  expect_equal(aug_pred_ssn_mod1$.fitted[1], 14.690, tolerance = 0.01)
 
   # coef
   expect_vector(coef(ssn_mod1))
+  expect_equal(coef(ssn_mod1), c("(Intercept)" = 70.54, "ELEV_DEM" = -0.0289), tolerance = 0.01)
   expect_s3_class(coef(ssn_mod1, type = "tailup"), "tailup_exponential")
+  expect_equal(unclass(coef(ssn_mod1, type = "tailup")), c("de" = 1.387, "range" = 4.0744e06), tolerance = 0.01)
+  expect_s3_class(coef(ssn_mod1, type = "taildown"), "taildown_exponential")
+  expect_equal(unclass(coef(ssn_mod1, type = "taildown")), c("de" = 2.419, "range" = 80694), tolerance = 0.01)
   expect_s3_class(coef(ssn_mod1, type = "euclid"), "euclid_exponential")
+  expect_equal(unclass(coef(ssn_mod1, type = "euclid")), c("de" = 0.445, "range" = 7.97e05, "rotate" = 0, "scale" = 1), tolerance = 0.01)
   expect_type(coef(ssn_mod1, type = "ssn"), "list")
   expect_null(coef(ssn_mod1, type = "randcov"))
+ # coefficients alias
   expect_vector(coefficients(ssn_mod1))
+  expect_equal(coefficients(ssn_mod1), c("(Intercept)" = 70.54, "ELEV_DEM" = -0.0289), tolerance = 0.01)
+  expect_s3_class(coefficients(ssn_mod1, type = "tailup"), "tailup_exponential")
+  expect_equal(unclass(coefficients(ssn_mod1, type = "tailup")), c("de" = 1.387, "range" = 4.0744e06), tolerance = 0.01)
   expect_s3_class(coefficients(ssn_mod1, type = "taildown"), "taildown_exponential")
-  expect_s3_class(coef(ssn_mod1, type = "nugget"), "nugget_nugget")
+  expect_equal(unclass(coefficients(ssn_mod1, type = "taildown")), c("de" = 2.419, "range" = 80694), tolerance = 0.01)
+  expect_s3_class(coefficients(ssn_mod1, type = "euclid"), "euclid_exponential")
+  expect_equal(unclass(coefficients(ssn_mod1, type = "euclid")), c("de" = 0.445, "range" = 7.97e05, "rotate" = 0, "scale" = 1), tolerance = 0.01)
+  expect_type(coefficients(ssn_mod1, type = "ssn"), "list")
   expect_null(coefficients(ssn_mod1, type = "randcov"))
 
   # confint
-  expect_true(inherits(confint(ssn_mod1), "matrix"))
-  expect_true(inherits(confint(ssn_mod1, parm = c("x"), level = 0.9), "matrix"))
+  expect_equal(dim(confint(ssn_mod1)), c(2, 2))
+  expect_equal(dim(confint(ssn_mod1, parm = c("ELEV_DEM"), level = 0.9)), c(1, 2))
 
   # cooks.distance
   expect_vector(cooks.distance(ssn_mod1))
+  expect_equal(cooks.distance(ssn_mod1)[1], c("1" = 0.004), tolerance = 0.01)
 
   # covmatrix
-  expect_true(inherits(covmatrix(ssn_mod1), "matrix"))
-  expect_true(inherits(covmatrix(ssn_mod1, "pred1km"), "matrix"))
-  expect_true(inherits(covmatrix(ssn_mod1, "pred1km", type = "obs.pred"), "matrix"))
-  expect_true(inherits(covmatrix(ssn_mod1, "pred1km", cov_type = "pred.pred"), "matrix"))
+  expect_equal(dim(covmatrix(ssn_mod1)), c(45, 45))
+  expect_equal(dim(covmatrix(ssn_mod1, "pred1km")), c(175, 45))
+  expect_equal(dim(covmatrix(ssn_mod1, "pred1km", cov_type = "obs.pred")), c(45, 175))
+  expect_equal(dim(covmatrix(ssn_mod1, "pred1km", cov_type = "pred.pred")), c(175, 175))
 
   # deviance
   expect_vector(deviance(ssn_mod1))
+  expect_equal(deviance(ssn_mod1), 41.63, tolerance = 0.01)
 
   # fitted
   expect_vector(fitted(ssn_mod1))
+  expect_equal(fitted(ssn_mod1)[1], c("1" = 14.26), tolerance = 0.01)
   expect_vector(fitted(ssn_mod1, type = "tailup"))
+  expect_equal(fitted(ssn_mod1, type = "tailup")[1], c("1" = -0.130), tolerance = 0.01)
   expect_vector(fitted(ssn_mod1, type = "taildown"))
+  expect_equal(fitted(ssn_mod1, type = "taildown")[1], c("1" = 0.772), tolerance = 0.01)
   expect_null(fitted(ssn_mod1, type = "randcov"))
+  # fitted.values alias
   expect_vector(fitted.values(ssn_mod1))
-  expect_vector(fitted.values(ssn_mod1, type = "euclid"))
-  expect_vector(fitted.values(ssn_mod1, type = "nugget"))
+  expect_equal(fitted.values(ssn_mod1)[1], c("1" = 14.26), tolerance = 0.01)
+  expect_vector(fitted.values(ssn_mod1, type = "tailup"))
+  expect_equal(fitted.values(ssn_mod1, type = "tailup")[1], c("1" = -0.130), tolerance = 0.01)
+  expect_vector(fitted.values(ssn_mod1, type = "taildown"))
+  expect_equal(fitted.values(ssn_mod1, type = "taildown")[1], c("1" = 0.772), tolerance = 0.01)
   expect_null(fitted.values(ssn_mod1, type = "randcov"))
 
   # formula
   expect_type(formula(ssn_mod1), "language")
+  expect_equal(formula(ssn_mod1), form)
 
   # getCall
   expect_type(getCall(ssn_mod1), "language")
+  expect_equal(getCall(ssn_mod1), ssn_mod1$call)
 
   # glance
-  expect_s3_class(glance(ssn_mod1), "data.frame")
+  glance_ssn_mod1 <- glance(ssn_mod1)
+  names_glance <- c("n", "p", "npar", "value", "AIC", "AICc", "logLik", "deviance", "pseudo.r.squared")
+  expect_s3_class(glance_ssn_mod1, "data.frame")
+  expect_equal(dim(glance_ssn_mod1), c(1, 9))
+  expect_identical(names_glance, names(glance_ssn_mod1))
 
   # glances
-  expect_s3_class(glances(ssn_mod1), "data.frame")
+  expect_identical(glance_ssn_mod1, glances(ssn_mod1)[, -1])
+  glance_ssn_mod12 <- glances(ssn_mod1, ssn_mod2)
   expect_s3_class(glances(ssn_mod1, ssn_mod2), "data.frame")
+  expect_equal(dim(glance_ssn_mod12), c(2, 10))
+  expect_identical(names_glance, names(glance_ssn_mod12))
 
   # hatvalues
   expect_vector(hatvalues(ssn_mod1))
