@@ -2,7 +2,7 @@
 
 ## Major Updates
 
-* Significant testing, documentation, and auxiliary (e.g., `README.md`) updates as part of a submission to *Journal of Statistical Software*. Relevant issues associated with the review are available at [#11](https://github.com/USEPA/SSN2/issues/11), [#12](https://github.com/USEPA/SSN2/issues/12), [#13](https://github.com/USEPA/SSN2/issues/13), [#14](https://github.com/USEPA/SSN2/issues/14), [#15](https://github.com/USEPA/SSN2/issues/15), [#16](https://github.com/USEPA/SSN2/issues/16), [#17](https://github.com/USEPA/SSN2/issues/17), [#20](https://github.com/USEPA/SSN2/issues/20). The review is [linked here](https://github.com/openjournals/joss-reviews/issues/6389).
+* Significant testing, documentation, and auxiliary (e.g., `README.md`) updates as part of a submission to *Journal of Open Source Software*. Relevant issues associated with the review are available at [#11](https://github.com/USEPA/SSN2/issues/11), [#12](https://github.com/USEPA/SSN2/issues/12), [#13](https://github.com/USEPA/SSN2/issues/13), [#14](https://github.com/USEPA/SSN2/issues/14), [#15](https://github.com/USEPA/SSN2/issues/15), [#16](https://github.com/USEPA/SSN2/issues/16), [#17](https://github.com/USEPA/SSN2/issues/17), [#20](https://github.com/USEPA/SSN2/issues/20). The review is [linked here](https://github.com/openjournals/joss-reviews/issues/6389).
 * Added support for geopackage file formats in the `.ssn` folder that is accessed when importing SSN objects via `ssn_import()`.
 
 ## Minor Updates
