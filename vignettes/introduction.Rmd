@@ -99,13 +99,7 @@ citation(package = "SSN2")
 
 # Input Data
 
-Spatial input data must be pre-processed before it can be used to fit spatial stream
-network models in the `SSN2` package. We recommend pre-processing data directly in **R** via the new `SSNbler` **R** package, which you can learn more about by visiting the `SSNbler` GitHub page at [this link](https://github.com/pet221/SSNbler). Legacy options for pre-processing data include the Spatial Tools for the Analysis of River Systems
-(STARS) toolset for ArcGIS Desktop versions 9.3x-10.8x
-[@peterson2014stars] and the `openSTARS` R package
-[@kattwinkel2020openSTARS], which leveraged GRASS GIS. Pre-processing using either `SSNbler`, STARS, or `openSTARS` yields a non-proprietary `.ssn` folder (i.e., directory) which contains all
-of the spatial, topological and attribute information needed to fit a
-spatial stream network model using `SSN2`. This includes:
+The streams, observation, and prediction datasets must be pre-processed prior to fitting SSN models and making predictions at unobserved locations using `SSN2`. Previously, the STARS toolset for ArcGIS Desktop versions 9.3x - 10.8x [@peterson2014stars] or the `openSTARS` **R** package [@kattwinkel2020preparing] were used to generate spatial information required for model fitting and prediction. However, both software packages have recently been retired and are replaced by the `SSNbler` **R** package [@peterson2024SSNbler], which is a new, **R**-based version of the STARS tools. `SSNbler` is currently available on GitHub ([link here](https://github.com/pet221/SSNbler/)), will soon be available on CRAN, and contains several useful resources that guide users through these pre-processing steps. Pre-processing using either `SSNbler`, STARS, or `openSTARS` ends with the creatino of a `.ssn` folder, which is non-proprietary. Files residing in the `.ssn` folder are read into R using `ssn_import()` from `SSN2` and palced into a list structure called an SSN object, which contains all the spatial, topological, and attribute information needed to leverage the modeling tools in `SSN2`. This includes:
 
 1. edges: a geopackage of lines representing the linear geometry of the
    stream network(s).
@@ -276,7 +270,7 @@ Suppose we are interested in studying summer mean temperature (`Summer_mn`) on t
 ggplot() +
   geom_sf(data = mf04p$edges) +
   geom_sf(data = mf04p$obs, aes(color = Summer_mn), size = 2) +
-  scale_color_viridis_c(limits = c(-1.5, 17), option = "H") +
+  scale_color_viridis_c(limits = c(0, 17), option = "H") +
   theme_bw()
 ```
 
@@ -466,7 +460,7 @@ We visualize these predictions (overlain onto the stream network) by running
 ggplot() +
   geom_sf(data = mf04p$edges) +
   geom_sf(data = aug_preds, aes(color = .fitted), size = 2) +
-  scale_color_viridis_c(limits = c(-1.5, 17), option = "H") +
+  scale_color_viridis_c(limits = c(0, 17), option = "H") +
   theme_bw()
 ```
 

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  25 JUN 2024 20:44
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  8 JUL 2024 22:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -989,8 +989,8 @@ Package hyperref Warning: Suppressing link with empty target on input line 308.
 
 Package hyperref Warning: Suppressing link with empty target on input line 308.
 
-File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
 Package fancyhdr Warning: \headheight is too small (62.59596pt): 
 (fancyhdr)                Make it at least 63.55022pt, for example:
@@ -1005,8 +1005,8 @@ LaTeX Font Info:    Font shape `TU/lmss/m/it' in size <8> not available
 ]
 File: paper_files/figure-latex/steam-network-1.pdf Graphic file (type pdf)
 <use paper_files/figure-latex/steam-network-1.pdf>
-File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
 Package fancyhdr Warning: \headheight is too small (62.59596pt): 
 (fancyhdr)                Make it at least 63.55022pt, for example:
@@ -1015,10 +1015,8 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [2]
-File: paper_files/figure-latex/steam-obs-1.pdf Graphic file (type pdf)
-<use paper_files/figure-latex/steam-obs-1.pdf>
-File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
 Package fancyhdr Warning: \headheight is too small (62.59596pt): 
 (fancyhdr)                Make it at least 63.55022pt, for example:
@@ -1027,17 +1025,12 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [3]
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 578--578
-[]\TU/lmtt/m/n/10 ##   term        estimate std.error statistic  p.value conf.low   conf.high[] 
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 586--586
+[]\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530805 ymin: 2527111 xmax: -1503079 ymax: 2537823[] 
  []
 
-
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 579--579
-[]\TU/lmtt/m/n/10 ##   <chr>          <dbl>     <dbl>     <dbl>    <dbl>    <dbl>       <dbl>[] 
- []
-
-File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
 Package fancyhdr Warning: \headheight is too small (62.59596pt): 
 (fancyhdr)                Make it at least 63.55022pt, for example:
@@ -1046,32 +1039,16 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [4]
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 581--581
-[]\TU/lmtt/m/n/10 ## 2 AREAWTMAP   -0.00807   0.00413     -1.96 5.05e- 2  -0.0162   0.0000187[] 
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 655--655
+[]\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530631 ymin: 2521707 xmax: -1500020 ymax: 2540253[] 
  []
 
 
-Overfull \hbox (16.91139pt too wide) in paragraph at lines 609--609
-[]\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530805 ymin: 920324.3 xmax: -1503079 ymax: 931036.6[] 
+Overfull \vbox (0.18597pt too high) detected at line 686
  []
 
-
-Overfull \hbox (1.16139pt too wide) in paragraph at lines 660--660
-[]\TU/lmtt/m/n/10 ##           1           2           3           4           5           6 
- []
-
-
-Overfull \hbox (1.16139pt too wide) in paragraph at lines 661--661
-[]\TU/lmtt/m/n/10 ##  0.77010720  0.71389871  0.77644852  0.42749165 -0.04368363  1.00936419[] 
- []
-
-
-Overfull \hbox (16.91139pt too wide) in paragraph at lines 678--678
-[]\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530631 ymin: 914920.7 xmax: -1500020 ymax: 933466.4[] 
- []
-
-File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
 Package fancyhdr Warning: \headheight is too small (62.59596pt): 
 (fancyhdr)                Make it at least 63.55022pt, for example:
@@ -1082,8 +1059,8 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 [5]
 File: paper_files/figure-latex/steam-preds-1.pdf Graphic file (type pdf)
 <use paper_files/figure-latex/steam-preds-1.pdf>
-File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
 Package fancyhdr Warning: \headheight is too small (62.59596pt): 
 (fancyhdr)                Make it at least 63.55022pt, for example:
@@ -1092,8 +1069,8 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [6]
-File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
 Package fancyhdr Warning: \headheight is too small (62.59596pt): 
 (fancyhdr)                Make it at least 63.55022pt, for example:
@@ -1102,8 +1079,8 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [7]
-File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
 Package fancyhdr Warning: \headheight is too small (62.59596pt): 
 (fancyhdr)                Make it at least 63.55022pt, for example:
@@ -1112,8 +1089,8 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [8]
-File: C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.2.2/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
 Package fancyhdr Warning: \headheight is too small (62.59596pt): 
 (fancyhdr)                Make it at least 63.55022pt, for example:
@@ -1127,18 +1104,18 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
  ***********
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: 44BAF6B9216D6DC2E1FA2B96B76B72BA;653.
+(rerunfilecheck)             Checksum: A3679AA965015B8D7E58B1F516933CC6;653.
 Package logreq Info: Writing requests to 'paper.run.xml'.
 \openout1 = `paper.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 36735 strings out of 476752
- 757026 string characters out of 5799757
+ 36723 strings out of 476752
+ 756528 string characters out of 5799757
  1948842 words of memory out of 5000000
- 58219 multiletter control sequences out of 15000+600000
+ 58208 multiletter control sequences out of 15000+600000
  564925 words of font info for 82 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 84i,13n,87p,1194b,850s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,12n,87p,1194b,850s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on paper.pdf (9 pages).
