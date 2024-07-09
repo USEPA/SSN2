@@ -53,6 +53,8 @@ test_that("generics work ssn_lm point data", {
   expect_equal(unclass(coef(ssn_mod1, type = "euclid")), c("de" = 0.445, "range" = 7.97e05, "rotate" = 0, "scale" = 1), tolerance = 0.01)
   expect_type(coef(ssn_mod1, type = "ssn"), "list")
   expect_null(coef(ssn_mod1, type = "randcov"))
+  expect_error(coef(ssn_mod1, type = 'error'), 'Invalid type argument. The type argument must be "fixed", "ssn", "tailup",  "taildown",  "euclid",  "nugget", or "randcov".')
+
  # coefficients alias
   expect_vector(coefficients(ssn_mod1))
   expect_equal(coefficients(ssn_mod1), c("(Intercept)" = 70.54, "ELEV_DEM" = -0.0289), tolerance = 0.01)
@@ -64,6 +66,8 @@ test_that("generics work ssn_lm point data", {
   expect_equal(unclass(coefficients(ssn_mod1, type = "euclid")), c("de" = 0.445, "range" = 7.97e05, "rotate" = 0, "scale" = 1), tolerance = 0.01)
   expect_type(coefficients(ssn_mod1, type = "ssn"), "list")
   expect_null(coefficients(ssn_mod1, type = "randcov"))
+  expect_error(coefficients(ssn_mod1, type = "error"), 'Invalid type argument. The type argument must be "fixed", "ssn", "tailup",  "taildown",  "euclid",  "nugget", or "randcov".')
+
 
   # confint
   expect_equal(dim(confint(ssn_mod1)), c(2, 2))
@@ -78,6 +82,7 @@ test_that("generics work ssn_lm point data", {
   expect_equal(dim(covmatrix(ssn_mod1, "pred1km")), c(175, 45))
   expect_equal(dim(covmatrix(ssn_mod1, "pred1km", cov_type = "obs.pred")), c(45, 175))
   expect_equal(dim(covmatrix(ssn_mod1, "pred1km", cov_type = "pred.pred")), c(175, 175))
+  expect_error(covmatrix(ssn_mod1, "pred1km", cov_type = "error"), 'Invalid "cov_type" argument.')
 
   # deviance
   expect_vector(deviance(ssn_mod1))
@@ -93,6 +98,8 @@ test_that("generics work ssn_lm point data", {
   expect_vector(fitted(ssn_mod1, type = "euclid"))
   expect_equal(fitted(ssn_mod1, type = "euclid")[1], c("1" = 0.003), tolerance = 0.01)
   expect_null(fitted(ssn_mod1, type = "randcov"))
+  expect_error(fitted(ssn_mod1, type = "error"), 'Invalid type argument. The type argument must be "response", "tailup",  "taildown",  "euclid",  "nugget", or "randcov".')
+
   # fitted.values alias
   expect_vector(fitted.values(ssn_mod1))
   expect_equal(fitted.values(ssn_mod1)[1], c("1" = 14.26), tolerance = 0.01)
@@ -103,6 +110,7 @@ test_that("generics work ssn_lm point data", {
   expect_vector(fitted.values(ssn_mod1, type = "euclid"))
   expect_equal(fitted.values(ssn_mod1, type = "euclid")[1], c("1" = 0.003), tolerance = 0.01)
   expect_null(fitted.values(ssn_mod1, type = "randcov"))
+  expect_error(fitted.values(ssn_mod1, type = "error"), 'Invalid type argument. The type argument must be "response", "tailup",  "taildown",  "euclid",  "nugget", or "randcov".')
 
   # formula
   expect_type(formula(ssn_mod1), "language")
@@ -182,6 +190,8 @@ test_that("generics work ssn_lm point data", {
                c("fit" = 14.690, "lwr" = 14.363, "upr" = 15.016), tolerance = 0.01)
   expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "confidence")[1, ],
                c("fit" = 14.058, "lwr" = 11.477, "upr" = 16.639), tolerance = 0.01)
+  expect_error(predict(ssn_mod1, newdata = "pred1km", interval = "error"))
+
   # block predict
   expect_equal(predict(ssn_mod1, newdata = "pred1km", block = TRUE)[1],
                c("1" = 10.295), tolerance = 0.01)
@@ -193,6 +203,7 @@ test_that("generics work ssn_lm point data", {
   expect_equal(predict(ssn_mod1, newdata = "pred1km", block = TRUE, interval = "confidence")[1, ],
                c("fit" = 10.579, "lwr" = 8.023, "upr" = 13.134), tolerance = 0.01)
   expect_vector(predict(ssn_mod1, newdata = "pred1km", block = TRUE))
+  expect_error(predict(ssn_mod1, newdata = "pred1km", block = TRUE, interval = "error"))
 
 
   # print
@@ -211,6 +222,8 @@ test_that("generics work ssn_lm point data", {
   expect_equal(residuals(ssn_mod1, type = "pearson")[1], c("1" = 0.329), tolerance = 0.01)
   expect_equal(residuals(ssn_mod1, type = "standardized")[1], c("1" = 0.341), tolerance = 0.01)
   expect_identical(residuals(ssn_mod1, type = "standardized"), rstandard(ssn_mod1))
+  expect_error(residuals(ssn_mod1, type = "error"), 'residuals must be response or pearson or standardized')
+
   # resid alias
   expect_vector(resid(ssn_mod1))
   expect_equal(length(resid(ssn_mod1)), 45)
@@ -218,6 +231,7 @@ test_that("generics work ssn_lm point data", {
   expect_equal(resid(ssn_mod1, type = "pearson")[1], c("1" = 0.329), tolerance = 0.01)
   expect_equal(resid(ssn_mod1, type = "standardized")[1], c("1" = 0.341), tolerance = 0.01)
   expect_identical(resid(ssn_mod1, type = "standardized"), rstandard(ssn_mod1))
+  expect_error(resid(ssn_mod1, type = "error"), 'residuals must be response or pearson or standardized')
 
   # summary
   expect_type(summary(ssn_mod1), "list")
