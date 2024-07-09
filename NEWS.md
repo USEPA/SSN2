@@ -1,13 +1,16 @@
 # SSN2 0.2.0
 
+## Major Updates
+
+* Significant testing, documentation, and auxiliary (e.g., `README.md`) updates as part of a submission to *Journal of Statistical Software*. Relevant issues associated with the review are available at [#11](https://github.com/USEPA/SSN2/issues/11), [#12](https://github.com/USEPA/SSN2/issues/12), [#13](https://github.com/USEPA/SSN2/issues/13), [#14](https://github.com/USEPA/SSN2/issues/14), [#15](https://github.com/USEPA/SSN2/issues/15), [#16](https://github.com/USEPA/SSN2/issues/16), [#17](https://github.com/USEPA/SSN2/issues/17), [#20](https://github.com/USEPA/SSN2/issues/20). The review is [linked here](https://github.com/openjournals/joss-reviews/issues/6389).
+* Added support for geopackage file formats in the `.ssn` folder that is accessed when importing SSN objects via `ssn_import()`.
+
 ## Minor Updates
 
 * Added `ssn_names()` to return column names in the `edges`, `obs`, and `preds` elements of an SSN object.
 * Changed `Matrix::rankMatrix(X, method = "tolNorm2")` to `Matrix::rankMatrix(X, method = "qr")` to enhance stability when determining linear independence in `X`, the design matrix of explanatory variables.
 * Replaced an error message with a warning message when `X` has perfect collinearities (i.e., is not full rank).
-* Added support for geopackage file formats in the `.ssn` folder that is accessed when importing SSN objects via `ssn_import()`.
 * Minor vignette updates.
-* Minor documentation updates.
 
 ## Bug Fixes
 
