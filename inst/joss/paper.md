@@ -4,7 +4,7 @@ tags:
   - R
   - Spatial stream network
   - Spatial correlation
-  - Spatial prediction
+  - Spatial prediction (Kriging)
   - Geostatistics
   - Generalized linear model
   - Torgegram
@@ -13,23 +13,26 @@ authors:
     orcid: 0000-0002-3393-5529
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Erin E. Peterson
+    orcid: 0000-0003-2992-0372
     affiliation: 2
   - name: Jay M. Ver Hoef
+    orcid: 0000-0003-4302-6895
     affiliation: 3
   - name: Alan Pearse
+    orcid: 0000-0002-4133-8548 
     affiliation: 4
   - name: Daniel J. Isaak
     affiliation: 5
 affiliations:
- - name: Office of Research and Development, United States Environmental Protection Agency (USEPA)
+ - name: Pacific Ecological Systems Division, United States Environmental Protection Agency, Corvallis, OR, USA
    index: 1
- - name: EP Consulting and Centre for Data Science, Queensland University of Technology, Brisbane Australia 4000 
+ - name: EP Consulting and Centre for Data Science, Queensland University of Technology, Brisbane, QLD, Australia
    index: 2
- - name: NMFS Alaska Fisheries Science Center, United States National Oceanic and Atmospheric Administration (NOAA)
+ - name: NMFS Alaska Fisheries Science Center, United States National Oceanic and Atmospheric Administration, Seattle, WA, USA
    index: 3
- - name: NIASRA, School of Mathematics and Applied Statistics, University of Wollongong
+ - name: NIASRA, School of Mathematics and Applied Statistics, University of Wollongong, Wollongong, NSW, Australia
    index: 4
- - name: Rocky Mountain Research Station, United States Forest Service (USFS)
+ - name: Rocky Mountain Research Station, United States Forest Service, Boise, ID, USA
    index: 5
 citation_author: Dumelle et. al.
 date: 07 July 2024
@@ -50,7 +53,7 @@ The `SSN2` **R** package provides tools for spatial statistical modeling, parame
 
 Streams provide vital aquatic services that sustain wildlife, provide drinking and irrigation water, and support recreational and cultural activities.  Data are often collected at various locations on a stream network and used to characterize spatial patterns in stream phenomena. For example, a manager may need to know how the amount of a hazardous chemical changes throughout a stream network to inform mitigation efforts. Comprehensive formulations of spatial stream network (SSN) models are provided by @ver2010moving, @peterson2010mixed, and @ver2014ssn. The `SSN2` **R** package is designed to help users fit SSN models to their stream network data.
 
-SSN models use a spatial statistical modeling framework [e.g., @cressie1993statistics] to describe unique and complex dependencies on a stream network resulting from a branching network structure, directional water flow, and differences in flow volume. These SSN models relate a continuous or discrete response variable to one or more explanatory variables, a spatially independent random error term (i.e., nugget), and up to three spatially dependent random error terms: tail-up random errors, tail-down random errors, and Euclidean random errors. Tail-up random errors restrict spatial dependence to flow-connected sites (i.e., water flows from an upstream to a downstream site) and incorporate spatial weights through an additive function to describe the branching network between sites. Tail-down random errors describe spatial dependence between both flow-connected and flow-unconnected sites (i.e., sites that share a common downstream junction but not flow), but spatial weights are not required. Euclidean random errors describe spatial dependence between sites based on straight-line distance and are governed by factors not confined to the stream network, such as regional geology. The variances and the length-scales of spatial dependence in the tail-up, tail-down, and Euclidean random errors are controlled by separate variance (i.e., partial sill) and range parameters, respectively. In this paper, we show how to use the `SSN2` **R** package to fit SSN models, inspect SSN models, and use SSN models to make predictions at unobserved locations on a stream network. 
+SSN models use a spatial statistical modeling framework [e.g., @cressie1993statistics] to describe unique and complex dependencies on a stream network resulting from a branching network structure, directional water flow, and differences in flow volume. These SSN models relate a continuous or discrete response variable to one or more explanatory variables, a spatially independent random error term, and up to three spatially dependent random error terms: tail-up random errors, tail-down random errors, and Euclidean random errors. Tail-up random errors restrict spatial dependence to flow-connected sites (i.e., water flows from an upstream to a downstream site) and incorporate spatial weights through an additive function to describe the branching network between sites. Tail-down random errors describe spatial dependence between both flow-connected and flow-unconnected sites (i.e., sites that share a common downstream junction but not flow), but spatial weights are not required. Euclidean random errors describe spatial dependence between sites based on straight-line distance and are governed by factors not confined to the stream network, such as regional geology. The variances and the length-scales of spatial dependence in the tail-up, tail-down, and Euclidean random errors are controlled by separate variance (i.e., partial sill) and range parameters, respectively, while the spatially independent variance (i.e., nugget) is controlled by another separate variance parameter. In this paper, we show how to use the `SSN2` **R** package to fit SSN models, inspect SSN models, and use SSN models to make predictions at unobserved locations on a stream network. 
 
 # Package Overview
 
@@ -305,6 +308,8 @@ There are several spatial modeling packages in **R**, including `geoR` [@ribiero
 Figures were created using `ggplot2` [@wickham2016ggplot2] and the `viridis` color palettes [@garnier2024viridis].
 
 <!-- Or, can use \nocite{wickham2016ggplot2, garnier2024viridis}. -->
+
+We would like to sincerely thank the editor and reviewers for all of their helpful feedback which greatly improved both the software and the manuscript.
 
 The views expressed in this manuscript are those of the authors and do not necessarily represent the views or policies of USEPA, NOAA, or USFS. Any mention of trade names, products, or services does not imply an endorsement by the U.S. government, USEPA, NOAA, or USFS. USEPA, NOAA, or USFS do not endorse any commercial products, services or enterprises.
 

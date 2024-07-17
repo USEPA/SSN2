@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  15 JUL 2024 11:26
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  17 JUL 2024 08:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -998,12 +998,22 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 LaTeX Font Info:    Font shape `TU/lmss/m/it' in size <8> not available
-(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 371.
+(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 372.
 [1
 
 ]
 LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 398.
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 399.
+File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
+<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
+
+Package fancyhdr Warning: \headheight is too small (62.59596pt): 
+(fancyhdr)                Make it at least 63.55022pt, for example:
+(fancyhdr)                \setlength{\headheight}{63.55022pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+(fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
+
+[2]
 File: paper_files/figure-latex/steam-network-1.pdf Graphic file (type pdf)
 <use paper_files/figure-latex/steam-network-1.pdf>
 File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
@@ -1015,18 +1025,8 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                You might also make \topmargin smaller to compensate:
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
-[2]
-File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
-<C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
-
-Package fancyhdr Warning: \headheight is too small (62.59596pt): 
-(fancyhdr)                Make it at least 63.55022pt, for example:
-(fancyhdr)                \setlength{\headheight}{63.55022pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-(fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
-
 [3]
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 589--589
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 590--590
 []\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530805 ymin: 2527111 xmax: -1503079 ymax: 2537823[] 
  []
 
@@ -1040,12 +1040,8 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [4]
-Overfull \hbox (6.41139pt too wide) in paragraph at lines 658--658
+Overfull \hbox (6.41139pt too wide) in paragraph at lines 659--659
 []\TU/lmtt/m/n/10 ## Bounding box:  xmin: -1530631 ymin: 2521707 xmax: -1500020 ymax: 2540253[] 
- []
-
-
-Overfull \vbox (0.18597pt too high) detected at line 689
  []
 
 File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
@@ -1080,6 +1076,15 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [7]
+Overfull \hbox (56.36137pt too wide) in paragraph at lines 878--883
+[][][][][][][][] [] [][] [] [][][][] [] [][][] [] [][][][][] [] [][][][][][][] [] [][][][][] [] [][][][][][][][] [] [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] []
+ []
+
+
+Underfull \hbox (badness 1231) in paragraph at lines 890--894
+\TU/lmr/m/n/10 data. Boulder, CO, USA: University Corporation for Atmospheric Research.
+ []
+
 File: C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png Graphic file (type bmp)
 <C:/Program Files/R/R-4.4.0/library/rticles/rmarkdown/templates/joss/resources/JOSS-logo.png>
 
