@@ -82,7 +82,7 @@ The `copy_lsn_to_temp()` function is only used when working with `MiddleFork04.s
 mf04p <- ssn_import(path, predpts = "pred1km")
 ```
 
-```{r steam-network, fig.cap="Middle Fork 2004 stream networks. Observed sites are represented by brown, closed circles. Prediction sites are represented by blue, closed triangles.", out.width="85%", fig.align="center", warning=FALSE}
+```{r steam-network, fig.cap="Middle Fork 2004 stream networks. Observed sites are represented by brown, closed circles at various locations throughout the stream network. Prediction sites are represented by blue, closed triangles and are spaced one kilometer apart.", out.width="85%", fig.align="center", warning=FALSE}
 library(ggplot2)
 ggplot() +
   geom_sf(data = mf04p$edges) +
@@ -139,7 +139,7 @@ subset(aug_pred, select = c(.fitted, .lower, .upper))
 
 Here, `.fitted` are the predictions, `.lower` are the lower bounds of 95% prediction intervals, and `.upper` are the upper bounds of 95% prediction intervals. Utilizing `augment()` makes the prediction output straightforward to visualize:
 
-```{r steam-preds, fig.cap="Predicted Middle Fork 2004 mean summer temperatures (Celsius) spaced one kilometer apart. ", out.width="85%", fig.align="center", warning=FALSE}
+```{r steam-preds, fig.cap="Predicted Middle Fork 2004 mean summer temperatures (Celsius) spaced one kilometer apart. As expected, temperature is predicted to be lower in areas of higher elevation.", out.width="85%", fig.align="center", warning=FALSE}
 ggplot() +
     geom_sf(data = mf04p$edges) +
     geom_sf(data = aug_pred, aes(color = .fitted), size = 2) +
