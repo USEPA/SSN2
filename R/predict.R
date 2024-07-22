@@ -60,8 +60,6 @@
 #' predict(ssn_mod, "pred1km")
 predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none", "confidence", "prediction"),
                            level = 0.95, block = FALSE, ...) {
-
-
   # match interval argument so the three display
   interval <- match.arg(interval)
 
@@ -354,9 +352,6 @@ get_pred <- function(newdata_list, se.fit, interval, formula, obdata, cov_matrix
 
 
 predict_block <- function(object, newdata, se.fit, interval, level, ...) {
-
-
-
   # deal with local (omitted for now)
   # if (missing(local)) local <- NULL
   # if (is.null(local)) local <- FALSE

@@ -8,7 +8,6 @@
 #' @return A distance matrix
 #' @noRd
 amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
-
   site.no <- length(pids)
 
   among_distance_matrix <- matrix(NA, nrow = site.no, ncol = site.no)
@@ -31,9 +30,9 @@ amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
     pid.data <- ssn_get_netgeom(ssn$obs[ind.pids, ], c(
       "pid", "SegmentID", "locID",
       "DistanceUpstream"
-      ), reformat = TRUE)
+    ), reformat = TRUE)
 
-    ##pid.data <- as.data.frame(sapply(pid.data, as.numeric))
+    ## pid.data <- as.data.frame(sapply(pid.data, as.numeric))
     colnames(pid.data) <- c("pid", "rid", "locID", "upDist")
   }
 

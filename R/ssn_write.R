@@ -31,8 +31,10 @@
 #' )
 #'
 #' ## Write SSN to new .ssn directory
-#' ssn_write(mf04p, path = paste0(tempdir(), "/tempSSN.ssn"),
-#'   overwrite = TRUE)
+#' ssn_write(mf04p,
+#'   path = paste0(tempdir(), "/tempSSN.ssn"),
+#'   overwrite = TRUE
+#' )
 #'
 #' ## Write SSN to .ssn directory and return SSN object
 #' tempSSN <- ssn_write(mf04p, path = paste0(
@@ -41,11 +43,12 @@
 #' ), overwrite = TRUE, import = TRUE)
 ssn_write <- function(ssn, path, overwrite = FALSE,
                       copy_dist = FALSE, import = FALSE) {
-
   ## Add .ssn extension if necessary
-  if(substr(path, nchar(path)-3, nchar(path)) != ".ssn") {
-    print(paste0("path must include .ssn extension. ",
-                 path, " updated to ", paste0(path, ".ssn")))
+  if (substr(path, nchar(path) - 3, nchar(path)) != ".ssn") {
+    print(paste0(
+      "path must include .ssn extension. ",
+      path, " updated to ", paste0(path, ".ssn")
+    ))
     path <- paste0(path, ".ssn")
   }
 

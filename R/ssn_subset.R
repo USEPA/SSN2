@@ -63,9 +63,8 @@
 #'   overwrite = TRUE
 #' )
 ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
-
   ## Add .ssn extension if necessary
-  if(substr(path, nchar(path)-3, nchar(path)) != ".ssn") {
+  if (substr(path, nchar(path) - 3, nchar(path)) != ".ssn") {
     print(paste0("path must include .ssn extension. ", path, " updated to ", paste0(path, ".ssn")))
     path <- paste0(path, ".ssn")
   }

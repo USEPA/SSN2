@@ -1,8 +1,4 @@
 test_that("covariance matrix functions run", {
-
-
-
-
   ################
   ##### create distance object
   ################
@@ -39,8 +35,10 @@ test_that("covariance matrix functions run", {
   ##### tailup
   ################
 
-  tailup_covs <- c("linear", "spherical", "exponential",
-                   "mariah", "epa", "none")
+  tailup_covs <- c(
+    "linear", "spherical", "exponential",
+    "mariah", "epa", "none"
+  )
   lapply(tailup_covs, function(x) {
     if (x == "none") {
       params <- tailup_params(x)
@@ -59,8 +57,10 @@ test_that("covariance matrix functions run", {
   ##### taildown
   ################
 
-  taildown_covs <- c("linear", "spherical", "exponential",
-                   "mariah", "epa", "none")
+  taildown_covs <- c(
+    "linear", "spherical", "exponential",
+    "mariah", "epa", "none"
+  )
   lapply(taildown_covs, function(x) {
     if (x == "none") {
       params <- taildown_params(x)
@@ -79,9 +79,11 @@ test_that("covariance matrix functions run", {
   ##### euclid
   ################
 
-  euclid_covs <- c("exponential", "spherical", "gaussian", "cubic",
-                    "pentaspherical", "cosine", "wave", "jbessel", "gravity",
-                   "rquad", "magnetic", "none")
+  euclid_covs <- c(
+    "exponential", "spherical", "gaussian", "cubic",
+    "pentaspherical", "cosine", "wave", "jbessel", "gravity",
+    "rquad", "magnetic", "none"
+  )
   lapply(euclid_covs, function(x) {
     if (x == "none") {
       params <- euclid_params(x)
@@ -118,21 +120,19 @@ test_that("covariance matrix functions run", {
       expect_equal(dim(covmx), n_obs_dim)
     }
   })
-
 })
 
 test_that("covariance vector functions run", {
-
-
-
   ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
-                    tailup_type = "exponential", taildown_type = "exponential",
-                    euclid_type = "exponential", anisotropy = FALSE,
-                    random = ~ as.factor(netID), additive = "afvArea",
-                    estmethod = "ml", partition_factor = ~ as.factor(netID))
+    tailup_type = "exponential", taildown_type = "exponential",
+    euclid_type = "exponential", anisotropy = FALSE,
+    random = ~ as.factor(netID), additive = "afvArea",
+    estmethod = "ml", partition_factor = ~ as.factor(netID)
+  )
 
   ssn_mod_anis <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
-                         euclid_type = "exponential", anisotropy = TRUE)
+    euclid_type = "exponential", anisotropy = TRUE
+  )
 
 
   ################
@@ -182,8 +182,10 @@ test_that("covariance vector functions run", {
   ##### tailup
   ################
 
-  tailup_covs <- c("linear", "spherical", "exponential",
-                   "mariah", "epa", "none")
+  tailup_covs <- c(
+    "linear", "spherical", "exponential",
+    "mariah", "epa", "none"
+  )
   lapply(tailup_covs, function(x) {
     if (x == "none") {
       params <- tailup_params(x)
@@ -201,8 +203,10 @@ test_that("covariance vector functions run", {
   ##### taildown
   ################
 
-  taildown_covs <- c("linear", "spherical", "exponential",
-                     "mariah", "epa", "none")
+  taildown_covs <- c(
+    "linear", "spherical", "exponential",
+    "mariah", "epa", "none"
+  )
   lapply(taildown_covs, function(x) {
     if (x == "none") {
       params <- taildown_params(x)
@@ -220,9 +224,11 @@ test_that("covariance vector functions run", {
   ##### euclid
   ################
 
-  euclid_covs <- c("exponential", "spherical", "gaussian", "cubic",
-                   "pentaspherical", "cosine", "wave", "jbessel", "gravity",
-                   "rquad", "magnetic", "none")
+  euclid_covs <- c(
+    "exponential", "spherical", "gaussian", "cubic",
+    "pentaspherical", "cosine", "wave", "jbessel", "gravity",
+    "rquad", "magnetic", "none"
+  )
   lapply(euclid_covs, function(x) {
     if (x == "none") {
       params <- euclid_params(x)
@@ -250,8 +256,6 @@ test_that("covariance vector functions run", {
   expect_identical(colnames(preds), c("fit", "lwr", "upr"))
   preds_anis <- predict(ssn_mod_anis, "pred1km")
   expect_equal(length(preds_anis), n_pred)
-
-
 })
 
 
@@ -262,24 +266,28 @@ test_that("initial objects", {
   dispersion <- 1
   tu <- tailup_initial("exponential", de = de, range = range, known = "given")
   td <- taildown_initial("exponential", de = de, range = range, known = c("de", "range"))
-  eu <- euclid_initial("exponential", de = de, range = range,
-                       rotate = 0, scale = 1, known = "given")
+  eu <- euclid_initial("exponential",
+    de = de, range = range,
+    rotate = 0, scale = 1, known = "given"
+  )
   nu <- nugget_initial("nugget", nugget, known = "nugget")
   disp <- dispersion_initial("Gamma", dispersion = dispersion, known = "given")
   ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
-                    tailup_initial = tu, taildown_initial = td,
-                    euclid_initial = eu, nugget_initial = nu,
-                    additive = "afvArea")
+    tailup_initial = tu, taildown_initial = td,
+    euclid_initial = eu, nugget_initial = nu,
+    additive = "afvArea"
+  )
   expect_equal(as.vector(coef(ssn_mod, "tailup")), c(de, range))
   expect_equal(as.vector(coef(ssn_mod, "taildown")), c(de, range))
   expect_equal(as.vector(coef(ssn_mod, "euclid")), c(de, range, 0, 1))
   expect_equal(as.vector(coef(ssn_mod, "nugget")), c(de))
 
   ssn_mod <- ssn_glm(Summer_mn ~ ELEV_DEM, mf04p,
-                    tailup_initial = tu, taildown_initial = td,
-                    euclid_initial = eu, nugget_initial = nu,
-                    dispersion_initial = disp,
-                    additive = "afvArea")
+    tailup_initial = tu, taildown_initial = td,
+    euclid_initial = eu, nugget_initial = nu,
+    dispersion_initial = disp,
+    additive = "afvArea"
+  )
   expect_equal(as.vector(coef(ssn_mod, "tailup")), c(de, range))
   expect_equal(as.vector(coef(ssn_mod, "taildown")), c(de, range))
   expect_equal(as.vector(coef(ssn_mod, "euclid")), c(de, range, 0, 1))

@@ -1,5 +1,4 @@
 test_that("prediction works", {
-
   ssn_mod1 <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
     tailup_type = "exponential",
     taildown_type = "exponential", euclid_type = "exponential",
@@ -52,7 +51,4 @@ test_that("prediction works", {
 
   preds_list <- predict(ssn_mod2)
   expect_identical(names(preds_list), c("pred1km", "CapeHorn"))
-
-
-
 })

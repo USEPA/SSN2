@@ -45,7 +45,6 @@
 #' @name SSN_to_SSN2
 #' @export
 SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
-
   .Deprecated(new = "ssn_import")
 
   if (!requireNamespace("sp", quietly = TRUE)) {
@@ -237,7 +236,7 @@ SSN_to_SSN2 <- function(object, edge_additive = NULL, site_additive = NULL) {
     ## -----------------------------------------------
     ## Construct SSN object
     ## -----------------------------------------------
-    
+
     ssnlist <- list(
       edges = edges,
       obs = sites

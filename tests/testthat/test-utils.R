@@ -21,8 +21,8 @@ test_that("check optim method works", {
 })
 
 test_that("logit and expit work", {
-  expect_equal(logit(1/2), 0)
-  expect_equal(expit(0), 1/2)
-  expect_equal(expit(logit(4/7)), 4/7)
-  expect_equal(logit(expit(4/7)), 4/7)
+  expect_equal(logit(1 / 2), 0)
+  expect_equal(expit(0), 1 / 2)
+  expect_equal(expit(logit(4 / 7)), 4 / 7)
+  expect_equal(logit(expit(4 / 7)), 4 / 7)
 })

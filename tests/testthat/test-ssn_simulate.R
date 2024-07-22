@@ -1,5 +1,4 @@
 test_that("simulating works", {
-
   tu <- tailup_params("exponential", de = 1, range = 1)
   td <- taildown_params("exponential", de = 1, range = 1)
   eu <- euclid_params("exponential", de = 1, range = 1, rotate = 0, scale = 1)
@@ -132,5 +131,4 @@ test_that("simulating works", {
 
   expect_equal(dim(sim2), c(n_obs, 2))
   expect_equal(sim2[1, ], c("1" = 7.874, "2" = 0.465), tolerance = 0.01)
-
 })

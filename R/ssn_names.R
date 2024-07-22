@@ -10,7 +10,6 @@
 #' @name ssn_names
 #' @export
 ssn_names <- function(ssn.object) {
-
   if (identical(ssn.object$obs, NA)) {
     no <- 0
     nameso <- NULL

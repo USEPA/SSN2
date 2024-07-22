@@ -1,5 +1,4 @@
 test_that("generics work ssn_glm point data", {
-
   set.seed(2)
 
   form <- Summer_mn ~ ELEV_DEM
@@ -189,21 +188,33 @@ test_that("generics work ssn_glm point data", {
 
   # predict
   expect_equal(predict(ssn_mod1, newdata = "pred1km")[1],
-               c("1" = 2.687), tolerance = 0.01)
+    c("1" = 2.687),
+    tolerance = 0.01
+  )
   expect_equal(predict(ssn_mod1, newdata = "pred1km", type = "response")[1],
-               c("1" = 14.688), tolerance = 0.01)
+    c("1" = 14.688),
+    tolerance = 0.01
+  )
   expect_equal(length(predict(ssn_mod1, newdata = "pred1km")), 175)
   expect_equal(length(predict(ssn_mod1, newdata = "pred1km", type = "response")), 175)
   expect_identical(names(predict(ssn_mod1, newdata = "pred1km", se.fit = TRUE)), c("fit", "se.fit"))
   expect_identical(names(predict(ssn_mod1, newdata = "pred1km", type = "response", se.fit = TRUE)), c("fit", "se.fit"))
   expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "prediction", se.fit = TRUE)$fit[1, ],
-               c("fit" = 2.687, "lwr" = 2.670, "upr" = 2.740), tolerance = 0.01)
+    c("fit" = 2.687, "lwr" = 2.670, "upr" = 2.740),
+    tolerance = 0.01
+  )
   expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "prediction", type = "response", se.fit = TRUE)$fit[1, ],
-               c("fit" = 14.688, "lwr" = 14.440, "upr" = 14.941), tolerance = 0.01)
+    c("fit" = 14.688, "lwr" = 14.440, "upr" = 14.941),
+    tolerance = 0.01
+  )
   expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "confidence")[1, ],
-               c("fit" = 2.635, "lwr" = 2.444, "upr" = 2.827), tolerance = 0.01)
+    c("fit" = 2.635, "lwr" = 2.444, "upr" = 2.827),
+    tolerance = 0.01
+  )
   expect_equal(predict(ssn_mod1, newdata = "pred1km", type = "response", interval = "confidence")[1, ],
-               c("fit" = 13.952, "lwr" = 11.519, "upr" = 16.898), tolerance = 0.01)
+    c("fit" = 13.952, "lwr" = 11.519, "upr" = 16.898),
+    tolerance = 0.01
+  )
   expect_error(predict(ssn_mod1, newdata = "pred1km", interval = "error"))
 
   # print
@@ -222,7 +233,7 @@ test_that("generics work ssn_glm point data", {
   expect_equal(residuals(ssn_mod1, type = "pearson")[1], c("1" = 0.0318), tolerance = 0.01)
   expect_equal(residuals(ssn_mod1, type = "standardized")[1], c("1" = 0.0001), tolerance = 0.01)
   expect_identical(residuals(ssn_mod1, type = "standardized"), rstandard(ssn_mod1))
-  expect_error(residuals(ssn_mod1, type = "error"), 'residuals must be deviance or response or pearson or standardized')
+  expect_error(residuals(ssn_mod1, type = "error"), "residuals must be deviance or response or pearson or standardized")
   # resid alias
   expect_vector(resid(ssn_mod1))
   expect_equal(length(resid(ssn_mod1)), 45)
@@ -230,7 +241,7 @@ test_that("generics work ssn_glm point data", {
   expect_equal(resid(ssn_mod1, type = "pearson")[1], c("1" = 0.0318), tolerance = 0.01)
   expect_equal(resid(ssn_mod1, type = "standardized")[1], c("1" = 0.0001), tolerance = 0.01)
   expect_identical(resid(ssn_mod1, type = "standardized"), rstandard(ssn_mod1))
-  expect_error(resid(ssn_mod1, type = "error"), 'residuals must be deviance or response or pearson or standardized')
+  expect_error(resid(ssn_mod1, type = "error"), "residuals must be deviance or response or pearson or standardized")
 
   # summary
   expect_type(summary(ssn_mod1), "list")
@@ -274,5 +285,4 @@ test_that("generics work ssn_glm point data", {
   expect_equal(diag(vcov(ssn_mod1)), c("(Intercept)" = 1.213, "ELEV_DEM" = 2.959e-07), tolerance = 0.01)
   expect_equal(dim(vcov(ssn_mod1, var_correct = FALSE)), c(2, 2))
   expect_equal(diag(vcov(ssn_mod1, var_correct = FALSE)), c("(Intercept)" = 1.194, "ELEV_DEM" = 2.911e-07), tolerance = 0.01)
-
 })

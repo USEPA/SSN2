@@ -107,11 +107,9 @@
 #'   overwrite = TRUE
 #' )
 #'
-
 ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
-                        overwrite = FALSE) {
-
-  if(!dir.exists(path)) stop("Cannot find the .ssn folder.")
+                       overwrite = FALSE) {
+  if (!dir.exists(path)) stop("Cannot find the .ssn folder.")
 
   # Get wd
   old_wd <- getwd()
@@ -120,43 +118,42 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   local_dir(path)
 
   ## Adjust if relative pathname is supplied in path
-  if(substr(path, start = 1, stop = 2) == "./") {
+  if (substr(path, start = 1, stop = 2) == "./") {
     rel.path <- substr(path, start = 2, stop = nchar(path))
     path <- paste0(old_wd, rel.path)
   }
 
-#################################################################
+  #################################################################
   ## Check format of predpts
-################################################################
+  ################################################################
 
   ## If names are provided, use them
-  if(is.vector(predpts) & !is.null(names(predpts))) {
-    p.names<- names(predpts)
+  if (is.vector(predpts) & !is.null(names(predpts))) {
+    p.names <- names(predpts)
   }
 
   ## If no names provided assign based on name of file without extension
-  if(is.vector(predpts) & is.null(names(predpts))) {
+  if (is.vector(predpts) & is.null(names(predpts))) {
     p.names <- NULL
 
-    for(d in 1:length(predpts)) {
-
-      shp.ext<- substr(predpts[d], nchar(predpts[d])-3, nchar(predpts[d])) == ".shp"
-      gpkg.ext <- substr(predpts[d], nchar(predpts[d])-4, nchar(predpts[d])) == ".gpkg"
+    for (d in 1:length(predpts)) {
+      shp.ext <- substr(predpts[d], nchar(predpts[d]) - 3, nchar(predpts[d])) == ".shp"
+      gpkg.ext <- substr(predpts[d], nchar(predpts[d]) - 4, nchar(predpts[d])) == ".gpkg"
 
       p.names[d] <- ifelse(
-        shp.ext == TRUE, substr(predpts[d], 1, nchar(predpts[d])-4),
-
-                 ifelse(gpkg.ext == TRUE,
-                        substr(predpts[d], 1, nchar(predpts[d])-5),
-
-                 ifelse(shp.ext == FALSE & gpkg.ext == FALSE, predpts[d])))
+        shp.ext == TRUE, substr(predpts[d], 1, nchar(predpts[d]) - 4),
+        ifelse(gpkg.ext == TRUE,
+          substr(predpts[d], 1, nchar(predpts[d]) - 5),
+          ifelse(shp.ext == FALSE & gpkg.ext == FALSE, predpts[d])
+        )
+      )
     }
   }
 
 
   ## Remove path to predpts files, if included
-  if(!is.null(predpts)) {
-    predpts<- basename(predpts)
+  if (!is.null(predpts)) {
+    predpts <- basename(predpts)
   }
 
 
@@ -165,26 +162,28 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   ## ----------------------------------------------------
   sfedges <- get_sf_obj("edges")
 
-  if(exists("sfedges")) {
+  if (exists("sfedges")) {
     ## Check geometry type
-    if(sum(st_geometry_type(sfedges, by_geometry = TRUE) ==
-            "LINESTRING") != nrow(sfedges)) {
+    if (sum(st_geometry_type(sfedges, by_geometry = TRUE) ==
+      "LINESTRING") != nrow(sfedges)) {
       stop("Edges do not have LINESTRING geometry")
     }
 
     ## Ensure geometry column is named geometry
-    if(!"geometry" %in% colnames(sfedges)) {
+    if (!"geometry" %in% colnames(sfedges)) {
       sf::st_geometry(sfedges) <- "geometry"
     }
 
     ## Add network geometry column to edges
     sfedges[, "netgeom"] <-
       paste0("ENETWORK (", paste(
-                             sfedges$netID,
-                             sfedges$rid,
-                             sfedges$upDist),
-             ")", sep = "")
-
+        sfedges$netID,
+        sfedges$rid,
+        sfedges$upDist
+      ),
+      ")",
+      sep = ""
+      )
   } else {
     stop(paste0("Edges is missing from ", path))
   }
@@ -194,29 +193,31 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   ## ----------------------------------------------------
 
   ## Check observation sites exist and import
-  if(include_obs == TRUE) {
-
+  if (include_obs == TRUE) {
     ## Check the file exists and then ingest, process
     sfsites <- get_sf_obj("sites")
 
     ## Check geometry type
-    if(sum(st_geometry_type(sfsites, by_geometry = TRUE) ==
-           "POINT") != nrow(sfsites)) {
+    if (sum(st_geometry_type(sfsites, by_geometry = TRUE) ==
+      "POINT") != nrow(sfsites)) {
       stop("Observed sites do not have POINT geometry")
     }
 
     ## Ensure geometry column is named geometry
-    if(!"geometry" %in% colnames(sfsites)) {
+    if (!"geometry" %in% colnames(sfsites)) {
       sf::st_geometry(sfsites) <- "geometry"
     }
 
     ## ## Add network geometry column
-    ##sfsites<- create_netgeom2(sfsites, type = "point")
+    ## sfsites<- create_netgeom2(sfsites, type = "point")
     sfsites[, "netgeom"] <- paste0("SNETWORK (",
-                                   paste(
-                                     sfsites$netID, sfsites$rid, sfsites$upDist,
-                                     sfsites$ratio, sfsites$pid, sfsites$locID),
-                                   ")", sep = "")
+      paste(
+        sfsites$netID, sfsites$rid, sfsites$upDist,
+        sfsites$ratio, sfsites$pid, sfsites$locID
+      ),
+      ")",
+      sep = ""
+    )
   } else {
     sfsites <- NA
     # sfsites <- list()
@@ -225,29 +226,29 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   ## ----------------------------------------------------
   ## Import preds
   ## ----------------------------------------------------
-  if(!is.null(predpts)) {
+  if (!is.null(predpts)) {
     sfpreds <- vector(mode = "list", length = length(predpts))
 
     for (m in seq_len(length(predpts))) {
-      ##tmp.preds <- st_read(paste0(file, "/", predpts[m]), quiet = TRUE)
+      ## tmp.preds <- st_read(paste0(file, "/", predpts[m]), quiet = TRUE)
       tmp.preds <- get_sf_obj(predpts[m]) # fixes bug that occurs below when
       # relative paths in a project are used
       # tmp.preds <- get_sf_obj(paste0(path, "/", predpts[m]))
 
-       ## Check geometry type
-       if (sum(st_geometry_type(tmp.preds, by_geometry = TRUE) == "POINT") != nrow(tmp.preds)) {
-         stop(paste0(predpts[m], " do not have POINT geometry"))
-       }
+      ## Check geometry type
+      if (sum(st_geometry_type(tmp.preds, by_geometry = TRUE) == "POINT") != nrow(tmp.preds)) {
+        stop(paste0(predpts[m], " do not have POINT geometry"))
+      }
 
       ## Add network geometry column
       tmp.preds[, "netgeom"] <- paste0("SNETWORK (", paste(
-                                                       tmp.preds$netID,
-                                                       tmp.preds$rid,
-                                                       tmp.preds$upDist,
-                                                       tmp.preds$ratio,
-                                                       tmp.preds$pid,
-                                                       tmp.preds$locID
-                                                     ),")",sep = "")
+        tmp.preds$netID,
+        tmp.preds$rid,
+        tmp.preds$upDist,
+        tmp.preds$ratio,
+        tmp.preds$pid,
+        tmp.preds$locID
+      ), ")", sep = "")
 
 
       sfpreds[[m]] <- tmp.preds
@@ -255,9 +256,9 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
       ##                             start = 1,
       ##                             stop = nchar(basename(predpts[m])) - 4)
 
-      names(sfpreds)[m]<-p.names[m]
+      names(sfpreds)[m] <- p.names[m]
       rm(tmp.preds)
-      }
+    }
     ## } else {
     ##   stop("At least one of these shapefiles does not exist: ", predpts)
     ## }
@@ -267,7 +268,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
 
 
   #################################
-  ##if(preds.exist) {
+  ## if(preds.exist) {
 
   ##   ## Check the files exist and then import prediction points
   ##   if(all(file.exists(unlist(predpts)))) {
@@ -329,11 +330,10 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   createBinaryID(ssnlist, overwrite = overwrite)
 
   ## Warning when observation sites are not included in SSN
-  if(is.logical(ssnlist$obs)) {
+  if (is.logical(ssnlist$obs)) {
     warning("SSN does not include observed sites, which are needed to fit models. If this was a mistake, run ssn_import() with obs correctly defined")
   }
 
   ## Return
   return(ssnlist)
 }
-

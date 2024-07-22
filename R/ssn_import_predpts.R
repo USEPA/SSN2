@@ -59,47 +59,50 @@
 #' )
 #' ssn_gmod <- ssn_import_predpts(ssn_gmod, predpts = "CapeHorn")
 #' names(ssn_gmod$ssn.object$preds)
-#' 
+#'
 ssn_import_predpts <- function(x, predpts) {
-  
   obj.type <- class(x)
 
   old_wd <- getwd()
   on.exit(setwd(old_wd))
 
-#################################################################
+  #################################################################
   ## Check format of predpts
-################################################################
+  ################################################################
 
   ## If names are provided, use them
-  if(is.vector(predpts) & !is.null(names(predpts))) {
-    p.names<- names(predpts)
+  if (is.vector(predpts) & !is.null(names(predpts))) {
+    p.names <- names(predpts)
   }
 
   ## If no names provided assign based on name of file without extension
-  if(is.vector(predpts) & is.null(names(predpts))) {
+  if (is.vector(predpts) & is.null(names(predpts))) {
     p.names <- NULL
 
-    for(d in 1:length(predpts)) {
-      
-      shp.ext<- substr(predpts[d], nchar(predpts[d])-3,
-                       nchar(predpts[d])) == ".shp"
-      gpkg.ext <- substr(predpts[d], nchar(predpts[d])-4,
-                         nchar(predpts[d])) == ".gpkg"
-      
-      p.names[d] <- ifelse(
-        shp.ext == TRUE, substr(predpts[d], 1, nchar(predpts[d])-4),
+    for (d in 1:length(predpts)) {
+      shp.ext <- substr(
+        predpts[d], nchar(predpts[d]) - 3,
+        nchar(predpts[d])
+      ) == ".shp"
+      gpkg.ext <- substr(
+        predpts[d], nchar(predpts[d]) - 4,
+        nchar(predpts[d])
+      ) == ".gpkg"
 
-                 ifelse(gpkg.ext == TRUE,
-                        substr(predpts[d], 1, nchar(predpts[d])-5),
-                        
-                 ifelse(shp.ext == FALSE & gpkg.ext == FALSE,
-                        predpts[d])))
+      p.names[d] <- ifelse(
+        shp.ext == TRUE, substr(predpts[d], 1, nchar(predpts[d]) - 4),
+        ifelse(gpkg.ext == TRUE,
+          substr(predpts[d], 1, nchar(predpts[d]) - 5),
+          ifelse(shp.ext == FALSE & gpkg.ext == FALSE,
+            predpts[d]
+          )
+        )
+      )
     }
   }
 
   ## Remove path to predpts files, if included
-  predpts<- basename(predpts)
+  predpts <- basename(predpts)
 
   ################################################
 
@@ -144,7 +147,7 @@ ssn_import_predpts <- function(x, predpts) {
 
   ## Import predpts as sf object
   predpoints <- get_sf_obj(predpts)
- 
+
   ## Check geometry type
   if (sum(st_geometry_type(predpoints, by_geometry = TRUE) == "POINT") != nrow(predpoints)) {
     stop(paste0(predpts, " does not have POINT geometry"))

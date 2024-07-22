@@ -93,7 +93,6 @@ get_dist_pred_object <- function(object, newdata_name, initial_object) {
 # vectorized version of get_dist_pred_object
 get_dist_pred_matlist <- function(ssn.object, newdata_name, initial_object, additive,
                                   order_list_pred) {
-
   # store network indices and orders
   network_index <- order_list_pred$network_index
   dist_order <- order_list_pred$dist_order
@@ -385,7 +384,7 @@ get_w_pred_matlist <- function(ssn.object, newdata_name, order_list_pred, additi
   network_index_obs <- as.numeric(as.character(order_list_pred$network_index))
   network_index_pred <- as.numeric(as.character(order_list_pred$network_index_pred))
   network_index_vals <- sort(unique(c(network_index_obs, network_index_pred)))
- # network_index_integer <- seq_along(network_index_vals)
+  # network_index_integer <- seq_along(network_index_vals)
 
   dist_order <- order_list_pred$dist_order
 

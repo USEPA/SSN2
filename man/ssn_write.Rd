@@ -43,8 +43,10 @@ mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
 )
 
 ## Write SSN to new .ssn directory
-ssn_write(mf04p, path = paste0(tempdir(), "/tempSSN.ssn"),
-  overwrite = TRUE)
+ssn_write(mf04p,
+  path = paste0(tempdir(), "/tempSSN.ssn"),
+  overwrite = TRUE
+)
 
 ## Write SSN to .ssn directory and return SSN object
 tempSSN <- ssn_write(mf04p, path = paste0(

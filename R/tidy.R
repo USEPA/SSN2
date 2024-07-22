@@ -42,7 +42,6 @@
 #' tidy(ssn_mod)
 tidy.ssn_lm <- function(x, conf.int = FALSE,
                         conf.level = 0.95, effects = "fixed", ...) {
-
   if (conf.int && (conf.level < 0 || conf.level > 1)) {
     stop("conf.level must be between 0 and 1.", call. = FALSE)
   }
@@ -165,7 +164,6 @@ tidy.ssn_lm <- function(x, conf.int = FALSE,
 #' @export
 tidy.ssn_glm <- function(x, conf.int = FALSE,
                          conf.level = 0.95, effects = "fixed", ...) {
-
   if (conf.int && (conf.level < 0 || conf.level > 1)) {
     stop("conf.level must be between 0 and 1.", call. = FALSE)
   }
