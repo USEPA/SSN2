@@ -295,7 +295,7 @@ ggplot() +
 \caption{Predicted Middle Fork 2004 mean summer temperatures (Celsius) spaced one kilometer apart. As expected, temperature is predicted to be lower in areas of higher elevation.}\label{fig:steam-preds}
 \end{figure}
 
-Generalized spatial linear models for binary, count, proportion, and skewed data are available via the `ssn_glm()` function. `ssn_lm()` and `ssn_glm()` also accommodate several advanced features, which include nonspatial random effects as in `lme4` [@bates2015lme4] and `nlme` [@pinheiro2006mixed] Euclidean anisotropy [@zimmerman2024spatial], and more. In addition to modeling, simulating data on a stream network is performed via `ssn_simulate()`. 
+Spatial generalized linear models for binary, count, proportion, and skewed data [@ver2024marginal] are applied to stream networks via the `ssn_glm()` function. `ssn_lm()` and `ssn_glm()` also accommodate several advanced features, which include nonspatial random effects as in `lme4` [@bates2015lme4] and `nlme` [@pinheiro2006mixed] Euclidean anisotropy [@zimmerman2024spatial], and more. In addition to modeling, simulating data on a stream network is performed via `ssn_simulate()`. 
 
 # Discussion
 

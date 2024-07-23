@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  17 JUL 2024 17:09
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.3.4)  23 JUL 2024 08:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1077,12 +1077,12 @@ Package fancyhdr Warning: \headheight is too small (62.59596pt):
 (fancyhdr)                \addtolength{\topmargin}{-0.95425pt}.
 
 [7]
-Overfull \hbox (56.36137pt too wide) in paragraph at lines 878--883
+Overfull \hbox (56.36137pt too wide) in paragraph at lines 879--884
 [][][][][][][][] [] [][] [] [][][][] [] [][][] [] [][][][][] [] [][][][][][][] [] [][][][][] [] [][][][][][][][] [] [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 1231) in paragraph at lines 890--894
+Underfull \hbox (badness 1231) in paragraph at lines 891--895
 \TU/lmr/m/n/10 data. Boulder, CO, USA: University Corporation for Atmospheric Research.
  []
 
@@ -1117,10 +1117,10 @@ Package logreq Info: Writing requests to 'paper.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 36774 strings out of 476752
- 757639 string characters out of 5799757
+ 36775 strings out of 476752
+ 757660 string characters out of 5799757
  1948842 words of memory out of 5000000
- 58257 multiletter control sequences out of 15000+600000
+ 58258 multiletter control sequences out of 15000+600000
  564933 words of font info for 83 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  84i,12n,87p,1194b,850s stack positions out of 10000i,1000n,20000p,200000b,200000s
