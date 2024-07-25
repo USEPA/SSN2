@@ -40,6 +40,12 @@ is used in the names attribute. See
 \code{\link[SSN2]{ssn_import}} for a detailed description of the
 prediction dataset format within the \code{SSN} class object.
 
+When the prediction dataset is imported, a new column named
+\code{netgeom} is created. If this column already exists it is
+overwritten. Please see \code{\link{create_netgeom}} for a
+detailed description of the \code{netgeom} column and the
+information it contains.
+
 The prediction dataset specified in \code{predpts} must contain the
 spatial, topological and attribute information needed to make
 predictions using an ssn_lm or ssn_glm object. This information
@@ -59,7 +65,8 @@ mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
 
 ## Import pred1km prediction dataset into SSN object and assign the
 ## name preds1
-mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"))
+mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+    overwrite = TRUE)
 mf04p <- ssn_import_predpts(mf04p, predpts = c(preds1 = "pred1km"))
 names(mf04p$preds)
 

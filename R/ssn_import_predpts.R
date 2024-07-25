@@ -25,6 +25,12 @@
 #'   \code{\link[SSN2]{ssn_import}} for a detailed description of the
 #'   prediction dataset format within the \code{SSN} class object.
 #'
+#'   When the prediction dataset is imported, a new column named
+#'   \code{netgeom} is created. If this column already exists it is
+#'   overwritten. Please see \code{\link{create_netgeom}} for a
+#'   detailed description of the \code{netgeom} column and the
+#'   information it contains.
+#'
 #'   The prediction dataset specified in \code{predpts} must contain the
 #'   spatial, topological and attribute information needed to make
 #'   predictions using an ssn_lm or ssn_glm object. This information
@@ -47,7 +53,8 @@
 #'
 #' ## Import pred1km prediction dataset into SSN object and assign the
 #' ## name preds1
-#' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"))
+#' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+#'     overwrite = TRUE)
 #' mf04p <- ssn_import_predpts(mf04p, predpts = c(preds1 = "pred1km"))
 #' names(mf04p$preds)
 #'
@@ -110,18 +117,19 @@ ssn_import_predpts <- function(x, predpts) {
   ## For fitted model objects- check if predpts already exists
   if (obj.type %in% c("ssn_lm", "ssn_glm")) {
     setwd(x$ssn.object$path)
-    count <- 0
+    ## count <- 0
 
-    if (length(x$ssn.object$preds) > 0) {
-      for (m in seq_len(length(x$ssn.object$preds))) {
-        if (names(x$ssn.object$preds[m]) == p.names) {
-          pred.num <- m
-          count <- count + 1
-        }
-      }
-    }
+    ## if (length(x$ssn.object$preds) > 0) {
+    ##   for (m in seq_len(length(x$ssn.object$preds))) {
+    ##     if (names(x$ssn.object$preds[m]) == p.names) {
+    ##       pred.num <- m
+    ##       count <- count + 1
+    ##     }
+    ##   }
+    ## }
 
-    if (count > 0) {
+    ## if (count > 0) {
+    if(p.names %in% names(x$ssn.object$preds)) {
       stop("Fitted model object already contains predpoints named ", predpts)
     }
   }
@@ -129,18 +137,19 @@ ssn_import_predpts <- function(x, predpts) {
   ## For SSN objects - check if predpts already exits
   if (obj.type == "SSN") {
     setwd(x$path)
-    count <- 0
+    ## count <- 0
 
-    if (length(x$preds) > 0) {
-      for (m in seq_len(length(x$preds))) {
-        if (names(x$preds[m]) == p.names) {
-          pred.num <- m
-          count <- count + 1
-        }
-      }
-    }
+    ## if (length(x$preds) > 0) {
+    ##   for (m in seq_len(length(x$preds))) {
+    ##     if (names(x$preds[m]) == p.names) {
+    ##       pred.num <- m
+    ##       count <- count + 1
+    ##     }
+    ##   }
+    ## }
 
-    if (count > 0) {
+    ## if (count > 0) {
+    if(p.names %in% names(x$ssn.object$preds)) {
       stop("SSN already contains a prediction dataset named ", predpts)
     }
   }
@@ -153,18 +162,9 @@ ssn_import_predpts <- function(x, predpts) {
     stop(paste0(predpts, " does not have POINT geometry"))
   }
 
-  ## Add netgeom column
-  predpoints[, "netgeom"] <- paste0("SNETWORK (", paste(
-    predpoints$netID,
-    predpoints$rid,
-    predpoints$upDist,
-    predpoints$ratio,
-    predpoints$pid,
-    predpoints$locID
-  ),
-  ")",
-  sep = ""
-  )
+  ## Add network geometry column
+  predpoints<- create_netgeom(predpoints, type = "POINT",
+                             overwrite = TRUE)
 
   ## Put prediction points in SSN object
   if (obj.type == "SSN") {

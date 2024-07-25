@@ -16,7 +16,7 @@
 #'   spatial, topological, and attribute information stored in the
 #'   original \code{SSN} object. Spatial datasets found in the
 #'   \code{SSN} object (e.g. edges, obs, and prediction sites) are
-#'   saved in geopackage format. When \code{import = TRUE}, the
+#'   saved in GeoPackage format. When \code{import = TRUE}, the
 #'   \code{SSN} object is imported and returned.
 #'
 #' @export
@@ -76,6 +76,13 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
 
     ssn.files <- list.files(ssn$path)
 
+    ## Remove binaryID.db from the vector b/c need recreate it on import
+    ## anyway
+    if(import == TRUE) {
+      ind.bid <- ssn.files == "binaryID.db"
+      ssn.files<- ssn.files[-c(which(ind.bid))]
+    }
+
     ind.gpkg <- substr(ssn.files, nchar(ssn.files) - 4, nchar(ssn.files)) == ".gpkg"
     ind.shp <- substr(ssn.files, nchar(ssn.files) - 3, nchar(ssn.files)) == ".shp"
 
@@ -88,8 +95,8 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
       tmp <- unlist(strsplit(ssn.files[j], "[.]"))
       if ((tmp[1] %in% sub.list) == TRUE) ind.list[j] <- TRUE
     }
-
-    ssn.files <- ssn.files[!ind.list]
+    
+    ssn.files <- ssn.files[!ind.list]  
 
     ## Copy files to new .ssn directory
     for (i in seq_len(length(ssn.files))) {
@@ -135,12 +142,12 @@ ssn_write <- function(ssn, path, overwrite = FALSE,
 
     ## Import SSN without prediction sites
     if (import == TRUE & pred.len == 0) {
-      ssn.tmp <- ssn_import(ssn.tmp$path, overwrite = FALSE)
+      ssn.tmp <- ssn_import(ssn.tmp$path, overwrite = TRUE)
       return(ssn.tmp2)
     }
     ## Import SSN with all prediction sites
     if (import == TRUE & pred.len > 0) {
-      ssn.tmp2 <- ssn_import(ssn.tmp$path, overwrite = FALSE)
+      ssn.tmp2 <- ssn_import(ssn.tmp$path, overwrite = TRUE)
       for (j in seq_len(pred.len)) {
         ssn.tmp2 <- ssn_import_predpts(ssn.tmp2, pred.name.vec[j])
       }

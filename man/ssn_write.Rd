@@ -25,7 +25,7 @@ after writing to file. Defaults to \code{FALSE}.}
 spatial, topological, and attribute information stored in the
 original \code{SSN} object. Spatial datasets found in the
 \code{SSN} object (e.g. edges, obs, and prediction sites) are
-saved in geopackage format. When \code{import = TRUE}, the
+saved in GeoPackage format. When \code{import = TRUE}, the
 \code{SSN} object is imported and returned.
 }
 \description{

@@ -12,11 +12,13 @@ ssn_import(path, include_obs = TRUE, predpts = NULL, overwrite = FALSE)
 \item{include_obs}{default = \code{TRUE}. Logical indicating
 whether observed sites should be included in the SSN object.}
 
-\item{predpts}{Vector of prediction site dataset names
-found within the .ssn folder. See details.}
+\item{predpts}{Vector of prediction site dataset names found within
+the .ssn folder. See details.}
 
 \item{overwrite}{default = \code{FALSE}. If \code{TRUE}, overwrite
-existing binaryID.db files.}
+existing binaryID.db files and netgeom column(s) if it exists in the
+edges, observed sites (if \code{include_obs = TRUE}), and
+prediction site datasets (if they exist).}
 }
 \value{
 \code{ssn_import} returns an object of class SSN, which is a list
@@ -38,7 +40,7 @@ This function reads spatial data from a .ssn folder
 and creates an \code{SSN} object.
 }
 \details{
-The \command{ssn_import} function imports spatial data (shapefile or geopackage format)
+The \command{ssn_import} function imports spatial data (shapefile or GeoPackage format)
 from a .ssn folder generated using the
 \code{SSNbler} package function \code{SSNbler::lsn_to_ssn}. The .ssn folder contains all of the spatial, topological and
 attribute data needed to fit a spatial statistical stream network
@@ -61,7 +63,7 @@ is created to store important data representing
 topological relationships in a spatial stream network
 model. These data are stored in character format, which is less
 likely to be inadvertantly changed by users. See
-\code{\link[SSN2]{ssn_get_netgeom}} for a more detailed description of
+\code{\link[SSN2]{create_netgeom}} for a more detailed description of
 the format and contents of 'netgeom'.
 
 The information contained in the netID text files is imported

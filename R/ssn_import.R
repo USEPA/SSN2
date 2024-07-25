@@ -5,12 +5,14 @@
 #' @param path Filepath to the .ssn directory. See details.
 #' @param include_obs default = \code{TRUE}. Logical indicating
 #'   whether observed sites should be included in the SSN object.
-#' @param predpts Vector of prediction site dataset names
-#'   found within the .ssn folder. See details.
+#' @param predpts Vector of prediction site dataset names found within
+#'   the .ssn folder. See details.
 #' @param overwrite default = \code{FALSE}. If \code{TRUE}, overwrite
-#'   existing binaryID.db files.
+#'   existing binaryID.db files and netgeom column(s) if it exists in the
+#'   edges, observed sites (if \code{include_obs = TRUE}), and
+#'   prediction site datasets (if they exist).
 #'
-#' @details The \command{ssn_import} function imports spatial data (shapefile or geopackage format)
+#' @details The \command{ssn_import} function imports spatial data (shapefile or GeoPackage format)
 #'   from a .ssn folder generated using the
 #'   \code{SSNbler} package function \code{SSNbler::lsn_to_ssn}. The .ssn folder contains all of the spatial, topological and
 #'   attribute data needed to fit a spatial statistical stream network
@@ -33,7 +35,7 @@
 #'   topological relationships in a spatial stream network
 #'   model. These data are stored in character format, which is less
 #'   likely to be inadvertantly changed by users. See
-#'   \code{\link[SSN2]{ssn_get_netgeom}} for a more detailed description of
+#'   \code{\link[SSN2]{create_netgeom}} for a more detailed description of
 #'   the format and contents of 'netgeom'.
 #'
 #'   The information contained in the netID text files is imported
@@ -175,15 +177,9 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
     }
 
     ## Add network geometry column to edges
-    sfedges[, "netgeom"] <-
-      paste0("ENETWORK (", paste(
-        sfedges$netID,
-        sfedges$rid,
-        sfedges$upDist
-      ),
-      ")",
-      sep = ""
-      )
+    sfedges<- create_netgeom(sfedges, type = "LINESTRING",
+                               overwrite = overwrite)
+    
   } else {
     stop(paste0("Edges is missing from ", path))
   }
@@ -209,18 +205,11 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
     }
 
     ## ## Add network geometry column
-    ## sfsites<- create_netgeom2(sfsites, type = "point")
-    sfsites[, "netgeom"] <- paste0("SNETWORK (",
-      paste(
-        sfsites$netID, sfsites$rid, sfsites$upDist,
-        sfsites$ratio, sfsites$pid, sfsites$locID
-      ),
-      ")",
-      sep = ""
-    )
+    sfsites<- create_netgeom(sfsites, type = "POINT",
+                               overwrite = overwrite)
+         
   } else {
     sfsites <- NA
-    # sfsites <- list()
   }
 
   ## ----------------------------------------------------
@@ -230,10 +219,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
     sfpreds <- vector(mode = "list", length = length(predpts))
 
     for (m in seq_len(length(predpts))) {
-      ## tmp.preds <- st_read(paste0(file, "/", predpts[m]), quiet = TRUE)
-      tmp.preds <- get_sf_obj(predpts[m]) # fixes bug that occurs below when
-      # relative paths in a project are used
-      # tmp.preds <- get_sf_obj(paste0(path, "/", predpts[m]))
+      tmp.preds <- get_sf_obj(predpts[m]) 
 
       ## Check geometry type
       if (sum(st_geometry_type(tmp.preds, by_geometry = TRUE) == "POINT") != nrow(tmp.preds)) {
@@ -241,84 +227,17 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
       }
 
       ## Add network geometry column
-      tmp.preds[, "netgeom"] <- paste0("SNETWORK (", paste(
-        tmp.preds$netID,
-        tmp.preds$rid,
-        tmp.preds$upDist,
-        tmp.preds$ratio,
-        tmp.preds$pid,
-        tmp.preds$locID
-      ), ")", sep = "")
-
+      tmp.preds<- create_netgeom(tmp.preds, type = "POINT",
+                               overwrite = overwrite)
 
       sfpreds[[m]] <- tmp.preds
-      ## names(sfpreds)[m] <- substr(basename(predpts[m]),
-      ##                             start = 1,
-      ##                             stop = nchar(basename(predpts[m])) - 4)
-
       names(sfpreds)[m] <- p.names[m]
       rm(tmp.preds)
     }
-    ## } else {
-    ##   stop("At least one of these shapefiles does not exist: ", predpts)
-    ## }
+
   } else {
     sfpreds <- list()
   }
-
-
-  #################################
-  ## if(preds.exist) {
-
-  ##   ## Check the files exist and then import prediction points
-  ##   if(all(file.exists(unlist(predpts)))) {
-
-  ##     ## Create empty list to hold sf objects and add names if missing
-  ##     sfpreds <- vector(mode = "list", length = length(predpts))
-
-  ##     if(is.null(names(predpts))) {
-  ##       names(predpts) <- sub("\\.\\w+$", "", predpts)
-  ##     } else {
-  ##       names(sfpreds) <- names(predpts)
-  ##     }
-
-  ##     for(m in seq_len(length(predpts))) {
-  ##       ## Check filename
-  ##       if(grepl(".gpkg", predpts[m])) {
-  ##         pred.format <- ".gpkg"
-  ##       }
-  ##       if(grepl(".shp", predpts[m])) {
-  ##         pred.format = ".shp"
-  ##       }
-  ##       if(!exists("pred.format")) {
-  ##         stop("All predpts must be in shapefile or geopackage format and include the file extension")
-  ##       }
-
-  ##       tmp.preds <- st_read(paste0(path, "/", predpts[[m]]), quiet = TRUE)
-
-  ##       ## Check geometry type
-  ##       if(sum(st_geometry_type(tmp.preds, by_geometry = TRUE) == "POINT") != nrow(tmp.preds)) {
-  ##         stop(paste0(predpts[[m]], " do not have POINT geometry"))
-  ##       }
-
-  ##       ## Ensure geometry column is named geometry
-  ##       if(!"geometry" %in% colnames(tmp.preds)) {
-  ##         sf::st_geometry(tmp.preds) <- "geometry"
-  ##       }
-
-  ##       ## Add network geometry column
-  ##       tmp.preds<- create_netgeom2(tmp.preds, type = "point")
-
-  ##       sfpreds[[m]] <- tmp.preds
-
-  ##       rm(tmp.preds)
-  ##     }
-  ##   } else {
-  ##     stop(paste("At least one of these files does not exist: ", paste(predpts, collapse = ", ")))
-  ##   }
-  ## } else {
-  ##   sfpreds <- list()
-  ## }
 
   ## ---------------------------------------------------------
   ## Create SSN object and return

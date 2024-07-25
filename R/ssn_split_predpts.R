@@ -178,7 +178,7 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
       ## Recreate netgeom
       ind <- colnames(tmp) == "netgeom"
       tmp <- tmp[, !ind]
-      tmp <- create_netgeom(tmp, "point")
+      tmp <- create_netgeom(tmp, "POINT", overwrite = TRUE)
 
       ## Replace predpts with updated data.frame
       ssn$preds[[predpts]] <- tmp
