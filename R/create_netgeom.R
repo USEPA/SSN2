@@ -28,10 +28,6 @@
 #'       \item{\code{'ENETWORK (netID, rid, upDist)'}}
 #'   }
 #'
-#' The rid, upDist and netID columns must already be present in edges
-#'   before netgeom is added. These columns are created using
-#'   \code{link{lines_to_lsn}}, \code{\link{updist_edges}}, and
-#'   \code{link{lsn_to_ssn}}, respectively.
 #'
 #'   For observed or prediction sites, the netgeom format is:
 #'   \itemize{
@@ -39,9 +35,7 @@
 #'   }
 #'
 #' The rid, ratio, upDist, netID, pid, and locID columns must be
-#' present in \code{sf_data} and are created using \code{SSNbler} package functions
-#' \code{sites_to_lsn}, \code{updist_sites}, and
-#' \code{ssn_assemble}, respectively.
+#' present in \code{sf_data} before netgeom is added.
 #'
 #' If \code{overwrite = TRUE} and a column named netgeom is present in
 #' \code{sf_data}, the data will be overwritten. Default = FALSE.
@@ -126,3 +120,24 @@ create_netgeom <- function(sf_data, type = NULL, overwrite = FALSE) {
   }
   return(sf_data) ## Return sf data.frame with netgeom column added
 }
+
+
+
+
+
+
+
+# The rid, upDist and netID columns must already be present in edges
+#   before netgeom is added. These columns are created using
+#   \code{link{lines_to_lsn}}, \code{\link{updist_edges}}, and
+#   \code{link{lsn_to_ssn}}, respectively.
+#
+#   For observed or prediction sites, the netgeom format is:
+#   \itemize{
+#       \item{\code{'SNETWORK (netID, rid, upDist, ratio, pid, locID)'}}
+#   }
+#
+# The rid, ratio, upDist, netID, pid, and locID columns must be
+# present in \code{sf_data} and are created using \code{SSNbler} package functions
+# \code{sites_to_lsn}, \code{updist_sites}, and
+# \code{ssn_assemble}, respectively.
