@@ -3,7 +3,7 @@ test_that("ssn manipulation functions work", {
   expect_s3_class(mf04p, "SSN")
 
 
-  tempdir_path <- paste0(tempdir(), "/MiddleFork04.ssn")
+  tempdir_path <- paste0(tempdir(), "\\MiddleFork04.ssn")
 
   # copy lsn to temporary directory (does it exist?)
   copy_lsn_to_temp()
@@ -17,7 +17,7 @@ test_that("ssn manipulation functions work", {
 
 
   # import new SSN object from temporary LSN
-  mf04p_new <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+  mf04p_new <- ssn_import(paste0(tempdir(), "\\MiddleFork04.ssn"),
     predpts = c("pred1km"),
     overwrite = TRUE
   )
@@ -59,7 +59,7 @@ test_that("ssn manipulation functions work", {
 
 
   # subset SSN data
-  subset_path <- paste0(tempdir(), "/subset1.ssn")
+  subset_path <- paste0(tempdir(), "\\subset1.ssn")
   ssn_subset(mf04p_new,
     path = subset_path,
     subset = netID == 1, clip = TRUE, overwrite = TRUE
@@ -103,7 +103,7 @@ test_that("ssn manipulation functions work", {
   expect_identical(mf04p_new_get, mf04p_new$obs)
 
   # write SSN object
-  write_path <- paste0(tempdir_path, "/tempSSN.ssn")
+  write_path <- paste0(tempdir_path, "\\tempSSN.ssn")
   ssn_write(mf04p, path = write_path, overwrite = TRUE)
   expect_true(file.exists(write_path))
 })
