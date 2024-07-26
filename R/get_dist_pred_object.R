@@ -1,4 +1,10 @@
-# parent function to get the distance object
+#' Get prediction distance object
+#'
+#' @param object Data object.
+#' @param newdata_name Name of the prediction data set.
+#' @param initial_object Initial value object.
+#'
+#' @noRd
 get_dist_pred_object <- function(object, newdata_name, initial_object) {
   # get netgeom
   netgeom <- ssn_get_netgeom(object$ssn.object$obs, reformat = TRUE)
@@ -84,10 +90,9 @@ get_dist_pred_object <- function(object, newdata_name, initial_object) {
   dist_pred_object
 }
 
-# get the list of prediction matrices
+# vectorized version of get_dist_pred_object
 get_dist_pred_matlist <- function(ssn.object, newdata_name, initial_object, additive,
                                   order_list_pred) {
-
   # store network indices and orders
   network_index <- order_list_pred$network_index
   dist_order <- order_list_pred$dist_order
@@ -185,7 +190,13 @@ get_dist_pred_matlist <- function(ssn.object, newdata_name, initial_object, addi
   dist_pred_matlist
 }
 
-# get list of distance junction matrices
+#' Get list of prediction distance junction matrices
+#'
+#' @param ssn.object SSN object.
+#' @param newdata_name Name of the prediction data set.
+#' @param order_list_pred The order for observations in the prediction data set.
+#'
+#' @noRd
 get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred) {
   # check and make sure there is missing data to predict
   if (newdata_name %in% names(ssn.object$preds) && NROW(ssn.object$preds[[newdata_name]]) == 0) {
@@ -303,12 +314,23 @@ get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred)
   distjunc_pred_matlist <- list(distjunca = distjunca, distjuncb = distjuncb)
 }
 
+
+#' Get mask prediction distance matrices
+#'
+#' @param distjunc_pred_matlist
+#'
+#' @noRd
 get_mask_pred_matlist <- function(distjunc_pred_matlist) {
   mask_pred_list <- lapply(distjunc_pred_matlist$distjunca, function(x) {
     Matrix::Matrix(1, nrow = dim(x)[1], ncol = dim(x)[2], sparse = TRUE)
   })
 }
 
+#' Get a prediction distance matrices
+#'
+#' @param distjunc_pred_matlist
+#'
+#' @noRd
 get_a_pred_matlist <- function(distjunc_pred_matlist) {
   a_matrix_list <- mapply(
     a = distjunc_pred_matlist$distjunca,
@@ -320,6 +342,11 @@ get_a_pred_matlist <- function(distjunc_pred_matlist) {
   )
 }
 
+#' Get b prediction distance matrices
+#'
+#' @param distjunc_pred_matlist
+#'
+#' @noRd
 get_b_pred_matlist <- function(distjunc_pred_matlist) {
   a_matrix_list <- mapply(
     a = distjunc_pred_matlist$distjunca,
@@ -331,6 +358,11 @@ get_b_pred_matlist <- function(distjunc_pred_matlist) {
   )
 }
 
+#' Get hydrologic prediction distance matrices
+#'
+#' @param distjunc_pred_matlist
+#'
+#' @noRd
 get_hydro_pred_matlist <- function(distjunc_pred_matlist) {
   a_matrix_list <- mapply(
     a = distjunc_pred_matlist$distjunca,
@@ -342,12 +374,17 @@ get_hydro_pred_matlist <- function(distjunc_pred_matlist) {
   )
 }
 
+#' Get w prediction distance matrices
+#'
+#' @param distjunc_pred_matlist
+#'
+#' @noRd
 get_w_pred_matlist <- function(ssn.object, newdata_name, order_list_pred, additive, b_pred_matlist, mask_pred_matlist) {
   # make list
   network_index_obs <- as.numeric(as.character(order_list_pred$network_index))
   network_index_pred <- as.numeric(as.character(order_list_pred$network_index_pred))
   network_index_vals <- sort(unique(c(network_index_obs, network_index_pred)))
- # network_index_integer <- seq_along(network_index_vals)
+  # network_index_integer <- seq_along(network_index_vals)
 
   dist_order <- order_list_pred$dist_order
 

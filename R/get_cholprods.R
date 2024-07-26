@@ -15,6 +15,7 @@ get_cholprods <- function(cov_matrix, X, y) {
   list(Sig_lowchol = Sig_lowchol, SqrtSigInv_X = SqrtSigInv_X, SqrtSigInv_y = SqrtSigInv_y)
 }
 
+# A vectorized version of get_cholprods
 get_cholprods_parallel <- function(cluster_list) {
   cov_matrix <- cluster_list$c
   X <- cluster_list$x
@@ -22,7 +23,7 @@ get_cholprods_parallel <- function(cluster_list) {
   get_cholprods(cov_matrix, X, y)
 }
 
-#' Find relevant Cholesky quantities (upper, lower, products, and inverse)
+#' Find relevant Cholesky quantities (upper, lower, products, and inverse) for glms
 #'
 #' @param cov_matrix A covariance matrix
 #' @param X A model matrix
@@ -45,6 +46,7 @@ get_cholprods_glm <- function(cov_matrix, X, y) {
   )
 }
 
+# A vectorized version of get_cholprods_glm
 get_cholprods_glm_parallel <- function(cluster_list) {
   cov_matrix <- cluster_list$c
   X <- cluster_list$x

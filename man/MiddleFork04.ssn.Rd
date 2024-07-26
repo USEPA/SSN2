@@ -7,8 +7,8 @@
 \source{
 \code{edges} are a modified version of the United States
 National Hydrography Dataset
-(http://nhd.usgs.gov/). \code{sites}, \code{pred1km}, \code{CapeHorn}
-and \code{Knapp} are unpublished United States Forest Service data.
+(http://nhd.usgs.gov/). \code{sites}, \code{pred1km} and \code{CapeHorn}
+are unpublished United States Forest Service data.
 }
 \description{
 The \code{MiddleFork04.ssn} data folder contains the spatial, attribute,
@@ -16,24 +16,22 @@ and topological information needed to construct an SSN object using
 the \code{SSN2} package.
 }
 \details{
-The \code{MiddleFork04.ssn} folder contains five shapefiles:
+The \code{MiddleFork04.ssn} folder contains five geopackages:
 
 \itemize{
-\item edges: polyline shapefile representing the stream network
-\item sites: point shapefile representing the observed site locations
-\item pred1km: point shapefile representing prediction site locations at
+\item edges: geopackage with LINESTRING geometry representing the stream network
+\item sites: geopackage with POINT geometry representing the observed site locations
+\item pred1km: geopackage with POINT geometry prediction site locations at
 approximately 1km intervals throughout the stream network
-\item Knapp: point shapefile representing prediction site locations on the Knapp River
-\item CapeHorn: point shapefile representing prediction site locations on the Cape Horn River
+\item CapeHorn: geopackage with POINT geometry representing prediction site locations on the Cape Horn River
 }
 
-The \code{MiddleFork04.ssn} includes one text file, \code{netID1.txt}, which contains the
-topological information for the stream network in the Middle Fork 2004
+The \code{MiddleFork04.ssn} includes two text files, \code{netID1.txt} and \code{netID2.txt}, which contain the
+topological information for the two stream networks in the Middle Fork 2004
 dataset.
 
 The distance folder contains four folders that store the hydrologic
-distance matrices for each of the point shapefiles (\code{obs}, \code{CapeHorn},
-\code{Knapp}, and \code{pred1km}). See \code{\link[=ssn_create_distmat]{ssn_create_distmat()}} for a
+distance matrices for each of the point datasets (\code{obs}, \code{CapeHorn}, and \code{pred1km}). See \code{\link[=ssn_create_distmat]{ssn_create_distmat()}} for a
 detailed description of the distance matrix file structure.
 
 Attribute data is also stored within each of the spatial
@@ -41,16 +39,16 @@ datasets. The column names are defined as follows:
 
 \code{edges}:
 \itemize{
+\item rid: Reach identifier
 \item COMID: Common identifier of an NHD feature or relationship
 \item GNIS_Name: Feature name as found in the Geographic Names Information System
 \item REACHCODE: Unique identifier for a reach. The first 8 digits contain the identfier for the HUC8 and the last 6 digits are a unique within-HUC8 identifier for the reach
 \item FTYPE: three-digit integer used to classify hydrography features in the NHD and define subtypes
 \item FCODE: Numeric code that contains the feature type and its attributes as found in the NHDFCode lookup table
-\item CDRAINAG: Cumulative drainage area (km2) for the lowermost location on the edge
 \item AREAWTMAP: Area weighted mean annual precipitation (mm) at the lowermost location on the edge
 \item SLOPE: Slope of the edge (cm/cm)
-\item h2oAreaKm2: Watershed area (km2) for the lowermost location on the line segment
-\item rid: Reach identifier
+\item rcaAreaKm2: Reach contributing area (km2) for each edge feature. The RCA represents the land area that drains directly to the edge feature
+\item h2oAreaKm2: Watershed area (km2) for the lowermost location on the edge feature
 \item areaPI: Segment proportional influence value, calculated using watershed area (h2oAreaKm2)
 \item afvArea: Additive function value, calculated using areaPI
 \item upDist: Distance from the stream outlet (most downstream location in the the stream network) to the uppermost location on the line segment
@@ -59,9 +57,10 @@ datasets. The column names are defined as follows:
 }
 \code{sites}:
 \itemize{
+\item rid: Reach identifier of the edge the site resides on
+\item pid: Point identifier
 \item STREAMNAME: Stream name
 \item COMID: Common identifier of an NHD feature or relationship
-\item CDRAINAG: Cumulative drainage area (km2)
 \item AREAWTMAP: Area weighted mean annual precipitation (mm) at lowermost
 location on the line segment where the site resides
 \item SLOPE: Slope of the line segment (cm/cm) where the site resides
@@ -81,34 +80,33 @@ from 1980-2009 across 10 COOP air stations within the domain
 from 1980-2009 across 10 COOP air stations within the domain.
 MWMT = maximum 7-day moving average of the maximum daily temperature
 (i.e. maximum of all the 7-day maximums)
-\item NEAR_X: x coordinate
-\item NEAR_Y: y coordinate
-\item rid: Reach identifier of the edge the site resides on
-\item ratio: Site ratio value; provides the proportional distance along the edge to the site location
+\item rcaAreaKm2: Reach contributing area (km2) for each edge feature the site resides on. The RCA represents the land area that drains directly to the edge feature
+\item h2oAreaKm2: Watershed area (km2) for the lowermost location on the edge feature the site resides on
+\item ratio: Site ratio value; provides the proportional distance from the downstream node of the edge to the site location
 \item upDist: Distance upstream from the stream outlet (m)
 \item afvArea: Additive function value calculated using waterhsed area (h2oAreaKm2)
 \item locID: Location identifier
 \item netID: Stream network identifier
-\item pid: Point identifier
+\item snapdist: Distance (m) that site was moved when it was snapped to the edges
 }
 
-\code{pred1km}, \code{CapeHorn}, and \code{Knapp}:
+\code{pred1km} and \code{CapeHorn}:
 \itemize{
+\item rid: Reach identifier of the edge the site resides on
+\item pid: Point identifier
 \item COMID: Common identifier of an NHD feature or relationship
 \item GNIS_Name: Feature name of the edge the site resides on, as found in the Geographic Names Information System
-\item CDRAINAG: Cumulative drainage area (km2)
 \item AREAWTMAP: Area weighted mean annual precipitation (mm) at lowermost location on the line segment where the site resides
 \item SLOPE: Slope of the line segment (cm/cm) where the site resides
 \item ELEV_DEM: Elevation at the site based on a 30m DEM
-\item NEAR_X: x coordinate
-\item NEAR_Y: y coordinate
-\item rid: Reach identifier of the edge the site resides on
+\item rcaAreaKm2: Reach contributing area (km2) for each edge feature the site resides on. The RCA represents the land area that drains directly to the edge feature
+\item h2oAreaKm2: Watershed area (km2) for the lowermost location on the edge feature the site resides on
 \item ratio: Site ratio value; provides the proportional distance along the edge to the site location
 \item upDist: Distance upstream from the stream outlet (m)
 \item afvArea: Additive function value calculated using watershed area (h2oAreaKm2)
 \item locID: Location identifier
 \item netID: Stream network identifier
-\item pid: Point identifier
+\item snapdist: Distance (m) that site was moved when it was snapped to the edges
 \item FlowCMS: Average stream flow (cubic meters per sec) for August, by year, from 1950-2010 across 9 USGS gauges in the region
 \item AirMEANc: Average mean air temperature (C) from July 15 - August 31, from 1980-2009 across 10 COOP air stations within the domain
 \item AirMWMTc: Average maximum air temperature (C) from July 15 - August 31, from 1980-2009 across 10 COOP air stations within the domain. MWMT = maximum 7-day moving average of the maximum daily temperature(i.e. maximum of all the 7-day maximums)

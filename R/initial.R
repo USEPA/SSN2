@@ -220,6 +220,18 @@ nugget_initial <- function(nugget_type, nugget, known) {
   new_nugget_initial
 }
 
+#' A helper to create an initial value object
+#'
+#' @param tailup_type Tailup covariance type
+#' @param taildown_type Taildown covariance type
+#' @param euclid_type Euclidean covariance type
+#' @param nugget_type Nugget covariance type
+#' @param tailup_initial Tailup initial object (if specified)
+#' @param taildown_initial Taildown initial object (if specified)
+#' @param euclid_initial Euclidean initial object (if specified)
+#' @param nugget_initial Nugget initial object (if specified)
+#'
+#' @noRd
 get_initial_object <- function(tailup_type, taildown_type, euclid_type, nugget_type,
                                tailup_initial, taildown_initial, euclid_initial, nugget_initial) {
   if (is.null(tailup_initial)) tailup_initial <- tailup_initial(tailup_type)
@@ -241,6 +253,20 @@ get_initial_object <- function(tailup_type, taildown_type, euclid_type, nugget_t
   initial_object
 }
 
+#' A helper to create an initial value glm object
+#'
+#' @param tailup_type Tailup covariance type
+#' @param taildown_type Taildown covariance type
+#' @param euclid_type Euclidean covariance type
+#' @param nugget_type Nugget covariance type
+#' @param tailup_initial Tailup initial object (if specified)
+#' @param taildown_initial Taildown initial object (if specified)
+#' @param euclid_initial Euclidean initial object (if specified)
+#' @param nugget_initial Nugget initial object (if specified)
+#' @param family The generalized linear model family
+#' @param dispersion_inital Dispersion initial object
+#'
+#' @noRd
 get_initial_object_glm <- function(tailup_type, taildown_type, euclid_type, nugget_type,
                                    tailup_initial, taildown_initial, euclid_initial, nugget_initial,
                                    family, dispersion_initial) {
@@ -261,6 +287,12 @@ get_initial_object_glm <- function(tailup_type, taildown_type, euclid_type, nugg
   initial_object
 }
 
+#' Create a vector that specifies whether covariance parameters are to be assumed known
+#'
+#' @param params  A covariance parameter vector
+#' @param known Which covariance parameters assumed known
+#'
+#' @noRd
 get_is_known <- function(params, known) {
   if (missing(known)) {
     is_known <- rep(FALSE, length(params))

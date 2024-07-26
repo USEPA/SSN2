@@ -1,3 +1,11 @@
+#' Various model checks for ssn_lm
+#'
+#' @param initial_object Initial value object.
+#' @param ssn.object SSN object.
+#' @param additive Additive function value name.
+#' @param estmethod Estimation method.
+#'
+#' @noRd
 check_ssn_lm <- function(initial_object, ssn.object, additive, estmethod) {
   if (is.null(additive)) {
     if (!grepl("none", class(initial_object$tailup))) {
@@ -14,6 +22,14 @@ check_ssn_lm <- function(initial_object, ssn.object, additive, estmethod) {
   }
 }
 
+#' Various model checks for ssn_glm
+#'
+#' @param initial_object Initial value object.
+#' @param ssn.object SSN object.
+#' @param additive Additive function value name.
+#' @param estmethod Estimation method.
+#'
+#' @noRd
 check_ssn_glm <- function(initial_object, ssn.object, additive, estmethod) {
   if (is.null(additive)) {
     if (!grepl("none", class(initial_object$tailup_initial))) {
@@ -30,6 +46,12 @@ check_ssn_glm <- function(initial_object, ssn.object, additive, estmethod) {
   }
 }
 
+
+#' Check for valid tailup type
+#'
+#' @param tailup_type The tailup covariance type.
+#'
+#' @noRd
 check_tailup_type <- function(tailup_type) {
   tailup_valid <- c("linear", "spherical", "exponential", "mariah", "epa", "none")
 
@@ -38,6 +60,11 @@ check_tailup_type <- function(tailup_type) {
   }
 }
 
+#' Check for valid taildown type
+#'
+#' @param taildown_type The taildown covariance type.
+#'
+#' @noRd
 check_taildown_type <- function(taildown_type) {
   taildown_valid <- c("linear", "spherical", "exponential", "mariah", "epa", "none")
 
@@ -46,6 +73,11 @@ check_taildown_type <- function(taildown_type) {
   }
 }
 
+#' Check for valid Euclidean type
+#'
+#' @param euclid_type The Euclidean covariance type.
+#'
+#' @noRd
 check_euclid_type <- function(euclid_type) {
   euclid_valid <- c(
     "spherical", "exponential", "gaussian", "cosine",
@@ -58,6 +90,11 @@ check_euclid_type <- function(euclid_type) {
   }
 }
 
+#' Check for valid nugget type
+#'
+#' @param nugget_type The nugget covariance type.
+#'
+#' @noRd
 check_nugget_type <- function(nugget_type) {
   nugget_valid <- c("nugget", "none")
   if (!(nugget_type %in% nugget_valid)) {
@@ -65,6 +102,12 @@ check_nugget_type <- function(nugget_type) {
   }
 }
 
+#' Check for valid ssn_glm family and dispersion parameter
+#'
+#' @param family The ssn_glm family.
+#' @param dispersion The dispersion parameter.
+#'
+#' @noRd
 check_dispersion <- function(family, dispersion) {
   # family must be a character here
   family_valid <- c("binomial", "poisson", "nbinomial", "Gamma", "inverse.gaussian", "beta")
@@ -78,6 +121,13 @@ check_dispersion <- function(family, dispersion) {
   }
 }
 
+#' Various checks on the response variable in ssn_glm
+#'
+#' @param family The ssn_glm family.
+#' @param y The response variable.
+#' @param size The number of trials (if family is binomial)
+#'
+#' @noRd
 response_checks_glm <- function(family, y, size) {
   # checks on y
   if (family == "binomial") {
@@ -121,7 +171,13 @@ response_checks_glm <- function(family, y, size) {
   }
 }
 
-# check if whole number
+
+#' Check if value is a whole number.
+#'
+#' @param x A vector.
+#' @param tol Tolerance to check whether x is a whole number.
+#'
+#' @noRd
 is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) {
   abs(x - round(x)) < tol
 }

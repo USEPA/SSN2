@@ -97,6 +97,15 @@ check_optim_method <- function(optim_par, optim_dotlist) {
   optim_dotlist
 }
 
+#' Get parameters to optimize over in optim (remove known parameters) for glms
+#'
+#' @param spcov_orig2optim A \code{spcov_orig2optim} object
+#' @param dispersion_orig2optim A \code{dispersion_orig2optim} object
+#' @param randcov_orig2optim A \code{randcov_orig2optim} object
+#'
+#' @return The parameters to optimize over in optim
+#'
+#' @noRd
 get_optim_par_glm <- function(spcov_orig2optim, dispersion_orig2optim, randcov_orig2optim = NULL) {
   if (is.null(randcov_orig2optim)) {
     par <- spcov_orig2optim$value[!spcov_orig2optim$is_known]

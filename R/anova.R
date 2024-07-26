@@ -167,6 +167,14 @@ anova.ssn_lm <- function(object, ..., test = TRUE, Terms, L) {
 #' @export
 anova.ssn_glm <- anova.ssn_lm
 
+
+#' Get marginal (type III) chi-square statistic for ANOVA
+#'
+#' @param L Matrix of contrasts.
+#' @param object Model object.
+#'
+#' @return A marginal chi-square statistic
+#' @noRd
 get_marginal_Chi2 <- function(L, object) {
   # make matrix if a numeric vector
   if (!is.matrix(L)) {
@@ -215,6 +223,8 @@ tidy.anova.ssn_glm <- tidy.anova.ssn_lm
 
 #' Get relevant L lists for anova
 #'
+#' @description This function iterates through each call to get_L_vector (which is defined below).
+#'
 #' @param assign_index A single assign value from the model matrix
 #' @param assign_indices The assign values from the model matrix
 #'
@@ -227,6 +237,14 @@ get_L_list <- function(assign_index, assign_indices) {
   do.call(rbind, L_vectors)
 }
 
+#' Get relevant L vectors for anova
+#'
+#' @param assign_index Relevant assign value from the model matrix
+#' @param assign_indices The assign values from the model matrix
+#'
+#' @return L vectors for anova
+#'
+#' @noRd
 get_L_vector <- function(assign_val, assign_indices) {
   L_vector <- matrix(0, nrow = 1, ncol = length(assign_indices))
   L_vector[, assign_val] <- 1

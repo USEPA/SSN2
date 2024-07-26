@@ -1,3 +1,12 @@
+#' Find initial values for optimization.
+#'
+#' @param initial_NA_object Initial object with relevant NAs to indicate which require estimation.
+#' @param ssn.object SSN object.
+#' @param data_object Data object.
+#' @param estmethod Estimation method.
+#'
+#' @return Initial values
+#' @noRd
 cov_initial_search_glm <- function(initial_NA_object, ssn.object, data_object, estmethod) {
   # find the initial "new" sample variance
   s2 <- data_object$s2
@@ -111,6 +120,16 @@ cov_initial_search_glm <- function(initial_NA_object, ssn.object, data_object, e
   best_params <- list(initial_object = updated_NA_object)
 }
 
+#' Evaluate initial values
+#'
+#' @param cov_grid_split A set of initial values.
+#' @param initial_NA_object Initial object with relevant NAs to indicate which require estimation.
+#' @param ssn.object SSN object.
+#' @param data_object Data object.
+#' @param estmethod Estimation method.
+#'
+#' @return The minus twice log likelihood
+#' @noRd
 eval_grid_glm <- function(cov_grid_split, initial_NA_object, ssn.object, data_object, estmethod) {
   cov_grid <- unlist(cov_grid_split)
   # params object
@@ -123,6 +142,14 @@ eval_grid_glm <- function(cov_grid_split, initial_NA_object, ssn.object, data_ob
   get_minustwolaploglik(lapll_prods, data_object, estmethod)
 }
 
+#' Replace initial values with known values.
+#'
+#' @param cov_grid A grid of initial values.
+#' @param initial_object An initial object.
+#' @param data_object Data object.
+#'
+#' @return Initial values with known values replaced.
+#' @noRd
 cov_grid_replace_glm <- function(cov_grid, initial_object, data_object) {
   if (!is.na(initial_object$tailup_initial$initial[["de"]])) {
     cov_grid[, "tailup_de"] <- initial_object$tailup_initial$initial[["de"]]

@@ -1,3 +1,11 @@
+#' Correct anisotropy argument if initial values specified
+#'
+#' @param anisotropy Anisotropy argument
+#' @param initial_object Initial object
+#'
+#' @return A corrected anisotropy argument. Values specified in the initial object
+#'   take precedence over the anisotropy argument.
+#' @noRd
 get_anisotropy_corrected <- function(anisotropy, initial_object) {
   if (inherits(initial_object$euclid_initial, "euclid_none")) {
     anisotropy <- FALSE

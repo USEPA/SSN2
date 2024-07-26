@@ -40,7 +40,11 @@ spmodel::randcov_params
 #' @export
 spmodel::varcomp
 
-# logit function
+#' Logit function
+#'
+#' @param x Vector to take logit of
+#'
+#' @noRd
 logit <- function(x) {
   if (x < 0 | x > 1) {
     stop("logit argument must be between zero and one", call. = FALSE)
@@ -48,17 +52,28 @@ logit <- function(x) {
   log(x / (1 - x))
 }
 
-# expit function
+#' Inverse logit (expit) function
+#'
+#' @param x Vector to take inverse logit of
+#'
+#' @noRd
 expit <- function(x) {
   1 / (1 + exp(-x))
 }
 
-# remove type class
+#' Helper to remove type class prefix from certain class strings
+#'
+#' @param class_string
+#'
+#' @noRd
 remove_covtype <- function(class_string) {
   sub("^[^_]*_", "", class_string)
 }
 
-# CRAN release questions
+
+#' CRAN release questions
+#'
+#' @noRd
 release_questions <- function() {
   c(
     "Have you changed version numbers in DESCRIPTION, CITATION, and README?",

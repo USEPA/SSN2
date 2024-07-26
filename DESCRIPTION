@@ -1,6 +1,6 @@
 Package: SSN2
 Title: Spatial Modeling on Stream Networks
-Version: 0.1.1
+Version: 0.2.0
 Authors@R: c(
     person(given = "Michael",
            family = "Dumelle",
@@ -26,7 +26,7 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Depends: 
     R (>= 2.10)
 Imports: 
@@ -36,10 +36,10 @@ Imports:
     generics,
     tibble,
     graphics,
-    parallel,
     spmodel,
     RSQLite,
-    utils
+    utils,
+    withr
 Suggests: 
     rmarkdown,
     knitr,

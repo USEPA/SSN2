@@ -1,3 +1,12 @@
+#' Parameters that control spatial indexing (not yet implemented for spatial indexing
+#'   and function calls to this just act as placeholders)
+#'
+#' @param local Placeholder
+#' @param data Placeholder
+#' @param n  Placeholder
+#' @param partition_factor Placeholder
+#'
+#' @noRd
 get_local_list_estimation <- function(local, data, n, partition_factor) {
   # size can be an integer and sets group size
   # alternatively, set the number of groups
@@ -83,6 +92,14 @@ get_local_list_estimation <- function(local, data, n, partition_factor) {
   local
 }
 
+#' A helper to get spatial indexes (not yet implemented for spatial indexing
+#'   and function calls to this just act as placeholders)
+#'
+#' @param local Placeholder
+#' @param data Placeholder
+#' @param n  Placeholder
+#'
+#' @noRd
 get_local_estimation_index <- function(local, data, n) {
   # if (local$method == "random") {
   #   index <- sample(rep(seq_len(local$groups), times = local$size)[seq_len(n)])
@@ -97,6 +114,13 @@ get_local_estimation_index <- function(local, data, n) {
   # index
 }
 
+
+#' Parameters that control local neighborhood prediction(not yet implemented
+#'   and function calls to this just act as placeholders)
+#'
+#' @param local Placeholder
+#'
+#' @noRd
 get_local_list_prediction <- function(local) {
   # set local neighborhood size
   # method can be "all" (for all data), "distance" (for local distance neighborhoods)

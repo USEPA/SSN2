@@ -43,6 +43,14 @@ loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
   }
 }
 
+#' A helper to get the leave one out predictions for glms
+#'
+#' @param object Model object
+#' @param cv_predict Whether cross validation predictions should be returned
+#' @param se.fit Whether the standard error should be returned
+#' @param ... Additional arguments
+#'
+#' @noRd
 get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
   # turn local off for now
   local <- FALSE
@@ -151,6 +159,14 @@ get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
   cv_output
 }
 
+#' Helper to get each row leave one out prediction
+#'
+#' @param row The row of interest
+#' @param object Model object
+#' @param se.fit Whether to return the standard error
+#' @param local_list Local list (not yet functional)
+#'
+#' @noRd
 loocv_local_glm <- function(row, object, se.fit, local_list) {
   object$fitted$link <- object$fitted$link[-row] # w needs to be subset
   newdata <- object$obdata[row, , drop = FALSE]
@@ -158,6 +174,19 @@ loocv_local_glm <- function(row, object, se.fit, local_list) {
   predict(object, newdata = newdata, se.fit = se.fit, local = local_list)
 }
 
+#' Get leave one out cross validation value for glm
+#'
+#' @param obs Index of observed data
+#' @param Sig Covariance matrix
+#' @param SigInv Inverse covariance matrix
+#' @param Xmat Model matrix
+#' @param w The predicted latent effects
+#' @param wX Matrix containing w and response
+#' @param SigInv_yX Product of inverse covariance matrix with w and response
+#' @param mHinv The minus of the inverse Hessian of w
+#' @param se.fit Whether to return standard errors of leave one out predictions
+#'
+#' @noRd
 get_loocv_glm <- function(obs, Sig, SigInv, Xmat, w, wX, SigInv_wX, mHinv, se.fit) {
   SigInv_mm <- SigInv[obs, obs] # a constant
   SigInv_om <- SigInv[-obs, obs, drop = FALSE]

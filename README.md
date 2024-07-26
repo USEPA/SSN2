@@ -3,6 +3,7 @@
 [![cran checks](https://badges.cranchecks.info/worst/SSN2.svg)](https://cran.r-project.org/web/checks/check_results_SSN2.html)
 [![R-CMD-check](https://github.com/USEPA/SSN2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/USEPA/SSN2/actions/workflows/R-CMD-check.yaml)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![status](https://joss.theoj.org/papers/66fd932526762f8ccd8bd9c3954e0e3d/status.svg)](https://joss.theoj.org/papers/66fd932526762f8ccd8bd9c3954e0e3d)
 <!-- badges: end -->
 
 # SSN2: Spatial Modeling on Stream Networks
@@ -24,7 +25,7 @@ citation(package = "SSN2")
 #> 
 #> To cite SSN2 in publications use:
 #> 
-#>   Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023). SSN2: Spatial Modeling on Stream Networks in R. R package version 0.1.0
+#>   Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023). SSN2: Spatial Modeling on Stream Networks in R. R package version 0.2.0
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
@@ -32,13 +33,13 @@ citation(package = "SSN2")
 #>     title = {{SSN2}: Spatial Modeling on Stream Networks in {R}},
 #>     author = {Michael Dumelle and Erin Peterson and Jay M. {Ver Hoef} and Alan Pearse and Dan Isaak},
 #>     year = {2023},
-#>     note = {{R} package version 0.1.0},
+#>     note = {{R} package version 0.2.0},
 #>   }
 ```
 
 ## Statement of Need
 
-Streams provide vital aquatic services that sustain wildlife, provide drinking and irrigation water, and support recreational and cultural activities.  Data are often collected at various locations on a stream network and used to characterize some scientific phenomenon in the stream. Spatial stream network (SSN) models use a spatial statistical modeling framework to describe unique and complex dependencies on a stream network resulting from a branching network structure, directional water flow, and differences in flow volume. SSN models relate a response variable to one or more explanatory variables, a spatially independent error term (i.e., nugget), and up to three spatially dependent error terms: tail-down errors, tail-up errors, and Euclidean errors. Tail-down errors restrict spatial dependence to flow-connected sites (i.e., water flows from an upstream to a downstream site) and incorporate spatial weights (i.e., additive function) to describe the branching network between them. Tail-up errors describe spatial dependence between both flow-connected and flow-unconnected (i.e., sites that share a common downstream junction but not flow) sites, but spatial weights are not required. Euclidean errors describe spatial dependence between sites based on Euclidean distance and are governed by factors not confined to the stream network like regional geology. 
+Streams provide vital aquatic services that sustain wildlife, provide drinking and irrigation water, and support recreational and cultural activities.  Data are often collected at various locations on a stream network and used to characterize some scientific phenomenon in the stream. Spatial stream network (SSN) models use a spatial statistical modeling framework to describe unique and complex dependencies on a stream network resulting from a branching network structure, directional water flow, and differences in flow volume. SSN models relate a response variable to one or more explanatory variables, a spatially independent error term (i.e., nugget), and up to three spatially dependent error terms: tail-down errors, tail-up errors, and Euclidean errors. Tail-down errors restrict spatial dependence to flow-connected sites (i.e., water flows from an upstream to a downstream site) and incorporate spatial weights (i.e., additive function) to describe the branching network between them. Tail-up errors describe spatial dependence between both flow-connected and flow-unconnected (i.e., sites that share a common downstream junction but not flow) sites, but spatial weights are not required. Euclidean errors describe spatial dependence between sites based on Euclidean distance and are governed by factors not confined to the stream network like regional geology. The `SSN2` **R** package is designed to help users fit SSN models to their stream network data.
 
 
 ## Installation Instructions
@@ -72,6 +73,18 @@ remotes::install_github("USEPA/SSN2", ref = "develop")
 # load the most recent development version from GitHub
 library(SSN2)
 ```
+
+## Contributing to `SSN2`
+
+We encourage users to report bugs and/or contribute to `SSN2`. For more detail on how to do this, please see our contributing guide (`CONTRIBUTING.md`).
+
+## Getting Help
+
+There are several ways to get help with `SSN2`:
+
+1. Open a GitHub issue [link here](https://github.com/USEPA/SSN2/issues).
+2. Email the SSN support team (support@spatialstreamnetworks.com or Dumelle.Michael@epa.gov)
+3. Post on a support website like Stack Overflow or Cross Validated. 
 
 ## Example Usage
 
@@ -199,14 +212,37 @@ head(preds)
 #> 6 15.12783 14.76358 15.49208
 ```
 
-## Contributing to `SSN2`
+## Imported Packages
 
-We encourage users to propose changes to `SSN2`. Please see our contributing guide (`CONTRIBUTING.md`) for more detail.
+`SSN2` imports the following **R** packages:
+
+* generics: For exporting generic functions.
+* graphics: For visualizations (e.g., `plot()`).
+* Matrix: For efficient matrix manipulations.
+* RSQlite: For various functions that read and write (e.g., `ssn_create_distmat()`).
+* sf: For handling spatial data.
+* spmodel: For various modeling functions (e.g., `randcov_initial()`) and generic functions (e.g., `loocv()`).
+* stats: For various modeling functions (e.g., `confint()`).
+* tibble: For creating tibbles as output for various functions (e.g., `tidy()`).
+* utils: For various utility functions.
+* withr: For path handling while reading and writing.
+
+## Suggested Packages
+
+`SSN2` suggests the following **R** packages:
+
+* ggplot2: For vignette visualizations.
+* knitr: For vignette building.
+* rmarkdown: For vignette building.
+* sp: For making `SSN` objects from the `SSN` **R** package compatible with `SSN2`.
+* statmod: For modeling and simulation of inverse Gaussian data.
+* testthat: For unit testing.
+
+## License
+
+This project is licensed under the GNU General Public License, [GPL-3](https://cran.r-project.org/web/licenses/GPL-3).
 
 ## EPA Disclaimer
 
 The United States Environmental Protection Agency (EPA) GitHub project code is provided on an "as is" basis and the user assumes responsibility for its use. EPA has relinquished control of the information and no longer has responsibility to protect the integrity , confidentiality, or availability of the information. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by EPA. The EPA seal and logo shall not be used in any manner to imply endorsement of any commercial product or activity by EPA or the United States Government.
 
-## License
-
-This project is licensed under the GNU General Public License, [GPL-3](https://cran.r-project.org/web/licenses/GPL-3).

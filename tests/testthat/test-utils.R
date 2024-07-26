@@ -1,27 +1,4 @@
-# Copy the mf04p .ssn data to a local directory and read it into R
-# When modeling with your .ssn object, you will load it using the relevant
-# path to the .ssn data on your machine
-copy_lsn_to_temp()
-temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-mf04p <- ssn_import(
-  temp_path,
-  predpts = c("pred1km", "CapeHorn", "Knapp"),
-  overwrite = TRUE
-)
-
-# fit an example model
-ssn_mod <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p, tailup_type = "exponential", additive = "afvArea")
-
-initial_object_val <- get_initial_object(
-  tailup_type = "exponential",
-  taildown_type = "exponential",
-  euclid_type = "exponential",
-  nugget_type = "nugget",
-  tailup_initial = NULL,
-  taildown_initial = NULL,
-  euclid_initial = NULL,
-  nugget_initial = NULL
-)
+# test some utility functions
 
 ################################################################################
 ############################ check_optim_method
@@ -43,45 +20,9 @@ test_that("check optim method works", {
   expect_equal(optim_dotlist_val$upper, 50)
 })
 
-################################################################################
-############################ params, cov_matrix, cov_vector work
-################################################################################
-
-test_that("params, cov_matrix, cov_vector work", {
-  tailup_par <- tailup_params("exponential", 1, 1)
-  taildown_par <- taildown_params("exponential", 1, 1)
-  euclid_par <- euclid_params("exponential", 1, 1, 0, 1)
-  nugget_par <- nugget_params("nugget", 0.1)
-
-  # create dist object
-  dist_object <- get_dist_object(
-    ssn.object = mf04p,
-    initial_object = initial_object_val,
-    additive = "afvArea",
-    anisotropy = FALSE
-  )
-
-  n_obs <- NROW(mf04p$obs)
-  n_obs_dim <- c(n_obs, n_obs)
-
-  expect_equal(dim(cov_matrix(tailup_par, dist_object)), n_obs_dim)
-  expect_equal(dim(cov_matrix(taildown_par, dist_object)), n_obs_dim)
-  expect_equal(dim(cov_matrix(euclid_par, dist_object, anisotropy = FALSE)), n_obs_dim)
-  expect_equal(dim(cov_matrix(nugget_par, dist_object, de_scale = 0)), n_obs_dim)
-
-
-  # create distance object
-  dist_pred_object <- get_dist_pred_object(
-    object = ssn_mod,
-    newdata_name = "pred1km",
-    initial_object = initial_object_val
-  )
-
-  n_obs <- NROW(ssn_mod$ssn.object$obs)
-  n_pred <- NROW(ssn_mod$ssn.object$preds[["pred1km"]])
-  n_dim <- c(n_pred, n_obs)
-
-  expect_equal(dim(cov_vector(tailup_par, dist_pred_object)), n_dim)
-  expect_equal(dim(cov_vector(taildown_par, dist_pred_object)), n_dim)
-  expect_equal(dim(cov_vector(euclid_par, dist_pred_object, anisotropy = FALSE)), n_dim)
+test_that("logit and expit work", {
+  expect_equal(logit(1 / 2), 0)
+  expect_equal(expit(0), 1 / 2)
+  expect_equal(expit(logit(4 / 7)), 4 / 7)
+  expect_equal(logit(expit(4 / 7)), 4 / 7)
 })

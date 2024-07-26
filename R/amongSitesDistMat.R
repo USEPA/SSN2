@@ -1,8 +1,13 @@
+#' Helper function to determining distance matrices among sites
+#'
+#' @param ssn An SSN object.
+#' @param pids A list of pid values for prediction sites
+#' @param name The network name (obs or prediction name)
+#' @param bin.table A binaryID table for the network.
+#'
+#' @return A distance matrix
+#' @noRd
 amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
-  ## ssn = SSN object
-  ## pids = list of pid values for prediction sites
-  ## bin.table = binaryID table for the network
-
   site.no <- length(pids)
 
   among_distance_matrix <- matrix(NA, nrow = site.no, ncol = site.no)
@@ -25,9 +30,9 @@ amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
     pid.data <- ssn_get_netgeom(ssn$obs[ind.pids, ], c(
       "pid", "SegmentID", "locID",
       "DistanceUpstream"
-      ), reformat = TRUE)
+    ), reformat = TRUE)
 
-    ##pid.data <- as.data.frame(sapply(pid.data, as.numeric))
+    ## pid.data <- as.data.frame(sapply(pid.data, as.numeric))
     colnames(pid.data) <- c("pid", "rid", "locID", "upDist")
   }
 

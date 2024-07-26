@@ -1,41 +1,45 @@
-# Copy the mf04p .ssn data to a local directory and read it into R
-# When modeling with your .ssn object, you will load it using the relevant
-# path to the .ssn data on your machine
-copy_lsn_to_temp()
-temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-mf04p <- ssn_import(
-  temp_path,
-  predpts = c("pred1km", "CapeHorn", "Knapp"),
-  overwrite = TRUE
-)
-
 test_that("torgegram works", {
   tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p)
-  tg_names <- names(tg$flowcon)
+  expect_s3_class(tg, "Torgegram")
+  tg_names <- names(tg)
+  expect_identical(c("flowcon", "flowuncon"), tg_names)
+  tg_names_flowcon <- names(tg$flowcon)
+  expect_identical(tg_names_flowcon, c("bins", "dist", "gamma", "np"))
   expect_s3_class(tg$flowcon, "data.frame")
-  expect_equal(names(tg$flowcon), tg_names)
+  expect_equal(unlist(tg$flowcon[1, c("dist", "gamma", "np")]), c("dist" = 409.648, "gamma" = 0.167, "np" = 11), tolerance = 0.01)
+  tg_names_flowuncon <- names(tg$flowuncon)
+  expect_identical(tg_names_flowuncon, c("bins", "dist", "gamma", "np"))
   expect_s3_class(tg$flowuncon, "data.frame")
-  expect_equal(names(tg$flowuncon), tg_names)
-  expect_false("euclid" %in% names(tg))
+  expect_equal(unlist(tg$flowuncon[1, c("dist", "gamma", "np")]), c("dist" = 487.595, "gamma" = 2.739, "np" = 6), tolerance = 0.01)
   expect_invisible(plot(tg))
 })
 
 test_that("torgegram works euclid", {
   tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, type = "euclid")
-  tg_names <- names(tg$euclid)
-  expect_s3_class(tg$euclid, "data.frame")
-  expect_equal(names(tg$euclid), tg_names)
-  expect_false(any(c("flowcon", "flowuncon") %in% names(tg)))
+  expect_s3_class(tg, "Torgegram")
+  tg_names <- names(tg)
+  expect_identical(c("euclid"), tg_names)
+  tg_names_euclid <- names(tg$euclid)
+  expect_identical(tg_names_euclid, c("bins", "dist", "gamma", "np"))
+  expect_equal(unlist(tg$euclid[1, c("dist", "gamma", "np")]), c("dist" = 545.053, "gamma" = 0.742, "np" = 40), tolerance = 0.01)
   expect_invisible(plot(tg))
 })
 
 test_that("torgegram works (partition factor)", {
-  tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, partition_factor = ~ as.factor(netID))
-  tg_names <- names(tg$flowcon)
+  tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, partition_factor = ~ as.factor(netID), type = c("flowcon", "flowuncon", "euclid"))
+  expect_s3_class(tg, "Torgegram")
+  tg_names <- names(tg)
+  expect_identical(c("flowcon", "flowuncon", "euclid"), tg_names)
+  tg_names_flowcon <- names(tg$flowcon)
+  expect_identical(tg_names_flowcon, c("bins", "dist", "gamma", "np"))
   expect_s3_class(tg$flowcon, "data.frame")
-  expect_equal(names(tg$flowcon), tg_names)
+  expect_equal(unlist(tg$flowcon[1, c("dist", "gamma", "np")]), c("dist" = 409.648, "gamma" = 0.167, "np" = 11), tolerance = 0.01)
+  tg_names_flowuncon <- names(tg$flowuncon)
+  expect_identical(tg_names_flowuncon, c("bins", "dist", "gamma", "np"))
   expect_s3_class(tg$flowuncon, "data.frame")
-  expect_equal(names(tg$flowuncon), tg_names)
-  expect_false("euclid" %in% names(tg))
+  expect_equal(unlist(tg$flowuncon[1, c("dist", "gamma", "np")]), c("dist" = 487.595, "gamma" = 2.739, "np" = 6), tolerance = 0.01)
+  tg_names_euclid <- names(tg$euclid)
+  expect_identical(tg_names_euclid, c("bins", "dist", "gamma", "np"))
+  expect_equal(unlist(tg$euclid[1, c("dist", "gamma", "np")]), c("dist" = 310.580, "gamma" = 0.526, "np" = 17), tolerance = 0.01)
   expect_invisible(plot(tg))
 })

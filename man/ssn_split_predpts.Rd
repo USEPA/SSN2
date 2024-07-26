@@ -20,7 +20,7 @@ ssn_split_predpts(
 \item{ssn}{An \code{SSN} object.}
 
 \item{predpts}{A character string representing the name of the
-prediction dataset}
+prediction dataset.}
 
 \item{size_predpts}{numeric value representing the size of the new
 prediction sets. The existing prediction set is split equally to
@@ -46,12 +46,12 @@ levels should be dropped in the \code{by} column when the new
 prediction dataset(s) are created. Default is \code{FALSE}}
 
 \item{overwrite}{logical indicating whether the new prediction
-dataset shapefile should be deleted in the .ssn directory if it
+dataset geopackage should be deleted in the .ssn directory if it
 already exists. Default = \code{FALSE}}
 }
 \value{
 returns the \code{SSN} specified in \code{ssn}, with one or more new prediction
-sets. Shapefiles of the new prediction sets are written to the
+sets. Geopackages of the new prediction sets are written to the
 .ssn directory designated in ssn$path.
 }
 \description{
@@ -64,16 +64,16 @@ set, or a logical expression.
 }
 \details{
 Three methods have been provided to split prediction sets:
-\code{size_predpts}, \code{by}, and \code{subset}. The
-\code{size_predpts} method is used to split the existing prediction
-set into multiple equally-sized prediction sets. Note that the
+size, by, and subset. The
+size method is used to split the existing prediction
+set into multiple equally-sized prediction sets using the \code{size_predpts} argument. Note that the
 final prediction set may be smaller in size than the others if
 the total number of predictions is not evenly divisible by
-\code{size_predpts}. The \code{by} method is used if the prediction
+\code{size_predpts}. The by method is used if the prediction
 set is to be split into multiple new prediction sets based on an
 existing column of type factor, integer, character, or
-logical. The \code{subset} method is used to create one new
-prediction set based on a logical expression.
+logical specified using the argument \code{by}. The subset method is used to create one new
+prediction set based on a logical expression defined in \code{subset}.
 
 When more than one prediction dataset is created the prediction
 dataset names will be appended with a hyphen and prediction
@@ -96,11 +96,11 @@ predictions can be made.
 ## Import SSN object
 copy_lsn_to_temp() ## Only needed for this example
 ssn <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-  predpts = c("pred1km.shp", "Knapp", "CapeHorn"),
+  predpts = c("pred1km", "CapeHorn"),
   overwrite = TRUE
 )
 
-## Split predictions into size_predpts 200
+## Split predictions based on 'size' method
 ssn1 <- ssn_split_predpts(ssn, "CapeHorn",
   size_predpts = 200,
   keep = FALSE, overwrite = TRUE
@@ -108,7 +108,7 @@ ssn1 <- ssn_split_predpts(ssn, "CapeHorn",
 names(ssn1$preds)
 nrow(ssn1$preds[["CapeHorn-1"]])
 
-## Split predictions using by method
+## Split predictions using 'by' method
 ssn$preds$pred1km$net.fac <- as.factor(ssn$preds$pred1km$netID)
 ssn2 <- ssn_split_predpts(ssn, "pred1km",
   by = "net.fac",
@@ -116,7 +116,7 @@ ssn2 <- ssn_split_predpts(ssn, "pred1km",
 )
 names(ssn2$preds)
 
-## Split predictions using subset method
+## Split predictions using 'subset' method
 ssn3 <- ssn_split_predpts(ssn, "pred1km",
   subset = ratio > 0.5,
   id_predpts = "RATIO_05", overwrite = TRUE

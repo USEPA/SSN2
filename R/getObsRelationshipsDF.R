@@ -1,3 +1,15 @@
+#' Get spatial relationships for observed points
+#'
+#' @param ssn SSN object
+#' @param pid integer pid value of interest
+#' @param junk data.frame with columns fc (logical) and binaryID
+#' @param ind vector indicator saying whether it is a duplicate
+#' @param ob data.frame with pid, rid, locID, and binaryID for sites on network ordered by pid
+#' @param ob_by_locID data.frame with pid, rid, locID, and binaryID for sites on network
+#'   ordered by locID factor level (not true locID)
+#' @param bin binaryID table
+#'
+#' @noRd
 getObsRelationshipsDF <- function(ssn, pid, junk, ind, ob, ob_by_locID, bin) {
   ## ssn = SpatialStreamNetwork object
   ## pid = integer pid value of interest

@@ -4,22 +4,13 @@
 \alias{SSN_to_SSN2}
 \title{Convert object from \code{SpatialStreamNetwork} class to \code{SSN} class}
 \usage{
-SSN_to_SSN2(object, edge_additive = NULL, site_additive = NULL)
+SSN_to_SSN2(object)
 }
 \arguments{
 \item{object}{A SpatialStreamNetwork object}
-
-\item{edge_additive}{A character vector of additive function value
-column names found in edges. Default is NULL. See Details for
-more information.}
-
-\item{site_additive}{A character vector of additive function value
-column names found in the observed sites and prediction
-sites. See Details for more information. Default is NULL.}
 }
 \value{
-An S3 \code{SSN} class object, with additive function value
-columns converted to text format.
+An S3 \code{SSN} class object.
 }
 \description{
 Convert an S4 \code{SpatialStreamNetwork} object
@@ -34,25 +25,4 @@ objects \emph{stored in saved workspaces} to the S3 \code{SSN} class object
 used in the \code{SSN2} package. Note that \code{\link[SSN2]{ssn_import}} is
 used to create an S3 \code{SSN} object from data stored locally in a .ssn
 directory.
-
-Additive function values are used to generate spatial weights for
-the tail-up covariance function used in \code{ssn_glm}. The range
-of additive function values are restricted to \eqn{0 \le AFV \le
-  1}. In the \code{SSN2} package, columns containing additive
-function values are stored as text, rather than numeric
-format. This prevents values less than 1 with more than 10 digits
-from being truncated when writing/reading shapefiles (and their
-.dbf tables). The columns containing additive function values are
-specified using the \code{edge_additive} and \code{site_additive} arguments
-and converted to character format in the \code{SSN} class object
-returned. The arguments \code{edge_additive} and \code{site_additive}
-accept a single column name in character format, or a vector
-containing multiple column names. Note that, column names for
-additive function values on the edges, sites, and prediction
-sites may differ. If a column specified in \code{edge_additive} or
-\code{site_additive} is not present, the function will return a
-warning, rather than an error. Columns containing additive
-function values can also be converted to text manually using the
-\code{\link[base]{formatC}} function, which provides the
-flexibility needed to store the values with their full precision.
 }

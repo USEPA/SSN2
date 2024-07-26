@@ -26,13 +26,24 @@ partition_matrix <- function(partition_factor = NULL, data) {
 }
 
 
-# could use old version for partition names
+
+#' Get names of partition factors
+#'
+#' @param partition_factor A partition factor
+#'
+#' @noRd
 get_partition_names <- function(partition_factor) {
+  # could use old version for partition names
   # get the partition formula and turn it into a named vector here
   labels_initial <- labels(terms(partition_factor))
   new_labels <- unlist(lapply(labels_initial, get_partition_name))
 }
 
+#' Get adjusted name of a partition factor
+#'
+#' @param label A partition factor name
+#'
+#' @noRd
 get_partition_name <- function(label) {
   if (grepl("|", label, fixed = TRUE)) {
     new_label <- label

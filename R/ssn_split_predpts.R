@@ -9,7 +9,7 @@
 #'
 #' @param ssn An \code{SSN} object.
 #' @param predpts A character string representing the name of the
-#'   prediction dataset
+#'   prediction dataset.
 #' @param size_predpts numeric value representing the size of the new
 #'   prediction sets. The existing prediction set is split equally to
 #'   produce multiple prediction sets of this size
@@ -28,20 +28,20 @@
 #'   levels should be dropped in the \code{by} column when the new
 #'   prediction dataset(s) are created. Default is \code{FALSE}
 #' @param overwrite logical indicating whether the new prediction
-#'   dataset shapefile should be deleted in the .ssn directory if it
+#'   dataset geopackage should be deleted in the .ssn directory if it
 #'   already exists. Default = \code{FALSE}
 #'
 #' @details Three methods have been provided to split prediction sets:
-#'   \code{size_predpts}, \code{by}, and \code{subset}. The
-#'   \code{size_predpts} method is used to split the existing prediction
-#'   set into multiple equally-sized prediction sets. Note that the
+#'   size, by, and subset. The
+#'   size method is used to split the existing prediction
+#'   set into multiple equally-sized prediction sets using the \code{size_predpts} argument. Note that the
 #'   final prediction set may be smaller in size than the others if
 #'   the total number of predictions is not evenly divisible by
-#'   \code{size_predpts}. The \code{by} method is used if the prediction
+#'   \code{size_predpts}. The by method is used if the prediction
 #'   set is to be split into multiple new prediction sets based on an
 #'   existing column of type factor, integer, character, or
-#'   logical. The \code{subset} method is used to create one new
-#'   prediction set based on a logical expression.
+#'   logical specified using the argument \code{by}. The subset method is used to create one new
+#'   prediction set based on a logical expression defined in \code{subset}.
 #'
 #'   When more than one prediction dataset is created the prediction
 #'   dataset names will be appended with a hyphen and prediction
@@ -61,7 +61,7 @@
 #'   predictions can be made.
 #'
 #' @return returns the \code{SSN} specified in \code{ssn}, with one or more new prediction
-#'   sets. Shapefiles of the new prediction sets are written to the
+#'   sets. Geopackages of the new prediction sets are written to the
 #'   .ssn directory designated in ssn$path.
 #'
 #' @name ssn_split_predpts
@@ -70,11 +70,11 @@
 #' ## Import SSN object
 #' copy_lsn_to_temp() ## Only needed for this example
 #' ssn <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-#'   predpts = c("pred1km.shp", "Knapp", "CapeHorn"),
+#'   predpts = c("pred1km", "CapeHorn"),
 #'   overwrite = TRUE
 #' )
 #'
-#' ## Split predictions into size_predpts 200
+#' ## Split predictions based on 'size' method
 #' ssn1 <- ssn_split_predpts(ssn, "CapeHorn",
 #'   size_predpts = 200,
 #'   keep = FALSE, overwrite = TRUE
@@ -82,7 +82,7 @@
 #' names(ssn1$preds)
 #' nrow(ssn1$preds[["CapeHorn-1"]])
 #'
-#' ## Split predictions using by method
+#' ## Split predictions using 'by' method
 #' ssn$preds$pred1km$net.fac <- as.factor(ssn$preds$pred1km$netID)
 #' ssn2 <- ssn_split_predpts(ssn, "pred1km",
 #'   by = "net.fac",
@@ -90,7 +90,7 @@
 #' )
 #' names(ssn2$preds)
 #'
-#' ## Split predictions using subset method
+#' ## Split predictions using 'subset' method
 #' ssn3 <- ssn_split_predpts(ssn, "pred1km",
 #'   subset = ratio > 0.5,
 #'   id_predpts = "RATIO_05", overwrite = TRUE
@@ -178,7 +178,7 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
       ## Recreate netgeom
       ind <- colnames(tmp) == "netgeom"
       tmp <- tmp[, !ind]
-      tmp <- create_netgeom(tmp, "point")
+      tmp <- create_netgeom(tmp, "POINT", overwrite = TRUE)
 
       ## Replace predpts with updated data.frame
       ssn$preds[[predpts]] <- tmp
@@ -215,18 +215,18 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
 
 
         ## write subset of prediction points to file
-        fe.old <- file.exists(paste0(ssn$path, "/", id_predpts2, ".shp"))
+        fe.old <- file.exists(paste0(ssn$path, "/", id_predpts2, ".gpkg"))
         if (overwrite == TRUE & fe.old == TRUE) {
-          st_delete(paste0(ssn$path, "/", id_predpts2, ".shp"),
+          st_delete(paste0(ssn$path, "/", id_predpts2, ".gpkg"),
             quiet = TRUE
           )
         }
         if (overwrite == FALSE & fe.old == TRUE) {
-          stop(paste0("overwrite = FALSE and ", id_predpts2, ".shp already exists"))
+          stop(paste0("overwrite = FALSE and ", id_predpts2, ".gpkg already exists"))
         }
 
-        ## Write shapefile
-        st_write(sub.data, paste0(id_predpts2, ".shp"), quiet = TRUE)
+        ## Write geopackage
+        st_write(sub.data, paste0(id_predpts2, ".gpkg"), quiet = TRUE)
 
         ## Add to existing ssn
         new.index <- length(ssn$preds) + 1
@@ -253,18 +253,18 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
       sub.data <- ssn$preds[[predpts]][values, ]
 
       ## write subset of prediction points to file
-      fe.old <- file.exists(paste0(ssn$path, "/", id_predpts, ".shp"))
+      fe.old <- file.exists(paste0(ssn$path, "/", id_predpts, ".gpkg"))
       if (overwrite == TRUE & fe.old == TRUE) {
-        st_delete(paste0(ssn$path, "/", id_predpts, ".shp"),
+        st_delete(paste0(ssn$path, "/", id_predpts, ".gpkg"),
           quiet = TRUE
         )
       }
       if (overwrite == FALSE & fe.old == TRUE) {
-        stop(paste0("overwrite = FALSE and ", id_predpts, ".shp already exists"))
+        stop(paste0("overwrite = FALSE and ", id_predpts, ".gpkg already exists"))
       }
 
       ## write subset of prediction points to file
-      st_write(sub.data, paste0(id_predpts, ".shp"), quiet = TRUE)
+      st_write(sub.data, paste0(id_predpts, ".gpkg"), quiet = TRUE)
 
       ## Add to existing ssn
       new.index <- length(ssn$preds) + 1
@@ -306,18 +306,18 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
         }
 
         ## write subset of prediction points to file
-        fe.old <- file.exists(paste0(ssn$path, "/", id_predpts, ".shp"))
+        fe.old <- file.exists(paste0(ssn$path, "/", id_predpts, ".gpkg"))
         if (overwrite == TRUE & fe.old == TRUE) {
-          st_delete(paste0(ssn$path, "/", id_predpts, ".shp"),
+          st_delete(paste0(ssn$path, "/", id_predpts, ".gpkg"),
             quiet = TRUE
           )
         }
         if (overwrite == FALSE & fe.old == TRUE) {
-          stop(paste0("overwrite = FALSE and ", id_predpts, ".shp already exists"))
+          stop(paste0("overwrite = FALSE and ", id_predpts, ".gpkg already exists"))
         }
 
         ## write subset of prediction points to file
-        st_write(sub.data, paste0(id_predpts, ".shp"), quiet = TRUE)
+        st_write(sub.data, paste0(id_predpts, ".gpkg"), quiet = TRUE)
 
         ## Add to existing ssn
         new.index <- length(ssn$preds) + 1

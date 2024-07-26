@@ -131,7 +131,7 @@ locations will also be calculated if \code{among_predpts = TRUE}.
 copy_lsn_to_temp()
 ## Import SSN data
 mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-  predpts = c("pred1km.shp", "Knapp"),
+  predpts = c("pred1km.gpkg", "CapeHorn"),
   overwrite = TRUE
 )
 
@@ -146,7 +146,7 @@ ssn_create_distmat(mf04p,
 ## Distance matrices for observations and pred1km prediction sites are
 ## not recalculated.
 ssn_create_distmat(mf04p,
-  predpts = "Knapp", overwrite = TRUE,
+  predpts = "CapeHorn", overwrite = TRUE,
   among_predpts = TRUE, only_predpts = TRUE
 )
 }

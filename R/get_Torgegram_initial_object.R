@@ -1,3 +1,8 @@
+#' Get initial object for use with Torgegram calculations
+#'
+#' @param type The Torgegram type (flow-connected, flow-unconnected, Euclidean)
+#'
+#' @noRd
 get_Torgegram_initial_object <- function(type) {
   if (any(!type %in% c("flowcon", "flowuncon", "euclid"))) {
     stop("All elements of type must be \"flowcon\", \"flowuncon\", or \"euclid\".", call. = FALSE)

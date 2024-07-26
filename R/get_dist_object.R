@@ -1,4 +1,12 @@
-# parent function to get the distance object
+#' Get the distance matrix oibject
+#'
+#' @param ssn.object SSN object.
+#' @param initial_object Initial value object.
+#' @param additive Name of the additive function value column.
+#' @param anisotropy Whether there is anisotropy.
+#'
+#' @return A distance matrix object that contains various distance matrices used in modeling.
+#' @noRd
 get_dist_object <- function(ssn.object, initial_object, additive, anisotropy) {
   # get netgeom
   netgeom <- ssn_get_netgeom(ssn.object$obs, reformat = TRUE)
@@ -60,7 +68,7 @@ get_dist_object <- function(ssn.object, initial_object, additive, anisotropy) {
   dist_object
 }
 
-# implement list structure for when local is implemented (big data)
+# a vectorized version of get_dist_object
 get_dist_object_oblist <- function(dist_object, observed_index, local_index) {
   # find names of the distance object
   dist_object_names <- names(dist_object)
@@ -87,6 +95,14 @@ get_dist_object_oblist <- function(dist_object, observed_index, local_index) {
   dist_object_oblist
 }
 
+#' Get list of full distance matrices
+#'
+#' @param ssn.object SSN object.
+#' @param initial_object Initial value object.
+#' @param additive Name of the additive function value column.
+#' @param order_list A list of order by pid and network.
+#'
+#' @noRd
 get_dist_matlist <- function(ssn.object, initial_object, additive,
                              order_list) {
   network_index <- order_list$network_index
@@ -171,8 +187,14 @@ get_dist_matlist <- function(ssn.object, initial_object, additive,
   dist_matlist
 }
 
-# auxiliary functions
-# auxiliary functions
+
+#' Get distance to the nearest junction matrix
+#'
+#' @param network_index Network index
+#' @param ssn.object SSN object
+#' @param newdata_name Name of the newdata matrix (if relevant)
+#'
+#' @noRd
 get_distjunc_matlist <- function(network_index, ssn.object, newdata_name = NULL) {
   if (is.null(newdata_name)) {
     ext <- "obs"
@@ -208,7 +230,13 @@ get_distjunc_matlist <- function(network_index, ssn.object, newdata_name = NULL)
 }
 
 
-# subset relevant objects in the distance object
+#' Subset relevant objects in the distance object
+#'
+#' @param dist_object_name Name of the relevant element in the distance object
+#' @param dist_object Distance object
+#' @param index Index of the distance matrix elements for ordering
+#'
+#' @noRd
 subset_dist_object <- function(dist_object_name, dist_object, index) {
   # store the distance object element
   dist_object_element <- dist_object[[dist_object_name]]
@@ -230,7 +258,12 @@ subset_dist_object <- function(dist_object_name, dist_object, index) {
   dist_sub
 }
 
-# find the mask matrix list for each network
+#' Find the mask matrix list for each network
+#'
+#' @param distjunc_list Create list of mask matrices (which zero out tailup
+#'   and taildown covariance for observations on separate networks).
+#'
+#' @noRd
 get_mask_matlist <- function(distjunc_list) {
   mask_list <- lapply(distjunc_list, function(x) {
     n_i <- dim(x)[[1]]
@@ -238,7 +271,11 @@ get_mask_matlist <- function(distjunc_list) {
   })
 }
 
-# find the a matrix list (largest stream distance) for each network
+#' Find the a matrix list for each network
+#'
+#' @param distjunc_list Create list of a matrices (largest stream distance) for each network.
+#'
+#' @noRd
 get_a_matlist <- function(distjunc_list) {
   # find a matrix list
   a_matlist <- lapply(distjunc_list, function(x) {
@@ -247,7 +284,11 @@ get_a_matlist <- function(distjunc_list) {
   })
 }
 
-# find the b matrix list (smallest stream distance) for each network
+#' Find the b matrix list for each network
+#'
+#' @param distjunc_list Create list of a matrices (smallest stream distance) for each network.
+#'
+#' @noRd
 get_b_matlist <- function(distjunc_list) {
   # find a matrix list
   b_matlist <- lapply(distjunc_list, function(x) {
@@ -256,13 +297,21 @@ get_b_matlist <- function(distjunc_list) {
   })
 }
 
-# find the hydrologic distance matrix list for each network
+#' Find the hydrologic distance matrix list for each network
+#'
+#' @param distjunc_list Create list of matrices (hydrologic stream distance) for each network.
+#'
+#' @noRd
 get_hydro_matlist <- function(distjunc_list) {
   # find hydro matrix list
   hydro_matlist <- lapply(distjunc_list, function(x) x + t(x))
 }
 
-# find the additive matrix list for each network
+#' Find the w matrix list for each network
+#'
+#' @param distjunc_list Create list of w matrices (additive function weight) for each network.
+#'
+#' @noRd
 get_w_matlist <- function(ssn.object, additive, network_index, dist_order, b_matlist, mask_matlist, newdata_name = NULL) {
   if (is.null(newdata_name)) {
     additive_val <- as.numeric(ssn.object$obs[[additive]]) # remember a character here

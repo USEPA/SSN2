@@ -114,7 +114,7 @@
 #' copy_lsn_to_temp()
 #' ## Import SSN data
 #' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-#'   predpts = c("pred1km.shp", "Knapp"),
+#'   predpts = c("pred1km.gpkg", "CapeHorn"),
 #'   overwrite = TRUE
 #' )
 #'
@@ -129,27 +129,32 @@
 #' ## Distance matrices for observations and pred1km prediction sites are
 #' ## not recalculated.
 #' ssn_create_distmat(mf04p,
-#'   predpts = "Knapp", overwrite = TRUE,
+#'   predpts = "CapeHorn", overwrite = TRUE,
 #'   among_predpts = TRUE, only_predpts = TRUE
 #' )
 ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                                among_predpts = FALSE, only_predpts = FALSE) {
-
   # iterate if predpts is not null
   if (length(predpts) > 1) {
     if (only_predpts) {
-      x <- lapply(predpts, function(x) ssn_create_distmat(ssn.object,
-                                                          predpts = x,
-                                                          overwrite,
-                                                          among_predpts,
-                                                          only_predpts))
+      x <- lapply(predpts, function(x) {
+        ssn_create_distmat(ssn.object,
+          predpts = x,
+          overwrite,
+          among_predpts,
+          only_predpts
+        )
+      })
     } else {
       x1 <- ssn_create_distmat(ssn.object, overwrite = overwrite)
-      x2 <- lapply(predpts, function(x) ssn_create_distmat(ssn.object,
-                                                           predpts = x,
-                                                           overwrite,
-                                                           among_predpts,
-                                                           only_predpts = TRUE))
+      x2 <- lapply(predpts, function(x) {
+        ssn_create_distmat(ssn.object,
+          predpts = x,
+          overwrite,
+          among_predpts,
+          only_predpts = TRUE
+        )
+      })
     }
     return(invisible(NULL))
   }
@@ -220,10 +225,12 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
 
   ## Get netID with observed or predicted sites
   if (!is.null(predpts)) {
-    site.nets<- unique(c(levels(ssn$obs$NetworkID),
-                         levels(ssn$preds[[predpts]]$NetworkID)))
+    site.nets <- unique(c(
+      levels(ssn$obs$NetworkID),
+      levels(ssn$preds[[predpts]]$NetworkID)
+    ))
   } else {
-    site.nets<- unique(c(levels(ssn$obs$NetworkID)))
+    site.nets <- unique(c(levels(ssn$obs$NetworkID)))
   }
 
   net.count <- length(site.nets)
@@ -258,7 +265,7 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   ## ----------------------------------------------------------------
   for (i in seq_len(net.count)) {
     ## Set network number and name
-    ##net.num <- levels(ssn$edges$NetworkID)[i]
+    ## net.num <- levels(ssn$edges$NetworkID)[i]
     net.num <- site.nets[i]
     net.name <- paste("net", net.num, sep = "")
 
@@ -369,8 +376,9 @@ ssn_create_distmat <- function(ssn.object, predpts = NULL, overwrite = FALSE,
 
       ## Create data.frame for obs with columns pid, rid, locID
       ob.i <- ssn_get_netgeom(ssn$obs[ind.obs, ], c("pid", "SegmentID", "locID"),
-                                  reformat = TRUE)
-      ##ob.i <- as.data.frame(sapply(ob.i, as.numeric))
+        reformat = TRUE
+      )
+      ## ob.i <- as.data.frame(sapply(ob.i, as.numeric))
       colnames(ob.i) <- c("pid", "rid", "locID")
       ob.i$locID <- as.factor(ob.i$locID)
 

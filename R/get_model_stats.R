@@ -1,3 +1,10 @@
+#' Get relevant model fit statistics and diagnostics
+#'
+#' @param cov_est_object Covariance parameter estimation object.
+#' @param data_object Data object.
+#' @param estmethod Estimation method.
+#'
+#' @noRd
 get_model_stats <- function(cov_est_object, data_object, estmethod) {
   # store the covariance matrix list
   cov_matrix_list <- get_cov_matrix_list(cov_est_object$params_object, data_object)
@@ -142,6 +149,10 @@ get_model_stats <- function(cov_est_object, data_object, estmethod) {
     npar = npar
   )
 }
+
+###############################################################################
+############### helpers to store relevant statistics as list objects
+###############################################################################
 
 get_coefficients <- function(betahat, params_object) {
   # store fixed effect and random coefficients as list

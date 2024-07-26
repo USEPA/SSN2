@@ -4,14 +4,7 @@
 \alias{ssn_import}
 \title{Import \code{SSN} object}
 \usage{
-ssn_import(
-  path,
-  include_obs = TRUE,
-  predpts,
-  format_additive = FALSE,
-  names_additive = NULL,
-  overwrite = FALSE
-)
+ssn_import(path, include_obs = TRUE, predpts = NULL, overwrite = FALSE)
 }
 \arguments{
 \item{path}{Filepath to the .ssn directory. See details.}
@@ -19,20 +12,13 @@ ssn_import(
 \item{include_obs}{default = \code{TRUE}. Logical indicating
 whether observed sites should be included in the SSN object.}
 
-\item{predpts}{Vector of shapefile basenames for prediction sites
-found within the .ssn folder.}
-
-\item{format_additive}{Logical indicating whether the columns containing
-the addtive function values should be formated for
-\code{SSN2}. Default = \code{FALSE}.}
-
-\item{names_additive}{Character vector of column names in observed and
-prediction site datasets containing additive function values.
-Must be defined if \code{format_additive = TRUE}. Default =
-\code{NULL}.}
+\item{predpts}{Vector of prediction site dataset names found within
+the .ssn folder. See details.}
 
 \item{overwrite}{default = \code{FALSE}. If \code{TRUE}, overwrite
-existing binaryID.db files.}
+existing binaryID.db files and netgeom column(s) if it exists in the
+edges, observed sites (if \code{include_obs = TRUE}), and
+prediction site datasets (if they exist).}
 }
 \value{
 \code{ssn_import} returns an object of class SSN, which is a list
@@ -44,10 +30,8 @@ with an additional 'netgeom' column.}
 with an additional 'netgeom' column. NA if \code{include_obs =
     FALSE}.}
 \item{\code{preds}: A list of sf data.frames containing prediction
-site locations. The names of the preds list correspond to the
-basenames of the prediction site shapefiles (without the .shp
-extension) specified in \code{predpts}. Empty list if \code{predpts} is not provided.}
-\item{path: The local file to the .ssn directory associated with the \code{SSN}
+site locations. An empty list is returned if \code{predpts} is not provided.}
+\item{path: The local filepath for the .ssn directory associated with the \code{SSN}
 object.}
 }
 }
@@ -56,48 +40,30 @@ This function reads spatial data from a .ssn folder
 and creates an \code{SSN} object.
 }
 \details{
-The \command{importSSN} function imports spatial data from a .ssn
-folder to create an \code{SSN} object. The information contained in the
-.ssn folder can be generated using a number of proprietary and
-open source software tools:
+The \command{ssn_import} function imports spatial data (shapefile or GeoPackage format)
+from a .ssn folder generated using the
+\code{SSNbler} package function \code{SSNbler::lsn_to_ssn}. The .ssn folder contains all of the spatial, topological and
+attribute data needed to fit a spatial statistical stream network
+model to streams data.  This includes:
 \itemize{
-\item{The Spatial Tools for the Analysis of River Systems
-(STARS) tools for ArcGIS Desktop versions 9.3x-10.8x (Peterson
-and Ver Hoef 2014). This custom ArcGIS toolset is designed to
-work with existing streams data in vector format.}
-\item{The openSTARS package (Kattwinkel et al. 2020) extends
-the functionality of the STARS toolset, which makes use of R
-and GRASS GIS. It is open source and designed to derive streams
-in raster format from a digital elevation model (DEM).}
-\item{The SSNbler package (currently in development as of
-September 2023) is an open source version of the STARS toolset,
-which makes use of the functionality found in the sf package to
-process streams data in vector format.}
-}
-When spatial data are processed using one of these software
-tools, a .ssn directory is output which contains all of the
-spatial, topological and attribute data needed to fit a spatial
-statistical stream network model to streams data.  This includes:
-\itemize{
-\item{An edges shapefile of lines that represent the stream
-network.}
-\item{A sites shapefile of points where observed data were
-collected on the stream network.}
-\item{Prediction sites shapefile(s) of locations where
-predictions will be made.}
-\item{netID.dat files for each distinct network, which store
-the topological relationships of the line segments in edges.}
-}
+\item{An edges dataset with LINESTRING geometry representing the stream network.}
+\item{A sites dataset with POINT geometry where observed data were collected on
+the stream network.}
+\item{Prediction sites dataset(s) representing
+locations where predictions will be made.}
+\item{netID.dat file(s) for each distinct network, which stores the topological
+relationships of the line features in edges.}}
+
 A more detailed description of the .ssn directory and its
 contents is provided in Peterson and Ver Hoef (2014).
 
-The \command{ssn_import} imports the edges, observed sites, and
-prediction sites as \code{sf data.frame} objects. A new column named 'netgeom'
-is created to store important data that represents
+The \command{ssn_import} imports the edges, observed sites (optional), and
+prediction sites (optional) as \code{sf data.frame} objects. A new column named 'netgeom'
+is created to store important data representing
 topological relationships in a spatial stream network
 model. These data are stored in character format, which is less
 likely to be inadvertantly changed by users. See
-\code{\link[SSN2]{ssn_get_netgeom}} for a more detailed description of
+\code{\link[SSN2]{create_netgeom}} for a more detailed description of
 the format and contents of 'netgeom'.
 
 The information contained in the netID text files is imported
@@ -111,20 +77,25 @@ to fit a spatial statistical model to stream network data. If
 file already exists within the .ssn directory, it will be
 overwriten when the \code{SSN} object is created.
 
-At a minimum, an \code{SSN} object must always contain streams, which
-are referred to as edges. The \code{SSN} object would also typically
-contain a set of observed sites, where measurements have been
-collected and only one observed dataset is permitted. When
-\code{include_obs=FALSE}, an \code{SSN} object is created without
-observations. This option provides flexibility for users who
-would like to simulate data on a set of artifical sites on an
-existing stream network. Note that observation sites must be
-included in the \code{SSN} object in order to fit models using
-\command{ssn_lm} or \command{ssn_glm}. The \code{SSN} object may contain
-multiple sets of prediction points (or none), which are stored as
-separate shapefiles in the .ssn directory. The
-\code{\link[SSN2]{ssn_import_predpts}} function allows users to import additional
-sets of prediction sites to a an existing \code{SSN} object.
+At a minimum, an \code{SSN} object must always contain streams,
+which are referred to as edges. The \code{SSN} object would also
+typically contain a set of observed sites, where measurements
+have been collected. Only one observed dataset is permitted in an
+\code{SSN} object. When \code{include_obs=FALSE}, an \code{SSN}
+object is created without observations. This option provides
+flexibility for users who would like to simulate data on a set of
+artifical sites on an existing stream network. Note that
+observation sites must be included in the \code{SSN} object in
+order to fit models using \command{ssn_lm} or
+\command{ssn_glm}. The \code{SSN} object may contain multiple
+sets of prediction points (or none), which are stored as separate
+datasets in the .ssn directory. If \code{predpts} is a named
+vector, the names of the \code{preds} list in the \code{SSN}
+object correspond to the vector names. Otherwise, they are set to
+the basename of the prediction site dataset file(s) specified in
+\code{predpts}. The \code{\link[SSN2]{ssn_import_predpts}}
+function allows users to import additional sets of prediction
+sites to a an existing \code{SSN} object.
 }
 \examples{
 ## Create local temporary copy of MiddleFork04.ssn found in
@@ -139,25 +110,17 @@ mf04 <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
 ## Import SSN object with 3 sets of prediction sites
 mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
   predpts = c(
-    "pred1km.shp",
-    "CapeHorn.shp",
-    "Knapp.shp"
+    "pred1km",
+    "CapeHorn"
   ),
   overwrite = TRUE
 )
 
 }
 \references{
-Kattwinkel, M., Szocs, E., Peterson, E., and Schafer,
-R.B. (2020) Preparing GIS data for analysis of stream monitoring
-data: The R package openSTARS. \emph{PLOS One} \bold{15(9)},
-e0239237.
 Peterson, E., and Ver Hoef, J.M. (2014) STARS: An
 ArcGIS toolset used to calculate the spatial information needed
 to fit spatial statistical stream network models to stream
 network data. \emph{Journal of Statistical Software}
 \bold{56(2)}, 1--17.
-}
-\seealso{
-\link{ssn_get_netgeom}
 }

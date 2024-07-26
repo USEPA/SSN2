@@ -1,3 +1,16 @@
+#' A helper to get the overall covariance matrix.
+#'
+#' @param params_object Parameter object.
+#' @param dist_object_oblist The distance matrices for the observed data.
+#' @param randcov_list Random effect list.
+#' @param partition_list Partition factor list.
+#' @param anisotropy Whether there is anisotropy.
+#' @param de_scale A scaling parameter on the de parameter that helps ensure
+#'   numeric stability of the covariance matrix.
+#' @param diagtol A tolerance added to the diagonal of the covariance matrix
+#'   that helps ensure numeric stability of the covariance matrix.
+#'
+#' @noRd
 get_cov_matrix <- function(params_object, dist_object_oblist,
                            randcov_list = NULL, partition_list = NULL, anisotropy,
                            de_scale, diagtol) {
@@ -24,6 +37,7 @@ get_cov_matrix <- function(params_object, dist_object_oblist,
   cov_matrix
 }
 
+# A vectorized version of get_cov_matrix
 get_cov_matrix_list <- function(params_object, data_object) {
   # this is a list of elements
 

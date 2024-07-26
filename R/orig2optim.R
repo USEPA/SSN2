@@ -1,3 +1,8 @@
+#' Transform parameters from original to optim scale
+#'
+#' @param initial_object Initial value object
+#'
+#' @noRd
 orig2optim <- function(initial_object) {
   # find parameters on optim (transformed) scale
 
@@ -109,7 +114,11 @@ orig2optim <- function(initial_object) {
   )
 }
 
-
+#' Transform parameters from original to optim scale for glms
+#'
+#' @param initial_object Initial value object
+#'
+#' @noRd
 orig2optim_glm <- function(initial_object) {
   # tailup
   tailup_de <- initial_object$tailup_initial$initial[["de"]]

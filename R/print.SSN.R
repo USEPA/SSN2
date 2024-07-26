@@ -14,6 +14,10 @@ print.SSN <- function(x, ...) {
   cat("Object of class SSN\n\n")
 
   nobs <- dim(x$obs)
+  # no observed data
+  if (is.null(nobs)) {
+    nobs <- c(0, 0)
+  }
   nobs <- matrix(nobs, 1, )
   np <- length(x$preds)
   if (np > 0) {
@@ -26,12 +30,12 @@ print.SSN <- function(x, ...) {
   print(st_bbox(x$edges))
   cat("\n")
 
-  if (nrow(nobs) == 2) {
-    cat("Object also includes", nrow(nobs) - 1, "set of prediction points with", sum(nobs[, 1]) - nobs[1, 1], "locations\n\n")
-  } else if (nrow(nobs) > 2) {
-    cat("Object also includes", nrow(nobs) - 1, "sets of prediction points with a total of", sum(nobs[, 1]) - nobs[1, 1], "locations\n\n")
+  if (np == 1) {
+    cat("Object also includes", 1, "set of prediction points with", sum(nobs[, 1]) - nobs[1, 1], "locations\n\n")
+  } else if (np > 1) {
+    cat("Object also includes", np, "sets of prediction points with a total of", sum(nobs[, 1]) - nobs[1, 1], "locations\n\n")
   }
-  cat("Variable names are (found using names(object)):\n")
+  cat("Variable names are (found using ssn_names(object)):\n")
   ## print(names(x$preds))
-  print(names(x))
+  ssn_names(x)
 }

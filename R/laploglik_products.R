@@ -1,3 +1,10 @@
+#' Get products involved in Laplace log likelihood (glms)
+#'
+#' @param params_object Covariance parameter object
+#' @param data_object Data object
+#' @param estmethod Estimation Method
+#'
+#' @noRd
 laploglik_products <- function(params_object, data_object, estmethod) {
   cov_matrix_list <- get_cov_matrix_list(params_object, data_object)
   # cholesky products (no local)
@@ -81,6 +88,13 @@ laploglik_products <- function(params_object, data_object, estmethod) {
   }
 }
 
+#' Get minus twice the Laplace log likelihood
+#'
+#' @param laploglik_products Laplace log likelihood products
+#' @param data_object Data object
+#' @param estmethod Estimation method
+#'
+#' @noRd
 get_minustwolaploglik <- function(laploglik_products, data_object, estmethod) {
   if (estmethod == "reml") {
     minustwolaploglik <- as.numeric(laploglik_products$l00 + laploglik_products$l01 + laploglik_products$l1 +
@@ -96,6 +110,18 @@ get_minustwolaploglik <- function(laploglik_products, data_object, estmethod) {
 }
 
 
+#' Get prediction and hessian of latent effects
+#'
+#' @param data_object Data object
+#' @param dispersion Dispersion parameter
+#' @param SigInv_list List of inverse covariance matrices for each block
+#' @param SigInv_X Product between inverse covariance matrix and model matrix
+#' @param cov_betahat Covariance of fixed effects
+#' @param cov_betahat_Inv Inverse covariance of fixed effects (precision)
+#' @param estmethod Estimation method
+#' @param ret_mHInv Should -(H)^-1 be retained for later use?
+#'
+#' @noRd
 get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_betahat, cov_betahat_Inv, estmethod, ret_mHInv = FALSE) {
   family <- data_object$family
   SigInv <- Matrix::bdiag(SigInv_list)
@@ -230,7 +256,15 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
   w_and_H_list
 }
 
-# gradient of w (lowcase d)
+#' Get the gradient of w (called d)
+#'
+#' @param family The glm family
+#' @param w The latent effect (link mean)
+#' @param y The response
+#' @param size Number of trails (for binomial response)
+#' @param dispersion Dispersion parameter
+#'
+#' @noRd
 get_d <- function(family, w, y, size, dispersion) {
   if (family == "poisson") {
     d <- -exp(w) + y
@@ -251,7 +285,15 @@ get_d <- function(family, w, y, size, dispersion) {
   d
 }
 
-# Hessian of w (cap D)
+#' Get the Hessian of w (called D)
+#'
+#' @param family The glm family
+#' @param w The latent effect (link mean)
+#' @param y The response
+#' @param size Number of trails (for binomial response)
+#' @param dispersion Dispersion parameter
+#'
+#' @noRd
 get_D <- function(family, w, y, size, dispersion) {
   w <- as.vector(w)
 
@@ -275,6 +317,13 @@ get_D <- function(family, w, y, size, dispersion) {
   D <- Diagonal(x = D_vec)
 }
 
+#' Get initial values for w
+#'
+#' @param w The latent effect (link mean)
+#' @param y The response
+#' @param dispersion Dispersion parameter
+#'
+#' @noRd
 get_w_init <- function(family, y, dispersion) {
   if (family == "poisson") {
     w_init <- 0.5 * log(y + 1)
@@ -292,6 +341,15 @@ get_w_init <- function(family, y, dispersion) {
   w_init
 }
 
+#' Get glm distribution piece of Laplace log likelihood
+#'
+#' @param family The glm family
+#' @param w The latent effect (link mean)
+#' @param y The response
+#' @param size Number of trails (for binomial response)
+#' @param dispersion Dispersion parameter
+#'
+#' @noRd
 get_l00 <- function(family, w, y, size, dispersion) {
   w <- as.vector(w)
   y <- as.vector(y)

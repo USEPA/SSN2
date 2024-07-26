@@ -2,6 +2,14 @@
 # GENERIC SETUP COVARIANCES
 ###############################################################################
 
+#' Create a covariance vector
+#'
+#' @param params Parameter object.
+#' @param dist_pred_object Prediction distance matrix object.
+#' @param ... Additional arguments
+#'
+#' @return A covariance vector
+#' @noRd
 cov_vector <- function(params, dist_pred_object, ...) {
   UseMethod("cov_vector", params)
 }

@@ -1,3 +1,9 @@
+#' An initial value object with NA values that indicate where estimation is required
+#'
+#' @param initial_object Initial value object
+#' @param data_object Data object
+#'
+#' @noRd
 get_initial_NA_object <- function(initial_object, data_object) {
   # get each initial NA object
   tailup_initial_NA_val <- tailup_initial_NA(initial_object$tailup_initial)
@@ -19,7 +25,11 @@ get_initial_NA_object <- function(initial_object, data_object) {
   initial_NA_object
 }
 
-# the tailup initial NA object
+#' Tailup initial NA object
+#'
+#' @param initial An initial value specification
+#'
+#' @noRd
 tailup_initial_NA <- function(initial) {
   tailup_names <- c("de", "range")
 
@@ -37,7 +47,11 @@ tailup_initial_NA <- function(initial) {
   new_initial
 }
 
-# the taildown initial NA object
+#' Taildown initial NA object
+#'
+#' @param initial An initial value specification
+#'
+#' @noRd
 taildown_initial_NA <- function(initial) {
   taildown_names <- c("de", "range")
 
@@ -55,7 +69,11 @@ taildown_initial_NA <- function(initial) {
   new_initial
 }
 
-# the euclid initial NA object
+#' Euclidean initial NA object
+#'
+#' @param initial An initial value specification
+#'
+#' @noRd
 euclid_initial_NA <- function(initial, data_object) {
   euclid_names <- c("de", "range", "rotate", "scale")
 
@@ -79,6 +97,11 @@ euclid_initial_NA <- function(initial, data_object) {
   new_initial
 }
 
+#' Nugget initial NA object
+#'
+#' @param initial An initial value specification
+#'
+#' @noRd
 nugget_initial_NA <- function(initial) {
   nugget_names <- c("nugget")
 
@@ -96,6 +119,14 @@ nugget_initial_NA <- function(initial) {
   new_initial
 }
 
+#' Insert NA values when covariance parameters assumed unknown
+#'
+#' @param names The names to assume unknown
+#' @param val_default The default value of values (NA)
+#' @param known_default The default value of whether parameters are known
+#' @param initial An initial value specification
+#'
+#' @noRd
 insert_initial_NA <- function(names, val_default, known_default, initial) {
   # find names with known initial values
   names_replace <- setdiff(names, names(initial$initial))
@@ -110,6 +141,12 @@ insert_initial_NA <- function(names, val_default, known_default, initial) {
   initial
 }
 
+#' Insert NA values when random effect parameters assumed unknown
+#'
+#' @param randcov_initial Random effect initial object
+#' @param data_object Data object
+#'
+#' @noRd
 randcov_initial_NA <- function(randcov_initial, data_object) {
   if (is.null(randcov_initial)) {
     randcov_initial <- NULL
@@ -134,6 +171,12 @@ randcov_initial_NA <- function(randcov_initial, data_object) {
   randcov_initial
 }
 
+#' An initial value object with NA values that indicate where estimation is required for glms
+#'
+#' @param initial_object Initial value object
+#' @param data_object Data object
+#'
+#' @noRd
 get_initial_NA_object_glm <- function(initial_object, data_object) {
   tailup_initial_NA_val <- tailup_initial_NA(initial_object$tailup_initial)
   taildown_initial_NA_val <- taildown_initial_NA(initial_object$taildown_initial)
@@ -154,6 +197,12 @@ get_initial_NA_object_glm <- function(initial_object, data_object) {
   initial_NA_object
 }
 
+#' Insert NA values when dispersion parameters assumed unknown
+#'
+#' @param initial Initial value object
+#' @param data_object Data object
+#'
+#' @noRd
 dispersion_initial_NA <- function(initial, data_object) {
   dispersion_names <- c("dispersion")
 

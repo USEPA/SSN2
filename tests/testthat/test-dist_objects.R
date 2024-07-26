@@ -1,14 +1,3 @@
-# Copy the mf04p .ssn data to a local directory and read it into R
-# When modeling with your .ssn object, you will load it using the relevant
-# path to the .ssn data on your machine
-copy_lsn_to_temp()
-temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-mf04p <- ssn_import(
-  temp_path,
-  predpts = c("pred1km", "CapeHorn", "Knapp"),
-  overwrite = TRUE
-)
-
 ssn_create_distmat(
   ssn.object = mf04p,
   predpts = c("pred1km"),
@@ -50,7 +39,7 @@ test_that("dist object output appropriate", {
   n_obs_dim <- c(n_obs, n_obs)
 
   # run test on object structure
-  expect_true(identical(names(object), names_vec))
+  expect_identical(names(object), names_vec)
   expect_equal(dim(object$distjunc_mat), n_obs_dim)
   expect_equal(dim(object$mask_mat), n_obs_dim)
   expect_equal(dim(object$a_mat), n_obs_dim)
@@ -58,10 +47,10 @@ test_that("dist object output appropriate", {
   expect_equal(dim(object$hydro_mat), n_obs_dim)
   expect_equal(dim(object$w_mat), n_obs_dim)
   expect_equal(dim(object$euclid_mat), n_obs_dim)
-  expect_true(is.vector(object$network_index))
-  expect_true(is.vector(object$pid))
-  expect_true(is.vector(object$dist_order))
-  expect_true(is.vector(object$inv_dist_order))
+  expect_equal(length(object$network_index), n_obs)
+  expect_equal(length(object$pid), n_obs)
+  expect_equal(length(object$dist_order), n_obs)
+  expect_equal(length(object$inv_dist_order), n_obs)
 })
 
 test_that("dist pred object output appropriate", {
@@ -86,7 +75,7 @@ test_that("dist pred object output appropriate", {
   n_dim <- c(n_pred, n_obs)
 
   # run test on object structure
-  expect_true(identical(names(dist_pred_object), names_vec))
+  expect_identical(names(dist_pred_object), names_vec)
   expect_equal(dim(dist_pred_object$distjunca_pred_mat), n_dim)
   expect_equal(dim(t(dist_pred_object$distjuncb_pred_mat)), n_dim)
   expect_equal(dim(dist_pred_object$mask_pred_mat), n_dim)
@@ -95,14 +84,14 @@ test_that("dist pred object output appropriate", {
   expect_equal(dim(dist_pred_object$hydro_pred_mat), n_dim)
   expect_equal(dim(dist_pred_object$w_pred_mat), n_dim)
   expect_equal(dim(dist_pred_object$euclid_pred_mat), n_dim)
-  expect_true(is.vector(dist_pred_object$network_index))
-  expect_true(is.vector(dist_pred_object$pid))
-  expect_true(is.vector(dist_pred_object$dist_order))
-  expect_true(is.vector(dist_pred_object$inv_dist_order))
-  expect_true(is.vector(dist_pred_object$network_index_pred))
-  expect_true(is.vector(dist_pred_object$pid_pred))
-  expect_true(is.vector(dist_pred_object$dist_order_pred))
-  expect_true(is.vector(dist_pred_object$inv_dist_order_pred))
+  expect_equal(length(dist_pred_object$network_index), n_obs)
+  expect_equal(length(dist_pred_object$pid), n_obs)
+  expect_equal(length(dist_pred_object$dist_order), n_obs)
+  expect_equal(length(dist_pred_object$inv_dist_order), n_obs)
+  expect_equal(length(dist_pred_object$network_index_pred), n_pred)
+  expect_equal(length(dist_pred_object$pid_pred), n_pred)
+  expect_equal(length(dist_pred_object$dist_order_pred), n_pred)
+  expect_equal(length(dist_pred_object$inv_dist_order_pred), n_pred)
 })
 
 test_that("dist pred bk object output appropriate", {
@@ -123,7 +112,7 @@ test_that("dist pred bk object output appropriate", {
   n_pred_dim <- c(n_pred, n_pred)
 
   # run test on object structure
-  expect_true(identical(names(object), names_vec))
+  expect_identical(names(object), names_vec)
   expect_equal(dim(object$distjunc_mat), n_pred_dim)
   expect_equal(dim(object$mask_mat), n_pred_dim)
   expect_equal(dim(object$a_mat), n_pred_dim)
@@ -131,8 +120,8 @@ test_that("dist pred bk object output appropriate", {
   expect_equal(dim(object$hydro_mat), n_pred_dim)
   expect_equal(dim(object$w_mat), n_pred_dim)
   expect_equal(dim(object$euclid_mat), n_pred_dim)
-  expect_true(is.vector(object$network_index))
-  expect_true(is.vector(object$pid))
-  expect_true(is.vector(object$dist_order))
-  expect_true(is.vector(object$inv_dist_order))
+  expect_equal(length(object$network_index), n_pred)
+  expect_equal(length(object$pid), n_pred)
+  expect_equal(length(object$dist_order), n_pred)
+  expect_equal(length(object$inv_dist_order), n_pred)
 })

@@ -1,3 +1,9 @@
+#' Transform parameters from optim to original scale
+#'
+#' @param orig2optim_object An object that contains the parameters on the original scale
+#' @param par Current parameter values
+#'
+#' @noRd
 optim2orig <- function(orig2optim_object, par) {
   # fill optim parameter vector with known parameters
   fill_optim_par_val <- fill_optim_par(orig2optim_object, par)
@@ -39,6 +45,12 @@ optim2orig <- function(orig2optim_object, par) {
   list(orig_ssn = fill_orig_val_ssn, orig_randcov = fill_orig_val_randcov)
 }
 
+#' Transform parameters from optim to original scale for glms
+#'
+#' @param orig2optim_object An object that contains the parameters on the original scale
+#' @param par Current parameter values
+#'
+#' @noRd
 optim2orig_glm <- function(orig2optim_object, par) {
   fill_optim_par_val <- fill_optim_par(orig2optim_object, par)
 

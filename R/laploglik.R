@@ -1,3 +1,11 @@
+#' Evaluate Laplace log likelihood
+#'
+#' @param par Current optimization parameter
+#' @param orig2optim_object Optimization object that controls transformations
+#' @param data_object Data object
+#' @param estmethod Estimation method
+#'
+#' @noRd
 laploglik <- function(par, orig2optim_object, data_object, estmethod) {
   # find covariance parameters on original scale
   cov_orig_val <- optim2orig_glm(orig2optim_object, par)

@@ -23,7 +23,9 @@ after writing to file. Defaults to \code{FALSE}.}
 \value{
 {ssn_write} creates an .ssn directory that contains the
 spatial, topological, and attribute information stored in the
-original \code{SSN} object. When \code{import = TRUE}, the
+original \code{SSN} object. Spatial datasets found in the
+\code{SSN} object (e.g. edges, obs, and prediction sites) are
+saved in GeoPackage format. When \code{import = TRUE}, the
 \code{SSN} object is imported and returned.
 }
 \description{
@@ -36,12 +38,15 @@ This function writes an \code{SSN} object to a local
 copy_lsn_to_temp()
 ## Import SSN object with prediction sites
 mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
-  predpts = c("pred1km.shp"),
+  predpts = "pred1km",
   overwrite = TRUE
 )
 
 ## Write SSN to new .ssn directory
-ssn_write(mf04p, path = paste0(tempdir(), "/tempSSN.ssn"))
+ssn_write(mf04p,
+  path = paste0(tempdir(), "/tempSSN.ssn"),
+  overwrite = TRUE
+)
 
 ## Write SSN to .ssn directory and return SSN object
 tempSSN <- ssn_write(mf04p, path = paste0(
