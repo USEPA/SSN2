@@ -5,64 +5,50 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="Spatial statistical modeling and prediction for data on stream networks, including models based on in-stream distance (Ver Hoef, J.M. and Peterson, E.E., (2010) &lt;DOI:10.1198/jasa.2009.ap08248&gt;.) Models are created using moving average constructions. Spatial linear models, including explanatory variables, can be fit with (restricted) maximum likelihood.  Mapping and other graphical functions are included. ">
 <title>Spatial Modeling on Stream Networks • SSN2</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Spatial Modeling on Stream Networks">
-<meta property="og:description" content="Spatial statistical modeling and prediction for data on stream networks, including models based on in-stream distance (Ver Hoef, J.M. and Peterson, E.E., (2010) &lt;DOI:10.1198/jasa.2009.ap08248&gt;.) Models are created using moving average constructions. Spatial linear models, including explanatory variables, can be fit with (restricted) maximum likelihood.  Mapping and other graphical functions are included. ">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
+<link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Spatial Modeling on Stream Networks">
+<meta name="description" content="Spatial statistical modeling and prediction for data on stream networks, including models based on in-stream distance (Ver Hoef, J.M. and Peterson, E.E., (2010) &lt;DOI:10.1198/jasa.2009.ap08248&gt;.) Models are created using moving average constructions. Spatial linear models, including explanatory variables, can be fit with (restricted) maximum likelihood. Mapping and other graphical functions are included.">
+<meta property="og:description" content="Spatial statistical modeling and prediction for data on stream networks, including models based on in-stream distance (Ver Hoef, J.M. and Peterson, E.E., (2010) &lt;DOI:10.1198/jasa.2009.ap08248&gt;.) Models are created using moving average constructions. Spatial linear models, including explanatory variables, can be fit with (restricted) maximum likelihood. Mapping and other graphical functions are included.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
-    
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
-    
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
     <a class="navbar-brand me-2" href="index.html">SSN2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
-    
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item">
-  <a class="nav-link" href="reference/index.html">Reference</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
-  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
-  <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="articles/introduction.html">An Introduction to Spatial Stream Network Modeling in R Using SSN2</a>
-  </div>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="articles/introduction.html">An Introduction to Spatial Stream Network Modeling in R Using SSN2</a></li>
+  </ul>
 </li>
-<li class="nav-item">
-  <a class="nav-link" href="news/index.html">Changelog</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
-<form class="form-inline my-2 my-lg-0" role="search">
-        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="search.json" id="search-input" placeholder="Search for" autocomplete="off">
-</form>
-
-      <ul class="navbar-nav">
-<li class="nav-item">
-  <a class="external-link nav-link" href="https://github.com/USEPA/SSN2/" aria-label="github">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
+</form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/USEPA/SSN2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
-    
+
   </div>
 </nav><div class="container template-home">
 <div class="row">
@@ -77,24 +63,24 @@
 <p>If you use <code>SSN2</code> in a formal publication or report, please cite it. Citing <code>SSN2</code> lets us devote more resources to it in the future. View the <code>SSN2</code> citation by running</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"SSN2"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; </span></span>
+<pre><code><span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt; To cite SSN2 in publications use:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023). SSN2: Spatial Modeling on Stream Networks in R. R package version 0.1.0</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;</span></span>
+<span><span class="co">#&gt;   Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023). SSN2: Spatial Modeling on Stream Networks in R. R package version 0.2.0</span></span>
+<span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt; A BibTeX entry for LaTeX users is</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt;   @Manual{,</span></span>
 <span><span class="co">#&gt;     title = {{SSN2}: Spatial Modeling on Stream Networks in {R}},</span></span>
 <span><span class="co">#&gt;     author = {Michael Dumelle and Erin Peterson and Jay M. {Ver Hoef} and Alan Pearse and Dan Isaak},</span></span>
 <span><span class="co">#&gt;     year = {2023},</span></span>
-<span><span class="co">#&gt;     note = {{R} package version 0.1.0},</span></span>
+<span><span class="co">#&gt;     note = {{R} package version 0.2.0},</span></span>
 <span><span class="co">#&gt;   }</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="statement-of-need">Statement of Need<a class="anchor" aria-label="anchor" href="#statement-of-need"></a>
 </h2>
-<p>Streams provide vital aquatic services that sustain wildlife, provide drinking and irrigation water, and support recreational and cultural activities. Data are often collected at various locations on a stream network and used to characterize some scientific phenomenon in the stream. Spatial stream network (SSN) models use a spatial statistical modeling framework to describe unique and complex dependencies on a stream network resulting from a branching network structure, directional water flow, and differences in flow volume. SSN models relate a response variable to one or more explanatory variables, a spatially independent error term (i.e., nugget), and up to three spatially dependent error terms: tail-down errors, tail-up errors, and Euclidean errors. Tail-down errors restrict spatial dependence to flow-connected sites (i.e., water flows from an upstream to a downstream site) and incorporate spatial weights (i.e., additive function) to describe the branching network between them. Tail-up errors describe spatial dependence between both flow-connected and flow-unconnected (i.e., sites that share a common downstream junction but not flow) sites, but spatial weights are not required. Euclidean errors describe spatial dependence between sites based on Euclidean distance and are governed by factors not confined to the stream network like regional geology.</p>
+<p>Streams provide vital aquatic services that sustain wildlife, provide drinking and irrigation water, and support recreational and cultural activities. Data are often collected at various locations on a stream network and used to characterize some scientific phenomenon in the stream. Spatial stream network (SSN) models use a spatial statistical modeling framework to describe unique and complex dependencies on a stream network resulting from a branching network structure, directional water flow, and differences in flow volume. SSN models relate a response variable to one or more explanatory variables, a spatially independent error term (i.e., nugget), and up to three spatially dependent error terms: tail-down errors, tail-up errors, and Euclidean errors. Tail-down errors restrict spatial dependence to flow-connected sites (i.e., water flows from an upstream to a downstream site) and incorporate spatial weights (i.e., additive function) to describe the branching network between them. Tail-up errors describe spatial dependence between both flow-connected and flow-unconnected (i.e., sites that share a common downstream junction but not flow) sites, but spatial weights are not required. Euclidean errors describe spatial dependence between sites based on Euclidean distance and are governed by factors not confined to the stream network like regional geology. The <code>SSN2</code> <strong>R</strong> package is designed to help users fit SSN models to their stream network data.</p>
 </div>
 <div class="section level2">
 <h2 id="installation-instructions">Installation Instructions<a class="anchor" aria-label="anchor" href="#installation-instructions"></a>
@@ -125,6 +111,22 @@
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/SSN2/" class="external-link">SSN2</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="contributing-to-ssn2">Contributing to <code>SSN2</code>
+<a class="anchor" aria-label="anchor" href="#contributing-to-ssn2"></a>
+</h2>
+<p>We encourage users to report bugs and/or contribute to <code>SSN2</code>. For more detail on how to do this, please see our contributing guide (<code>CONTRIBUTING.md</code>).</p>
+</div>
+<div class="section level2">
+<h2 id="getting-help">Getting Help<a class="anchor" aria-label="anchor" href="#getting-help"></a>
+</h2>
+<p>There are several ways to get help with <code>SSN2</code>:</p>
+<ol style="list-style-type: decimal">
+<li>Open a GitHub issue <a href="https://github.com/USEPA/SSN2/issues" class="external-link">link here</a>.</li>
+<li>Email the SSN support team (<a href="mailto:support@spatialstreamnetworks.com" class="email">support@spatialstreamnetworks.com</a> or <a href="mailto:Dumelle.Michael@epa.gov" class="email">Dumelle.Michael@epa.gov</a>)</li>
+<li>Post on a support website like Stack Overflow or Cross Validated.</li>
+</ol>
+</div>
+<div class="section level2">
 <h2 id="example-usage">Example Usage<a class="anchor" aria-label="anchor" href="#example-usage"></a>
 </h2>
 <p>Below we provide a brief example showing how to use <code>SSN2</code>. For a thorough introduction to the software, see our introductory vignette <a href="https://usepa.github.io/SSN2/articles/introduction.html" class="external-link">linked here</a>. For a list of all functions available in <code>SSN2</code>, see our function reference <a href="https://usepa.github.io/SSN2/reference/index.html" class="external-link">linked here</a>.</p>
@@ -146,26 +148,26 @@
 <span>  additive <span class="op">=</span> <span class="st">"afvArea"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ssn_mod</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; </span></span>
+<pre><code><span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; ssn_lm(formula = Summer_mn ~ ELEV_DEM + AREAWTMAP, ssn.object = mf04p, </span></span>
-<span><span class="co">#&gt;     tailup_type = "exponential", taildown_type = "spherical", </span></span>
+<span><span class="co">#&gt; ssn_lm(formula = Summer_mn ~ ELEV_DEM + AREAWTMAP, ssn.object = mf04p,</span></span>
+<span><span class="co">#&gt;     tailup_type = "exponential", taildown_type = "spherical",</span></span>
 <span><span class="co">#&gt;     euclid_type = "gaussian", additive = "afvArea")</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
-<span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -3.6393 -2.0646 -0.5952  0.2143  0.7497 </span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     Min      1Q  Median      3Q     Max</span></span>
+<span><span class="co">#&gt; -3.6393 -2.0646 -0.5952  0.2143  0.7497</span></span>
+<span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt; Coefficients (fixed):</span></span>
-<span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)</span></span>
 <span><span class="co">#&gt; (Intercept) 76.195041   7.871574   9.680  &lt; 2e-16 ***</span></span>
 <span><span class="co">#&gt; ELEV_DEM    -0.026905   0.003646  -7.379  1.6e-13 ***</span></span>
-<span><span class="co">#&gt; AREAWTMAP   -0.009099   0.004461  -2.040   0.0414 *  </span></span>
+<span><span class="co">#&gt; AREAWTMAP   -0.009099   0.004461  -2.040   0.0414 *</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt; Pseudo R-squared: 0.6124</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt; Coefficients (covariance):</span></span>
 <span><span class="co">#&gt;               Effect     Parameter   Estimate</span></span>
 <span><span class="co">#&gt;   tailup exponential  de (parsill)  3.800e+00</span></span>
@@ -181,7 +183,7 @@
 <pre><code><span><span class="co">#&gt; # A tibble: 3 × 7</span></span>
 <span><span class="co">#&gt;   term        estimate std.error statistic  p.value conf.low conf.high</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 (Intercept) 76.2       7.87         9.68 0         60.8    91.6     </span></span>
+<span><span class="co">#&gt; 1 (Intercept) 76.2       7.87         9.68 0         60.8    91.6</span></span>
 <span><span class="co">#&gt; 2 AREAWTMAP   -0.00910   0.00446     -2.04 4.14e- 2  -0.0178 -0.000356</span></span>
 <span><span class="co">#&gt; 3 ELEV_DEM    -0.0269    0.00365     -7.38 1.60e-13  -0.0341 -0.0198</span></span></code></pre>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -198,14 +200,14 @@
 <span><span class="co">#&gt; Bounding box:  xmin: -1515032 ymin: 2529461 xmax: -1512690 ymax: 2531883</span></span>
 <span><span class="co">#&gt; Projected CRS: USA_Contiguous_Albers_Equal_Area_Conic_USGS_version</span></span>
 <span><span class="co">#&gt; # A tibble: 6 × 10</span></span>
-<span><span class="co">#&gt;   Summer_mn ELEV_DEM AREAWTMAP .fitted .resid   .hat  .cooksd .std.resid pid  </span></span>
+<span><span class="co">#&gt;   Summer_mn ELEV_DEM AREAWTMAP .fitted .resid   .hat  .cooksd .std.resid pid</span></span>
 <span><span class="co">#&gt;       &lt;dbl&gt;    &lt;int&gt;     &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt; &lt;chr&gt;</span></span>
-<span><span class="co">#&gt; 1     11.4      1977      940.    14.4  -3.07 0.0915 0.0962       -1.78  1    </span></span>
-<span><span class="co">#&gt; 2     10.7      1984     1087.    12.9  -2.20 0.114  0.00471      -0.352 2    </span></span>
-<span><span class="co">#&gt; 3     10.4      1993     1087.    12.7  -2.25 0.0372 0.00724      -0.764 3    </span></span>
-<span><span class="co">#&gt; 4     10.1      2007     1087.    12.3  -2.18 0.0251 0.00153      -0.427 4    </span></span>
-<span><span class="co">#&gt; 5     10.1      2009     1087.    12.3  -2.13 0.0374 0.000583     -0.216 5    </span></span>
-<span><span class="co">#&gt; 6      9.81     2012     1109.    12.0  -2.16 0.0602 0.0150       -0.863 6    </span></span>
+<span><span class="co">#&gt; 1     11.4      1977      940.    14.4  -3.07 0.0915 0.0962       -1.78  1</span></span>
+<span><span class="co">#&gt; 2     10.7      1984     1087.    12.9  -2.20 0.114  0.00471      -0.352 2</span></span>
+<span><span class="co">#&gt; 3     10.4      1993     1087.    12.7  -2.25 0.0372 0.00724      -0.764 3</span></span>
+<span><span class="co">#&gt; 4     10.1      2007     1087.    12.3  -2.18 0.0251 0.00153      -0.427 4</span></span>
+<span><span class="co">#&gt; 5     10.1      2009     1087.    12.3  -2.13 0.0374 0.000583     -0.216 5</span></span>
+<span><span class="co">#&gt; 6      9.81     2012     1109.    12.0  -2.16 0.0602 0.0150       -0.863 6</span></span>
 <span><span class="co">#&gt; # ℹ 1 more variable: geometry &lt;POINT [m]&gt;</span></span></code></pre>
 <p>We make predictions at the prediction sites (<code>pred1km</code>) by running <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> (or <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
@@ -220,20 +222,44 @@
 <span><span class="co">#&gt; 6 15.12783 14.76358 15.49208</span></span></code></pre>
 </div>
 <div class="section level2">
-<h2 id="contributing-to-ssn2">Contributing to <code>SSN2</code>
-<a class="anchor" aria-label="anchor" href="#contributing-to-ssn2"></a>
+<h2 id="imported-packages">Imported Packages<a class="anchor" aria-label="anchor" href="#imported-packages"></a>
 </h2>
-<p>We encourage users to propose changes to <code>SSN2</code>. Please see our contributing guide (<code>CONTRIBUTING.md</code>) for more detail.</p>
+<p><code>SSN2</code> imports the following <strong>R</strong> packages:</p>
+<ul>
+<li>generics: For exporting generic functions.</li>
+<li>graphics: For visualizations (e.g., <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>).</li>
+<li>Matrix: For efficient matrix manipulations.</li>
+<li>RSQlite: For various functions that read and write (e.g., <code><a href="reference/ssn_create_distmat.html">ssn_create_distmat()</a></code>).</li>
+<li>sf: For handling spatial data.</li>
+<li>spmodel: For various modeling functions (e.g., <code><a href="https://usepa.github.io/spmodel/reference/randcov_initial.html" class="external-link">randcov_initial()</a></code>) and generic functions (e.g., <code><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv()</a></code>).</li>
+<li>stats: For various modeling functions (e.g., <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>).</li>
+<li>tibble: For creating tibbles as output for various functions (e.g., <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>).</li>
+<li>utils: For various utility functions.</li>
+<li>withr: For path handling while reading and writing.</li>
+</ul>
 </div>
 <div class="section level2">
-<h2 id="epa-disclaimer">EPA Disclaimer<a class="anchor" aria-label="anchor" href="#epa-disclaimer"></a>
+<h2 id="suggested-packages">Suggested Packages<a class="anchor" aria-label="anchor" href="#suggested-packages"></a>
 </h2>
-<p>The United States Environmental Protection Agency (EPA) GitHub project code is provided on an “as is” basis and the user assumes responsibility for its use. EPA has relinquished control of the information and no longer has responsibility to protect the integrity , confidentiality, or availability of the information. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by EPA. The EPA seal and logo shall not be used in any manner to imply endorsement of any commercial product or activity by EPA or the United States Government.</p>
+<p><code>SSN2</code> suggests the following <strong>R</strong> packages:</p>
+<ul>
+<li>ggplot2: For vignette visualizations.</li>
+<li>knitr: For vignette building.</li>
+<li>rmarkdown: For vignette building.</li>
+<li>sp: For making <code>SSN</code> objects from the <code>SSN</code> <strong>R</strong> package compatible with <code>SSN2</code>.</li>
+<li>statmod: For modeling and simulation of inverse Gaussian data.</li>
+<li>testthat: For unit testing.</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
 <p>This project is licensed under the GNU General Public License, <a href="https://cran.r-project.org/web/licenses/GPL-3" class="external-link">GPL-3</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="epa-disclaimer">EPA Disclaimer<a class="anchor" aria-label="anchor" href="#epa-disclaimer"></a>
+</h2>
+<p>The United States Environmental Protection Agency (EPA) GitHub project code is provided on an “as is” basis and the user assumes responsibility for its use. EPA has relinquished control of the information and no longer has responsibility to protect the integrity , confidentiality, or availability of the information. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by EPA. The EPA seal and logo shall not be used in any manner to imply endorsement of any commercial product or activity by EPA or the United States Government.</p>
 </div>
 </div>
 
@@ -285,6 +311,7 @@
 <li><a href="https://cran.r-project.org/web/checks/check_results_SSN2.html" class="external-link"><img src="https://badges.cranchecks.info/worst/SSN2.svg" alt="cran checks"></a></li>
 <li><a href="https://github.com/USEPA/SSN2/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/USEPA/SSN2/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
 <li><a href="https://www.repostatus.org/#active" class="external-link"><img src="https://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active – The project has reached a stable, usable state and is being actively developed."></a></li>
+<li><a href="https://joss.theoj.org/papers/66fd932526762f8ccd8bd9c3954e0e3d" class="external-link"><img src="https://joss.theoj.org/papers/66fd932526762f8ccd8bd9c3954e0e3d/status.svg" alt="status"></a></li>
 </ul>
 </div>
 
@@ -293,21 +320,19 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p>
-<p>Developed by Michael Dumelle, Jay M. Ver Hoef, Erin Peterson.</p>
+  <p>Developed by Michael Dumelle, Jay M. Ver Hoef, Erin Peterson.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
     </footer>
 </div>
 
-  
 
-  
+
+
 
   </body>
 </html>
