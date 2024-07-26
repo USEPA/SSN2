@@ -25,15 +25,24 @@ citation(package = "SSN2")
 #> 
 #> To cite SSN2 in publications use:
 #> 
-#>   Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023). SSN2: Spatial Modeling on Stream Networks in R. R package version 0.2.0
+#>   Dumelle M, Peterson EE, Ver Hoef JM, Pearse A, Isaak DJ (2024). SSN2:
+#>   The next generation of spatial stream network modeling in R. Journal
+#>   of Open Source Software, 9(99), 6389,
+#>   https://doi.org/10.21105/joss.06389
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
-#>   @Manual{,
-#>     title = {{SSN2}: Spatial Modeling on Stream Networks in {R}},
-#>     author = {Michael Dumelle and Erin Peterson and Jay M. {Ver Hoef} and Alan Pearse and Dan Isaak},
-#>     year = {2023},
-#>     note = {{R} package version 0.2.0},
+#>   @Article{,
+#>     title = {{SSN2}: The next generation of spatial stream network modeling in {R}},
+#>     author = {Michael Dumelle and Erin E. Peterson and Jay M. {Ver Hoef} and Alan Pearse and Daniel J. Isaak},
+#>     journal = {Journal of Open Source Software},
+#>     year = {2024},
+#>     volume = {9},
+#>     number = {99},
+#>     pages = {6389},
+#>     doi = {10.21105/joss.06389},
+#>     url = {https://doi.org/10.21105/joss.06389},
+#>     publisher = {The Open Journal},
 #>   }
 ```
 

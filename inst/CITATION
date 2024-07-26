@@ -1,24 +1,28 @@
 bibentry(
-  bibtype = "Manual",
-  title        = "{SSN2}: Spatial Modeling on Stream Networks in {R}",
+  bibtype = "Article",
+  title        = "{SSN2}: The next generation of spatial stream network modeling in {R}",
   author       = c(person(given = "Michael",
                           family = "Dumelle",
                           email = "Dumelle.Michael@epa.gov"),
-                   person(given = "Erin",
+                   person(given = "Erin E.",
                           family = "Peterson"),
                    person(given = "Jay M.",
                           family = "Ver Hoef"),
                    person(given = "Alan",
                           family = "Pearse"),
-                   person(given = "Dan",
+                   person(given = "Daniel J.",
                           family = "Isaak")
                           ),
-  year         = "2023",
-  note         = "{R} package version 0.2.0",
+  journal      = "Journal of Open Source Software",
+  year         = "2024",
+  volume       = "9",
+  number       = "99",
+  pages        = "6389",
+  doi          = "10.21105/joss.06389",
+  url          = "https://doi.org/10.21105/joss.06389",
+  publisher    = "The Open Journal",
 
   header       = "To cite SSN2 in publications use:",
   textVersion  =
-  paste("Dumelle M, Peterson, E, Ver Hoef JM, Pearse A, Isaak D (2023).",
-        "SSN2: Spatial Modeling on Stream Networks in R.",
-        "R package version 0.2.0")
+  paste("Dumelle M, Peterson EE, Ver Hoef JM, Pearse A, Isaak DJ (2024). SSN2: The next generation of spatial stream network modeling in R. Journal of Open Source Software, 9(99), 6389, https://doi.org/10.21105/joss.06389")
 )
