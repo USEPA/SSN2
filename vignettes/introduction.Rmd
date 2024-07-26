@@ -618,7 +618,7 @@ loocv_nb <- loocv(ssn_nb)
 loocv_nb$RMSPE
 ```
 
-The Poisson has a lower `RMSPE`, which suggests no evidence of overdispersion. Other ways to assess the impact of overdispersion include 1) comparing the models using a likelihood-based fit statistic like AIC; if the AIC values are similar there is little evidence of overdispersion -- and 2) inspecting the dispersion parameter estimates of the negative binomial model; if the dispersion parameter is very large, there is little evidence of overdispersion.
+The negative binomial model has a lower `RMSPE`, which suggests some evidence of overdispersion. Other ways to assess the impact of overdispersion include 1) comparing the models using a likelihood-based fit statistic like AIC; if the AIC values are similar there is little evidence of overdispersion -- and 2) inspecting the dispersion parameter estimates of the negative binomial model; if the dispersion parameter is very large, there is little evidence of overdispersion.
 
 All advanced modeling features discussed for linear spatial stream network models (e.g., fixing covariance parameter values, random effects, partition factors) are also available for generalized linear spatial stream network models.
 
