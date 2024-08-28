@@ -1,70 +1,204 @@
-<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
-<url><loc>/404.html</loc></url>
-<url><loc>/articles/index.html</loc></url>
-<url><loc>/articles/introduction.html</loc></url>
-<url><loc>/authors.html</loc></url>
-<url><loc>/CONTRIBUTING.html</loc></url>
-<url><loc>/index.html</loc></url>
-<url><loc>/LICENSE.html</loc></url>
-<url><loc>/news/index.html</loc></url>
-<url><loc>/reference/AIC.SSN2.html</loc></url>
-<url><loc>/reference/anova.SSN2.html</loc></url>
-<url><loc>/reference/augment.SSN2.html</loc></url>
-<url><loc>/reference/coef.SSN2.html</loc></url>
-<url><loc>/reference/confint.SSN2.html</loc></url>
-<url><loc>/reference/cooks.distance.SSN2.html</loc></url>
-<url><loc>/reference/copy_lsn_to_temp.html</loc></url>
-<url><loc>/reference/covmatrix.SSN2.html</loc></url>
-<url><loc>/reference/create_netgeom.html</loc></url>
-<url><loc>/reference/deviance.SSN2.html</loc></url>
-<url><loc>/reference/fitted.SSN2.html</loc></url>
-<url><loc>/reference/formula.SSN2.html</loc></url>
-<url><loc>/reference/glance.SSN2.html</loc></url>
-<url><loc>/reference/glances.SSN2.html</loc></url>
-<url><loc>/reference/hatvalues.SSN2.html</loc></url>
-<url><loc>/reference/index.html</loc></url>
-<url><loc>/reference/influence.SSN2.html</loc></url>
-<url><loc>/reference/labels.SSN2.html</loc></url>
-<url><loc>/reference/logLik.SSN2.html</loc></url>
-<url><loc>/reference/loocv.SSN2.html</loc></url>
-<url><loc>/reference/mf04p.html</loc></url>
-<url><loc>/reference/MiddleFork04.ssn.html</loc></url>
-<url><loc>/reference/model.frame.SSN2.html</loc></url>
-<url><loc>/reference/model.matrix.SSN2.html</loc></url>
-<url><loc>/reference/names.SSN.html</loc></url>
-<url><loc>/reference/plot.SSN2.html</loc></url>
-<url><loc>/reference/plot.Torgegram.html</loc></url>
-<url><loc>/reference/predict.SSN2.html</loc></url>
-<url><loc>/reference/print.SSN.html</loc></url>
-<url><loc>/reference/print.SSN2.html</loc></url>
-<url><loc>/reference/pseudoR2.SSN2.html</loc></url>
-<url><loc>/reference/reexports.html</loc></url>
-<url><loc>/reference/residuals.SSN2.html</loc></url>
-<url><loc>/reference/SSN2-package.html</loc></url>
-<url><loc>/reference/ssn_create_distmat.html</loc></url>
-<url><loc>/reference/ssn_get_data.html</loc></url>
-<url><loc>/reference/ssn_get_netgeom.html</loc></url>
-<url><loc>/reference/ssn_get_netgeometry.html</loc></url>
-<url><loc>/reference/ssn_get_stream_distmat.html</loc></url>
-<url><loc>/reference/ssn_glm.html</loc></url>
-<url><loc>/reference/ssn_import.html</loc></url>
-<url><loc>/reference/ssn_import_predpts.html</loc></url>
-<url><loc>/reference/ssn_initial.html</loc></url>
-<url><loc>/reference/ssn_lm.html</loc></url>
-<url><loc>/reference/ssn_names.html</loc></url>
-<url><loc>/reference/ssn_params.html</loc></url>
-<url><loc>/reference/ssn_put_data.html</loc></url>
-<url><loc>/reference/ssn_simulate.html</loc></url>
-<url><loc>/reference/ssn_split_predpts.html</loc></url>
-<url><loc>/reference/ssn_subset.html</loc></url>
-<url><loc>/reference/SSN_to_SSN2.html</loc></url>
-<url><loc>/reference/ssn_update_path.html</loc></url>
-<url><loc>/reference/ssn_write.html</loc></url>
-<url><loc>/reference/summary.SSN.html</loc></url>
-<url><loc>/reference/summary.SSN2.html</loc></url>
-<url><loc>/reference/tidy.SSN2.html</loc></url>
-<url><loc>/reference/Torgegram.html</loc></url>
-<url><loc>/reference/varcomp.SSN2.html</loc></url>
-<url><loc>/reference/vcov.SSN2.html</loc></url>
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://usepa.github.io/SSN2/404.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/articles/index.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/articles/introduction.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/authors.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/CONTRIBUTING.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/index.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/LICENSE.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/news/index.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/AIC.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/anova.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/augment.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/coef.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/confint.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/cooks.distance.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/copy_lsn_to_temp.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/covmatrix.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/create_netgeom.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/deviance.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/fitted.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/formula.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/glance.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/glances.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/hatvalues.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/influence.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/labels.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/logLik.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/loocv.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/mf04p.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/MiddleFork04.ssn.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/model.frame.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/model.matrix.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/names.SSN.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/plot.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/plot.Torgegram.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/predict.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/print.SSN.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/print.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/pseudoR2.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/reexports.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/residuals.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/SSN2-package.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_create_distmat.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_get_data.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_get_netgeom.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_get_netgeometry.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_get_stream_distmat.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_glm.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_import.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_import_predpts.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_initial.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_lm.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_names.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_params.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_put_data.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_simulate.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_split_predpts.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_subset.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/SSN_to_SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_update_path.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_write.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/summary.SSN.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/summary.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/tidy.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/Torgegram.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/varcomp.SSN2.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/vcov.SSN2.html</loc>
+  </url>
 </urlset>
-

@@ -4,65 +4,89 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>An Introduction to Spatial Stream Network Modeling in R Using SSN2 • SSN2</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="An Introduction to Spatial Stream Network Modeling in R Using SSN2">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="../pkgdown.js"></script><meta property="og:title" content="An Introduction to Spatial Stream Network Modeling in R Using SSN2">
+<meta property="og:description" content="SSN2">
+<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
 </head>
-<body>
-    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
+<body data-spy="scroll" data-target="#toc">
+    
 
+    <div class="container template-article">
+      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">SSN2</a>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+      </span>
+    </div>
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
-
-    <a class="navbar-brand me-2" href="../index.html">SSN2</a>
-
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
-
-
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/introduction.html">An Introduction to Spatial Stream Network Modeling in R Using SSN2</a></li>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+<li>
+  <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="../articles/introduction.html">An Introduction to Spatial Stream Network Modeling in R Using SSN2</a>
+    </li>
   </ul>
 </li>
-<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+<li>
+  <a href="../news/index.html">Changelog</a>
+</li>
       </ul>
-<ul class="navbar-nav">
-<li class="nav-item"><form class="form-inline" role="search">
- <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
-</form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/USEPA/SSN2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/USEPA/SSN2/" class="external-link">
+    <span class="fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
 </div>
-
-
+<!--/.nav-collapse -->
   </div>
-</nav><div class="container template-article">
+<!--/.container -->
+</div>
+<!--/.navbar -->
 
+      
 
-
-
-<div class="row">
-  <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>An Introduction to Spatial Stream Network Modeling in R Using SSN2</h1>
+      </header><div class="row">
+  <div class="col-md-9 contents">
+    <div class="page-header toc-ignore">
+      <h1 data-toc-skip>An Introduction to Spatial Stream Network
+Modeling in R Using SSN2</h1>
                         <h4 data-toc-skip class="author">Michael
 Dumelle, Erin Peterson, Jay M. Ver Hoef, Alan Pearse, and Dan Isaak</h4>
             
       
       <small class="dont-index">Source: <a href="https://github.com/USEPA/SSN2/blob/HEAD/vignettes/introduction.Rmd" class="external-link"><code>vignettes/introduction.Rmd</code></a></small>
-      <div class="d-none name"><code>introduction.Rmd</code></div>
+      <div class="hidden name"><code>introduction.Rmd</code></div>
+
     </div>
 
     
@@ -155,7 +179,7 @@ and Ver Hoef 2023)</span>.</p></li>
 <p>This vignette provides an overview of basic features in
 <code>SSN2</code>. We load <code>SSN2</code> by running</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/SSN2/" class="external-link">SSN2</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/SSN2/">SSN2</a></span><span class="op">)</span></span></code></pre></div>
 <p>If you use <code>SSN2</code> in a formal publication or report,
 please cite it. Citing <code>SSN2</code> lets us devote more resources
 to it in the future. We view the <code>SSN2</code> citation by
@@ -434,44 +458,29 @@ dependent variable) is continuous and not highly skewed, and generalized
 linear models are often used when the response variable is binary, a
 count, or highly skewed.</p>
 <p>Linear spatial stream network models for a quantitative response
-vector
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐲</mi><annotation encoding="application/x-tex">\mathbf{y}</annotation></semantics></math>
-have spatially dependent random errors and are often parameterized
-as</p>
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝐲</mi><mo>=</mo><mi>𝐗</mi><mi>𝛃</mi><mo>+</mo><msub><mi>𝛕</mi><mrow><mi>t</mi><mi>u</mi></mrow></msub><mo>+</mo><msub><mi>𝛕</mi><mrow><mi>t</mi><mi>d</mi></mrow></msub><mo>+</mo><msub><mi>𝛕</mi><mrow><mi>e</mi><mi>u</mi></mrow></msub><mo>+</mo><mi>𝛜</mi><mo>,</mo></mrow><annotation encoding="application/x-tex">\begin{equation*}
-\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\tau}_{tu} + \boldsymbol{\tau}_{td} + \boldsymbol{\tau}_{eu} + \boldsymbol{\epsilon},
-\end{equation*}</annotation></semantics></math><p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐗</mi><annotation encoding="application/x-tex">\mathbf{X}</annotation></semantics></math>
-is a matrix of explanatory variables (usually including a column of 1’s
-for an intercept),
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛃</mi><annotation encoding="application/x-tex">\boldsymbol{\beta}</annotation></semantics></math>
-is a vector of fixed effects that describe the average impact of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐗</mi><annotation encoding="application/x-tex">\mathbf{X}</annotation></semantics></math>
-on
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐲</mi><annotation encoding="application/x-tex">\mathbf{y}</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛕</mi><mrow><mi>t</mi><mi>u</mi></mrow></msub><annotation encoding="application/x-tex">\boldsymbol{\tau}_{tu}</annotation></semantics></math>
-is a vector of spatially dependent (autocorrelated) tail-up random
-errors,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛕</mi><mrow><mi>t</mi><mi>d</mi></mrow></msub><annotation encoding="application/x-tex">\boldsymbol{\tau}_{td}</annotation></semantics></math>
-is a vector of spatially dependent (autocorrelated) tail-down random
-errors,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>𝛕</mi><mrow><mi>e</mi><mi>u</mi></mrow></msub><annotation encoding="application/x-tex">\boldsymbol{\tau}_{eu}</annotation></semantics></math>
-is a vector of spatially dependent (autocorrelated) Euclidean random
-errors, and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛜</mi><annotation encoding="application/x-tex">\boldsymbol{\epsilon}</annotation></semantics></math>
-is a vector of spatially independent (uncorrelated) random errors. The
-spatial dependence of each
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛕</mi><annotation encoding="application/x-tex">\boldsymbol{\tau}</annotation></semantics></math>
-term is explicitly specified using a spatial covariance function that
-incorporates the variance of the respective
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛕</mi><annotation encoding="application/x-tex">\boldsymbol{\tau}</annotation></semantics></math>
-term, often called a partial sill, and a range parameter that controls
-the behavior of the respective spatial covariance. The variance of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛜</mi><annotation encoding="application/x-tex">\boldsymbol{\epsilon}</annotation></semantics></math>
-is often called the nugget (or nugget effect). Sometimes several
-unconnected networks are modeled simultaneously. For two observations on
-separate networks, tail-up and tail-down random errors are uncorrelated
-but Euclidean random errors can be autocorrelated.</p>
+vector <span class="math inline">\(\mathbf{y}\)</span> have spatially
+dependent random errors and are often parameterized as</p>
+<span class="math display">\[\begin{equation*}
+\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\tau}_{tu} +
+\boldsymbol{\tau}_{td} + \boldsymbol{\tau}_{eu} + \boldsymbol{\epsilon},
+\end{equation*}\]</span>
+<p>where <span class="math inline">\(\mathbf{X}\)</span> is a matrix of
+explanatory variables (usually including a column of 1’s for an
+intercept), <span class="math inline">\(\boldsymbol{\beta}\)</span> is a
+vector of fixed effects that describe the average impact of <span class="math inline">\(\mathbf{X}\)</span> on <span class="math inline">\(\mathbf{y}\)</span>, <span class="math inline">\(\boldsymbol{\tau}_{tu}\)</span> is a vector of
+spatially dependent (autocorrelated) tail-up random errors, <span class="math inline">\(\boldsymbol{\tau}_{td}\)</span> is a vector of
+spatially dependent (autocorrelated) tail-down random errors, <span class="math inline">\(\boldsymbol{\tau}_{eu}\)</span> is a vector of
+spatially dependent (autocorrelated) Euclidean random errors, and <span class="math inline">\(\boldsymbol{\epsilon}\)</span> is a vector of
+spatially independent (uncorrelated) random errors. The spatial
+dependence of each <span class="math inline">\(\boldsymbol{\tau}\)</span> term is explicitly
+specified using a spatial covariance function that incorporates the
+variance of the respective <span class="math inline">\(\boldsymbol{\tau}\)</span> term, often called a
+partial sill, and a range parameter that controls the behavior of the
+respective spatial covariance. The variance of <span class="math inline">\(\boldsymbol{\epsilon}\)</span> is often called the
+nugget (or nugget effect). Sometimes several unconnected networks are
+modeled simultaneously. For two observations on separate networks,
+tail-up and tail-down random errors are uncorrelated but Euclidean
+random errors can be autocorrelated.</p>
 <p>Suppose we are interested in studying summer mean temperature
 (<code>Summer_mn</code>) on the stream network. We can visualize the
 distribution of summer mean temperature (overlain onto the stream
@@ -664,22 +673,17 @@ stream temperature with a one unit (meter) increase in elevation, and
 <code>AREAWTMAP</code> represents the decrease in average summer mean
 stream temperature with a one unit (mm) increase in precipitation. There
 is strong evidence that average summer mean stream temperature decreases
-with elevation
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&lt;</mo><mn>0.001</mn></mrow><annotation encoding="application/x-tex">&lt; 0.001</annotation></semantics></math>),
-while there is moderate evidence that average summer mean stream
-temperature decreases with precipitation
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≈</mo><annotation encoding="application/x-tex">\approx</annotation></semantics></math>
-0.05). A pseudo r-squared is also returned, which quantifies the
-proportion of variability explained by the fixed effects. The
-coefficients table of covariance parameters describes the model’s
-dependence. The larger the <code>de</code> parameter, the more
-variability in the process is attributed to the relevant effect. Here,
-most of the model’s random variability comes from the tail-up and
-tail-down portions of the model. The larger the <code>range</code>
-parameter, the more autocorrelated nearby observations are with respect
-to the relevant effect.</p>
+with elevation (<span class="math inline">\(p\)</span>-value <span class="math inline">\(&lt; 0.001\)</span>), while there is moderate
+evidence that average summer mean stream temperature decreases with
+precipitation (<span class="math inline">\(p\)</span>-value <span class="math inline">\(\approx\)</span> 0.05). A pseudo r-squared is also
+returned, which quantifies the proportion of variability explained by
+the fixed effects. The coefficients table of covariance parameters
+describes the model’s dependence. The larger the <code>de</code>
+parameter, the more variability in the process is attributed to the
+relevant effect. Here, most of the model’s random variability comes from
+the tail-up and tail-down portions of the model. The larger the
+<code>range</code> parameter, the more autocorrelated nearby
+observations are with respect to the relevant effect.</p>
 <p>We directly compare the sources of variability in the model using the
 <code>varcomp</code> function:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
@@ -726,8 +730,7 @@ running</p>
 <code>n</code>: The sample size.</li>
 <li>
 <code>p</code>: The number of fixed effects (linearly independent
-columns in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐗</mi><annotation encoding="application/x-tex">\mathbf{X}</annotation></semantics></math>).</li>
+columns in <span class="math inline">\(\mathbf{X}\)</span>).</li>
 <li>
 <code>npar</code>: The number of estimated covariance
 parameters.</li>
@@ -766,7 +769,7 @@ model fit and model simplicity. The lower AIC and AICc for the original
 model (<code>ssn_mod</code>) indicates it is a better fit to the data
 (than <code>ssn_mod2</code>). Outside of <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> and
 <code><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances()</a></code>, the functions <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>,
-<code><a href="https://usepa.github.io/spmodel/reference/AIC.spmodel.html" class="external-link">AICc()</a></code>, <code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>, <code><a href="https://rdrr.io/r/stats/deviance.html" class="external-link">deviance()</a></code>, and
+<code><a href="https://usepa.github.io/spmodel/reference/AICc.html" class="external-link">AICc()</a></code>, <code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>, <code><a href="https://rdrr.io/r/stats/deviance.html" class="external-link">deviance()</a></code>, and
 <code><a href="https://usepa.github.io/spmodel/reference/pseudoR2.html" class="external-link">pseudoR2()</a></code> are available to compute the relevant
 statistics. Note that <code>additive</code> is only required when the
 tail-up covariance is specified. We are able to compare <code>AIC</code>
@@ -1149,31 +1152,26 @@ stream networks are completely uncorrelated.</p>
 <h3 id="sec:glm">Generalized Linear SSN Models<a class="anchor" aria-label="anchor" href="#sec:glm"></a>
 </h3>
 <p>Generalized linear spatial stream network models for a response
-vector
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐲</mi><annotation encoding="application/x-tex">\mathbf{y}</annotation></semantics></math>
-have spatially dependent random errors and are often parameterized
-as</p>
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>𝐗</mi><mi>𝛃</mi><mo>+</mo><msub><mi>𝛕</mi><mrow><mi>t</mi><mi>u</mi></mrow></msub><mo>+</mo><msub><mi>𝛕</mi><mrow><mi>t</mi><mi>d</mi></mrow></msub><mo>+</mo><msub><mi>𝛕</mi><mrow><mi>e</mi><mi>u</mi></mrow></msub><mo>+</mo><mi>𝛜</mi><mo>,</mo></mrow><annotation encoding="application/x-tex">\begin{equation*}
-g(\boldsymbol{\mu}) = \mathbf{X} \boldsymbol{\beta} + \boldsymbol{\tau}_{tu} + \boldsymbol{\tau}_{td} + \boldsymbol{\tau}_{eu} + \boldsymbol{\epsilon},
-\end{equation*}</annotation></semantics></math><p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛍</mi><annotation encoding="application/x-tex">\boldsymbol{\mu}</annotation></semantics></math>
-is the mean of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐲</mi><annotation encoding="application/x-tex">\mathbf{y}</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mo>⋅</mo><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">g(\cdot)</annotation></semantics></math>
-is a link function that “links”
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝛍</mi><annotation encoding="application/x-tex">\boldsymbol{\mu}</annotation></semantics></math>
-to a linear function of the predictor variables and random errors, and
-all other terms are the same as those defined for linear spatial stream
-network models. Rather than assuming
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>
-is normally (Gaussian) distributed as is often the case with linear
-spatial stream network models, generalized linear spatial stream network
-models assume
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐲</mi><annotation encoding="application/x-tex">\mathbf{y}</annotation></semantics></math>
-follows one of many distributions and has a corresponding link function.
-Below we summarize the families of generalized linear spatial stream
-network models supported by <code>SSN2</code> their link functions, and
-the type of data typically associated with these families. For more on
+vector <span class="math inline">\(\mathbf{y}\)</span> have spatially
+dependent random errors and are often parameterized as</p>
+<span class="math display">\[\begin{equation*}
+g(\boldsymbol{\mu}) = \mathbf{X} \boldsymbol{\beta} +
+\boldsymbol{\tau}_{tu} + \boldsymbol{\tau}_{td} + \boldsymbol{\tau}_{eu}
++ \boldsymbol{\epsilon},
+\end{equation*}\]</span>
+<p>where <span class="math inline">\(\boldsymbol{\mu}\)</span> is the
+mean of <span class="math inline">\(\mathbf{y}\)</span>, <span class="math inline">\(g(\cdot)\)</span> is a link function that “links”
+<span class="math inline">\(\boldsymbol{\mu}\)</span> to a linear
+function of the predictor variables and random errors, and all other
+terms are the same as those defined for linear spatial stream network
+models. Rather than assuming <span class="math inline">\(y\)</span> is
+normally (Gaussian) distributed as is often the case with linear spatial
+stream network models, generalized linear spatial stream network models
+assume <span class="math inline">\(\mathbf{y}\)</span> follows one of
+many distributions and has a corresponding link function. Below we
+summarize the families of generalized linear spatial stream network
+models supported by <code>SSN2</code> their link functions, and the type
+of data typically associated with these families. For more on
 generalized linear models more generally, see <span class="citation">McCullagh and Nelder (1989)</span>, <span class="citation">Myers et al. (2012)</span>, and <span class="citation">Faraway (2016)</span>.</p>
 <p>The <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> function is used to fit generalized linear
 spatial stream network models and bears many similarities to
@@ -1202,7 +1200,8 @@ relevant link scale and should be interpreted accordingly.</p>
 <tbody>
 <tr class="odd">
 <td>Gaussian</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>𝛍</mi></mrow><annotation encoding="application/x-tex">g(\mathbf{\mu}) = \mathbf{\mu}</annotation></semantics></math></td>
+<td><span class="math inline">\(g(\mathbf{\mu}) =
+\mathbf{\mu}\)</span></td>
 <td>Identity</td>
 <td>Continuous</td>
 <td>
@@ -1211,42 +1210,48 @@ relevant link scale and should be interpreted accordingly.</p>
 </tr>
 <tr class="even">
 <td>Binomial</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mi>/</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">g(\mathbf{\mu}) = \log(\mathbf{\mu} / (1 - \mathbf{\mu}))</annotation></semantics></math></td>
+<td><span class="math inline">\(g(\mathbf{\mu}) = \log(\mathbf{\mu} / (1
+- \mathbf{\mu}))\)</span></td>
 <td>Logit</td>
 <td>Binary; Binary Count</td>
 <td><code><a href="../reference/ssn_glm.html">ssn_glm()</a></code></td>
 </tr>
 <tr class="odd">
 <td>Beta</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mi>/</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">g(\mathbf{\mu}) = \log(\mathbf{\mu} / (1 - \mathbf{\mu}))</annotation></semantics></math></td>
+<td><span class="math inline">\(g(\mathbf{\mu}) = \log(\mathbf{\mu} / (1
+- \mathbf{\mu}))\)</span></td>
 <td>Logit</td>
 <td>Proportion</td>
 <td><code><a href="../reference/ssn_glm.html">ssn_glm()</a></code></td>
 </tr>
 <tr class="even">
 <td>Poisson</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">g(\mathbf{\mu}) = \log(\mathbf{\mu})</annotation></semantics></math></td>
+<td><span class="math inline">\(g(\mathbf{\mu}) =
+\log(\mathbf{\mu})\)</span></td>
 <td>Log</td>
 <td>Count</td>
 <td><code><a href="../reference/ssn_glm.html">ssn_glm()</a></code></td>
 </tr>
 <tr class="odd">
 <td>Negative Binomial</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">g(\mathbf{\mu}) = \log(\mathbf{\mu})</annotation></semantics></math></td>
+<td><span class="math inline">\(g(\mathbf{\mu}) =
+\log(\mathbf{\mu})\)</span></td>
 <td>Log</td>
 <td>Count</td>
 <td><code><a href="../reference/ssn_glm.html">ssn_glm()</a></code></td>
 </tr>
 <tr class="even">
 <td>Gamma</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">g(\mathbf{\mu}) = \log(\mathbf{\mu})</annotation></semantics></math></td>
+<td><span class="math inline">\(g(\mathbf{\mu}) =
+\log(\mathbf{\mu})\)</span></td>
 <td>Log</td>
 <td>Skewed (positive continuous)</td>
 <td><code><a href="../reference/ssn_glm.html">ssn_glm()</a></code></td>
 </tr>
 <tr class="odd">
 <td>Inverse Gaussian</td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo>log</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>𝛍</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">g(\mathbf{\mu}) = \log(\mathbf{\mu})</annotation></semantics></math></td>
+<td><span class="math inline">\(g(\mathbf{\mu}) =
+\log(\mathbf{\mu})\)</span></td>
 <td>Log</td>
 <td>Skewed (positive continuous)</td>
 <td><code><a href="../reference/ssn_glm.html">ssn_glm()</a></code></td>
@@ -1319,15 +1324,10 @@ temperature with a one unit (meter) increase in elevation, and
 <code>AREAWTMAP</code> represents the decrease in log average summer
 mean temperature with a one unit (mm) increase in precipitation. There
 is strong evidence that log average summer mean temperature decreases
-with elevation
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&lt;</mo><mn>0.001</mn></mrow><annotation encoding="application/x-tex">&lt; 0.001</annotation></semantics></math>),
-while there is moderate evidence that log average summer mean
-temperature decreases with precipitation
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-value
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>≈</mo><annotation encoding="application/x-tex">\approx</annotation></semantics></math>
-0.03). Recall that the covariance parameter estimates are on the link
-(here, log) scale.</p>
+with elevation (<span class="math inline">\(p\)</span>-value <span class="math inline">\(&lt; 0.001\)</span>), while there is moderate
+evidence that log average summer mean temperature decreases with
+precipitation (<span class="math inline">\(p\)</span>-value <span class="math inline">\(\approx\)</span> 0.03). Recall that the covariance
+parameter estimates are on the link (here, log) scale.</p>
 <p>The Poisson model assumes that each observations mean and variance
 are equal. Often with ecological or environmental data, the variance is
 larger than the mean – this is called overdispersion. The negative
@@ -1444,7 +1444,7 @@ operate on model fits:</p>
 <li>
 <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>: Compute the AIC.</li>
 <li>
-<code><a href="https://usepa.github.io/spmodel/reference/AIC.spmodel.html" class="external-link">AICc()</a></code>: Compute the AICc.</li>
+<code><a href="https://usepa.github.io/spmodel/reference/AICc.html" class="external-link">AICc()</a></code>: Compute the AICc.</li>
 <li>
 <code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code>: Perform an analysis of variance.</li>
 <li>
@@ -1474,8 +1474,7 @@ with predictions.</li>
 <code><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv()</a></code>: Perform leave-one-out cross validation and
 compute relevant statistics.</li>
 <li>
-<code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix()</a></code>: Return the model matrix
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝐗</mi><annotation encoding="application/x-tex">\mathbf{X}</annotation></semantics></math>).</li>
+<code><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix()</a></code>: Return the model matrix (<span class="math inline">\(\mathbf{X}\)</span>).</li>
 <li>
 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>: Create fitted model plots.</li>
 <li>
@@ -1578,7 +1577,7 @@ their relevant successors in <code>SSN2</code>:</p>
 <tr class="odd">
 <td><code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code></td>
 <td>
-<code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>; <code><a href="https://usepa.github.io/spmodel/reference/AIC.spmodel.html" class="external-link">AICc()</a></code>
+<code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>; <code><a href="https://usepa.github.io/spmodel/reference/AICc.html" class="external-link">AICc()</a></code>
 </td>
 </tr>
 <tr class="even">
@@ -1713,7 +1712,7 @@ changes may occur until we are ready to release version 1.0.0.</p>
 <h2 class="unnumbered" id="r-code-appendix">R Code Appendix<a class="anchor" aria-label="anchor" href="#r-code-appendix"></a>
 </h2>
 <div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/SSN2/" class="external-link">SSN2</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://usepa.github.io/SSN2/">SSN2</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"SSN2"</span><span class="op">)</span></span>
 <span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"lsndata/MiddleFork04.ssn"</span>, package <span class="op">=</span> <span class="st">"SSN2"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/copy_lsn_to_temp.html">copy_lsn_to_temp</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -2015,26 +2014,35 @@ Statistics</em> 26 (2): 253–64.
 </div>
 </div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
-    </nav></aside>
+  </div>
+
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
+
 </div>
 
 
 
-    <footer><div class="pkgdown-footer-left">
-  <p>Developed by Michael Dumelle, Jay M. Ver Hoef, Erin Peterson.</p>
+      <footer><div class="copyright">
+  <p></p>
+<p>Developed by Michael Dumelle, Jay M. Ver Hoef, Erin Peterson.</p>
 </div>
 
-<div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+<div class="pkgdown">
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
-    </footer>
+      </footer>
 </div>
 
+  
 
 
-
+  
 
   </body>
 </html>
