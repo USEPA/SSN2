@@ -1,3 +1,10 @@
+# SSN2 0.2.1
+
+## Minor Updates
+
+* Enhanced numeric stability of deviance and pseudo R-squared for `ssn_glm()` models when `family = "beta"` [(#23)](https://github.com/USEPA/SSN2/issues/23).
+* Updated `reexport.Rd` to reflect changes in `spmodel v0.8.0`'s handling of `AIC()` and `AICc()`.
+
 # SSN2 0.2.0
 
 ## Major Updates

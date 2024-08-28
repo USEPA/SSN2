@@ -1,4 +1,5 @@
-This is a minor update that adds a few small features and bug fixes. Thank you.
+This is a minor update that enhances stability and includes updates to `reexports.Rd`
+to reflect changes in `spmodel v0.8.0`'s handling of `AIC()` and `AICc()`. Thank you.
 
 -------
 
