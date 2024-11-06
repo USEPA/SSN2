@@ -39,7 +39,12 @@ Imports:
     spmodel,
     RSQLite,
     utils,
-    withr
+    withr,
+    doParallel,
+    filematrix,
+    foreach, 
+    parallel,
+    itertools
 Suggests: 
     rmarkdown,
     knitr,

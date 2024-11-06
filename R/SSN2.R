@@ -18,6 +18,14 @@
 #' @importFrom tibble tibble as_tibble
 #' @importFrom utils read.table tail
 #' @importFrom withr local_dir
+#' @import parallel
+#' @import doParallel
+#' @import foreach
+#' @import itertools
+#' @import iterators
+#' @import filematrix
 NULL
 
-# #' @importFrom parallel detectCores makeCluster parLapply stopCluster
+## @importFrom parallel detectCores makeCluster parLapply stopCluster
+## #' @importFrom parallel makeCluster stopCluster
+

@@ -1,14 +1,14 @@
 
-
-getObsRelationshipsDF <- function(ssn, pid, junk, ind, ob_by_locID, bin) {
+getObsPredsRelationshipsDF <- function(ssn, junk, pred.dup, pred_by_locID,
+                                       ob.i_by_locID, bin, pred.name) {
 
     ## ssn = SpatialStreamNetwork object
     ## pid = integer pid value of interest
     ## junk = ox2 data.frame with columns fc (logical) and binaryID
-    ## ind = vector indicator saying whether it is a duplicate
+    ## pred.dup = vector indicator saying whether it is a duplicate
     ## ob = data.frame with pid, rid, locID, and binaryID for sites on network
     ##      ordered by pid
-    ## ob_by_locID = data.frame with pid, rid, locID, and binaryID for sites on network
+    ## pred_by_locID = data.frame with pid, rid, locID, and binaryID for sites on network
     ##               ordered by locID
     ## bin = binaryID table
 
@@ -22,10 +22,10 @@ getObsRelationshipsDF <- function(ssn, pid, junk, ind, ob_by_locID, bin) {
 
 ## Create relationships table
 
-      ob.j.r <- data.frame(ob_by_locID[ind, c("pid", "locID")], junk,
+      ob.j.r <- data.frame(pred_by_locID[pred.dup, c("pid", "locID")], junk,
                            stringsAsFactors = FALSE)
 
-      ## ob.j.r <- data.frame(ob_by_locID[ind, c("pid", "locID")], junk,
+      ## ob.j.r <- data.frame(pred_by_locID[pred.dup, c("pid", "locID")], junk,
       ##                      stringsAsFactors = FALSE)
 
       ob.j.r$fc <- as.logical(ob.j.r$fc)
@@ -37,26 +37,25 @@ getObsRelationshipsDF <- function(ssn, pid, junk, ind, ob_by_locID, bin) {
 
       ## Expand this data.frame ---
       ## Add extra rows
-      ob.j.r[,"rep"] <- aggregate(rep(1, length(ob_by_locID$locID)), by = list(ob_by_locID$locID), sum)[2]
+      ob.j.r[,"rep"] <- aggregate(rep(1, length(pred_by_locID$locID)),
+                                  by = list(pred_by_locID$locID), sum)[2]
       ob.j <- ob.j.r[rep(row.names(ob.j.r), ob.j.r$rep),1:ncol(ob.j.r)-1]
       ## fix pid values
-      ob.j$pid <- ob_by_locID$pid
-      rownames(ob.j)<- rownames(ob_by_locID)
-
-      ## Reorder back to same as pid.data
+      ob.j$pid <- pred_by_locID$pid
+      rownames(ob.j)<- rownames(pred_by_locID)
 
       ## Create some funky rownames, with extension .fc - ADDED OB.J INSTEAD OF OB
       rownames(ob.j) <- paste(rownames(ob.j), ".fc", sep = "")
 
-      ## Don't know why we're doing this...
-      ##ob.j$pid <- ob_by_locID$pid[ind]
 
       ## juncDist is the upstream distance of the common downstream rid junction
-      ob.j$juncDist <- ssn@network.line.coords$DistanceUpstream[match(ob.j$junc.rid, ssn@network.line.coords$SegmentID)]
+      ob.j$juncDist <- ssn$edges$DistanceUpstream[match(ob.j$junc.rid,
+                                                        ssn$edges$SegmentID)]
 
-      ## upDist.j is the upDist for each observed site
-      ob.j$upDist.j <- ssn@obspoints@SSNPoints[[1]]@network.point.coords$DistanceUpstream[
-                    match(ob.j$pid, as.numeric(rownames(ssn@obspoints@SSNPoints[[1]]@network.point.coords)))]
+      ob.j$upDist.j <- ssn$preds[[pred.name]]$DistanceUpstream[match(
+        ob.j$pid,
+        as.numeric(ssn$preds[[pred.name]]$ng.pid)
+      )]
 
       ob.j
 

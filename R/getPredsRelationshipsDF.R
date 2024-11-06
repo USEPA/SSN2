@@ -1,6 +1,6 @@
 
 
-getObsRelationshipsDF <- function(ssn, pid, junk, ind, ob_by_locID, bin) {
+getPredsRelationshipsDF <- function(ssn, pid, junk, ind, ob_by_locID, bin) {
 
     ## ssn = SpatialStreamNetwork object
     ## pid = integer pid value of interest
@@ -55,8 +55,8 @@ getObsRelationshipsDF <- function(ssn, pid, junk, ind, ob_by_locID, bin) {
       ob.j$juncDist <- ssn@network.line.coords$DistanceUpstream[match(ob.j$junc.rid, ssn@network.line.coords$SegmentID)]
 
       ## upDist.j is the upDist for each observed site
-      ob.j$upDist.j <- ssn@obspoints@SSNPoints[[1]]@network.point.coords$DistanceUpstream[
-                    match(ob.j$pid, as.numeric(rownames(ssn@obspoints@SSNPoints[[1]]@network.point.coords)))]
+      ob.j$upDist.j <- ssn@predpoints@SSNPoints[[1]]@network.point.coords$DistanceUpstream[
+                    match(ob.j$pid, as.numeric(rownames(ssn@predpoints@SSNPoints[[1]]@network.point.coords)))]
 
       ob.j
 
