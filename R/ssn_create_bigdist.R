@@ -332,8 +332,8 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       rownames(current_distance_matrix_b) <- as.character(pred.pids)
       colnames(current_distance_matrix_b) <- as.character(obs.pids)
 
-      close(current_distance_matrix_b)
-      close(current_distance_matrix_a)
+      ##close(current_distance_matrix_b)
+      ##close(current_distance_matrix_a)
 
       ## Extract binaryID table for the network
       bin.table <- dbReadTable(connect, net.name)
@@ -396,7 +396,7 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
         rownames(current_distance_matrix) <- as.character(obs.pids)
         colnames(current_distance_matrix) <- as.character(obs.pids)
 
-        close(current_distance_matrix)
+        ##close(current_distance_matrix)
 
 
 
@@ -411,20 +411,17 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
         ans1<- foreach(obs.pids.vec=itCol,
                        .packages = c("SSN2", "filematrix","itertools","iterators"),
                        .errorhandling = "pass") %dopar% {
-                           # amongSitesBigDistMat(ssn = ssn, net.num = net.num,
-                           #                    pids = obs.pids.vec,
-                           #                    bin.table = bin.table,
-                           #                    workspace.name = workspace.name1)
-
 
                          amongSitesBigDistMat(ssn = ssn,
                                               pids = obs.pids.vec,
+                                              net.num = net.num,
                                               bin.table = bin.table,
                                               name = "obs",
                                               workspace.name = workspace.name1)
                          finished1 <- TRUE
                          return(finished1)
                        }
+        close(current_distance_matrix)
 
       }
 
@@ -448,7 +445,8 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                            finished2 <- TRUE
                            return(finished2)
                        }
-
+      close(current_distance_matrix_a)
+      close(current_distance_matrix_b)
     }
     ## ---------------------------------------------------------------------------------
     ## Case 2: Observed sites, no prediction sites
@@ -482,13 +480,14 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
 
                           amongSitesBigDistMat(ssn = ssn,
                                               pids = obs.pids.vec,
+                                              net.num = net.num,
                                               bin.table = bin.table,
                                               name = "obs",
                                               workspace.name = workspace.name1)
                          finished1 <- TRUE
                          return(finished1)
                        }
-
+      close(current_distance_matrix)
     }
 
 
@@ -529,6 +528,7 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                        .errorhandling = "pass") %dopar% {
                            amongSitesBigDistMat(ssn = ssn,
                                                 pids = pred.pids.vec,
+                                                net.num = net.num,
                                                 name = predpts,
                                                 bin.table = bin.table,
                                                 workspace.name = preds.path)
@@ -538,8 +538,5 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
         close(among_distance_matrix)
     }
       ## serialize(among_distance_matrix, file_handle, ascii = FALSE)
-
   }
-
-
 }
