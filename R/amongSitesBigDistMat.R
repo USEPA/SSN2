@@ -85,16 +85,6 @@ amongSitesBigDistMat <- function(ssn, pids, net.num, name = "obs", bin.table,
                                       name = name,
                                     ob.i_by_locID, bin.table)
 
-      # truncated.binaryIDs <- data.frame(pid = pid.data[, "pid"], junk,
-      #                                   stringsAsFactors = FALSE)
-      # truncated.binaryIDs$fc <- as.logical(truncated.binaryIDs$fc)
-      # truncated.binaryIDs$junc.rid <- bin.table$rid[match(truncated.binaryIDs$binaryID, bin.table$binaryID)]
-      #
-      # truncated.binaryIDs$juncDist <- ssn$edges$DistanceUpstream[match(
-      #   truncated.binaryIDs$junc.rid,
-      #   ssn$edges$rid
-      # )]
-      # truncated.binaryIDs$upDist.j <- pid.data$upDist[match(truncated.binaryIDs$pid, pid.data$pid)]
       ind.fc<-ob.j$fc==1
       ##dist.sites <- ifelse(ind.fc, upDist.b - truncated.binaryIDs$upDist.j,
         ##                   upDist.b - truncated.binaryIDs$juncDist)

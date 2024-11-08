@@ -53,7 +53,7 @@ amongObsBigDistMat <- function(ssn, net.num, pids, bin.table, workspace.name){
 
 
         if(locID.b != locID.old) {
-            junk <- SSN2:::get.rid.fc(ob.i_by_locID[ind.dup,"binaryID"], ob.i_by_locID$binaryID[ind.pid])
+            junk <- get.rid.fc(ob.i_by_locID[ind.dup,"binaryID"], ob.i_by_locID$binaryID[ind.pid])
             ob.j <- getObsRelationshipsDF(ssn, pid.b,  junk, ind.dup, ob.i_by_locID, bin.table)
 	    ##upDist.i <- ssn@obspoints@SSNPoints[[1]]@network.point.coords[paste(pid.b),"DistanceUpstream"]
 	    upDist.i <- ssn$obs[paste(pid.b),"DistanceUpstream"]

@@ -54,8 +54,8 @@ amongPredsBigDistMat <- function(ssn, net.num, pids, pred.num, bin.table, worksp
 
         if(locID.b != locID.old) {
 
-           ##junk <- SSN:::get.rid.fc(pid.data[,"binaryID"], pid.data$binaryID[ind.pid])
-           junk <- SSN:::get.rid.fc(ob.i_by_locID[ind.dup,"binaryID"], ob.i_by_locID$binaryID[ind.pid])
+           ##junk <- get.rid.fc(pid.data[,"binaryID"], pid.data$binaryID[ind.pid])
+           junk <- get.rid.fc(ob.i_by_locID[ind.dup,"binaryID"], ob.i_by_locID$binaryID[ind.pid])
            ob.j <- getPredsRelationshipsDF(ssn, pid.b,  junk, ind.dup, ob.i_by_locID, bin.table)
 
            upDist.i <- ssn@predpoints@SSNPoints[[1]]@network.point.coords[paste(pid.b),"DistanceUpstream"]

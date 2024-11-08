@@ -136,35 +136,40 @@
 ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                                among_predpts = FALSE, only_predpts = FALSE,
                                no_cores = 1) {
-  # iterate if predpts is not null
-  ## if (length(predpts) > 1) {
-  ##   if (only_predpts) {
-  ##     x <- lapply(predpts, function(x) {
-  ##       ssn_create_distmat(ssn.object,
-  ##         predpts = x,
-  ##         overwrite,
-  ##         among_predpts,
-  ##         only_predpts
-  ##       )
-  ##     })
-  ##   } else {
-  ##     x1 <- ssn_create_distmat(ssn.object, overwrite = overwrite)
-  ##     x2 <- lapply(predpts, function(x) {
-  ##       ssn_create_distmat(ssn.object,
-  ##         predpts = x,
-  ##         overwrite,
-  ##         among_predpts,
-  ##         only_predpts = TRUE
-  ##       )
-  ##     })
-  ##   }
-  ##   return(invisible(NULL))
-  ## }
+
+  # ##iterate if predpts is not null
+  # if (length(predpts) > 1) {
+  #   if (only_predpts) {
+  #     x <- lapply(predpts, function(x) {
+  #       ssn_create_bigdist(ssn.object,
+  #         predpts = x,
+  #         overwrite,
+  #         among_predpts,
+  #         only_predpts,
+  #         no_cores
+  #       )
+  #     })
+  #   } else {
+  #     x1 <- ssn_create_bigdist(ssn.object, overwrite = overwrite)
+  #     x2 <- lapply(predpts, function(x) {
+  #       ssn_create_bigdist(ssn.object,
+  #         predpts = x,
+  #         overwrite,
+  #         among_predpts,
+  #         only_predpts = TRUE,
+  #         no_cores
+  #       )
+  #     })
+  #   }
+  #   return(invisible(NULL))
+  # }
 
 
   # recreate function argument name
   ssn <- ssn.object
 
+  obs.pids.vec <- NULL
+  pred.pids.vec <- NULL
 
   ## ------------------------------------------------------------------------
   ## Check arguments, format data
@@ -265,7 +270,7 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       dbDisconnect(connect)
       stopCluster(cl)
       registerDoSEQ()
-      ##closeAllConnections()
+      suppressWarnings(closeAllConnections())
   })
 
 
@@ -291,12 +296,33 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       pred.site.no <- 0
     }
 
+    if(only_predpts == FALSE) {
+
+      ## Set o x o distance matrix name
+      workspace.name1 <- paste(ssn$path, "/distance/obs/dist.net",
+                               net.num, sep = "")
+
+      obs.pids <- sort(as.numeric(ssn$obs$ng.pid[ind.obs]))
+
+      ## Create empty obs distance matrix
+      current_distance_matrix <-
+        fm.create(filenamebase = workspace.name1,
+                  nrow = site.no, ncol = site.no, type = "double")
+
+      rownames(current_distance_matrix) <- as.character(obs.pids)
+      colnames(current_distance_matrix) <- as.character(obs.pids)
+
+      close(current_distance_matrix)
+    }
+
+
+
     ## -------------------------------------------------------------
     ## CASE 1: IF OBS and PREDS EXIST ON NETWORK
     ## -------------------------------------------------------------
     if (site.no > 0 & pred.site.no > 0) {
       ## get sorted pids to use as dim names
-      obs.pids <- sort(as.numeric(ssn$obs$ng.pid[ind.obs]))
+      ##obs.pids <- sort(as.numeric(ssn$obs$ng.pid[ind.obs]))
 
       ## Get pred pids and sort
       pred.pids <- sort(as.numeric(ssn$preds[[predpts]]$ng.pid[ind.preds]))
@@ -307,11 +333,6 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       workspace.name.b <- paste(ssn$path, "/distance/", predpts,
                                 "/dist.net", net.num, ".b", sep = "")
 
-      ## ## create o x p distance matrix full of NA
-      ## current_distance_matrix_a <- matrix(NA,
-      ##   nrow = site.no, ncol = pred.site.no,
-      ##   dimnames = list(obs.pids, pred.pids)
-        ## )
       current_distance_matrix_a <-
             fm.create(filenamebase = workspace.name.a,
               nrow = pred.site.no, ncol = site.no, type = "double")
@@ -319,21 +340,12 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
             rownames(current_distance_matrix_a) <- as.character(pred.pids)
             colnames(current_distance_matrix_a) <- as.character(obs.pids)
 
-
-      ## ## create p x o distance matrix full of NA
-      ## current_distance_matrix_b <- matrix(NA,
-      ##   nrow = pred.site.no, ncol = site.no,
-      ##   dimnames = list(pred.pids, obs.pids)
-      ## )
       current_distance_matrix_b <-
             fm.create(filenamebase = workspace.name.b,
                       nrow = pred.site.no, ncol = site.no,
                       type = "double")
       rownames(current_distance_matrix_b) <- as.character(pred.pids)
       colnames(current_distance_matrix_b) <- as.character(obs.pids)
-
-      ##close(current_distance_matrix_b)
-      ##close(current_distance_matrix_a)
 
       ## Extract binaryID table for the network
       bin.table <- dbReadTable(connect, net.name)
@@ -367,7 +379,6 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
         # }
       }
 
-      ##browser()
       ## Calculate obs x obs distance matrix
       if (!only_predpts) {
 
@@ -388,15 +399,6 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
         #
         # }
 
-        ## Create empty obs distance matrix
-        current_distance_matrix <-
-            fm.create(filenamebase = workspace.name1,
-                      nrow = site.no, ncol = site.no, type = "double")
-
-        rownames(current_distance_matrix) <- as.character(obs.pids)
-        colnames(current_distance_matrix) <- as.character(obs.pids)
-
-        ##close(current_distance_matrix)
 
 
 
@@ -421,30 +423,24 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                          finished1 <- TRUE
                          return(finished1)
                        }
-        close(current_distance_matrix)
 
+       close(current_distance_matrix)
       }
 
-      ## Create vector iterator
-      if(only_predpts == TRUE) {
-        itCol <- isplitVector(obs.pids, chunks = no_cores)
-      }
+      # parLapply
+      parallel::clusterEvalQ(cl, {
+        library(SSN2)
+        library(filematrix)
+      })
+      parLapply(cl, obs.pids,
+                function(x) amongObsPredsBigDistMat(ssn = ssn,
+                                                    obs.pids = x,
+                                                    pred.pids = pred.pids,
+                                                    bin.table = bin.table,
+                                                    pred.name = predpts,
+                                                    workspace.name.a = workspace.name.a,
+                                                    workspace.name.b = workspace.name.b))
 
-      ##browser()
-      ans2<- foreach(obs.pids.vec=itCol,
-                       .packages = c("SSN2", "filematrix","itertools","iterators"),
-                       .errorhandling = "stop") %dopar% {
-
-                          amongObsPredsBigDistMat(ssn = ssn,
-                                                 obs.pids = obs.pids.vec,
-                                                 pred.pids=pred.pids,
-                                                 bin.table = bin.table,
-                                                 workspace.name.a = workspace.name.a,
-                                                 workspace.name.b = workspace.name.b,
-                                                 pred.name = predpts)
-                           finished2 <- TRUE
-                           return(finished2)
-                       }
       close(current_distance_matrix_a)
       close(current_distance_matrix_b)
     }
@@ -461,24 +457,14 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       net.name <- paste("net", net.num, sep = "")
       bin.table <- dbReadTable(connect, net.name)
 
-      ## obs_distance_matrix <- amongSitesDistMat(ssn, obs.pids, name = "obs", bin.table)
-      ## ## Write obs-obs distance matrix to distance folder
-      ## file_handle <- file(file.path(ssn$path, "distance", "obs", workspace.name), open = "wb")
-      ## serialize(obs_distance_matrix, file_handle, ascii = FALSE)
-        ## close(file_handle)
-
-      ## Create vector iterator
+      # Create vector iterator
       itCol <- isplitVector(obs.pids, chunks = no_cores)
 
       ans1<- foreach(obs.pids.vec=itCol,.packages = c("SSN2", "filematrix",
                                                         "itertools","iterators"),
                        .errorhandling = "pass") %dopar% {
-                           # amongObsBigDistMat(ssn = ssn, net.num = net.num,
-                           #                    pids = obs.pids.vec,
-                           #                    bin.table = bin.table,
-                           #                    workspace.name = workspace.name1)
 
-                          amongSitesBigDistMat(ssn = ssn,
+                         amongSitesBigDistMat(ssn = ssn,
                                               pids = obs.pids.vec,
                                               net.num = net.num,
                                               bin.table = bin.table,
@@ -537,6 +523,6 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                        }
         close(among_distance_matrix)
     }
-      ## serialize(among_distance_matrix, file_handle, ascii = FALSE)
+
   }
 }

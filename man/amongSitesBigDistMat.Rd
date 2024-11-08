@@ -4,12 +4,21 @@
 \alias{amongSitesBigDistMat}
 \title{Helper function to determining distance matrices among sites}
 \usage{
-amongSitesBigDistMat(ssn, pids, name = "obs", bin.table, workspace.name)
+amongSitesBigDistMat(
+  ssn,
+  pids,
+  net.num,
+  name = "obs",
+  bin.table,
+  workspace.name
+)
 }
 \arguments{
 \item{ssn}{An SSN object.}
 
 \item{pids}{A list of pid values for prediction sites}
+
+\item{net.num}{Network number (netID) in character format.}
 
 \item{name}{The network name (obs or prediction name)}
 

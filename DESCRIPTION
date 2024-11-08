@@ -44,7 +44,8 @@ Imports:
     filematrix,
     foreach, 
     parallel,
-    itertools
+    itertools,
+    iterators
 Suggests: 
     rmarkdown,
     knitr,

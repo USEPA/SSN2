@@ -98,7 +98,7 @@ amongObsPredsBigDistMat <- function(ssn, obs.pids, pred.pids, bin.table,
 
         if(locID.ob != locID.old) {
 
-            junk <- SSN2:::get.rid.fc(pred_by_locID[dup.pred,"binaryID"],
+            junk <- get.rid.fc(pred_by_locID[dup.pred,"binaryID"],
                                      obs_by_locID$binaryID[ind.pid])
 
 
@@ -132,7 +132,8 @@ amongObsPredsBigDistMat <- function(ssn, obs.pids, pred.pids, bin.table,
             ##locID.old <- locID.ob
         }
 
-   }
+    }
+    ##browser()
     close(current_distance_matrix_a)
     close(current_distance_matrix_b)
 }
