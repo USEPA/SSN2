@@ -1,123 +1,120 @@
 library(SSN2)
 
 
+## Import data ---------------------------------------------------------
+# for examples, copy MiddleFork04.ssn directory to R's temporary directory
+copy_lsn_to_temp()
 
-# NOT RUN
-# mf04 <- importSSN(system.file("lsndata/MiddleFork04.ssn",
-#	        package = "SSN"), o.write = TRUE)
-# # use SpatialStreamNetwork object mf04 that was already created
-# data(mf04p)
-# # for examples, copy MiddleFork04.ssn directory to R's temporary directory
-# copy_lsn_to_temp()
-
-mf04p <- ssn_import("c:/temp/MiddleFork04.ssn",
+mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
                     predpts = c("pred1km", "CapeHorn"),
                     overwrite = TRUE)
 
-## Does not currently work with multiple sets of prediction points
+## Delete distance folder if it exists
+if(dir.exists(paste0(mf04p$path, "/distance"))) {
+  closeAllConnections()
+  unlink(paste0(mf04p$path, "/distance"), recursive = TRUE)
+
+}
+
+
+## Calculate old distance matrices ----------------------------------
 ssn_create_distmat(mf04p, predpts = c("pred1km", "CapeHorn"),
                     among_predpts = TRUE, overwrite = TRUE)
 
+## Get old distance matrices for CapeHorn
+## This will not work if you have old and new distance matrix
+## files in /distance
+old.preds <- ssn_get_stream_distmat(mf04p, "pred1km")
+names(old.preds)
+
+## Extract all old matrices from distance matrix list
+net1a.old <- old.preds[[1]]
+net1b.old <- old.preds[[2]]
+net1.old <- old.preds[[3]]
+net2a.old <- old.preds[[4]]
+net2b.old <- old.preds[[5]]
+net2.old <- old.preds[[6]]
+dim(net1a.old)
+class(net1a.old)
+
+## Calculate new distance matrices ---------------------------------
+## Does not currently work with multiple sets of prediction points
+## Ignore the warning con$close() for now...
 ssn_create_bigdist(mf04p, predpts = "pred1km", overwrite = TRUE,
                    among_predpts = TRUE, no_cores = 2)
 
-ssn_create_bigdist(mf04p,
-                   predpts = "CapeHorn",
-                   overwrite = TRUE,
-                   among_predpts = TRUE,
-                   no_cores = 2)
+# ssn_create_bigdist(mf04p,
+#                    predpts = "CapeHorn",
+#                    overwrite = TRUE,
+#                    among_predpts = TRUE,
+#                    no_cores = 2)
 
-###############################
-## Check prediction site distances
-old.preds <- ssn_get_stream_distmat(mf04p, "CapeHorn")
-names(old.preds)
-net2a.old <- old.preds[[1]]
-net2b.old <- old.preds[[2]]
-net2.old <- old.preds[[3]]
-dim(net2a.old)
-
-## Network 1
+## Compare old and new distance matrices -------------------------------
+## Extract new distance matrix for dist.net2.a
 library(filematrix)
-net2a.fm <- fm.open("c:/temp/MiddleFork04.ssn/distance.fm/CapeHorn/dist.net2.a.bmat")
+net2a.fm <- fm.open(paste0(tempdir(),
+                           "/MiddleFork04.ssn/distance/pred1km/dist.net2.a.bmat"))
+class(net2a.fm)
+net2a.fm
 
-## select by pid
-ind<- rownames(net2a.fm) %in% c("1494", "1495")
-test<- net2a.fm[ind,]
+# ## Example of how to select by pid
+# ind<- rownames(net2a.fm) %in% c("1494", "1495")
+# test<- net2a.fm[ind,]
 
-net2a <-t(net2a.fm[,]) ## MUST transpose for A's only
+## Convert filematrix to matrix. If object is an 'a' matrix,
+## it must be transposed. Not necessary for other matrices.
+net2a <- net2a.fm[,]
+colnames(net2a) <- colnames(net2a.fm)
+rownames(net2a) <- rownames(net2a.fm)
+net2a <-t(net2a)
+
 dim(net2a)
-net2a
+class(net2a)
 
 net2a[1:5,1:5]
 
+## Compare old and new distance matrices
 sum(net2a != net2a.old)
-max(net2a - net2a.old)
+sum(colnames(net2a) != colnames(net2a.old))
+sum(rownames(net2a) != rownames(net2a.old))
+
+## Close the connection
 close(net2a.fm)
 
-
-
-
-net1b.fm <- fm.open("c:/temp/MiddleFork04.ssn/distance.fm/CapeHorn/dist.net1.b.bmat")
+## More examples ------------------
+## Extract net1b. No need to transpose 'b' matrices
+net1b.fm <-  fm.open(paste0(tempdir(),
+                            "/MiddleFork04.ssn/distance/pred1km/dist.net1.b.bmat"))
 net1b <-(net1b.fm[,])
+rownames(net1b)<- rownames(net1b.fm[,])
+colnames(net1b)<- colnames(net1b.fm[,])
+
 dim(net1b)
-net1b
+
 sum(net1b != net1b.old)
+sum(colnames(net1b) != colnames(net1b.old))
+sum(rownames(net1b) != rownames(net1b.old))
 close(net1b.fm)
 
-net1.fm <- fm.open("c:/temp/MiddleFork04.ssn/distance.fm/CapeHorn/dist.net1.bmat")
+## Extract new net1 matrix (pred1km x pred1km).
+## Do not transpose
+net1.fm <- fm.open(paste0(tempdir(),
+                          "/MiddleFork04.ssn/distance/pred1km/dist.net1.bmat"))
 net1 <-(net1.fm[,])
+rownames(net1)<- rownames(net1.fm[,])
+colnames(net1)<- colnames(net1.fm[,])
 dim(net1)
-net1
+
 sum(net1 != net1.old)
+sum(colnames(net1) != colnames(net1.old))
+sum(rownames(net1) != rownames(net1.old))
 close(net1.fm)
 
-## Network 2
-net2a.fm <- fm.open("c:/temp/MiddleFork04.ssn/distance.fm/CapeHorn/dist.net2.a.bmat")
-net2a <-t(net2a.fm[,])
-dim(net2a)
-net2a
-
-sum(net2a != net2a.old)
-max(net2a - net2a.old)
-close(net2a.fm)
-
-net2b.fm <- fm.open("c:/temp/MiddleFork04.ssn/distance.fm/CapeHorn/dist.net2.b.bmat")
-net2b <-(net2b.fm[,])
-dim(net2b)
-net2b
-
-sum(net2b != net2b.old)
-close(net2b.fm)
-
-net2.fm <- fm.open("c:/temp/MiddleFork04.ssn/distance.fm/CapeHorn/dist.net2.bmat")
-net2 <-(net2.fm[,])
-dim(net2)
-net2
-sum(net2 != net2.old)
-close(net2.fm)
+## Just to make sure...
+closeAllConnections()
 
 
-###########
-old.obs <- ssn_get_stream_distmat(mf04p, "obs")
-names(old.obs)
-net1.old <- old.obs[[1]]
-net2.old <- old.obs[[2]]
-dim(net1.old)
 
-library(filematrix)
-net1.fm <- fm.open("c:/temp/MiddleFork04.ssn/distance.fm/obs/dist.net1.bmat")
-net1 <-(net1.fm[,])
-dim(net1)
-net1
-max(net1 - net1.old)
-close(net1.fm)
-
-net2.fm <- fm.open("c:/temp/MiddleFork04.ssn/distance.fm/obs/dist.net2.bmat")
-net2 <-(net2.fm[,])
-dim(net2)
-net2
-max(net2 - net2.old)
-close(net2.fm)
 
 
 
