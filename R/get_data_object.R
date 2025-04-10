@@ -22,10 +22,10 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
   ## get response value in pid (data) order
   na_index <- is.na(sf::st_drop_geometry(ssn.object$obs)[[all.vars(formula)[1]]])
   ## get index in pid (data) order
-  # observed_index <- which(!na_index)
-  # missing_index <- which(na_index)
-  observed_index <- !na_index
-  missing_index <- na_index
+  observed_index <- which(!na_index)
+  missing_index <- which(na_index)
+  # observed_index <- !na_index
+  # missing_index <- na_index
 
   # get ob data and frame objects
   obdata <- ssn.object$obs[observed_index, , drop = FALSE]
@@ -110,17 +110,18 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
     # partition_factor <- reformulate(paste0("as.character(", partition_factor_labels, ")"), intercept = FALSE)
   }
 
-
-  if (is.null(local)) {
-    if (n > 5000) {
-      local <- TRUE
-      message("Because the sample size exceeds 5000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun ssn_lm() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
-    } else {
-      local <- FALSE
-    }
-  }
+  # find index (can put back in with local later)
+  # if (is.null(local)) {
+  #   if (n > 5000) {
+  #     local <- TRUE
+  #     message("Because the sample size exceeds 5000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun ssn_lm() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
+  #   } else {
+  #     local <- FALSE
+  #   }
+  # }
+  local <- list(index = rep(1, n))
   local <- get_local_list_estimation(local, obdata, n, partition_factor)
-  n_local_index <- length(unique(local$index))
+
 
   # store data list
   obdata_list <- split.data.frame(obdata, local$index)
@@ -169,48 +170,30 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
   }
 
   # find dist object
-  if (n_local_index <= 1) {
-    dist_object <- get_dist_object(ssn.object, initial_object, additive, anisotropy)
-    # find maxes
-    tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
-    taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
-    if (tailup_none && taildown_none) {
-      tail_max <- Inf
-    } else {
-      tail_max <- max(dist_object$hydro_mat * dist_object$mask_mat)
-    }
+  dist_object <- get_dist_object(ssn.object, initial_object, additive, anisotropy)
 
-    euclid_none <- inherits(initial_object$euclid_initial, "euclid_none")
-    if (euclid_none) {
-      euclid_max <- Inf
-    } else {
-      if (anisotropy) {
-        euclid_max <- max(as.matrix(dist(cbind(dist_object$.xcoord, dist_object$.ycoord))))
-      } else {
-        euclid_max <- max(dist_object$euclid_mat) # no anisotropy
-      }
-    }
-    # find dist observed object
-    dist_object <- get_dist_object_oblist(dist_object, observed_index, local$index)
+  dist_object <- get_dist_object(ssn.object, initial_object, additive, anisotropy)
+  # find maxes
+  tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
+  taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
+  if (tailup_none && taildown_none) {
+    tail_max <- Inf
   } else {
-    dist_object <- get_dist_object_bigdata(ssn.object, initial_object, additive, anisotropy, local$index, observed_index)
-    bbox <- st_bbox(obdata)
-    tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
-    taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
-    if (tailup_none && taildown_none) {
-      tail_max <- Inf
-    } else {
-      tail_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
-    }
-    euclid_none <- inherits(initial_object$euclid_initial, "euclid_none")
-    if (euclid_none) {
-      euclid_max <- Inf
-    } else {
-      euclid_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
-    }
-    dist_object <- get_dist_object_oblist_bigdata(dist_object)
+    tail_max <- max(dist_object$hydro_mat * dist_object$mask_mat)
   }
 
+  euclid_none <- inherits(initial_object$euclid_initial, "euclid_none")
+  if (euclid_none) {
+    euclid_max <- Inf
+  } else {
+    if (anisotropy) {
+      euclid_max <- max(as.matrix(dist(cbind(dist_object$.xcoord, dist_object$.ycoord))))
+    } else {
+      euclid_max <- max(dist_object$euclid_mat) # no anisotropy
+    }
+  }
+  # find dist observed object
+  dist_object <- get_dist_object_oblist(dist_object, observed_index, local$index)
   # rename as oblist to not store two sets
   dist_object_oblist <- dist_object
 
