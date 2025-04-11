@@ -40,7 +40,9 @@ get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisot
     observed_index
   )
 
-  order_list <- order_list[order(order_list$network_index, order_list$pid), ]
+
+  order_list <- order_list[order(order_list$network_index, order_list$pid), , drop = FALSE]
+  order_list <- order_list[order_list$observed_index, , drop = FALSE]
   order_list <- split(order_list, local_index)
 
   # get list of distance matrices in order of the original data
@@ -134,24 +136,36 @@ get_dist_matlist_bigdata <- function(ssn.object, initial_object,
     # network by network and then combine so zeroes populate accordingly)
     distjunc_matlist <- lapply(order_list, function(x) get_distjunc_matlist_bigdata(x$network_index, x$pid, ssn.object))
 
-    # get other matrices as a list
-    dist_matlist <- list(
-      distjunc_matlist = distjunc_matlist,
-      mask_matlist = get_mask_matlist(distjunc_matlist),
-      a_matlist = get_a_matlist(distjunc_matlist),
-      b_matlist = get_b_matlist(distjunc_matlist),
-      hydro_matlist = get_hydro_matlist(distjunc_matlist)
-    )
 
     dist_matlist <- lapply(names(order_list), function(x) {
       dist_matlist <- list(
-        distjunc_mat = dist_matlist$distjunc_matlist[[x]],
-        mask_mat = dist_matlist$mask_matlist[[x]],
-        a_mat = dist_matlist$a_matlist[[x]],
-        b_mat = dist_matlist$b_matlist[[x]],
-        hydro_mat = dist_matlist$hydro_matlist[[x]]
+        distjunc_mat = Matrix::bdiag(distjunc_matlist[[x]]),
+        mask_mat = Matrix::bdiag(get_mask_matlist(distjunc_matlist[[x]])),
+        a_mat = Matrix::bdiag(get_a_matlist(distjunc_matlist[[x]])),
+        b_mat = Matrix::bdiag(get_b_matlist(distjunc_matlist[[x]])),
+        hydro_mat = Matrix::bdiag(get_hydro_matlist(distjunc_matlist[[x]]))
       )
     })
+    names(dist_matlist) <- names(order_list)
+
+    # # get other matrices as a list
+    # dist_matlist <- list(
+    #   distjunc_matlist = dist_matlist$distjunc_matlist,
+    #   mask_matlist = dist_matlist$mask_matrix,
+    #   a_matlist = get_a_matlist(distjunc_matlist),
+    #   b_matlist = get_b_matlist(distjunc_matlist),
+    #   hydro_matlist = get_hydro_matlist(distjunc_matlist)
+    # )
+    #
+    # dist_matlist <- lapply(names(order_list), function(x) {
+    #   dist_matlist <- list(
+    #     distjunc_mat = dist_matlist$distjunc_matlist[[x]],
+    #     mask_mat = dist_matlist$mask_matlist[[x]],
+    #     a_mat = dist_matlist$a_matlist[[x]],
+    #     b_mat = dist_matlist$b_matlist[[x]],
+    #     hydro_mat = dist_matlist$hydro_matlist[[x]]
+    #   )
+    # })
     names(dist_matlist) <- names(order_list)
 
     # if only taildown covariacne, do not need additive matrix
@@ -199,18 +213,18 @@ get_distjunc_matlist_bigdata <- function(network_index, pid, ssn.object) {
       stop("Unable to locate required distance matrix", call. = FALSE)
     }
     distjunc_fm <- fm.open(path)
-    pid_index <- rownames(distjunc_fm) %in% as.character(pid)
+    rownames_val <- rownames(distjunc_fm)
+    pid_index <- rownames_val %in% as.character(pid)
     dist_mat <- distjunc_fm[pid_index, pid_index]
+    rownames(dist_mat) <- rownames_val[pid_index]
     # get pid order
     # could also get this as dist_order[network_index == x]
-    pid_order <- order(as.numeric(rownames(distjunc_fm)))
+    pid_order <- order(as.numeric(rownames(dist_mat)))
     # get distance juncture
     distjunc <- dist_mat[pid_order, pid_order, drop = FALSE]
     close(distjunc_fm)
     distjunc
   })
-
-  distjunc_list <- Matrix::bdiag(distjunc_list)
 }
 
 
@@ -241,7 +255,6 @@ subset_dist_object_bigdata <- function(dist_object_name, dist_object, index) {
   }
   dist_sub
 }
-
 #' Find the w matrix list for each network
 #'
 #' @param distjunc_list Create list of w matrices (additive function weight) for each network.

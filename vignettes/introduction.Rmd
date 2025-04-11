@@ -6,6 +6,10 @@ output:
   pdf_document:
     toc: true
     toc_depth: '3'
+vignette: >
+  %\VignetteIndexEntry{Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include = FALSE}

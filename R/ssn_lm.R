@@ -66,6 +66,55 @@
 #' @param partition_factor A one-sided linear formula with a single term
 #'   specifying the partition factor.  The partition factor assumes observations
 #'   from different levels of the partition factor are uncorrelated.
+#' @param local An optional logical or list controlling the big data approximation.
+#'   If omitted, \code{local} is set
+#'   to \code{TRUE} or \code{FALSE} based on the sample size (the number of
+#'   non-missing observations in \code{data}) -- if the sample size exceeds 5,000,
+#'   \code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
+#'   \code{local} is also set to \code{FALSE} when \code{spcov_type} is \code{"none"}
+#'   and there are no random effects specified via \code{random}.
+#'   If \code{FALSE}, no big data approximation is implemented.
+#'   If a list is provided, the following arguments detail the big
+#'   data approximation:
+#'   \itemize{
+#'     \item \code{index: }The group indexes. Observations in different
+#'       levels of \code{index} are assumed to be uncorrelated for the
+#'       purposes of estimation. If \code{index} is not provided, it is
+#'       determined by specifying \code{method} and either \code{size} or \code{groups}.
+#'     \item \code{method}: The big data approximation method used to determine \code{index}. Ignored
+#'       if \code{index} is provided. If \code{method = "random"},
+#'       observations are randomly assigned to \code{index} based on \code{size}.
+#'       If \code{method = "kmeans"}, observations assigned to \code{index}
+#'       based on k-means clustering on the coordinates with \code{groups} clusters. The default
+#'       is \code{"kmeans"}. Note that both methods have a random component, which
+#'       means that you may get different results from separate model fitting calls.
+#'       To ensure consistent results, specify \code{index} or set a seed via
+#'       \code{base::set.seed()}.
+#'     \item \code{size}: The number of observations in each \code{index} group
+#'       when \code{method} is \code{"random"}. If the number of observations
+#'       is not divisible by \code{size}, some levels get \code{size - 1} observations.
+#'       The default is 100.
+#'     \item \code{groups: }The number of \code{index} groups. If \code{method}
+#'       is \code{"random"}, \code{size} is \eqn{ceiling(n / groups)}, where
+#'       \eqn{n} is the sample size. Automatically determined if \code{size}
+#'       is specified. If \code{method} is \code{"kmeans"}, \code{groups}
+#'       is the number of clusters.
+#'     \item \code{var_adjust: }The approach for adjusting the variance-covariance
+#'       matrix of the fixed effects. \code{"none"} for no adjustment, \code{"theoretical"}
+#'       for the theoretically-correct adjustment,
+#'       \code{"pooled"} for the pooled adjustment, and \code{"empirical"} for the
+#'       empirical adjustment. The default is \code{"theoretical"} for samples sizes
+#'       up to 100,000 and \code{"none"} for samples sizes exceeding 100,000.
+#'     \item \code{parallel}: If \code{TRUE}, parallel processing via the
+#'       parallel package is automatically used. The default is \code{FALSE}.
+#'     \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
+#'       parallelize over. The default is the number of available cores on your machine.
+#'   }
+#'   When \code{local} is a list, at least one list element must be provided to
+#'   initialize default arguments for the other list elements.
+#'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
+#'   that \code{local} is transformed into
+#'   \code{list(size = 100, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)}.
 #' @param ... Other arguments to \code{stats::optim()}.
 #'
 #' @details The linear model for spatial stream networks can be written as
@@ -193,6 +242,15 @@
 #'   spatial and random effects components is then multiplied element-wise
 #'   (Hadmard product) by \eqn{P}, yielding the final covariance matrix.
 #'
+#' \code{local} Details: The big data approximation works by sorting observations into different levels
+#'   of an index variable. Observations in different levels of the index variable
+#'   are assumed to be uncorrelated for the purposes of model fitting. Sparse matrix methods are then implemented
+#'   for significant computational gains. Parallelization generally further speeds up
+#'   computations when data sizes are larger than a few thousand. Both the \code{"random"} and \code{"kmeans"} values of \code{method}
+#'   in \code{local} have random components. That means you may get slightly different
+#'   results when using the big data approximation and rerunning \code{splm()} with the same code. For consistent results,
+#'   either set a seed via \code{base::set.seed()} or specify \code{index} to \code{local}.
+#'
 #'   Other Details: Observations with \code{NA} response values are removed for model
 #'   fitting, but their values can be predicted afterwards by running
 #'   \code{predict(object)}.
@@ -293,7 +351,7 @@ ssn_lm <- function(formula, ssn.object,
                    euclid_type = "none", nugget_type = "nugget",
                    tailup_initial, taildown_initial, euclid_initial, nugget_initial,
                    additive, estmethod = "reml", anisotropy = FALSE,
-                   random, randcov_initial, partition_factor, ...) {
+                   random, randcov_initial, partition_factor, local, ...) {
   # set defaults
   if (missing(tailup_initial)) tailup_initial <- NULL
   if (missing(taildown_initial)) taildown_initial <- NULL
@@ -303,8 +361,7 @@ ssn_lm <- function(formula, ssn.object,
   if (missing(random)) random <- NULL
   if (missing(randcov_initial)) randcov_initial <- NULL
   if (missing(partition_factor)) partition_factor <- NULL
-  local <- NULL
-
+  if (missing(local)) local <- NULL
 
   # fix additive
   if (is.symbol(substitute(additive))) { # or is.language
@@ -321,10 +378,17 @@ ssn_lm <- function(formula, ssn.object,
   check_ssn_lm(initial_object, ssn.object, additive, estmethod)
 
   # get data object
-  data_object <- get_data_object(
-    formula, ssn.object, additive, anisotropy,
-    initial_object, random, randcov_initial, partition_factor, local, ...
-  )
+  if (is.null(local) || (is.logical(local) && !local)) {
+    data_object <- get_data_object(
+      formula, ssn.object, additive, anisotropy,
+      initial_object, random, randcov_initial, partition_factor, local, ...
+    )
+  } else {
+    data_object <- get_data_object_bigdata(
+      formula, ssn.object, additive, anisotropy,
+      initial_object, random, randcov_initial, partition_factor, local, ...
+    )
+  }
 
   # add random to initial object
   initial_object$randcov_initial <- data_object$randcov_initial
@@ -341,20 +405,23 @@ ssn_lm <- function(formula, ssn.object,
   cov_est_object <- cov_estimate_gloglik(data_object, ssn.object, initial_object, estmethod, optim_dotlist)
 
   # compute model statistics
-  model_stats <- get_model_stats(cov_est_object, data_object, estmethod)
+  if (is.null(local) || (is.logical(local) && !local)) {
+    model_stats <- get_model_stats(cov_est_object, data_object, estmethod)
+  } else {
+    model_stats <- get_model_stats_bigdata(cov_est_object, data_object, estmethod)
+  }
 
   # parallel cluster if necessary (add back when local implemented)
-  # if (data_object$parallel) {
-  #   data_object$cl <- parallel::stopCluster(data_object$cl) # makes it NULL
-  # }
+  if (data_object$parallel) {
+    data_object$cl <- parallel::stopCluster(data_object$cl) # makes it NULL
+  }
 
   # store index if necessary (add back when local implemented)
-  # if (is.null(local)) { # local was stored as NULL in previous function call
-  #   local_index <- NULL
-  # } else {
-  #   local_index <- data_object$local_index
-  # }
-  local_index <- NULL
+  if (is.null(local)) { # local was stored as NULL in previous function call
+    local_index <- NULL
+  } else {
+    local_index <- data_object$local_index
+  }
 
   output <- list(
     coefficients = model_stats$coefficients,

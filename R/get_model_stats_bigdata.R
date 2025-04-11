@@ -5,7 +5,7 @@
 #' @param estmethod Estimation method.
 #'
 #' @noRd
-get_model_stats <- function(cov_est_object, data_object, estmethod) {
+get_model_stats_bigdata <- function(cov_est_object, data_object, estmethod) {
   # store the covariance matrix list
   cov_matrix_list <- get_cov_matrix_list(cov_est_object$params_object, data_object)
 
@@ -85,28 +85,28 @@ get_model_stats <- function(cov_est_object, data_object, estmethod) {
   # reorder relevant quantities to match data order
   ## fitted values
   model_stats_names <- data_object$pid[data_object$observed_index]
-  fitted$response <- fitted$response[order(data_object$order)]
+  fitted$response <- fitted$response[order(data_object$order_bigdata)]
   names(fitted$response) <- model_stats_names
-  fitted$tailup <- fitted$tailup[order(data_object$order)]
+  fitted$tailup <- fitted$tailup[order(data_object$order_bigdata)]
   names(fitted$tailup) <- model_stats_names
-  fitted$taildown <- fitted$taildown[order(data_object$order)]
+  fitted$taildown <- fitted$taildown[order(data_object$order_bigdata)]
   names(fitted$taildown) <- model_stats_names
-  fitted$euclid <- fitted$euclid[order(data_object$order)]
+  fitted$euclid <- fitted$euclid[order(data_object$order_bigdata)]
   names(fitted$euclid) <- model_stats_names
-  fitted$nugget <- fitted$nugget[order(data_object$order)]
+  fitted$nugget <- fitted$nugget[order(data_object$order_bigdata)]
   names(fitted$nugget) <- model_stats_names
   ## hat values
-  hatvalues <- hatvalues[order(data_object$order)]
+  hatvalues <- hatvalues[order(data_object$order_bigdata)]
   names(hatvalues) <- model_stats_names
   ## residuals
-  residuals$response <- residuals$response[order(data_object$order)]
+  residuals$response <- residuals$response[order(data_object$order_bigdata)]
   names(residuals$response) <- model_stats_names
-  residuals$pearson <- residuals$pearson[order(data_object$order)]
+  residuals$pearson <- residuals$pearson[order(data_object$order_bigdata)]
   names(residuals$pearson) <- model_stats_names
-  residuals$standardized <- residuals$standardized[order(data_object$order)]
+  residuals$standardized <- residuals$standardized[order(data_object$order_bigdata)]
   names(residuals$standardized) <- model_stats_names
   ## cook's distance
-  cooks_distance <- cooks_distance[order(data_object$order)]
+  cooks_distance <- cooks_distance[order(data_object$order_bigdata)]
   names(cooks_distance) <- model_stats_names
 
   # get variance covariance matrices

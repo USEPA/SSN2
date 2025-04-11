@@ -6,31 +6,33 @@
 #'
 #' @noRd
 gloglik_products <- function(params_object, data_object, estmethod) {
-  cov_matrix_list <- get_cov_matrix_list(params_object, data_object)
-  # cholesky products (no local)
-  # if (data_object$parallel) {
-  #   cluster_list <- lapply(seq_along(cov_matrix_list), function(l) {
-  #     cluster_list_element <- list(
-  #       c = cov_matrix_list[[l]],
-  #       x = data_object$X_list[[l]],
-  #       y = data_object$y_list[[l]]
-  #     )
-  #   })
-  #   cholprods_list <- parallel::parLapply(data_object$cl, cluster_list, get_cholprods_parallel)
-  #   names(cholprods_list) <- names(cov_matrix_list)
-  # } else {
-  #   cholprods_list <- mapply(
-  #     c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list,
-  #     function(c, x, y) get_cholprods(c, x, y),
-  #     SIMPLIFY = FALSE
-  #   )
-  # }
 
-  cholprods_list <- mapply(
-    c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list,
-    function(c, x, y) get_cholprods(c, x, y),
-    SIMPLIFY = FALSE
-  )
+
+  cov_matrix_list <- get_cov_matrix_list(params_object, data_object)
+  # cholesky products (local)
+  if (data_object$parallel) {
+    cluster_list <- lapply(seq_along(cov_matrix_list), function(l) {
+      cluster_list_element <- list(
+        c = cov_matrix_list[[l]],
+        x = data_object$X_list[[l]],
+        y = data_object$y_list[[l]]
+      )
+    })
+    cholprods_list <- parallel::parLapply(data_object$cl, cluster_list, get_cholprods_parallel)
+    names(cholprods_list) <- names(cov_matrix_list)
+  } else {
+    cholprods_list <- mapply(
+      c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list,
+      function(c, x, y) get_cholprods(c, x, y),
+      SIMPLIFY = FALSE
+    )
+  }
+
+  # cholprods_list <- mapply(
+  #   c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list,
+  #   function(c, x, y) get_cholprods(c, x, y),
+  #   SIMPLIFY = FALSE
+  # )
 
   # storing relevant products
   ## lower chol %*% X
