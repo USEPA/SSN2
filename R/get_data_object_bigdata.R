@@ -204,7 +204,7 @@ get_data_object_bigdata <- function(formula, ssn.object, additive, anisotropy,
   pid <- ssn_get_netgeom(ssn.object$obs, "pid")$pid
 
   # restructure ssn
-  ssn.object <- restruct_ssn_missing(ssn.object, observed_index, missing_index)
+  ssn.object <- restruct_ssn_missing_bigdata(ssn.object, observed_index, missing_index)
 
   list(
     anisotropy = anisotropy,
