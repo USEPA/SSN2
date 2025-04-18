@@ -59,7 +59,7 @@
 #' )
 #' predict(ssn_mod, "pred1km")
 predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none", "confidence", "prediction"),
-                           level = 0.95, block = FALSE, ...) {
+                           level = 0.95, block = FALSE, local, ...) {
   # match interval argument so the three display
   interval <- match.arg(interval)
 
@@ -74,6 +74,22 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
   #   object <- eval(call_val, envir = parent.frame())
   #   return(object)
   # }
+
+  if (missing(local)) local <- NULL
+  # deal with local
+  if (is.null(local)) {
+    if (object$n > 10000) {
+      # if (object$n > 5000 || NROW(newdata) > 5000) {
+      local <- TRUE
+      message("Because the sample size of the fitted model object exceeds 10,000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun predict() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
+    } else {
+      local <- FALSE
+    }
+  }
+  if (local) {
+    object <- predict_bigdata_ssn_lm(object, newdata, se.fit, interval, level, block, local, ...)
+    return(object)
+  }
 
   #  safter but potentially passes block
   if (block) {
