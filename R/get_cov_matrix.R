@@ -18,11 +18,13 @@ get_cov_matrix <- function(params_object, dist_object_oblist,
 
   # could use Reduce if arguments the same
 
+
   # compute spatial covariance matrix
   cov_matrix <- cov_matrix(params_object$tailup, dist_object_oblist) + # tailup covariance
     cov_matrix(params_object$taildown, dist_object_oblist) + # taildown covariance
     cov_matrix(params_object$euclid, dist_object_oblist, anisotropy) + # euclid covariance
     cov_matrix(params_object$nugget, dist_object_oblist, de_scale, diagtol) # nugget covariance
+
 
   # add random effects if necessary
   if (!is.null(randcov_list)) {

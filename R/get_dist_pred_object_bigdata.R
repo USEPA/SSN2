@@ -107,7 +107,7 @@ get_distjunc_pred_matlist_bigdata <- function(network_index_obs, pid_obs, networ
     # on the disk, distance matrices are stored by network
     workspace_name <- paste("dist.net", x, ".bmat", sep = "")
     # path to the distance matrices on disk
-    path <- file.path(ssn.object$path, "distance", ext, workspace_name)
+    path <- file.path(ssn.object$path, "distance", "obs", workspace_name)
     # check to see if the file exists on the disk
     if (!file.exists(path)) {
       stop("Unable to locate required distance matrix", call. = FALSE)

@@ -105,6 +105,7 @@ predict_bigdata_ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c
 
   # get params object
   params_object <- object$coefficients$params_object
+  initial_object <-
 
 
   formula_newdata <- delete.response(terms(object))
@@ -342,23 +343,46 @@ get_pred_bigdata_ssn_lm <- function(newdata_list, se.fit, interval, formula,
   }
 
   # making the covariance vector
-  cov_vector_val <- get_cov_vector(params_object, dist_pred_object, obdata, newdata_list$row, partition_factor = NULL, anisotropy)
-
-  # subsetting data if method distance
-  if (local$method == "distance") {
-    n <- length(cov_vector_val)
-    # want the smallest distance here and order goes from smallest first to largest last (keep last values with are smallest distance)
-    nn_index <- order(as.numeric(dist_vector))[seq(from = 1, to = min(n, local$size))]
-    obdata <- obdata[nn_index, , drop = FALSE]
-    cov_vector_val <- cov_vector_val[nn_index]
-  }
+  cov_vector_val <- get_cov_vector(params_object, dist_pred_object, obdata, newdata_list$row, partition_factor = partition_factor, anisotropy)
 
   if (local$method == "covariance") {
     n <- length(cov_vector_val)
     # want the largest covariance here and order goes from smallest first to largest last (keep last values which are largest covariance)
     cov_index <- order(as.numeric(cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
     obdata <- obdata[cov_index, , drop = FALSE]
+    obdata <- obdata[order(cov_index), , drop = FALSE]
     cov_vector_val <- cov_vector_val[cov_index]
+  }
+
+  if (local$method %in% c("covariance")) {
+    if (!is.null(random)) {
+      randcov_names <- get_randcov_names(random)
+      xlev_list <- lapply(Z_index_obdata_list, function(x) x$reform_bar2_xlev)
+      randcov_Zs <- get_randcov_Zs(obdata, randcov_names, xlev_list = xlev_list)
+    } else {
+      randcov_Zs <- NULL
+    }
+    partition_matrix_val <- partition_matrix(partition_factor, obdata)
+
+    new_ssn.object <- list(obs = obdata, path = ssn.object$path) # original order
+    new_initial_object <- get_initial_cheap(params_object)
+    # new_pid_obs <- pid_obs[cov_index]
+    dist_object_oblist <- get_dist_object_bigdata(
+      new_ssn.object,
+      new_initial_object,
+      additive,
+      anisotropy,
+      local_index = rep(1, length(cov_index)), # just to make it work with big data observed function
+      observed_index = rep(TRUE, length(cov_index)) # just to make it work with big data observed function
+    )$dist_matlist[[1]]
+    dist_object_oblist$network_index <- rep(1, length(cov_index)) # just so nugget cov works
+    cov_matrix_val <- get_cov_matrix(params_object, dist_object_oblist, randcov_list = randcov_Zs, partition_list = partition_matrix_val, anisotropy = anisotropy, de_scale = 1, diagtol = 0)
+    cov_matrix_val <- cov_matrix_val[order(order(cov_index)), order(order(cov_index))]
+    cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
+    model_frame <- model.frame(formula, obdata[order(order(cov_index)), , drop = FALSE], drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
+    Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
+    y <- model.response(model_frame)
+    offset <- model.offset(model_frame)
   }
 
   # handle offset
@@ -367,6 +391,9 @@ get_pred_bigdata_ssn_lm <- function(newdata_list, se.fit, interval, formula,
   }
 
 
+
+
+  total_var <- cov_lowchol[1, 1]^2
 
   c0 <- as.numeric(cov_vector_val)
   SqrtSigInv_X <- forwardsolve(cov_lowchol, Xmat)
