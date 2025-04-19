@@ -26,19 +26,24 @@ get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisot
 
   if (is.null(additive)) {
     additive_val <- NULL
+    order_list <- data.frame(
+      network_index = network_index,
+      pid = pid,
+      dist_order = dist_order,
+      inv_dist_order = inv_dist_order,
+      observed_index
+    )
   } else {
     additive_val <- as.numeric(ssn.object$obs[[additive]])
+    order_list <- data.frame(
+      network_index = network_index,
+      pid = pid,
+      dist_order = dist_order,
+      inv_dist_order = inv_dist_order,
+      additive_val = additive_val,
+      observed_index
+    )
   }
-
-  # create "order" list
-  order_list <- data.frame(
-    network_index = network_index,
-    pid = pid,
-    dist_order = dist_order,
-    inv_dist_order = inv_dist_order,
-    additive_val = additive_val,
-    observed_index
-  )
 
 
   order_list <- order_list[order(order_list$network_index, order_list$pid), , drop = FALSE]
