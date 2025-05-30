@@ -16,7 +16,7 @@ whether observed sites should be included in the SSN object.}
 the .ssn folder. See details.}
 
 \item{overwrite}{default = \code{FALSE}. If \code{TRUE}, overwrite
-existing binaryID.db files and netgeom column(s) if it exists in the
+existing binaryID.db files and netgeom column(s) if they exist in the
 edges, observed sites (if \code{include_obs = TRUE}), and
 prediction site datasets (if they exist).}
 }
@@ -75,7 +75,7 @@ directory. This information is used internally by
 to fit a spatial statistical model to stream network data. If
 \code{overwrite = TRUE} (\code{overwrite = FALSE} is the default) and a binaryID.db
 file already exists within the .ssn directory, it will be
-overwriten when the \code{SSN} object is created.
+overwriten when the \code{SSN} object is created. If a 'netgeom' column exists in any of the input datasets (e.g. edges, observed sites, predictions sites) and \code{overwrite = TRUE}, it will be overwriten.
 
 At a minimum, an \code{SSN} object must always contain streams,
 which are referred to as edges. The \code{SSN} object would also

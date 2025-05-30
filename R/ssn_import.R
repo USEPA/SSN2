@@ -8,7 +8,7 @@
 #' @param predpts Vector of prediction site dataset names found within
 #'   the .ssn folder. See details.
 #' @param overwrite default = \code{FALSE}. If \code{TRUE}, overwrite
-#'   existing binaryID.db files and netgeom column(s) if it exists in the
+#'   existing binaryID.db files and netgeom column(s) if they exist in the
 #'   edges, observed sites (if \code{include_obs = TRUE}), and
 #'   prediction site datasets (if they exist).
 #'
@@ -47,7 +47,7 @@
 #'   to fit a spatial statistical model to stream network data. If
 #'   \code{overwrite = TRUE} (\code{overwrite = FALSE} is the default) and a binaryID.db
 #'   file already exists within the .ssn directory, it will be
-#'   overwriten when the \code{SSN} object is created.
+#'   overwriten when the \code{SSN} object is created. If a 'netgeom' column exists in any of the input datasets (e.g. edges, observed sites, predictions sites) and \code{overwrite = TRUE}, it will be overwriten.
 #'
 #'   At a minimum, an \code{SSN} object must always contain streams,
 #'   which are referred to as edges. The \code{SSN} object would also
@@ -177,9 +177,18 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
     }
 
     ## Add network geometry column to edges
-    sfedges<- create_netgeom(sfedges, type = "LINESTRING",
+    if ("netgeom" %in% colnames(sfedges)){
+      if(overwrite == TRUE){
+        sfedges<- create_netgeom(sfedges, type = "LINESTRING",
                                overwrite = overwrite)
-    
+      } else {
+        message("netgeom exists in edges and overwrite == FALSE. No changes made to netgeom\n")
+      }
+    } else {
+      sfedges<- create_netgeom(sfedges, type = "LINESTRING",
+                               overwrite = overwrite)
+    }
+
   } else {
     stop(paste0("Edges is missing from ", path))
   }
@@ -204,10 +213,19 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
       sf::st_geometry(sfsites) <- "geometry"
     }
 
-    ## ## Add network geometry column
-    sfsites<- create_netgeom(sfsites, type = "POINT",
+    ## Add network geometry column to sites
+    if ("netgeom" %in% colnames(sfsites)){
+      if(overwrite == TRUE){
+        sfsites<- create_netgeom(sfsites, type = "POINT",
+                                 overwrite = overwrite)
+      } else {
+        message("netgeom exists in observed sites and overwrite == FALSE. No changes made to netgeom\n")
+      }
+    } else {
+      sfsites<- create_netgeom(sfsites, type = "POINT",
                                overwrite = overwrite)
-         
+    }
+
   } else {
     sfsites <- NA
   }
@@ -219,16 +237,25 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
     sfpreds <- vector(mode = "list", length = length(predpts))
 
     for (m in seq_len(length(predpts))) {
-      tmp.preds <- get_sf_obj(predpts[m]) 
+      tmp.preds <- get_sf_obj(predpts[m])
 
       ## Check geometry type
       if (sum(st_geometry_type(tmp.preds, by_geometry = TRUE) == "POINT") != nrow(tmp.preds)) {
         stop(paste0(predpts[m], " do not have POINT geometry"))
       }
 
-      ## Add network geometry column
-      tmp.preds<- create_netgeom(tmp.preds, type = "POINT",
-                               overwrite = overwrite)
+      ## Add network geometry column to tmp.preds
+      if ("netgeom" %in% colnames(tmp.preds)){
+        if(overwrite == TRUE){
+          tmp.preds<- create_netgeom(tmp.preds, type = "POINT",
+                                   overwrite = overwrite)
+        } else {
+          message(paste0("netgeom exists in ", p.names[m], " and overwrite == FALSE. No changes made to netgeom\n"))
+        }
+      } else {
+        tmp.preds<- create_netgeom(tmp.preds, type = "POINT",
+                                 overwrite = overwrite)
+      }
 
       sfpreds[[m]] <- tmp.preds
       names(sfpreds)[m] <- p.names[m]
