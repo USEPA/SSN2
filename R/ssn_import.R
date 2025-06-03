@@ -11,6 +11,7 @@
 #'   existing binaryID.db files and netgeom column(s) if they exist in the
 #'   edges, observed sites (if \code{include_obs = TRUE}), and
 #'   prediction site datasets (if they exist).
+#' @param verbose default = \code{TRUE}. If \code{FALSE}, warning messages will not be printed to the console.
 #'
 #' @details The \command{ssn_import} function imports spatial data (shapefile or GeoPackage format)
 #'   from a .ssn folder generated using the
@@ -110,7 +111,7 @@
 #' )
 #'
 ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
-                       overwrite = FALSE) {
+                       overwrite = FALSE, verbose = TRUE) {
   if (!dir.exists(path)) stop("Cannot find the .ssn folder.")
 
   # Get wd
@@ -152,12 +153,10 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
     }
   }
 
-
   ## Remove path to predpts files, if included
   if (!is.null(predpts)) {
     predpts <- basename(predpts)
   }
-
 
   ## ----------------------------------------------------
   ## Import edges
@@ -182,7 +181,9 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
         sfedges<- create_netgeom(sfedges, type = "LINESTRING",
                                overwrite = overwrite)
       } else {
-        message("netgeom exists in edges and overwrite == FALSE. No changes made to netgeom\n")
+        if(verbose == TRUE) {
+            message("netgeom exists in edges and overwrite == FALSE. No changes made to netgeom\n")
+        }
       }
     } else {
       sfedges<- create_netgeom(sfedges, type = "LINESTRING",
@@ -219,7 +220,9 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
         sfsites<- create_netgeom(sfsites, type = "POINT",
                                  overwrite = overwrite)
       } else {
-        message("netgeom exists in observed sites and overwrite == FALSE. No changes made to netgeom\n")
+        if(verbose == TRUE) {
+            message("netgeom exists in observed sites and overwrite == FALSE. No changes made to netgeom\n")
+        }
       }
     } else {
       sfsites<- create_netgeom(sfsites, type = "POINT",
@@ -234,6 +237,7 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   ## Import preds
   ## ----------------------------------------------------
   if (!is.null(predpts)) {
+
     sfpreds <- vector(mode = "list", length = length(predpts))
 
     for (m in seq_len(length(predpts))) {
@@ -250,7 +254,9 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
           tmp.preds<- create_netgeom(tmp.preds, type = "POINT",
                                    overwrite = overwrite)
         } else {
-          message(paste0("netgeom exists in ", p.names[m], " and overwrite == FALSE. No changes made to netgeom\n"))
+          if(verbose == TRUE) {
+              message(paste0("netgeom exists in ", p.names[m], " and overwrite == FALSE. No changes made to netgeom\n"))
+          }
         }
       } else {
         tmp.preds<- create_netgeom(tmp.preds, type = "POINT",
@@ -273,11 +279,13 @@ ssn_import <- function(path, include_obs = TRUE, predpts = NULL,
   class(ssnlist) <- "SSN"
 
   ## Create Binary ID database
-  createBinaryID(ssnlist, overwrite = overwrite)
+  createBinaryID(ssnlist, overwrite = overwrite, verbose = verbose)
 
   ## Warning when observation sites are not included in SSN
   if (is.logical(ssnlist$obs)) {
-    warning("SSN does not include observed sites, which are needed to fit models. If this was a mistake, run ssn_import() with obs correctly defined")
+      if(verbose == TRUE) {
+          warning("SSN does not include observed sites, which are needed to fit models. If this was a mistake, run ssn_import() with obs correctly defined")
+      }
   }
 
   ## Return

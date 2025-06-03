@@ -2,16 +2,19 @@
 #'
 #' @param ssn SSN object
 #' @param overwrite Should binaryID.db be deleted if it already exists?
+#' @param verbose default = \code{TRUE}. If \code{FALSE}, warning messages will not be printed to the console.
 #'
 #' @return binary ID database
 #' @noRd
-createBinaryID <- function(ssn, overwrite) {
+createBinaryID <- function(ssn, overwrite, verbose = TRUE) {
   ## If binaryID.db exists
   if (file.exists("binaryID.db") == TRUE) {
     if (overwrite == TRUE) {
       unlink("binaryID.db")
     } else {
-      message("binaryID.db already exists - no changes were made to binaryID.db table\n")
+        if(verbose == TRUE) {
+            message("binaryID.db already exists - no changes were made to binaryID.db table\n")
+        }
       mm <- TRUE
     }
   }

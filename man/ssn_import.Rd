@@ -4,7 +4,13 @@
 \alias{ssn_import}
 \title{Import \code{SSN} object}
 \usage{
-ssn_import(path, include_obs = TRUE, predpts = NULL, overwrite = FALSE)
+ssn_import(
+  path,
+  include_obs = TRUE,
+  predpts = NULL,
+  overwrite = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{path}{Filepath to the .ssn directory. See details.}
@@ -19,6 +25,8 @@ the .ssn folder. See details.}
 existing binaryID.db files and netgeom column(s) if they exist in the
 edges, observed sites (if \code{include_obs = TRUE}), and
 prediction site datasets (if they exist).}
+
+\item{verbose}{default = \code{TRUE}. If \code{FALSE}, warning messages will not be printed to the console.}
 }
 \value{
 \code{ssn_import} returns an object of class SSN, which is a list
