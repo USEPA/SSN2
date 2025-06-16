@@ -66,6 +66,8 @@ getSitesRelationshipsDF <- function(ssn, pid, junk, ind, ob_by_locID, bin,
           match(ob.j$pid, ssn$preds[[name]]$ng.pid)]
 
       }
+      ob.j <- ob.j[order(ob.j[, "pid"]), ]
+
       ob.j
 
 }

@@ -164,7 +164,6 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
   #   return(invisible(NULL))
   # }
 
-
   # recreate function argument name
   ssn <- ssn.object
 
@@ -304,18 +303,29 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
 
       obs.pids <- sort(as.numeric(ssn$obs$ng.pid[ind.obs]))
 
+      ## Check for o x o
+      obs.exist <- file.exists(paste0(workspace.name1, ".bmat"))
+
       ## Create empty obs distance matrix
-      current_distance_matrix <-
-        fm.create(filenamebase = workspace.name1,
-                  nrow = site.no, ncol = site.no, type = "double")
+      if((obs.exist == TRUE & overwrite == TRUE) |
+         obs.exist == FALSE) {
 
-      rownames(current_distance_matrix) <- as.character(obs.pids)
-      colnames(current_distance_matrix) <- as.character(obs.pids)
+        current_distance_matrix <- fm.create(
+          filenamebase = workspace.name1,
+          nrow = site.no,
+          ncol = site.no,
+          type = "double")
 
-      close(current_distance_matrix)
+        rownames(current_distance_matrix) <- as.character(obs.pids)
+        colnames(current_distance_matrix) <- as.character(obs.pids)
+
+        close(current_distance_matrix)
+        obs.exist <- FALSE
+      } else {
+        message(paste0("observed site distance matrix for netID = ",
+                       net.num, " exists and overwrite = FALSE. No changes made to distance matrix.\n"))
+      }
     }
-
-
 
     ## -------------------------------------------------------------
     ## CASE 1: IF OBS and PREDS EXIST ON NETWORK
@@ -333,6 +343,9 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       workspace.name.b <- paste(ssn$path, "/distance/", predpts,
                                 "/dist.net", net.num, ".b", sep = "")
 
+      ###################################################################
+      ## This will overwrite existing files if they already exist....
+
       current_distance_matrix_a <-
             fm.create(filenamebase = workspace.name.a,
               nrow = pred.site.no, ncol = site.no, type = "double")
@@ -347,10 +360,14 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       rownames(current_distance_matrix_b) <- as.character(pred.pids)
       colnames(current_distance_matrix_b) <- as.character(obs.pids)
 
+      close(current_distance_matrix_a)
+      close(current_distance_matrix_b)
+
       ## Extract binaryID table for the network
       bin.table <- dbReadTable(connect, net.name)
 
       ## If overwrite == FALSE, check whether distance matrices exist
+      ## DOES THIS WORK? DIDN'T i JUST CREATE IT ABOVE?
       if (!overwrite) {
 
         ## Check for o x p
@@ -365,66 +382,38 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
           ))
         )
 
-        # ## If they are all already there, warn but continue
-        # if (all(exists)) {
-        #   if (!warned.overwrite) {
-        #     warned.overwrite <- TRUE
-        #     message("Prediction site distance matrices already exist with overwrite set to FALSE. Not overwriting existing matrices\n")
-        #   }
-        #   next
-        #
-        # ## if some exist but some don't that's an error
-        # } else if (any(exists) && any(!exists)) {
-        #     stop("overwrite was set to FALSE and some (but not all) distance matrices already exist", call. = FALSE)
-        # }
-      }
-
       ## Calculate obs x obs distance matrix
       if (!only_predpts) {
 
         ## Set o x o distance matrix name
-        workspace.name1 <- paste(ssn$path, "/distance/obs/dist.net",
-                                net.num, sep = "")
-
-        # ## Check for o x o - look at this later
-        # if (!only_predpts) {
-        #   obs.exists <- file.exists(file.path(ssn$path, "distance", "obs",
-        #                                   workspace.name))
-        # } else {
-        #   obs.exists <- FALSE
-        # }
-        #
-        # if(obs.exists == TRUE){
-        #   message("Observed site distance matrices already exist with overwrite set to FALSE. Not overwriting existing matrices\n")
-        #
-        # }
-
-
-
+        # workspace.name1 <- paste(ssn$path, "/distance/obs/dist.net",
+        #                         net.num, sep = "")
 
         ## Calculate obs x obs distances
-        if (is.null(getDoParName())) {
+        if(obs.exist == FALSE) {
+
+          if (is.null(getDoParName())) {
             registerDoSEQ() # A little hack to avoid the foreach warning 1st time.
+          }
+
+          ## Create vector iterator
+          itCol <- isplitVector(obs.pids, chunks = no_cores)
+
+          ans1<- foreach(obs.pids.vec=itCol,
+                         .packages = c("SSN2", "filematrix","itertools","iterators"),
+                         .errorhandling = "pass") %dopar% {
+
+                           amongSitesBigDistMat(ssn = ssn,
+                                                pids = obs.pids.vec,
+                                                net.num = net.num,
+                                                bin.table = bin.table,
+                                                name = "obs",
+                                                workspace.name = workspace.name1)
+                           finished1 <- TRUE
+                           return(finished1)
+                         }
+
         }
-
-        ## Create vector iterator
-        itCol <- isplitVector(obs.pids, chunks = no_cores)
-
-        ans1<- foreach(obs.pids.vec=itCol,
-                       .packages = c("SSN2", "filematrix","itertools","iterators"),
-                       .errorhandling = "pass") %dopar% {
-
-                         amongSitesBigDistMat(ssn = ssn,
-                                              pids = obs.pids.vec,
-                                              net.num = net.num,
-                                              bin.table = bin.table,
-                                              name = "obs",
-                                              workspace.name = workspace.name1)
-                         finished1 <- TRUE
-                         return(finished1)
-                       }
-
-       close(current_distance_matrix)
       }
 
       # parLapply
@@ -441,8 +430,9 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                                                     workspace.name.a = workspace.name.a,
                                                     workspace.name.b = workspace.name.b))
 
-      close(current_distance_matrix_a)
-      close(current_distance_matrix_b)
+      #close(current_distance_matrix_a)
+      #close(current_distance_matrix_b)
+      }
     }
     ## ---------------------------------------------------------------------------------
     ## Case 2: Observed sites, no prediction sites
@@ -473,9 +463,8 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                          finished1 <- TRUE
                          return(finished1)
                        }
-      close(current_distance_matrix)
+      #close(current_distance_matrix)
     }
-
 
     ## ---------------------------------------------------------------------------------
     ## Case 3: Calculate distances among prediction sites
@@ -503,6 +492,8 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       rownames(among_distance_matrix) <- as.character(pred.pids)
       colnames(among_distance_matrix) <- as.character(pred.pids)
 
+      close(among_distance_matrix)
+
       ##among_distance_matrix <- amongSitesDistMat(ssn, pred.pids,
         ##name = predpts, bin.table)
 
@@ -521,7 +512,7 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                       finished3 <- TRUE
                       return(finished3)
                        }
-        close(among_distance_matrix)
+        #close(among_distance_matrix)
     }
 
   }

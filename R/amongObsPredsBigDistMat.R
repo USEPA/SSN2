@@ -4,7 +4,6 @@ amongObsPredsBigDistMat <- function(ssn, obs.pids, pred.pids, bin.table,
                                     workspace.name.a, workspace.name.b,
                                     pred.name){
 
-    ##browser()
     site.no <- length(obs.pids)
     pred.site.no <- length(pred.pids)
 
@@ -45,10 +44,10 @@ amongObsPredsBigDistMat <- function(ssn, obs.pids, pred.pids, bin.table,
     current_distance_matrix_b <- fm.open(filenamebase = workspace.name.b,
                                          readonly = FALSE)
 
-    # on.exit(
-    #   filematrix::close(current_distance_matrix_a)
-    #   filematrix::close(current_distance_matrix_b)
-    # )
+    on.exit({
+      close(current_distance_matrix_a)
+      close(current_distance_matrix_b)
+    })
 
     ## Create a data.frame of prediction point data
     locID.pred.data <- pred.data$locID
@@ -109,7 +108,6 @@ amongObsPredsBigDistMat <- function(ssn, obs.pids, pred.pids, bin.table,
 
             ob.j <-ob.j[pred_reordering,]
 
-            ##obs fills in by column because it's working between obs to obs.
             ind.fc<-ob.j$fc==1
 
             dist.a <- ifelse(ind.fc, ob.j$upDist.j-upDist.ob,
@@ -133,7 +131,4 @@ amongObsPredsBigDistMat <- function(ssn, obs.pids, pred.pids, bin.table,
         }
 
     }
-    ##browser()
-    close(current_distance_matrix_a)
-    close(current_distance_matrix_b)
 }
