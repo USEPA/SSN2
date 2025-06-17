@@ -301,16 +301,16 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
     ## Create observed distance matrices if necessary
     ## ----------------------------------------------
     if(site.no > 0) {
+      obs.pids <- sort(as.numeric(ssn$obs$ng.pid[ind.obs]))
+
+      ## Set o x o distance matrix name
+      workspace.name1 <- paste(ssn$path, "/distance/obs/dist.net",
+                               net.num, sep = "")
+
+      ## Check for o x o
+      obs.exist <- file.exists(paste0(workspace.name1, ".bmat"))
+
       if(only_predpts == FALSE) {
-
-        ## Set o x o distance matrix name
-        workspace.name1 <- paste(ssn$path, "/distance/obs/dist.net",
-                                 net.num, sep = "")
-
-        obs.pids <- sort(as.numeric(ssn$obs$ng.pid[ind.obs]))
-
-        ## Check for o x o
-        obs.exist <- file.exists(paste0(workspace.name1, ".bmat"))
 
         ## Create empty obs distance matrix
         if((overwrite == TRUE) | obs.exist == FALSE) {
