@@ -117,7 +117,7 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
   if (missing(local)) local <- NULL
   # deal with local
   if (is.null(local)) {
-    if (newdata != "all")
+    if (newdata != "all") {
       if (object$n > 10000 || (object$n * NROW(object$ssn.object$preds[[newdata]]) > 1e8)) {
         # if (object$n > 5000 || NROW(newdata) > 5000) {
         local <- TRUE
@@ -125,6 +125,7 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
       } else {
         local <- FALSE
       }
+    }
   }
   # make local list
   local_list <- get_local_list_prediction(local)
@@ -244,7 +245,8 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
     if (local_list$method == "all") {
       cov_lowchol <- t(chol(cov_matrix_val))
     } else {
-      cov_lowchol <- NULL
+      cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
+      cov_lowchol <- t(chol(cov_matrix_val))
     }
 
     # until big data back
@@ -374,12 +376,11 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
                        Xmat, y, offset, betahat, cov_betahat, contrasts, local, xlevels, cov_index) {
 
 
+
     cov_vector_val <- newdata_list$c0
 
     if (!is.null(cov_index)) {
       obdata <- obdata[cov_index, , drop = FALSE]
-      cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
-      cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
       model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
       Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
       y <- model.response(model_frame)
