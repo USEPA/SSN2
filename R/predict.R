@@ -113,32 +113,37 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
   #   return(object)
   # }
 
+  if (missing(newdata)) newdata <- "all"
   if (missing(local)) local <- NULL
   # deal with local
   if (is.null(local)) {
-    if (object$n > 10000) {
-      # if (object$n > 5000 || NROW(newdata) > 5000) {
-      local <- TRUE
-      message("Because the sample size of the fitted model object exceeds 10,000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun predict() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
-    } else {
-      local <- FALSE
-    }
+    if (newdata != "all")
+      if (object$n > 10000 || (object$n * NROW(object$ssn.object$preds[[newdata]]) > 1e8)) {
+        # if (object$n > 5000 || NROW(newdata) > 5000) {
+        local <- TRUE
+        message("Because the large sample size or number of predictions, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun predict() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
+      } else {
+        local <- FALSE
+      }
   }
-  if (is.list(local) || local) {
-    object <- predict_bigdata_ssn_lm(object, newdata, se.fit, interval, level, block, local, ...)
-    return(object)
-  }
+  # make local list
+  local_list <- get_local_list_prediction(local)
+  local <- local_list
+
+  # if (is.list(local) || local && (object$n > 15000 || NROW(object$ssn.object$preds[[newdata]]) * object$n > 15000^2)) {
+  #   object <- predict_bigdata_ssn_lm(object, newdata, se.fit, interval, level, block, local, ...)
+  #   return(object)
+  # }
 
   #  safter but potentially passes block
   if (block) {
-    object <- predict_block(object, newdata, se.fit, interval, level, ...)
+    object <- predict_block(object, newdata, se.fit, interval, level, local, ...)
     return(object)
   }
 
   # deal with local (omitted for now)
   # if (missing(local)) local <- NULL
   # if (is.null(local)) local <- FALSE
-  local <- FALSE
 
   # new data name
   if (missing(newdata)) newdata <- NULL
@@ -175,6 +180,13 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
 
   # make covariance object
   cov_vector <- covmatrix(object, newdata_name)
+  if (local_list$method == "covariance") {
+    cov_vector_means <- colMeans(cov_vector)
+    cov_index <- order(as.numeric(cov_vector_means))[seq(from = object$n, to = max(1, object$n - local$size + 1))]
+    cov_vector <- cov_vector[, cov_index, drop = FALSE]
+  } else {
+    cov_index <- NULL
+  }
   cov_vector_list <- split(cov_vector, seq_len(NROW(cov_vector)))
 
   formula_newdata <- delete.response(terms(object))
@@ -227,7 +239,7 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
   total_var <- cov_matrix_val[1, 1]
 
   if (interval %in% c("none", "prediction")) {
-    local_list <- get_local_list_prediction(local)
+    # local_list <- get_local_list_prediction(local)
 
     if (local_list$method == "all") {
       cov_lowchol <- t(chol(cov_matrix_val))
@@ -236,37 +248,37 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
     }
 
     # until big data back
-    # if (local_list$parallel) {
-    #   cl <- parallel::makeCluster(local_list$ncores)
-    #   pred_val <- parallel::parLapply(cl, newdata_list, get_pred,
-    #                                   se.fit = se.fit, interval = interval, formula = object$formula,
-    #                                   obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-    #                                   Xmat = model.matrix(object), y = model.response(model.frame(object)),
-    #                                   offset = model.offset(model.frame(object)),
-    #                                   betahat = coefficients(object), cov_betahat = vcov(object),
-    #                                   contrasts = object$contrasts, local = local_list,
-    #                                   xlevels = object$xlevels)
-    #   cl <- parallel::stopCluster(cl)
-    # } else {
-    #   pred_val <- lapply(newdata_list, get_pred,
-    #                      se.fit = se.fit, interval = interval, formula = object$formula,
-    #                      obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-    #                      Xmat = model.matrix(object), y = model.response(model.frame(object)),
-    #                      offset = model.offset(model.frame(object)),
-    #                      betahat = coefficients(object), cov_betahat = vcov(object),
-    #                      contrasts = object$contrasts, local = local_list,
-    #                      xlevels = object$xlevels)
-    # }
+    if (local_list$parallel) {
+      cl <- parallel::makeCluster(local_list$ncores)
+      pred_val <- parallel::parLapply(cl, newdata_list, get_pred,
+                                      se.fit = se.fit, interval = interval, formula = object$formula,
+                                      obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
+                                      Xmat = model.matrix(object), y = model.response(model.frame(object)),
+                                      offset = model.offset(model.frame(object)),
+                                      betahat = coefficients(object), cov_betahat = vcov(object),
+                                      contrasts = object$contrasts, local = local_list,
+                                      xlevels = object$xlevels, cov_index)
+      cl <- parallel::stopCluster(cl)
+    } else {
+      pred_val <- lapply(newdata_list, get_pred,
+                         se.fit = se.fit, interval = interval, formula = object$formula,
+                         obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
+                         Xmat = model.matrix(object), y = model.response(model.frame(object)),
+                         offset = model.offset(model.frame(object)),
+                         betahat = coefficients(object), cov_betahat = vcov(object),
+                         contrasts = object$contrasts, local = local_list,
+                         xlevels = object$xlevels, cov_index)
+    }
 
-    pred_val <- lapply(newdata_list, get_pred,
-      se.fit = se.fit, interval = interval, formula = object$formula,
-      obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-      Xmat = model.matrix(object), y = model.response(model.frame(object)),
-      offset = model.offset(model.frame(object)),
-      betahat = coefficients(object), cov_betahat = vcov(object),
-      contrasts = object$contrasts, local = local_list,
-      xlevels = object$xlevels
-    )
+    # pred_val <- lapply(newdata_list, get_pred,
+    #   se.fit = se.fit, interval = interval, formula = object$formula,
+    #   obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
+    #   Xmat = model.matrix(object), y = model.response(model.frame(object)),
+    #   offset = model.offset(model.frame(object)),
+    #   betahat = coefficients(object), cov_betahat = vcov(object),
+    #   contrasts = object$contrasts, local = local_list,
+    #   xlevels = object$xlevels
+    # )
 
 
     if (interval == "none") {
@@ -338,78 +350,86 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
   }
 }
 
-#' Title
+  ' Title
 #'
-#' @param newdata_list A row of prediction data
-#' @param se.fit Whether standard errors should be returned
-#' @param interval The interval type
-#' @param formula Model formula
-#' @param obdata Observed data
-#' @param cov_matrix_val Covariance matrix
-#' @param total_var Total variance in the process
-#' @param cov_lowchol Lower triangular of Cholesky decomposition matrix
-#' @param Xmat Model matrix
-#' @param y Response variable
-#' @param offset A possible offset
-#' @param betahat Fixed effect estimates
-#' @param cov_betahat Covariance of fixed effects
-#' @param contrasts Possible contrasts
-#' @param local Local neighborhood options (not yet implemented)
-#' @param xlevels Levels of explanatory variables
-#'
-#' @noRd
-get_pred <- function(newdata_list, se.fit, interval, formula, obdata, cov_matrix_val, total_var, cov_lowchol,
-                     Xmat, y, offset, betahat, cov_betahat, contrasts, local, xlevels) {
-  cov_vector_val <- newdata_list$c0
-
-  if (local$method == "covariance") {
-    # n <- length(cov_vector_val)
-    # cov_index <- order(as.numeric(cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
-    # obdata <- obdata[cov_index, , drop = FALSE]
-    # cov_vector_val <- cov_vector_val[cov_index]
-    # cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
-    # cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
-    # model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
-    # Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
-    # y <- model.response(model_frame)
-    # offset <- model.offset(model_frame)
-  }
-
-  # handle offset
-  if (!is.null(offset)) {
-    y <- y - offset
-  }
+  #' @param newdata_list A row of prediction data
+  #' @param se.fit Whether standard errors should be returned
+  #' @param interval The interval type
+  #' @param formula Model formula
+  #' @param obdata Observed data
+  #' @param cov_matrix_val Covariance matrix
+  #' @param total_var Total variance in the process
+  #' @param cov_lowchol Lower triangular of Cholesky decomposition matrix
+  #' @param Xmat Model matrix
+  #' @param y Response variable
+  #' @param offset A possible offset
+  #' @param betahat Fixed effect estimates
+  #' @param cov_betahat Covariance of fixed effects
+  #' @param contrasts Possible contrasts
+  #' @param local Local neighborhood options (not yet implemented)
+  #' @param xlevels Levels of explanatory variables
+  #'
+  #' @noRd
+  get_pred <- function(newdata_list, se.fit, interval, formula, obdata, cov_matrix_val, total_var, cov_lowchol,
+                       Xmat, y, offset, betahat, cov_betahat, contrasts, local, xlevels, cov_index) {
 
 
+    cov_vector_val <- newdata_list$c0
 
-  c0 <- as.numeric(cov_vector_val)
-  SqrtSigInv_X <- forwardsolve(cov_lowchol, Xmat)
-  SqrtSigInv_y <- forwardsolve(cov_lowchol, y)
-  residuals_pearson <- SqrtSigInv_y - SqrtSigInv_X %*% betahat
-  SqrtSigInv_c0 <- forwardsolve(cov_lowchol, c0)
-  x0 <- newdata_list$x0
+    if (!is.null(cov_index)) {
+      obdata <- obdata[cov_index, , drop = FALSE]
+      cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
+      cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
+      model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
+      Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
+      y <- model.response(model_frame)
+      offset <- model.offset(model_frame)
+    }
 
-  fit <- as.numeric(x0 %*% betahat + Matrix::crossprod(SqrtSigInv_c0, residuals_pearson))
-  H <- x0 - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_X)
+    # if (local$method == "covariance") {
+    #   n <- length(cov_vector_val)
+    #   cov_index <- order(as.numeric(cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
+    #   obdata <- obdata[cov_index, , drop = FALSE]
+    #   cov_vector_val <- cov_vector_val[cov_index]
+    #   cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
+    #   cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
+    #   model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
+    #   Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
+    #   y <- model.response(model_frame)
+    #   offset <- model.offset(model_frame)
+    # }
 
-  if (se.fit || interval == "prediction") {
-    total_var <- total_var
-    var <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
-    pred_list <- list(fit = fit, var = var)
-  } else {
-    pred_list <- list(fit = fit)
-  }
-  pred_list
+    # handle offset
+    if (!is.null(offset)) {
+      y <- y - offset
+    }
+
+
+
+    c0 <- as.numeric(cov_vector_val)
+    SqrtSigInv_X <- forwardsolve(cov_lowchol, Xmat)
+    SqrtSigInv_y <- forwardsolve(cov_lowchol, y)
+    residuals_pearson <- SqrtSigInv_y - SqrtSigInv_X %*% betahat
+    SqrtSigInv_c0 <- forwardsolve(cov_lowchol, c0)
+    x0 <- newdata_list$x0
+
+    fit <- as.numeric(x0 %*% betahat + Matrix::crossprod(SqrtSigInv_c0, residuals_pearson))
+    H <- x0 - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_X)
+
+    if (se.fit || interval == "prediction") {
+      total_var <- total_var
+      var <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
+      pred_list <- list(fit = fit, var = var)
+    } else {
+      pred_list <- list(fit = fit)
+    }
+    pred_list
 }
 
-
-
-
-predict_block <- function(object, newdata, se.fit, interval, level, ...) {
+predict_block <- function(object, newdata, se.fit, interval, level, local, ...) {
   # deal with local (omitted for now)
   # if (missing(local)) local <- NULL
   # if (is.null(local)) local <- FALSE
-  local <- FALSE
 
   # new data name
   if (missing(newdata)) newdata <- NULL
@@ -440,6 +460,14 @@ predict_block <- function(object, newdata, se.fit, interval, level, ...) {
 
   # make covariance object
   cov_vector <- covmatrix(object, newdata_name)
+  # adjustment one for local
+  if (local$method == "covariance") {
+    cov_vector_means <- colMeans(cov_vector)
+    cov_index <- order(as.numeric(cov_vector_means))[seq(from = object$n, to = max(1, object$n - local$size + 1))]
+    cov_vector <- cov_vector[, cov_index, drop = FALSE]
+  } else {
+    cov_index <- NULL
+  }
   formula_newdata <- delete.response(terms(object))
   newdata_model_frame <- model.frame(formula_newdata, newdata, drop.unused.levels = FALSE, na.action = na.pass, xlev = object$xlevels)
   # assumes that predicted observations are not outside the factor levels
@@ -461,12 +489,25 @@ predict_block <- function(object, newdata, se.fit, interval, level, ...) {
   x0 <- colMeans(newdata_model)
   c0 <- colMeans(cov_vector)
   y <- model.response(model.frame(object))
+  fitted_val <- fitted(object)
   if (!is.null(offset)) {
     y <- y - offset
   }
 
   # storing cov matrix
   cov_matrix_val <- covmatrix(object)
+
+  # adjustment two for local
+  if (local$method == "covariance") {
+   Xmat <- Xmat[cov_index, , drop = FALSE]
+   y <- y[cov_index]
+   cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
+   fitted_val <- fitted_val[cov_index]
+  }
+
+
+
+  # cholesky
   cov_lowchol <- t(chol(cov_matrix_val))
 
   # total var (could do sums params object)
@@ -481,7 +522,7 @@ predict_block <- function(object, newdata, se.fit, interval, level, ...) {
   if (interval %in% c("none", "prediction")) {
     # should use cholesky matrix not eigendecomposition matrix
     # ie can't call residuals(object, type = "pearson") directly
-    residuals_pearson <- forwardsolve(cov_lowchol, y - fitted(object))
+    residuals_pearson <- forwardsolve(cov_lowchol, y - fitted_val)
     SqrtSigInv_c0 <- forwardsolve(cov_lowchol, c0)
     fit <- as.numeric(x0 %*% betahat + Matrix::crossprod(SqrtSigInv_c0, residuals_pearson))
     names(fit) <- "1"
