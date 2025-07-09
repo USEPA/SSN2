@@ -4,7 +4,6 @@ amongObsPredsBigDistMat <- function(ssn, obs.pids, pred.pids, bin.table,
                                     workspace.name.a, workspace.name.b,
                                     pred.name){
 
-    ##browser()
     site.no <- length(obs.pids)
     pred.site.no <- length(pred.pids)
 
@@ -133,7 +132,6 @@ amongObsPredsBigDistMat <- function(ssn, obs.pids, pred.pids, bin.table,
         }
 
     }
-    ##browser()
     close(current_distance_matrix_a)
     close(current_distance_matrix_b)
 }
