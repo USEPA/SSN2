@@ -40,5 +40,7 @@ getPredRelationshipsDF <- function(ssn, predpts, ind, bin, ob, j) {
     ob.j$pid,
     as.numeric(ssn$preds[[predpts]]$ng.pid)
   )]
+
+  ob.j <- ob.j[order(ob.j[, "pid"]), ]
   ob.j
 }

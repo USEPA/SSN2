@@ -10,7 +10,8 @@ ssn_create_bigdist(
   overwrite = FALSE,
   among_predpts = FALSE,
   only_predpts = FALSE,
-  no_cores = 1
+  no_cores = 1,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ between the prediction sites. Defaults to \code{FALSE}.}
 prediction sites. Defaults to \code{FALSE}.}
 
 \item{no_cores}{Number of cores to use in computation of the distance matrices. Also, the number of chunks to split the dataset into during computation.}
+
+\item{verbose}{Logical. If \code{TRUE}, warning messages (if they exist) are printed to the console. Defaults to \code{TRUE}.}
 }
 \value{
 The \command{ssn_create_distmat} function creates a collection

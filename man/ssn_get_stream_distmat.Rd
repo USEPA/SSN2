@@ -24,7 +24,7 @@ Extracts the stream network distance matrices for the
 observation or prediction data from an \code{SSN} object.
 }
 \details{
-The internal \code{name} for observed data in objects of class
+\code{ssn_get_stream_distmat()} extracts the stream network distance matrices created using \code{\link{ssn_create_distmat}}, which are stored as .Rdata files. The internal \code{name} for observed data in objects of class
 \code{SSN} is "obs" and it is the default. If another \code{name}
 is specified, it must represent a prediction data set in the
 \code{SSN} object. For \code{SSN}

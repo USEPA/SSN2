@@ -12,15 +12,17 @@
 #'
 amongSitesBigDistMat <- function(ssn, pids, net.num, name = "obs", bin.table,
                               workspace.name) {
+
   site.no <- length(pids)
   ##among_distance_matrix <- matrix(NA, nrow = site.no, ncol = site.no)
   among_distance_matrix<- fm.open(filenamebase = workspace.name,
                                   readonly = FALSE)
 
 
-  # on.exit(
-  #     filematrix::close(among_distance_matrix)
-  # )
+  on.exit(
+      filematrix::close(among_distance_matrix)
+  )
+
   #diag(among_distance_matrix) <- 0
   # rownames(among_distance_matrix) <- pids
   # colnames(among_distance_matrix) <- pids
@@ -91,6 +93,9 @@ amongSitesBigDistMat <- function(ssn, pids, net.num, name = "obs", bin.table,
       dist.sites <- ifelse(ind.fc, upDist.b - ob.j$upDist.j,
                          upDist.b - ob.j$juncDist)
 
+      ## Writing to distance matrix when dist.sites is in a different pid order
+      ## than among_distance_matrix
+
       col.ind<- colnames(among_distance_matrix) == as.character(pid.b)
       ##among_distance_matrix[, paste(pid.b)] <- ifelse(dist.sites < 0, 0, dist.sites)
       among_distance_matrix[,col.ind] <- ifelse(dist.sites<0, 0, dist.sites)
@@ -101,6 +106,6 @@ amongSitesBigDistMat <- function(ssn, pids, net.num, name = "obs", bin.table,
     }
   }
 
-  close(among_distance_matrix)
+  #close(among_distance_matrix)
 
 }

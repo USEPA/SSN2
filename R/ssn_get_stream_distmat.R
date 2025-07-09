@@ -9,8 +9,7 @@
 #'   prediction data set, the name of the dataset must be given, in
 #'   quotes.
 #' @details
-#'
-#' The internal \code{name} for observed data in objects of class
+#' \code{ssn_get_stream_distmat()} extracts the stream network distance matrices created using \code{\link{ssn_create_distmat}}, which are stored as .Rdata files. The internal \code{name} for observed data in objects of class
 #' \code{SSN} is "obs" and it is the default. If another \code{name}
 #' is specified, it must represent a prediction data set in the
 #' \code{SSN} object. For \code{SSN}
@@ -144,6 +143,10 @@ ssn_get_stream_distmat <- function(x, name = "obs") {
   }
   path <- paste0(x$path, "/distance/", name)
   flist <- list.files(path)
+
+  ## Remove filenames without .RData
+  flist <- flist[grepl("\\.RData", flist)]
+
   distMats <- vector("list", length(flist))
   for (i in seq_len(length(flist))) {
     path1 <- paste0(path, "/", flist[i])
