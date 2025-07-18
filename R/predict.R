@@ -94,6 +94,8 @@
 #' predict(ssn_mod, "pred1km")
 predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none", "confidence", "prediction"),
                            level = 0.95, block = FALSE, local, ...) {
+
+
   # match interval argument so the three display
   interval <- match.arg(interval)
 
@@ -245,14 +247,25 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
       cov_lowchol <- t(chol(cov_matrix_val))
     }
 
+    Xmat <- model.matrix(object)
+    y <- model.response(model.frame(object))
+    offset <- model.offset(model.frame(object))
+
+    if (!is.null(cov_index)) {
+      Xmat <- Xmat[cov_index, , drop = FALSE]
+      y <- y[cov_index]
+      if (!is.null(offset)) {
+        offset <- offset[cov_index]
+      }
+    }
     # until big data back
     if (local_list$parallel) {
       cl <- parallel::makeCluster(local_list$ncores)
       pred_val <- parallel::parLapply(cl, newdata_list, get_pred,
                                       se.fit = se.fit, interval = interval, formula = object$formula,
                                       obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-                                      Xmat = model.matrix(object), y = model.response(model.frame(object)),
-                                      offset = model.offset(model.frame(object)),
+                                      Xmat = Xmat, y = y,
+                                      offset = offset,
                                       betahat = coefficients(object), cov_betahat = vcov(object),
                                       contrasts = object$contrasts, local = local_list,
                                       xlevels = object$xlevels, cov_index)
@@ -261,8 +274,8 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
       pred_val <- lapply(newdata_list, get_pred,
                          se.fit = se.fit, interval = interval, formula = object$formula,
                          obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-                         Xmat = model.matrix(object), y = model.response(model.frame(object)),
-                         offset = model.offset(model.frame(object)),
+                         Xmat = Xmat, y = y,
+                         offset = offset,
                          betahat = coefficients(object), cov_betahat = vcov(object),
                          contrasts = object$contrasts, local = local_list,
                          xlevels = object$xlevels, cov_index)
@@ -375,13 +388,19 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
 
     cov_vector_val <- newdata_list$c0
 
-    if (!is.null(cov_index)) {
-      obdata <- obdata[cov_index, , drop = FALSE]
-      model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
-      Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
-      y <- model.response(model_frame)
-      offset <- model.offset(model_frame)
-    }
+    # moved indexing of relevant quantities outside the function (cov_index no longer needed)
+    # if (!is.null(cov_index)) {
+    #   obdata <- obdata[cov_index, , drop = FALSE]
+    #   model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
+    #   Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
+    #   y <- model.response(model_frame)
+    #   offset <- model.offset(model_frame)
+    #   # Xmat <- Xmat[cov_index, , drop = FALSE]
+    #   # y <- y[cov_index]
+    #   # if (!is.null(offset)) {
+    #   #   offset <- offset[cov_index]
+    #   # }
+    # }
 
     # if (local$method == "covariance") {
     #   n <- length(cov_vector_val)

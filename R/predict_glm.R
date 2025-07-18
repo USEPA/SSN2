@@ -164,28 +164,45 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response"), se.fi
       predvar_adjust_all <- FALSE
     }
 
+    Xmat <- model.matrix(object)
+    y <- model.response(model.frame(object))
+    offset <- model.offset(model.frame(object))
+    w <- fitted(object, type = "link")
+    size <- object$size
+    if (!is.null(cov_index)) {
+      Xmat <- Xmat[cov_index, , drop = FALSE]
+      y <- y[cov_index]
+      w <- w[cov_index]
+      if (!is.null(offset)) {
+        offset <- offset[cov_index]
+      }
+      if (!is.null(size)) {
+        size <- size[cov_index]
+      }
+    }
+
     # until big data back
     if (local_list$parallel) {
       cl <- parallel::makeCluster(local_list$ncores)
       pred_val <- parallel::parLapply(cl, newdata_list, get_pred_glm,
                                       se.fit = se.fit, interval = interval, formula = object$formula,
                        obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-                       Xmat = model.matrix(object), y = model.response(model.frame(object)),
+                       Xmat = Xmat, y = y,
                        betahat = coefficients(object), cov_betahat = vcov(object, var_correct = FALSE),
                        contrasts = object$contrasts, local = local_list,
-                       family = object$family, w = fitted(object, type = "link"),
-                       size = object$size, dispersion = dispersion_params_val,
+                       family = object$family, w = w,
+                       size = size, dispersion = dispersion_params_val,
                        predvar_adjust_ind = predvar_adjust_ind, xlevels = object$xlevels, cov_index = cov_index)
       cl <- parallel::stopCluster(cl)
     } else {
       pred_val <- lapply(newdata_list, get_pred_glm,
                        se.fit = se.fit, interval = interval, formula = object$formula,
                        obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-                       Xmat = model.matrix(object), y = model.response(model.frame(object)),
+                       Xmat = Xmat, y = y,
                        betahat = coefficients(object), cov_betahat = vcov(object, var_correct = FALSE),
                        contrasts = object$contrasts, local = local_list,
-                       family = object$family, w = fitted(object, type = "link"),
-                       size = object$size, dispersion = dispersion_params_val,
+                       family = object$family, w = w,
+                       size = size, dispersion = dispersion_params_val,
                        predvar_adjust_ind = predvar_adjust_ind, xlevels = object$xlevels, cov_index = cov_index)
 
     }
@@ -370,18 +387,23 @@ get_pred_glm <- function(newdata_list, se.fit, interval,
                          family, w, size, dispersion, predvar_adjust_ind, xlevels, cov_index) {
   cov_vector_val <- newdata_list$c0
 
-
-  if (!is.null(cov_index)) {
-    obdata <- obdata[cov_index, , drop = FALSE]
-    model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
-    Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
-    y <- model.response(model_frame)
-    offset <- model.offset(model_frame)
-    w <- w[cov_index]
-    if (!is.null(size)) {
-      size <- size[cov_index]
-    }
-  }
+  # moved indexing of relevant quantities outside the function (cov_index no longer needed)
+  # if (!is.null(cov_index)) {
+  #   obdata <- obdata[cov_index, , drop = FALSE]
+  #   model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
+  #   Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
+  #   # Xmat <- Xmat[cov_index, , drop = FALSE]
+  #   y <- model.response(model_frame)
+  #   # y <- y[cov_index]
+  #   offset <- model.offset(model_frame)
+  #   # if (!is.null(offset)) {
+  #   #   offset <- offset[cov_index]
+  #   # }
+  #   w <- w[cov_index]
+  #   if (!is.null(size)) {
+  #     size <- size[cov_index]
+  #   }
+  # }
 
   # if (local$method == "covariance") {
   #   # n <- length(cov_vector_val)
