@@ -23,6 +23,7 @@ ssn_glm(
   random,
   randcov_initial,
   partition_factor,
+  local,
   ...
 )
 }
@@ -114,6 +115,56 @@ known values for the random effect variances. See \code{\link[spmodel:randcov_in
 \item{partition_factor}{A one-sided linear formula with a single term
 specifying the partition factor.  The partition factor assumes observations
 from different levels of the partition factor are uncorrelated.}
+
+\item{local}{An optional logical or list controlling the big data approximation.
+If omitted, \code{local} is set
+to \code{TRUE} or \code{FALSE} based on the sample size (the number of
+non-missing observations in \code{data}) -- if the sample size exceeds 5,000,
+\code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
+\code{local} is also set to \code{FALSE} when \code{spcov_type} is \code{"none"}
+and there are no random effects specified via \code{random}.
+If \code{FALSE}, no big data approximation is implemented.
+If a list is provided, the following arguments detail the big
+data approximation:
+\itemize{
+\item \code{index: }The group indexes. Observations in different
+levels of \code{index} are assumed to be uncorrelated for the
+purposes of estimation. If \code{index} is not provided, it is
+determined by specifying \code{method} and either \code{size} or \code{groups}.
+\item \code{method}: The big data approximation method used to determine \code{index}. Ignored
+if \code{index} is provided. If \code{method = "random"},
+observations are randomly assigned to \code{index} based on \code{size}.
+If \code{method = "kmeans"}, observations assigned to \code{index}
+based on k-means clustering on the coordinates with \code{groups} clusters. The default
+is \code{"kmeans"}. Note that both methods have a random component, which
+means that you may get different results from separate model fitting calls.
+To ensure consistent results, specify \code{index} or set a seed via
+\code{base::set.seed()}.
+\item \code{size}: The number of observations in each \code{index} group
+when \code{method} is \code{"random"}. If the number of observations
+is not divisible by \code{size}, some levels get \code{size - 1} observations.
+The default is 100.
+\item \code{groups: }The number of \code{index} groups. If \code{method}
+is \code{"random"}, \code{size} is \eqn{ceiling(n / groups)}, where
+\eqn{n} is the sample size. Automatically determined if \code{size}
+is specified. If \code{method} is \code{"kmeans"}, \code{groups}
+is the number of clusters.
+\item \code{var_adjust: }The approach for adjusting the variance-covariance
+matrix of the fixed effects. \code{"none"} for no adjustment, \code{"theoretical"}
+for the theoretically-correct adjustment,
+\code{"pooled"} for the pooled adjustment, and \code{"empirical"} for the
+empirical adjustment. The default is \code{"theoretical"} for samples sizes
+up to 100,000 and \code{"none"} for samples sizes exceeding 100,000.
+\item \code{parallel}: If \code{TRUE}, parallel processing via the
+parallel package is automatically used. The default is \code{FALSE}.
+\item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
+parallelize over. The default is the number of available cores on your machine.
+}
+When \code{local} is a list, at least one list element must be provided to
+initialize default arguments for the other list elements.
+If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
+that \code{local} is transformed into
+\code{list(size = 100, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)}.}
 
 \item{...}{Other arguments to \code{stats::optim()}.}
 }

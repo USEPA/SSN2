@@ -54,14 +54,14 @@ If an \code{ssn_glm} object, the cross validation error metrics are:
 }
 }
 \description{
-Perform leave-one-out cross validation with options for computationally
-efficient approximations for big data.
+Perform leave-one-out cross validation.
 }
 \details{
 Each observation is held-out from the data set and the remaining data
 are used to make a prediction for the held-out observation. This is compared
 to the true value of the observation and several model-fit statistics are computed
-across all observations.
+across all observations. Currently only computationally feasible for observed data
+matrices smaller than approximately 10,000.
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

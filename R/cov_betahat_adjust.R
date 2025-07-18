@@ -14,6 +14,7 @@
 cov_betahat_adjust <- function(invcov_betahat_list, betahat_list,
                                betahat, eigenprods_list, data_object, params_object,
                                cov_betahat_noadjust, var_adjust) {
+
   P <- length(betahat_list)
   # reset var_adjust if only one partition
   # var_adjust == "theoretical" ||
@@ -73,7 +74,6 @@ cov_betahat_adjust <- function(invcov_betahat_list, betahat_list,
 
 get_W_ij <- function(d1_index, d2_index, eigenprods_list, params_object,
                      randcov_params, randcov_names, data_object) {
-
 
 
   d1 <- data_object$obdata_list[[d1_index]]

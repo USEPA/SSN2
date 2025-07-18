@@ -242,6 +242,7 @@ get_distjunc_matlist_bigdata <- function(network_index, pid, ssn.object) {
 #' @noRd
 subset_dist_object_bigdata <- function(dist_object_name, dist_object, index) {
   # store the distance object element
+
   dist_object_element <- dist_object[[dist_object_name]]
 
   # if the element is a matrix, perform matrix subsetting (using NULL where appropriate)

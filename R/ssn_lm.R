@@ -248,7 +248,7 @@
 #'   for significant computational gains. Parallelization generally further speeds up
 #'   computations when data sizes are larger than a few thousand. Both the \code{"random"} and \code{"kmeans"} values of \code{method}
 #'   in \code{local} have random components. That means you may get slightly different
-#'   results when using the big data approximation and rerunning \code{splm()} with the same code. For consistent results,
+#'   results when using the big data approximation and rerunning \code{ssn_lm()} with the same code. For consistent results,
 #'   either set a seed via \code{base::set.seed()} or specify \code{index} to \code{local}.
 #'
 #'   Other Details: Observations with \code{NA} response values are removed for model

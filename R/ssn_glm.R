@@ -314,7 +314,7 @@ ssn_glm <- function(formula, ssn.object, family,
                     euclid_type = "none", nugget_type = "nugget",
                     tailup_initial, taildown_initial, euclid_initial, nugget_initial,
                     dispersion_initial, additive, estmethod = "reml", anisotropy = FALSE,
-                    random, randcov_initial, partition_factor, ...) {
+                    random, randcov_initial, partition_factor, local, ...) {
   # set defaults
   if (missing(tailup_initial)) tailup_initial <- NULL
   if (missing(taildown_initial)) taildown_initial <- NULL
@@ -325,7 +325,7 @@ ssn_glm <- function(formula, ssn.object, family,
   if (missing(random)) random <- NULL
   if (missing(randcov_initial)) randcov_initial <- NULL
   if (missing(partition_factor)) partition_factor <- NULL
-  local <- NULL
+  if (missing(local)) local <- NULL
 
   # fix family
   if (missing(family)) {
@@ -362,10 +362,17 @@ ssn_glm <- function(formula, ssn.object, family,
   check_ssn_glm(initial_object, ssn.object, additive, estmethod)
 
   # get data object
-  data_object <- get_data_object_glm(
-    formula, ssn.object, family, additive, anisotropy,
-    initial_object, random, randcov_initial, partition_factor, ...
-  )
+  if (is.null(local) || (is.logical(local) && !local)) {
+    data_object <- get_data_object_glm(
+      formula, ssn.object, family, additive, anisotropy,
+      initial_object, random, randcov_initial, partition_factor, local, ...
+    )
+  } else {
+    data_object <- get_data_object_bigdata_glm(
+      formula, ssn.object, family, additive, anisotropy,
+      initial_object, random, randcov_initial, partition_factor, local, ...
+    )
+  }
 
   # add random to initial object
   initial_object$randcov_initial <- data_object$randcov_initial
@@ -383,9 +390,24 @@ ssn_glm <- function(formula, ssn.object, family,
   # covariance parameter estimation
   cov_est_object <- cov_estimate_laploglik(data_object, ssn.object, initial_object, estmethod, optim_dotlist)
 
-  model_stats_glm <- get_model_stats_glm(cov_est_object, data_object, estmethod)
+  # compute model statistics
+  if (is.null(local) || (is.logical(local) && !local)) {
+    model_stats_glm <- get_model_stats_glm(cov_est_object, data_object, estmethod)
+  } else {
+    model_stats_glm <- get_model_stats_bigdata_glm(cov_est_object, data_object, estmethod)
+  }
 
+  # parallel cluster if necessary (add back when local implemented)
+  if (data_object$parallel) {
+    data_object$cl <- parallel::stopCluster(data_object$cl) # makes it NULL
+  }
 
+  # store index if necessary (add back when local implemented)
+  if (is.null(local)) { # local was stored as NULL in previous function call
+    local_index <- NULL
+  } else {
+    local_index <- data_object$local_index
+  }
 
   output <- list(
     coefficients = model_stats_glm$coefficients,
@@ -413,7 +435,7 @@ ssn_glm <- function(formula, ssn.object, family,
     missing_index = data_object$missing_index,
     contrasts = data_object$contrasts,
     xlevels = data_object$xlevels,
-    local_index = NULL,
+    local_index = local_index,
     sf_column_name = data_object$sf_column_name,
     crs = data_object$crs,
     ssn.object = data_object$ssn.object,

@@ -26,6 +26,7 @@
   newdata_size,
   level = 0.95,
   var_correct = TRUE,
+  local,
   ...
 )
 }
@@ -68,18 +69,14 @@ is implemented. If a list is provided, the following arguments detail the big
 data approximation:
 \itemize{
 \item \code{method}: The big data approximation method. If \code{method = "all"},
-all observations are used and \code{size} is ignored. If \code{method = "distance"},
-the \code{size} data observations closest (in terms of Euclidean distance)
-to the observation requiring prediction are used.
+all observations are used and \code{size} is ignored.
 If \code{method = "covariance"}, the \code{size} data observations
-with the highest covariance with the observation requiring prediction are used.
-If random effects and partition factors are not used in estimation and
-the spatial covariance function is monotone decreasing,
-\code{"distance"} and \code{"covariance"} are equivalent. The default
-is \code{"covariance"}. Only used with models fit using \code{\link[=splm]{splm()}} or \code{\link[=spglm]{spglm()}}.
+with the average highest covariance with the prediction locations are used.
+The default
+is \code{"covariance"}. Only used with models fit using \code{\link[=ssn_lm]{ssn_lm()}}.
 \item \code{size}: The number of data observations to use when \code{method}
-is \code{"distance"} or \code{"covariance"}. The default is 100. Only used
-with models fit using \code{\link[=splm]{splm()}} or \code{\link[=spglm]{spglm()}}.
+is \code{"distance"} or \code{"covariance"}. The default is 2000. Only used
+with models fit using \code{\link[=ssn_lm]{ssn_lm()}}.
 \item \code{parallel}: If \code{TRUE}, parallel processing via the
 parallel package is automatically used. This can significantly speed
 up computations even when \code{method = "all"} (i.e., no big data
@@ -92,7 +89,7 @@ When \code{local} is a list, at least one list element must be provided to
 initialize default arguments for the other list elements.
 If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 that \code{local} is transformed into
-\code{list(size = 100, method = "covariance", parallel = FALSE)}.}
+\code{list(size = 2000, method = "covariance", parallel = FALSE)}.}
 
 \item{...}{Other arguments. Not used (needed for generic consistency).}
 
