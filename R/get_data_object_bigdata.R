@@ -177,6 +177,7 @@ get_data_object_bigdata <- function(formula, ssn.object, additive, anisotropy,
     partition_list <- NULL
   }
 
+
   dist_object <- get_dist_object_bigdata(ssn.object, initial_object, additive, anisotropy, local$index, observed_index)
   bbox <- st_bbox(obdata)
   tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")

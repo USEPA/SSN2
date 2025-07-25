@@ -403,10 +403,12 @@ ssn_glm <- function(formula, ssn.object, family,
   }
 
   # store index if necessary (add back when local implemented)
-  if (is.null(local)) { # local was stored as NULL in previous function call
+  if (is.null(local) || !local) { # local was stored as NULL in previous function call
     local_index <- NULL
   } else {
     local_index <- data_object$local_index
+    data_object$observed_index <- which(data_object$observed_index)
+    data_object$missing_index <- which(data_object$missing_index)
   }
 
   output <- list(

@@ -46,8 +46,10 @@ get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisot
   }
 
 
+
   order_list <- order_list[order(order_list$network_index, order_list$pid), , drop = FALSE]
-  order_list <- order_list[order_list$observed_index, , drop = FALSE]
+  obs_index <- order_list$observed_index
+  order_list <- order_list[obs_index, , drop = FALSE]
   order_list <- split(order_list, local_index)
 
   # get list of distance matrices in order of the original data
@@ -65,6 +67,7 @@ get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisot
   } else {
     # store euclid coordinates (in original data order)
     obs_coords <- sf::st_coordinates(ssn.object$obs)
+    obs_coords <- obs_coords[obs_index, , drop = FALSE]
     obs_coords_list <- split.data.frame(obs_coords, local_index)
 
     dist_matlist <- mapply(d = dist_matlist, c = obs_coords_list, function(d, c) {
