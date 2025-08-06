@@ -24,6 +24,7 @@ A single-row tibble with columns
 \item \code{value} The optimized value of the fitting function
 \item \code{AIC} The AIC.
 \item \code{AICc} The AICc.
+\item \code{BIC} The BIC.
 \item \code{logLik} The log-likelihood
 \item \code{deviance} The deviance.
 \item \code{pseudo.r.squared} The pseudo r-squared

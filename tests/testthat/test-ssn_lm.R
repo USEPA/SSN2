@@ -19,6 +19,12 @@ test_that("generics work ssn_lm point data", {
   expect_s3_class(AIC(ssn_mod1, ssn_mod2), "data.frame")
   expect_equal(AIC(ssn_mod1, ssn_mod2)$AIC, c(84.934, 82.893), tolerance = 0.01)
 
+  # AICc
+  expect_vector(AICc(ssn_mod1))
+  expect_equal(AICc(ssn_mod1), 87.96, tolerance = 0.01)
+  expect_s3_class(AICc(ssn_mod1, ssn_mod2), "data.frame")
+  expect_equal(AICc(ssn_mod1, ssn_mod2)$AIC, c(87.96, 83.47), tolerance = 0.01)
+
   # anova
   anova1 <- anova(ssn_mod1)
   expect_s3_class(anova1, "data.frame")
@@ -40,6 +46,12 @@ test_that("generics work ssn_lm point data", {
   expect_s3_class(aug_pred_ssn_mod1, "sf")
   expect_true(all(c(".fitted") %in% names(aug_ssn_mod1)))
   expect_equal(aug_pred_ssn_mod1$.fitted[1], 14.690, tolerance = 0.01)
+
+  # BIC
+  expect_vector(BIC(ssn_mod1))
+  expect_equal(BIC(ssn_mod1), 97.58, tolerance = 0.01)
+  expect_s3_class(BIC(ssn_mod1, ssn_mod2), "data.frame")
+  expect_equal(BIC(ssn_mod1, ssn_mod2)$BIC, c(97.58, 88.31), tolerance = 0.01)
 
   # coef
   expect_vector(coef(ssn_mod1))
@@ -121,16 +133,16 @@ test_that("generics work ssn_lm point data", {
 
   # glance
   glance_ssn_mod1 <- glance(ssn_mod1)
-  names_glance <- c("n", "p", "npar", "value", "AIC", "AICc", "logLik", "deviance", "pseudo.r.squared")
+  names_glance <- c("n", "p", "npar", "value", "AIC", "AICc", "BIC", "logLik", "deviance", "pseudo.r.squared")
   expect_s3_class(glance_ssn_mod1, "data.frame")
-  expect_equal(dim(glance_ssn_mod1), c(1, 9))
+  expect_equal(dim(glance_ssn_mod1), c(1, 10))
   expect_identical(names_glance, names(glance_ssn_mod1))
 
   # glances
   expect_identical(glance_ssn_mod1, glances(ssn_mod1)[, -1])
   glance_ssn_mod12 <- glances(ssn_mod1, ssn_mod2)
   expect_s3_class(glances(ssn_mod1, ssn_mod2), "data.frame")
-  expect_equal(dim(glance_ssn_mod12), c(2, 10))
+  expect_equal(dim(glance_ssn_mod12), c(2, 11))
   expect_identical(c("model", names_glance), names(glance_ssn_mod12))
 
   # hatvalues
@@ -149,8 +161,8 @@ test_that("generics work ssn_lm point data", {
   expect_identical(labels(ssn_mod1), "ELEV_DEM")
 
   # logLik
-  expect_vector(logLik(ssn_mod1))
-  expect_equal(logLik(ssn_mod1), -35.46, tolerance = 0.01)
+  expect_vector(as.numeric(logLik(ssn_mod1)))
+  expect_equal(as.numeric(logLik(ssn_mod1)), -35.46, tolerance = 0.01)
 
   # loocv
   loocv_ssn_mod1 <- loocv(ssn_mod1)

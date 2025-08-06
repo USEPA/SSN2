@@ -6,6 +6,19 @@
 
 ## Minor Updates
 
+
+* Updated `logLik()` to match `lm()` and `glm()` behavior. `logLik()` now returns a vector with class `logLik` and attributes `nobs` and `df`.
+* Added support for using `AIC()` and `BIC()` from `stats` and removed `spmodel`-specific `AIC()` methods.
+* Added a `warning` argument to `glances()` that determines whether relevant warnings should be displayed or not.
+* Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when a one model has `estmethod = "ml"` and another model has `estmethod = "reml"`.
+* Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models with `estmethod = "reml"` have distinct `formula` arguments.
+* Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different sample sizes.
+* Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different family supports (which can happen with `spglm()` and `spgautor()` models).
+* Updated `ssn_import()` so that it does not force an overwrite of the `netgeom` column when it already exists.
+* Add a `verbose` argument to `ssn_import()`, `ssn_import_predpts()`, and `createBinaryID()` to control whether warning messages are printed to the **R** console.
+* Minor documentation updates.
+* Minor code maintenance updates.
+
 ## Bug Fixes
 
 * Fixed a bug that caused incorrect degrees of freedom for the likelihood ratio test (`anova(model1, model2)`) when `estmethod` is `"ml"` for both models [#25](https://github.com/USEPA/SSN2/issues/25).
