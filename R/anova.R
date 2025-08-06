@@ -147,10 +147,10 @@ anova.ssn_lm <- function(object, ..., test = TRUE, Terms, L) {
 
     p_value <- pchisq(Chi2_stat, df_diff, lower.tail = FALSE)
     if (object2$npar < object$npar) {
-      full_name <- as.character(substitute(object))
+      full_name <- deparse(substitute(object)) # replace as.character with deparse
       reduced_name <- as.character(as.list(substitute(list(...)))[-1])
     } else {
-      reduced_name <- as.character(substitute(object))
+      reduced_name <- deparse(substitute(object)) # replace as.character with deparse
       full_name <- as.character(as.list(substitute(list(...)))[-1])
     }
     if (test) {

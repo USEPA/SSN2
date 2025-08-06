@@ -1,3 +1,14 @@
+# SSN2 0.3.0
+
+## Major Updates
+
+## Minor Updates
+
+## Bug Fixes
+
+* Fixed a bug that caused incorrect degrees of freedom for the likelihood ratio test (`anova(model1, model2)`) when `estmethod` is `"ml"` for both models.
+* Fixed a bug that caused an error in `anova(object1, object2)` when the name of `object1` had special characters (e.g., `$`).
+
 # SSN2 0.2.1
 
 ## Minor Updates
