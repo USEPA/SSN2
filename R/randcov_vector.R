@@ -7,7 +7,9 @@
 #' @return A random effects covariance vector
 #'
 #' @noRd
-randcov_vector <- function(randcov_params = NULL, data, newdata) {
+randcov_vector <- function(randcov_params = NULL, data, newdata,
+                           reform_bar2_list = NULL, Z_index_data_list = NULL,
+                           reform_bar1_list = NULL, Z_data_list = NULL) {
   if (is.null(randcov_params)) {
     randcov_vectors <- NULL
   } else {

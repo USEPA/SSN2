@@ -72,13 +72,12 @@ covmatrix.ssn_lm <- function(object, newdata, cov_type, ...) {
     cov_type <- "pred.obs"
   }
 
-
   if (cov_type == "obs.obs") {
     de_scale <- sum(params_object$tailup[["de"]], params_object$taildown[["de"]], params_object$euclid[["de"]])
     randcov_names <- get_randcov_names(object$random)
     randcov_Zs <- get_randcov_Zs(object$ssn.object$obs, randcov_names)
     partition_matrix_val <- partition_matrix(object$partition_factor, object$ssn.object$obs)
-    if (length(object$missing_index) > 0) { # this (and list format below) is for "putting stuff back together" when there is missingness in observed data
+    if ((is.logical(object$missing_index) && sum(object$missing_index) > 0) || (!is.logical(object$missing_index) && length(object$missing_index) > 0)) { # this (and list format below) is for "putting stuff back together" when there is missingness in observed data
       object$ssn.object$obs <- rbind(object$ssn.object$obs, object$ssn.object$preds$.missing)
       reorder_val <- order(c(object$observed_index, object$missing_index))
       object$ssn.object$obs <- object$ssn.object$obs[reorder_val, , drop = FALSE]

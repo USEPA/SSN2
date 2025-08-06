@@ -10,7 +10,8 @@
 #' @param bin binaryID table
 #'
 #' @noRd
-getObsRelationshipsDF <- function(ssn, pid, junk, ind, ob, ob_by_locID, bin) {
+getObsRelationshipsDF <- function(ssn, pid, junk, ind, ob, ob_by_locID, bin,
+                                  name = "obs") {
   ## ssn = SpatialStreamNetwork object
   ## pid = integer pid value of interest
   ## junk = data.frame with columns fc (logical) and binaryID
@@ -58,10 +59,9 @@ getObsRelationshipsDF <- function(ssn, pid, junk, ind, ob, ob_by_locID, bin) {
     ssn$edges$SegmentID
   )]
 
-  ## upDist.j is the upDist for each observed site
   ob.j$upDist.j <- ssn$obs$DistanceUpstream[
-    match(ob.j$pid, ssn$obs$ng.pid)
-  ]
+      match(ob.j$pid, ssn$obs$ng.pid)]
+
 
   ob.j
 }

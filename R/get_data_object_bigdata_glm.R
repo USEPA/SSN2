@@ -1,4 +1,4 @@
-#' Get the data object for use with many other functions.
+#' Get the glm data object for use with many other functions.
 #'
 #' @param formula Model formula.
 #' @param ssn.object SSN object.
@@ -11,21 +11,21 @@
 #' @param local Spatial indexing argument (not yet implemented)
 #' @param ... Additional arguments
 #'
-#' @return The data object that contains various pieces of important information
+#' @return The glm data object that contains various pieces of important information
 #'   required for modeling.
 #' @noRd
-get_data_object <- function(formula, ssn.object, additive, anisotropy,
-                            initial_object, random, randcov_initial, partition_factor, local, ...) {
+get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, anisotropy,
+                                initial_object, random, randcov_initial, partition_factor, local, ...) {
   sf_column_name <- attributes(ssn.object$obs)$sf_column
   crs <- attributes(ssn.object$obs[[sf_column_name]])$crs
 
   ## get response value in pid (data) order
   na_index <- is.na(sf::st_drop_geometry(ssn.object$obs)[[all.vars(formula)[1]]])
   ## get index in pid (data) order
-  observed_index <- which(!na_index)
-  missing_index <- which(na_index)
-  # observed_index <- !na_index
-  # missing_index <- na_index
+  # observed_index <- which(!na_index)
+  # missing_index <- which(na_index)
+  observed_index <- !na_index
+  missing_index <- na_index
 
   # get ob data and frame objects
   obdata <- ssn.object$obs[observed_index, , drop = FALSE]
@@ -44,6 +44,8 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
   }
   # subset obdata by nonNA predictors
   obdata <- obdata[ob_predictors, , drop = FALSE]
+  obdata_netgeom <- ssn_get_netgeom(obdata)
+  original_pid <- as.numeric(obdata_netgeom$pid)
 
   # new model frame
   obdata_model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.omit)
@@ -62,12 +64,32 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
   # find sample size
   n <- NROW(X)
   # find response
-  y <- as.matrix(model.response(obdata_model_frame), ncol = 1)
-  # adjust response to reflect offset
+  y_modr <- model.response(obdata_model_frame)
+  if (NCOL(y_modr) == 2) {
+    y <- y_modr[, 1, drop = FALSE]
+    size <- rowSums(y_modr)
+  } else {
+    if (family == "binomial") {
+      if (is.factor(y_modr)) {
+        if (length(levels(y_modr)) != 2) {
+          stop("When family is binomial, a factor response must have exactly two levels.", call. = FALSE)
+        }
+        y_modr <- ifelse(y_modr == levels(y_modr)[1], 0, 1)
+      }
+      if (is.logical(y_modr)) {
+        y_modr <- ifelse(y_modr, 1, 0) # or as.numeric()
+      }
+      size <- rep(1, n)
+    } else {
+      size <- NULL
+    }
+    y <- as.matrix(y_modr, ncol = 1)
+  }
+
+  # handle offset
   offset <- model.offset(obdata_model_frame)
   if (!is.null(offset)) {
     offset <- as.matrix(offset, ncol = 1)
-    y <- y - offset
   }
 
   # see if response is numeric
@@ -80,18 +102,23 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
     stop("The response has no variability. Model fit unreliable.", call. = FALSE)
   }
 
+  # checks on y
+  response_checks_glm(family, y, size)
+
   # error if p >= n
   if (p >= n) {
     stop("The number of fixed effects is at least as large as the number of observations (p >= n). Consider reducing the number of fixed effects and rerunning ssn_lm().", call. = FALSE)
   }
 
   # find s2 for initial values
+  y_trans <- log(y + 1)
   qr_val <- qr(X)
   R_val <- qr.R(qr_val)
-  betahat <- backsolve(R_val, qr.qty(qr_val, y))
-  resid <- y - X %*% betahat
+  betahat <- backsolve(R_val, qr.qty(qr_val, y_trans))
+  resid <- y_trans - X %*% betahat
   s2 <- sum(resid^2) / (n - p)
-  diagtol <- 0
+  # diagtol <- 1e-4
+  diagtol <- min(1e-4, 1e-4 * s2)
 
   # correct anisotropy
   anisotropy <- get_anisotropy_corrected(anisotropy, initial_object)
@@ -110,18 +137,23 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
     # partition_factor <- reformulate(paste0("as.character(", partition_factor_labels, ")"), intercept = FALSE)
   }
 
-  # find index (can put back in with local later)
-  # if (is.null(local)) {
-  #   if (n > 5000) {
-  #     local <- TRUE
-  #     message("Because the sample size exceeds 5000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun ssn_lm() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
-  #   } else {
-  #     local <- FALSE
-  #   }
-  # }
-  local <- list(index = rep(1, n))
+  if (is.null(local)) {
+    if (n > 3000) {
+      local <- TRUE
+      message("Because the sample size exceeds 5000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun ssn_lm() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
+    } else {
+      local <- FALSE
+    }
+  }
   local <- get_local_list_estimation(local, obdata, n, partition_factor)
+  n_local_index <- length(unique(local$index))
 
+  # reorder
+  order_bigdata <- order(local$index, obdata_netgeom$NetworkID, obdata_netgeom$pid)
+  order_before_index <- order(obdata_netgeom$NetworkID, original_pid)
+  obdata <- obdata[order_before_index, , drop = FALSE]
+  X <- X[order_before_index, , drop = FALSE]
+  y <- y[order_before_index, , drop = FALSE]
 
   # store data list
   obdata_list <- split.data.frame(obdata, local$index)
@@ -130,6 +162,10 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
   X_list <- split.data.frame(X, local$index)
   y_list <- split.data.frame(y, local$index)
   ones_list <- lapply(obdata_list, function(x) matrix(rep(1, nrow(x)), ncol = 1))
+  if (!is.null(size)) {
+    size_list <- split(size, local$index) # just split because vector not matrix
+    size <- as.vector(do.call("c", size_list)) # rearranging size by y list
+  }
 
   # organize offset (as a one col matrix)
   if (!is.null(offset)) {
@@ -169,45 +205,23 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
     partition_list <- NULL
   }
 
-  # find dist object
-  dist_object <- get_dist_object(ssn.object, initial_object, additive, anisotropy)
-
-  # find maxes
+  dist_object <- get_dist_object_bigdata(ssn.object, initial_object, additive, anisotropy, local$index, observed_index)
+  bbox <- st_bbox(obdata)
   tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
   taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
   if (tailup_none && taildown_none) {
     tail_max <- Inf
   } else {
-    tail_max <- max(dist_object$hydro_mat * dist_object$mask_mat)
+    tail_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
   }
-
   euclid_none <- inherits(initial_object$euclid_initial, "euclid_none")
   if (euclid_none) {
     euclid_max <- Inf
   } else {
-    if (anisotropy) {
-      euclid_max <- max(as.matrix(dist(cbind(dist_object$.xcoord, dist_object$.ycoord))))
-    } else {
-      euclid_max <- max(dist_object$euclid_mat) # no anisotropy
-    }
+    euclid_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
   }
+  dist_object <- get_dist_object_oblist_bigdata(dist_object)
 
-  # bbox <- st_bbox(obdata)
-  # tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
-  # taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
-  # if (tailup_none && taildown_none) {
-  #   tail_max <- Inf
-  # } else {
-  #   tail_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
-  # }
-  # euclid_none <- inherits(initial_object$euclid_initial, "euclid_none")
-  # if (euclid_none) {
-  #   euclid_max <- Inf
-  # } else {
-  #   euclid_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
-  # }
-  # find dist observed object
-  dist_object <- get_dist_object_oblist(dist_object, observed_index, local$index)
   # rename as oblist to not store two sets
   dist_object_oblist <- dist_object
 
@@ -218,7 +232,7 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
   pid <- ssn_get_netgeom(ssn.object$obs, "pid")$pid
 
   # restructure ssn
-  ssn.object <- restruct_ssn_missing(ssn.object, observed_index, missing_index)
+  ssn.object <- restruct_ssn_missing_bigdata(ssn.object, observed_index, missing_index)
 
   list(
     anisotropy = anisotropy,
@@ -229,17 +243,17 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
     # dist_object = dist_object,
     dist_object_oblist = dist_object_oblist,
     euclid_max = euclid_max,
+    family = family,
     formula = formula,
     local_index = local$index,
     missing_index = missing_index,
     n = n,
     ncores = local$ncores,
     observed_index = observed_index,
-    obdata_list = NULL,
+    obdata_list = obdata_list,
     offset = offset,
     ones_list = ones_list,
     order = order,
-    order_bigdata = NULL,
     p = p,
     parallel = local$parallel,
     partition_factor_initial = partition_factor,
@@ -250,6 +264,7 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
     randcov_list = randcov_list,
     randcov_names = randcov_names,
     sf_column_name = sf_column_name,
+    size = size,
     ssn.object = ssn.object,
     s2 = s2,
     tail_max = tail_max,

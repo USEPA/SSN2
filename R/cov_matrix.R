@@ -176,7 +176,7 @@ cov_matrix.taildown_none <- function(params, dist_object, ...) {
 
 #' @export
 cov_matrix.euclid_exponential <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   cor_part <- exp(-dist_ratio)
   params[["de"]] * cor_part
@@ -184,7 +184,7 @@ cov_matrix.euclid_exponential <- function(params, dist_object, anisotropy, ...) 
 
 #' @export
 cov_matrix.euclid_spherical <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 - (3 / 2) * dist_ratio + (1 / 2) * dist_ratio^3) * (dist_ratio <= 1)
   params[["de"]] * cor_part
@@ -192,7 +192,7 @@ cov_matrix.euclid_spherical <- function(params, dist_object, anisotropy, ...) {
 
 #' @export
 cov_matrix.euclid_gaussian <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   cor_part <- exp(-dist_ratio^2)
   params[["de"]] * cor_part
@@ -200,7 +200,7 @@ cov_matrix.euclid_gaussian <- function(params, dist_object, anisotropy, ...) {
 
 #' @export
 cov_matrix.euclid_cosine <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   min_val <- pmin(dist_ratio, 1)
   cor_part <- (1 - (2 / pi * (min_val * sqrt(1 - min_val^2) + asin(min_val)))) * (dist_ratio <= 1)
@@ -209,7 +209,7 @@ cov_matrix.euclid_cosine <- function(params, dist_object, anisotropy, ...) {
 
 #' @export
 cov_matrix.euclid_cubic <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 - (7 / 1 * dist_ratio^2) + (35 / 4 * dist_ratio^3) - (7 / 2 * dist_ratio^5) + (3 / 4 * dist_ratio^7)) * (dist_ratio <= 1)
   params[["de"]] * cor_part
@@ -217,7 +217,7 @@ cov_matrix.euclid_cubic <- function(params, dist_object, anisotropy, ...) {
 
 #' @export
 cov_matrix.euclid_pentaspherical <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 - (15 / 8 * dist_ratio) + (5 / 4 * dist_ratio^3) - (3 / 8 * dist_ratio^5)) * (dist_ratio <= 1)
   params[["de"]] * cor_part
@@ -225,7 +225,7 @@ cov_matrix.euclid_pentaspherical <- function(params, dist_object, anisotropy, ..
 
 #' @export
 cov_matrix.euclid_wave <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   cor_part <- sin(dist_ratio) / (dist_ratio)
   cor_part[h == 0] <- 1
@@ -234,7 +234,7 @@ cov_matrix.euclid_wave <- function(params, dist_object, anisotropy, ...) {
 
 #' @export
 cov_matrix.euclid_jbessel <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_product <- h * params[["range"]]
   cor_part <- besselJ(as.matrix(pmin(dist_product, 100000)), 0)
   params[["de"]] * cor_part
@@ -242,7 +242,7 @@ cov_matrix.euclid_jbessel <- function(params, dist_object, anisotropy, ...) {
 
 #' @export
 cov_matrix.euclid_gravity <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 + dist_ratio^2)^(-1 / 2)
   params[["de"]] * cor_part
@@ -250,7 +250,7 @@ cov_matrix.euclid_gravity <- function(params, dist_object, anisotropy, ...) {
 
 #' @export
 cov_matrix.euclid_rquad <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 + dist_ratio^2)^(-1)
   params[["de"]] * cor_part
@@ -258,7 +258,7 @@ cov_matrix.euclid_rquad <- function(params, dist_object, anisotropy, ...) {
 
 #' @export
 cov_matrix.euclid_magnetic <- function(params, dist_object, anisotropy, ...) {
-  h <- get_euclid_mat_observed(params, dist_object, anisotropy)
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   cor_part <- (1 + dist_ratio^2)^(-3 / 2)
   params[["de"]] * cor_part
@@ -294,21 +294,46 @@ cov_matrix.nugget_none <- function(params, dist_object, de_scale, diagtol = 0, .
 # EUCILD MATRIX OBSERVED
 ###############################################################################
 
-get_euclid_mat_observed <- function(params, dist_object, anisotropy) {
+get_euclid_mat_observed <- function(params, dist_object, anisotropy, cross = FALSE) {
   # THIS IS ELEMENT BY ELEMENT
 
-  # compute distance matrix with anisotropic coordinates or return
-  # already stored euclidean distance matrix
-  if (anisotropy) {
-    new_coords_observed <- transform_anis(
-      dist_object$.xcoord,
-      dist_object$.ycoord,
-      rotate = params[["rotate"]],
-      scale = params[["scale"]]
-    )
-    euclid_mat_observed <- Matrix::Matrix(as.matrix(dist(cbind(new_coords_observed$xcoord_val, new_coords_observed$ycoord_val))), sparse = TRUE)
+  if (cross) {
+    if (anisotropy) {
+      d1_new_coords_observed <- transform_anis(
+        dist_object$.xcoord_d1,
+        dist_object$.ycoord_d1,
+        rotate = params[["rotate"]],
+        scale = params[["scale"]]
+      )
+
+      d2_new_coords_observed <- transform_anis(
+        dist_object$.xcoord_d2,
+        dist_object$.ycoord_d2,
+        rotate = params[["rotate"]],
+        scale = params[["scale"]]
+      )
+
+      x_diffs <- outer(d1_new_coords_observed$xcoord_val, d2_new_coords_observed$xcoord_val, "-")
+      y_diffs <- outer(d1_new_coords_observed$ycoord_val, d2_new_coords_observed$ycoord_val, "-")
+      euclid_mat <- sqrt(x_diffs^2 + y_diffs^2)
+      euclid_mat_observed <- Matrix::Matrix(euclid_mat, sparse = TRUE)
+    } else {
+      euclid_mat_observed <- dist_object$euclid_mat
+    }
   } else {
-    euclid_mat_observed <- dist_object$euclid_mat
+    # compute distance matrix with anisotropic coordinates or return
+    # already stored euclidean distance matrix
+    if (anisotropy) {
+      new_coords_observed <- transform_anis(
+        dist_object$.xcoord,
+        dist_object$.ycoord,
+        rotate = params[["rotate"]],
+        scale = params[["scale"]]
+      )
+      euclid_mat_observed <- Matrix::Matrix(as.matrix(dist(cbind(new_coords_observed$xcoord_val, new_coords_observed$ycoord_val))), sparse = TRUE)
+    } else {
+      euclid_mat_observed <- dist_object$euclid_mat
+    }
   }
   euclid_mat_observed
 }
