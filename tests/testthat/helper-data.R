@@ -14,3 +14,10 @@ ssn_create_distmat(
   overwrite = TRUE,
   among_predpts = TRUE
 )
+
+ssn_create_bigdist(
+  mf04p,
+  predpts = c("CapeHorn"),
+  overwrite = TRUE,
+  among_predpts = TRUE
+)

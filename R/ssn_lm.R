@@ -396,10 +396,10 @@ ssn_lm <- function(formula, ssn.object,
   # get optim dotlist
   optim_dotlist <- get_optim_dotlist(...)
 
-  # parallel cluster if necessary (add back when local implemented)
-  # if (data_object$parallel) {
-  #   data_object$cl <- parallel::makeCluster(data_object$ncores)
-  # }
+  if (data_object$parallel) {
+    data_object$cl <- parallel::makeCluster(data_object$ncores)
+    # invisible(clusterEvalQ(data_object$cl, library(Matrix)))
+  }
 
   # covariance parameter estimation
   cov_est_object <- cov_estimate_gloglik(data_object, ssn.object, initial_object, estmethod, optim_dotlist)
@@ -417,7 +417,7 @@ ssn_lm <- function(formula, ssn.object,
   }
 
   # store index if necessary (add back when local implemented)
-  if (is.null(local) || !local) { # local was stored as NULL in previous function call
+  if (is.null(local) || (is.logical(local) && !local)) { # local was stored as NULL in previous function call
     local_index <- NULL
   } else {
     local_index <- data_object$local_index
