@@ -2,11 +2,13 @@
 
 ## Major Updates
 
+* Added support for applications to large data sets. The `ssn_create_bigdist()` function was added to create large distance matrices using the `filematrix` **R** package. Estimation for large data sets is performed by leveraging the `local` argument to `ssn_lm()` and `ssn_glm()`, which looks for a distance matrix created using `ssn_create_bigdist()`. Prediction for large data sets is performed by leveraging the `local` argument to `predict()` (and `augment()`).
+
 ## Minor Updates
 
 ## Bug Fixes
 
-* Fixed a bug that caused incorrect degrees of freedom for the likelihood ratio test (`anova(model1, model2)`) when `estmethod` is `"ml"` for both models.
+* Fixed a bug that caused incorrect degrees of freedom for the likelihood ratio test (`anova(model1, model2)`) when `estmethod` is `"ml"` for both models [#25](https://github.com/USEPA/SSN2/issues/25).
 * Fixed a bug that caused an error in `anova(object1, object2)` when the name of `object1` had special characters (e.g., `$`).
 
 # SSN2 0.2.1
