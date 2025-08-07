@@ -16,6 +16,7 @@
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different sample sizes.
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different family supports (which can happen with `spglm()` and `spgautor()` models).
 * Added `AUROC()`  functions to compute the area under the receiver operating characteristic (AUROC) curve for `ssn_glm` models when `family` is `"binomial"` and the response is binary (i.e., represents a single success or failure).
+* Added a `type` argument to `loocv()` when `cv_predict = TRUE` and using `ssn_glm()` models so that predictions may be obtained on the link or response scale.
 * Updated `ssn_import()` so that it does not force an overwrite of the `netgeom` column when it already exists.
 * Add a `verbose` argument to `ssn_import()`, `ssn_import_predpts()`, and `createBinaryID()` to control whether warning messages are printed to the **R** console.
 * Minor documentation updates.

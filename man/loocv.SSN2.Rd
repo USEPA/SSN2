@@ -8,7 +8,13 @@
 \usage{
 \method{loocv}{ssn_lm}(object, cv_predict = FALSE, se.fit = FALSE, ...)
 
-\method{loocv}{ssn_glm}(object, cv_predict = FALSE, se.fit = FALSE, ...)
+\method{loocv}{ssn_glm}(
+  object,
+  cv_predict = FALSE,
+  type = c("link", "response"),
+  se.fit = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A fitted model object from \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}.}
@@ -20,6 +26,9 @@ should be returned. Defaults to \code{FALSE}.}
 prediction standard errors should be returned. Defaults to \code{FALSE}.}
 
 \item{...}{Other arguments. Not used (needed for generic consistency).}
+
+\item{type}{The scale (\code{response} or \code{link}) of predictions obtained
+when \code{cv_predict = TRUE} and using \code{ssn_glm()} objects.}
 }
 \value{
 If \code{cv_predict = FALSE} and \code{se.fit = FALSE},

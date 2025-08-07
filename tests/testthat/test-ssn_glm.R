@@ -177,6 +177,10 @@ test_that("generics work ssn_glm point data", {
   expect_identical(names(loocv_ssn_mod1), c("bias", "MSPE", "RMSPE", "RAV"))
   expect_equal(loocv_ssn_mod1$MSPE, 0.243, tolerance = 0.01)
   expect_identical(names(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE)), c("stats", "cv_predict", "se.fit"))
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE)$cv_predict[1], 2.695, tolerance = 0.01)
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE)$se.fit[1], 0.0285, tolerance = 0.01)
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE, type = "response")$cv_predict[1], exp(2.695), tolerance = 0.01)
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE, type = "response")$se.fit[1], 0.0285, tolerance = 0.01) # still on link scale
 
   # model.frame
   expect_equal(dim(model.frame(ssn_mod1)), c(45, 2))
