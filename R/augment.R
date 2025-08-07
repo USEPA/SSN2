@@ -32,6 +32,11 @@
 #'   add to the augmented \code{newdata} output. Passed to \code{predict()} and defaults
 #'   to \code{"none"}.
 #' @param level Tolerance/confidence level. The default is \code{0.95}.
+#' @param local A list or logical. If a list, specific list elements described
+#'   in [predict.ssn_lm()] or [predict.ssn_glm()] control the big data approximation behavior.
+#'   If a logical, \code{TRUE} chooses default list elements for the list version
+#'   of \code{local} as specified in [predict.ssn_lm()] or [predict.ssn_glm()]. Defaults to \code{FALSE},
+#'   which performs exact computations.
 #' @param ... Additional arguments to \code{predict()} when augmenting \code{newdata}.
 #'
 #' @details \code{augment()} returns a tibble as an \code{sf} object.
@@ -87,9 +92,9 @@
 #' augment(ssn_mod, newdata = "CapeHorn")
 augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
                            interval = c("none", "confidence", "prediction"),
-                           level = 0.95, ...) {
-  # save big data for later
-  local <- FALSE
+                           level = 0.95, local, ...) {
+
+
 
   interval <- match.arg(interval)
 
@@ -117,6 +122,7 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
     tibble_out$.ycoord <- coords[, 2, drop = TRUE]
     tibble_out <- sf::st_as_sf(tibble_out, coords = c(".xcoord", ".ycoord"), crs = x$crs)
   } else {
+    if (missing(local)) local <- NULL
     newdata_name <- newdata
     if (newdata_name == "all") {
       newdata_name <- names(x$ssn.object$preds)
@@ -128,7 +134,7 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
       }
       preds_newdata <- predict(x,
         newdata = y, se.fit = se_fit, interval = interval,
-        level = level, ...
+        level = level, local = local, ...
       )
       if (se_fit) {
         if (interval %in% c("confidence", "prediction")) {
@@ -188,9 +194,7 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
 augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("link", "response"),
                             type.residuals = c("deviance", "pearson", "response"), se_fit = FALSE,
                             interval = c("none", "confidence", "prediction"),
-                            newdata_size, level = 0.95, var_correct = TRUE, ...) {
-  # save big data for later
-  local <- FALSE
+                            newdata_size, level = 0.95, local = local, var_correct = TRUE, ...) {
 
   type.predict <- match.arg(type.predict)
   type.residuals <- match.arg(type.residuals)
@@ -219,6 +223,8 @@ augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("li
     tibble_out$.ycoord <- coords[, 2, drop = TRUE]
     tibble_out <- sf::st_as_sf(tibble_out, coords = c(".xcoord", ".ycoord"), crs = x$crs)
   } else {
+    if (missing(newdata_size)) newdata_size <- NULL
+    if (missing(local)) local <- NULL
     newdata_name <- newdata
     if (newdata_name == "all") {
       newdata_name <- names(x$ssn.object$preds)
@@ -233,7 +239,7 @@ augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("li
       preds_newdata <- predict(x,
         newdata = y, type = type.predict, se.fit = se_fit, interval = interval,
         newdata_size = newdata_size, level = level,
-        var_correct = FALSE, ...
+        var_correct = FALSE, local = local, ...
       )
       if (se_fit) {
         if (interval %in% c("confidence", "prediction")) {

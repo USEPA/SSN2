@@ -13,6 +13,7 @@
   se_fit = FALSE,
   interval = c("none", "confidence", "prediction"),
   level = 0.95,
+  local,
   ...
 )
 
@@ -26,6 +27,7 @@
   interval = c("none", "confidence", "prediction"),
   newdata_size,
   level = 0.95,
+  local = local,
   var_correct = TRUE,
   ...
 )
@@ -55,6 +57,12 @@ add to the augmented \code{newdata} output. Passed to \code{predict()} and defau
 to \code{"none"}.}
 
 \item{level}{Tolerance/confidence level. The default is \code{0.95}.}
+
+\item{local}{A list or logical. If a list, specific list elements described
+in \code{\link[=predict.ssn_lm]{predict.ssn_lm()}} or \code{\link[=predict.ssn_glm]{predict.ssn_glm()}} control the big data approximation behavior.
+If a logical, \code{TRUE} chooses default list elements for the list version
+of \code{local} as specified in \code{\link[=predict.ssn_lm]{predict.ssn_lm()}} or \code{\link[=predict.ssn_glm]{predict.ssn_glm()}}. Defaults to \code{FALSE},
+which performs exact computations.}
 
 \item{...}{Additional arguments to \code{predict()} when augmenting \code{newdata}.}
 
