@@ -45,7 +45,7 @@
 #'     \item \code{method}: The big data approximation method. If \code{method = "all"},
 #'       all observations are used and \code{size} is ignored.
 #'       If \code{method = "covariance"}, the \code{size} data observations
-#'       with the average highest covariance with the prediction locations are used.
+#'       having the average highest covariance with the prediction locations are used.
 #'       The default
 #'       is \code{"covariance"}. Only used with models fit using [ssn_lm()].
 #'     \item \code{size}: The number of data observations to use when \code{method}
