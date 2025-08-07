@@ -12,7 +12,7 @@
 #' @importFrom spmodel AICc AUROC covmatrix dispersion_initial dispersion_params glances loocv pseudoR2 randcov_initial randcov_params varcomp
 #' @importFrom stats aggregate AIC anova BIC coef coefficients complete.cases confint cooks.distance cor dbeta
 #'   delete.response dbinom deviance dist dgamma dnbinom dpois fitted fitted.values formula .getXlevels hatvalues
-#'   influence kmeans lm logLik model.frame model.matrix model.offset model.response na.omit na.pass pchisq
+#'   influence kmeans lm logLik model.frame model.matrix model.offset model.response na.fail na.omit na.pass pchisq
 #'   pnorm predict printCoefmat pt qnorm qqnorm qqline qt quantile rbinom resid residuals
 #'   reformulate rbeta rgamma rnbinom rnorm rpois rstandard terms var vcov
 #' @importFrom tibble tibble as_tibble

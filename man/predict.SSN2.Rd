@@ -10,23 +10,31 @@
   object,
   newdata,
   se.fit = FALSE,
+  scale = NULL,
+  df = Inf,
   interval = c("none", "confidence", "prediction"),
   level = 0.95,
+  type = c("response", "terms"),
   block = FALSE,
   local,
+  terms = NULL,
+  na.action = na.fail,
   ...
 )
 
 \method{predict}{ssn_glm}(
   object,
   newdata,
-  type = c("link", "response"),
+  type = c("link", "response", "terms"),
   se.fit = FALSE,
   interval = c("none", "confidence", "prediction"),
-  newdata_size,
   level = 0.95,
-  var_correct = TRUE,
+  dispersion = NULL,
+  terms = NULL,
   local,
+  var_correct = TRUE,
+  newdata_size,
+  na.action = na.fail,
   ...
 )
 }
@@ -44,11 +52,23 @@ to fit the model.}
 \item{se.fit}{A logical indicating if standard errors are returned.
 The default is \code{FALSE}.}
 
+\item{scale}{A numeric constant by which to scale the regular standard errors and intervals.
+Similar to but slightly different than \code{scale} for \code{\link[stats:predict.lm]{stats::predict.lm()}}, because
+predictions form a spatial model may have different residual variances for each
+observation in \code{newdata}. The default is \code{NULL}, which returns
+the regular standard errors and intervals.}
+
+\item{df}{Degrees of freedom to use for confidence or prediction intervals
+(ignored if \code{scale} is not specified). The default is \code{Inf}.}
+
 \item{interval}{Type of interval calculation. The default is \code{"none"}.
 Other options are \code{"confidence"} (for confidence intervals) and
 \code{"prediction"} (for prediction intervals).}
 
 \item{level}{Tolerance/confidence level. The default is \code{0.95}.}
+
+\item{type}{The scale (\code{response} or \code{link}) of predictions obtained
+using \code{ssn_glm} objects.}
 
 \item{block}{A logical indicating whether a block prediction over the entire
 region in \code{newdata} should be returned. The default is \code{FALSE}, which returns point
@@ -91,17 +111,25 @@ If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 that \code{local} is transformed into
 \code{list(size = 2000, method = "covariance", parallel = FALSE)}.}
 
+\item{terms}{If \code{type} is \code{"terms"}, the type of terms to be returned,
+specified via either numeric position or name. The default is all terms are included.}
+
+\item{na.action}{Missing (\code{NA}) values in \code{newdata} will return an error and should
+be removed before proceeding.}
+
 \item{...}{Other arguments. Not used (needed for generic consistency).}
 
-\item{type}{The scale (\code{response} or \code{link}) of predictions obtained
-using \code{ssn_glm} objects.}
-
-\item{newdata_size}{The \code{size} value for each observation in \code{newdata}
-used when predicting for the binomial family.}
+\item{dispersion}{The dispersion of assumed when computing the prediction standard errors
+for \code{ssn_glm()} model objects when \code{family}
+is \code{"nbinomial"}, \code{"beta"}, \code{"Gamma"}, or \code{"inverse.gaussian"}.
+If omitted, the model object dispersion parameter is used.}
 
 \item{var_correct}{A logical indicating whether to return the corrected prediction
 variances when predicting via models fit using \code{ssn_glm}. The default is
 \code{TRUE}.}
+
+\item{newdata_size}{The \code{size} value for each observation in \code{newdata}
+used when predicting for the binomial family.}
 }
 \value{
 If \code{se.fit} is \code{FALSE}, \code{predict.ssn()} returns

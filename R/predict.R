@@ -12,10 +12,19 @@
 #'   to fit the model.
 #' @param se.fit A logical indicating if standard errors are returned.
 #'   The default is \code{FALSE}.
+#' @param scale A numeric constant by which to scale the regular standard errors and intervals.
+#'   Similar to but slightly different than \code{scale} for [stats::predict.lm()], because
+#'   predictions form a spatial model may have different residual variances for each
+#'   observation in \code{newdata}. The default is \code{NULL}, which returns
+#'   the regular standard errors and intervals.
+#' @param df Degrees of freedom to use for confidence or prediction intervals
+#'   (ignored if \code{scale} is not specified). The default is \code{Inf}.
 #' @param interval Type of interval calculation. The default is \code{"none"}.
 #'   Other options are \code{"confidence"} (for confidence intervals) and
 #'   \code{"prediction"} (for prediction intervals).
 #' @param level Tolerance/confidence level. The default is \code{0.95}.
+#' @param terms If \code{type} is \code{"terms"}, the type of terms to be returned,
+#'   specified via either numeric position or name. The default is all terms are included.
 #' @param block A logical indicating whether a block prediction over the entire
 #'  region in \code{newdata} should be returned. The default is \code{FALSE}, which returns point
 #'  predictions for each location in \code{newdata}. Currently only available for
@@ -55,6 +64,10 @@
 #'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 #'   that \code{local} is transformed into
 #'   \code{list(size = 2000, method = "covariance", parallel = FALSE)}.
+#' @param terms If \code{type} is \code{"terms"}, the type of terms to be returned,
+#'   specified via either numeric position or name. The default is all terms are included.
+#' @param na.action Missing (\code{NA}) values in \code{newdata} will return an error and should
+#'   be removed before proceeding.
 #' @param ... Other arguments. Not used (needed for generic consistency).
 #'
 #' @details The (empirical) best linear unbiased predictions (i.e., Kriging
@@ -92,12 +105,13 @@
 #'   additive = "afvArea"
 #' )
 #' predict(ssn_mod, "pred1km")
-predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none", "confidence", "prediction"),
-                           level = 0.95, block = FALSE, local, ...) {
+predict.ssn_lm <- function(object, newdata, se.fit = FALSE, scale = NULL, df = Inf, interval = c("none", "confidence", "prediction"),
+                           level = 0.95, type = c("response", "terms"), block = FALSE, local, terms = NULL, na.action = na.fail, ...) {
 
 
   # match interval argument so the three display
   interval <- match.arg(interval)
+  type <- match.arg(type)
 
   # call predict_block if necessary
   # if (block) { # gives ::: warning so no rd exported
@@ -217,6 +231,11 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
   attr(newdata_model, "assign") <- attr_assign[keep_cols]
   attr(newdata_model, "contrasts") <- attr_contrasts
 
+  # call terms if needed
+  if (type == "terms") {
+    return(predict_terms(object, newdata_model, se.fit, scale, df, interval, level, add_newdata_rows, terms, ...))
+  }
+
   # storing newdata as a list
   newdata_rows_list <- split(newdata, seq_len(NROW(newdata)))
 
@@ -297,6 +316,9 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
       if (se.fit) {
         vars <- vapply(pred_val, function(x) x$var, numeric(1))
         se <- sqrt(vars)
+        if (!is.null(scale)) {
+          se <- se * scale
+        }
         if (add_newdata_rows) {
           names(fit) <- object$missing_index
           names(se) <- object$missing_index
@@ -314,8 +336,15 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
       fit <- vapply(pred_val, function(x) x$fit, numeric(1))
       vars <- vapply(pred_val, function(x) x$var, numeric(1))
       se <- sqrt(vars)
+      if (!is.null(scale)) {
+        se <- se * scale
+        df <- df
+      } else {
+        df <- Inf
+      }
+      tstar <- qt(1 - (1 - level) / 2, df = df)
       # tstar <- qt(1 - (1 - level) / 2, df = object$n - object$p)
-      tstar <- qnorm(1 - (1 - level) / 2)
+      # tstar <- qnorm(1 - (1 - level) / 2)
       lwr <- fit - tstar * se
       upr <- fit + tstar * se
       fit <- cbind(fit, lwr, upr)
@@ -338,8 +367,15 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, interval = c("none",
     fit <- as.numeric(newdata_model %*% coef(object))
     vars <- as.numeric(vapply(newdata_model_list, function(x) crossprod(x, vcov(object) %*% x), numeric(1)))
     se <- sqrt(vars)
+    if (!is.null(scale)) {
+      se <- se * scale
+      df <- df
+    } else {
+      df <- Inf
+    }
+    tstar <- qt(1 - (1 - level) / 2, df = df)
     # tstar <- qt(1 - (1 - level) / 2, df = object$n - object$p)
-    tstar <- qnorm(1 - (1 - level) / 2)
+    # tstar <- qnorm(1 - (1 - level) / 2)
     lwr <- fit - tstar * se
     upr <- fit + tstar * se
     fit <- cbind(fit, lwr, upr)
