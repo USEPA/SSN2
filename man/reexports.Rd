@@ -7,6 +7,7 @@
 \alias{glance}
 \alias{augment}
 \alias{AICc}
+\alias{AUROC}
 \alias{covmatrix}
 \alias{dispersion_initial}
 \alias{dispersion_params}
@@ -25,6 +26,6 @@ below to see their documentation.
 \describe{
   \item{generics}{\code{\link[generics]{augment}}, \code{\link[generics]{glance}}, \code{\link[generics]{tidy}}}
 
-  \item{spmodel}{\code{\link[spmodel]{AICc}}, \code{\link[spmodel]{covmatrix}}, \code{\link[spmodel]{dispersion_initial}}, \code{\link[spmodel]{dispersion_params}}, \code{\link[spmodel]{glances}}, \code{\link[spmodel]{loocv}}, \code{\link[spmodel]{pseudoR2}}, \code{\link[spmodel]{randcov_initial}}, \code{\link[spmodel]{randcov_params}}, \code{\link[spmodel]{varcomp}}}
+  \item{spmodel}{\code{\link[spmodel]{AICc}}, \code{\link[spmodel]{AUROC}}, \code{\link[spmodel]{covmatrix}}, \code{\link[spmodel]{dispersion_initial}}, \code{\link[spmodel]{dispersion_params}}, \code{\link[spmodel]{glances}}, \code{\link[spmodel]{loocv}}, \code{\link[spmodel]{pseudoR2}}, \code{\link[spmodel]{randcov_initial}}, \code{\link[spmodel]{randcov_params}}, \code{\link[spmodel]{varcomp}}}
 }}
 

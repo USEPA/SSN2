@@ -2,7 +2,7 @@
 
 ## Major Updates
 
-* Added support for applications to large data sets. The `ssn_create_bigdist()` function was added to create large distance matrices using the `filematrix` **R** package. Estimation for large data sets is performed by leveraging the `local` argument to `ssn_lm()` and `ssn_glm()`, which looks for a distance matrix created using `ssn_create_bigdist()`. Prediction for large data sets is performed by leveraging the `local` argument to `predict()` (and `augment()`).
+* Added support for applications to large data sets. The `ssn_create_bigdist()` function was added to create large distance matrices using the `filematrix` **R** package. Estimation for large data sets is performed by leveraging the `local` argument to `ssn_lm()` and `ssn_glm()`. Prediction for large data sets is performed by leveraging the `local` argument to `predict()` (and `augment()`). When `local` is used, `SSN2` looks for distance matrices created using `ssn_create_bigdist()`.
 * Added support for Gaussian tail-up and tail-down covariance functions.
 
 ## Minor Updates
@@ -15,6 +15,7 @@
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models with `estmethod = "reml"` have distinct `formula` arguments.
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different sample sizes.
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different family supports (which can happen with `spglm()` and `spgautor()` models).
+* Added `AUROC()`  functions to compute the area under the receiver operating characteristic (AUROC) curve for `ssn_glm` models when `family` is `"binomial"` and the response is binary (i.e., represents a single success or failure).
 * Updated `ssn_import()` so that it does not force an overwrite of the `netgeom` column when it already exists.
 * Add a `verbose` argument to `ssn_import()`, `ssn_import_predpts()`, and `createBinaryID()` to control whether warning messages are printed to the **R** console.
 * Minor documentation updates.
