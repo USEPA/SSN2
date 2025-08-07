@@ -16,7 +16,7 @@
 * `augment()` for `ssn_glm()` models now returns fitted values on the link scale by default to match `broom::augment.glm()`.
 * Added a `type.residuals` argument for `ssn_glm()` models to match `broom::augment.glm()`.
 * Updated `logLik()` to match `lm()` and `glm()` behavior. `logLik()` now returns a vector with class `logLik` and attributes `nobs` and `df`.
-* Added support for using `AIC()` and `BIC()` from `stats` and removed `spmodel`-specific `AIC()` methods.
+* Added support for using `AIC()` and `BIC()` from `stats` and removed `SSN2`-specific `AIC()` methods.
 * Added a `warning` argument to `glances()` that determines whether relevant warnings should be displayed or not.
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when a one model has `estmethod = "ml"` and another model has `estmethod = "reml"`.
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models with `estmethod = "reml"` have distinct `formula` arguments.
