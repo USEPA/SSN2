@@ -2,8 +2,10 @@
 
 ## Major Updates
 
+* Added support for the `emmeans` **R** package for estimating marginal means of `ssn_lm()` and `ssn_glm()` models.
 * Added support for applications to large data sets. The `ssn_create_bigdist()` function was added to create large distance matrices using the `filematrix` **R** package. Estimation for large data sets is performed by leveraging the `local` argument to `ssn_lm()` and `ssn_glm()`. Prediction for large data sets is performed by leveraging the `local` argument to `predict()` (and `augment()`). When `local` is used, `SSN2` looks for distance matrices created using `ssn_create_bigdist()`.
 * Added support for Gaussian tail-up and tail-down covariance functions.
+
 
 ## Minor Updates
 
