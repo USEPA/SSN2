@@ -41,11 +41,16 @@ test_that("generics work ssn_glm point data", {
   aug_ssn_mod1 <- augment(ssn_mod1)
   expect_s3_class(aug_ssn_mod1, "sf")
   expect_true(all(c(".fitted", ".resid", ".hat", ".cooksd", ".std.resid") %in% names(aug_ssn_mod1)))
-  expect_equal(aug_ssn_mod1$.fitted[1], 14.918, tolerance = 0.01)
+  expect_equal(aug_ssn_mod1$.fitted[1], log(14.918), tolerance = 0.01)
   aug_pred_ssn_mod1 <- augment(ssn_mod1, newdata = "pred1km")
   expect_s3_class(aug_pred_ssn_mod1, "sf")
   expect_true(all(c(".fitted") %in% names(aug_ssn_mod1)))
   expect_equal(aug_pred_ssn_mod1$.fitted[1], 2.687, tolerance = 0.01)
+  aug_ssn_mod1 <- augment(ssn_mod1, type.predict = "response")
+  expect_s3_class(aug_ssn_mod1, "sf")
+  expect_equal(aug_ssn_mod1$.fitted[1], 14.918, tolerance = 0.01)
+  aug_pred_ssn_mod1 <- augment(ssn_mod1, newdata = "pred1km", type.predict = "response")
+  expect_equal(aug_pred_ssn_mod1$.fitted[1], exp(2.687), tolerance = 0.01)
 
   # BIC
   expect_vector(BIC(ssn_mod1))
