@@ -34,12 +34,12 @@ the terms on the right, separated by \code{+} operators.}
 
 \item{tailup_type}{The tailup covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, and \code{"none"}. Parameterizations are
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, and \code{"none"}. Parameterizations are
 described in Details.}
 
 \item{taildown_type}{The taildown covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, and \code{"none"}. Parameterizations are
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, and \code{"none"}. Parameterizations are
 described in Details.}
 
 \item{euclid_type}{The euclidean covariance function type. Available options
@@ -248,6 +248,7 @@ elements of \eqn{R(zu)} are given below:
 \item exponential: \eqn{exp(-r) * W}
 \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
 \item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
+\item gaussian: \eqn{2 exp(-r^2) * (1 - pnorm(r * 2^{1/2})) * W}
 \item none: \eqn{I} * W
 }
 
@@ -265,6 +266,7 @@ elements of \eqn{R(zd)} are given below:
 \item exponential: \eqn{exp(-r)}
 \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
 \item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
+\item gaussian: \eqn{0}
 \item none: \eqn{I}
 }
 
@@ -276,9 +278,10 @@ Then parametric forms for flow-unconnected elements of \eqn{R(zd)} are given bel
 \itemize{
 \item linear: \eqn{(1 - r2) * (r2 <= 1)}
 \item spherical: \eqn{(1 - 1.5r1 + 0.5r2) * (1 - r2)^2 * (r2 <= 1)}
-\item exponential: \eqn{exp(-(r1 + r2))}
+\item exponential: \eqn{0}
 \item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
 \item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
+\item gaussian: \eqn{2 exp(-(B - A) / range) * (1 - pnorm(r * 2^{1/2})) * W}
 \item none: \eqn{I}
 }
 

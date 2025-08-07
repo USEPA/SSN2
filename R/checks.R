@@ -53,7 +53,7 @@ check_ssn_glm <- function(initial_object, ssn.object, additive, estmethod) {
 #'
 #' @noRd
 check_tailup_type <- function(tailup_type) {
-  tailup_valid <- c("linear", "spherical", "exponential", "mariah", "epa", "none")
+  tailup_valid <- c("linear", "spherical", "exponential", "mariah", "epa", "gaussian", "none")
 
   if (!(tailup_type %in% tailup_valid)) {
     stop(paste(tailup_type, " is not a valid tailup covariance function."), call. = FALSE)
@@ -66,7 +66,7 @@ check_tailup_type <- function(tailup_type) {
 #'
 #' @noRd
 check_taildown_type <- function(taildown_type) {
-  taildown_valid <- c("linear", "spherical", "exponential", "mariah", "epa", "none")
+  taildown_valid <- c("linear", "spherical", "exponential", "mariah", "epa", "gaussian", "none")
 
   if (!(taildown_type %in% taildown_valid)) {
     stop(paste(taildown_type, "is not a valid taildown covariance function."), call. = FALSE)

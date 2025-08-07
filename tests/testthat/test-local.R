@@ -1,4 +1,13 @@
 test_that("generics work local big data", {
+
+  ssn_create_bigdist(
+    mf04p,
+    predpts = c("CapeHorn"),
+    overwrite = TRUE,
+    among_predpts = TRUE
+  )
+
+
   set.seed(2)
 
   form <- Summer_mn ~ ELEV_DEM

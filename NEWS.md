@@ -3,6 +3,7 @@
 ## Major Updates
 
 * Added support for applications to large data sets. The `ssn_create_bigdist()` function was added to create large distance matrices using the `filematrix` **R** package. Estimation for large data sets is performed by leveraging the `local` argument to `ssn_lm()` and `ssn_glm()`, which looks for a distance matrix created using `ssn_create_bigdist()`. Prediction for large data sets is performed by leveraging the `local` argument to `predict()` (and `augment()`).
+* Added support for Gaussian tail-up and tail-down covariance functions.
 
 ## Minor Updates
 
