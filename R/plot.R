@@ -197,6 +197,9 @@ plot.ssn_glm <- plot.ssn_lm
 #' tg <- Torgegram(Summer_mn ~ 1, mf04p)
 #' plot(tg)
 plot.Torgegram <- function(x, type, separate = FALSE, ...) {
+
+  cloud <- attr(x, "cloud")
+
   if (missing(type)) {
     type <- names(x)
   }
@@ -215,7 +218,11 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
   x <- do.call("rbind", x)
   x$type <- droplevels(factor(x$type, levels = c("flowcon", "flowuncon", "euclid")))
   # scale to [1, 3]
-  x$cex <- (x$np - min(x$np)) / (max(x$np) - min(x$np)) * 2 + 1
+  if (cloud) {
+    x$cex <- 1
+  } else {
+    x$cex <- (x$np - min(x$np)) / (max(x$np) - min(x$np)) * 2 + 1
+  }
   col_key <- c("flowcon" = "#000000", "flowuncon" = "#E69F00", euclid = "#56B4E9")
   x$col <- col_key[as.character(x$type)]
 
@@ -228,6 +235,7 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
   # set defaults
   if (!"main" %in% names_dotlist) {
     dotlist$main <- "Torgegram"
+    if (cloud) dotlist$main <- paste0(dotlist$main, " (Cloud)")
   }
 
   if (!"xlab" %in% names_dotlist) {
@@ -239,7 +247,12 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
   }
 
   if (!"pch" %in% names_dotlist) {
-    dotlist$pch <- 19
+    if (cloud) dotlist$pch <- 1 else dotlist$pch <- 19
+  }
+
+  if ("cex" %in% names_dotlist) {
+    x$cex <- dotlist$cex
+    dotlist$cex <- NULL
   }
 
 

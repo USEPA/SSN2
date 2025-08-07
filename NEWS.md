@@ -9,6 +9,8 @@
 
 ## Minor Updates
 
+* Updated `ssn_import()` so that it does not force an overwrite of the `netgeom` column when it already exists.
+* Add a `verbose` argument to `ssn_import()`, `ssn_import_predpts()`, and `createBinaryID()` to control whether warning messages are printed to the **R** console.
 * Added the `na.action` argument to `predict.ssn_lm()` and `predict.ssn_glm()` functions to clarify that missing values in `newdata` return an error.
 * Changed the `type` argument in `augment()` for `ssn_glm()` models to `type.predict` to match `broom::augment.glm()`.
 * `augment()` for `ssn_glm()` models now returns fitted values on the link scale by default to match `broom::augment.glm()`.
@@ -20,13 +22,14 @@
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models with `estmethod = "reml"` have distinct `formula` arguments.
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different sample sizes.
 * Added a warning message to `glances()` about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different family supports (which can happen with `ssn_glm()` models).
+* Added a `cloud` argument to `Torgegram()` to return a cloud Torgegram.
+* Added the ability to pass custom `cex` to `plot.Torgegram()`.
+* Added a robust semivariogram option to `Torgegram()`; see the `robust`argument to `Torgegram()`
 * Added an `AUROC()`  function to compute the area under the receiver operating characteristic (AUROC) curve for `ssn_glm` models when `family` is `"binomial"` and the response is binary (i.e., represents a single success or failure).
 * Added a `type` argument to `loocv()` when `cv_predict = TRUE` and using `ssn_glm()` models so that predictions may be obtained on the link or response scale.
 * Added support for `"terms"` prediction for `ssn_lm()` and `ssn_glm()` models.
 * Added `scale` and `df` arguments to `predict()` for `ssn_lm()` models.
 * Add `dispersion` argument to `predict()` for `ssn_glm()` models.
-* Updated `ssn_import()` so that it does not force an overwrite of the `netgeom` column when it already exists.
-* Add a `verbose` argument to `ssn_import()`, `ssn_import_predpts()`, and `createBinaryID()` to control whether warning messages are printed to the **R** console.
 * Minor documentation updates.
 * Minor code maintenance updates.
 
