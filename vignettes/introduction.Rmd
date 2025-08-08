@@ -670,7 +670,7 @@ Currently, `ssn_simulate()` only works on the observed network (`network = "obs"
 Here we list a few advanced modeling features available in `SSN2`:
 
 * Support for the `emmeans` **R** package: The `ssn_lm()` and `ssn_glm()` model objects can be used directly with `emmeans` for estimating marginal means.
-* Applications to large data sets: Via distance matrices created using `ssn_create_bigdist()`, the `local` argument to `ssn_lm()` and `ssn_glm()`, and the `local` argument to `predict()` (i.e., `predict.ssn_lm()` and `predict.ssn_glm()`).
+* Applications to large data sets ($n \geq 3,000$): Via distance matrices created using `ssn_create_bigdist()`, the `local` argument to `ssn_lm()` and `ssn_glm()`, and the `local` argument to `predict()` (i.e., `predict.ssn_lm()` and `predict.ssn_glm()`).
 * Nonspatial random effects: Via the `random` argument to `ssn_lm()` and `ssn_glm()`.
 * Partition factors: Via the `partition_factor` argument to `ssn_lm()` and `ssn_glm()`.
 * Fix covariance parameters at known values: Via the `tailup_initial`, `taildown_initial`, `euclid_initial`, and `nugget_initial`, and `dispersion_initial`.
