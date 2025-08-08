@@ -103,13 +103,8 @@ specifying the partition factor.  The partition factor assumes observations
 from different levels of the partition factor are uncorrelated.}
 
 \item{local}{An optional logical or list controlling the big data approximation.
-If omitted, \code{local} is set
-to \code{TRUE} or \code{FALSE} based on the sample size (the number of
-non-missing observations in \code{data}) -- if the sample size exceeds 5,000,
-\code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
-\code{local} is also set to \code{FALSE} when \code{spcov_type} is \code{"none"}
-and there are no random effects specified via \code{random}.
-If \code{FALSE}, no big data approximation is implemented.
+\code{local} can only be used when big data distance matrices have been created
+using \code{\link[=ssn_create_bigdist]{ssn_create_bigdist()}}.
 If a list is provided, the following arguments detail the big
 data approximation:
 \itemize{

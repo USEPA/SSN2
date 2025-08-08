@@ -665,6 +665,20 @@ head(sims)
 
 Currently, `ssn_simulate()` only works on the observed network (`network = "obs"`). However, simulation in `SSN2` will be a focus of future updates, and we plan to add support for simulating on prediction networks as well as observed and prediction networks simultaneously.
 
+# Advanced Modeling Features in `SSN2`
+
+Here we list a few advanced modeling features available in `SSN2`:
+
+* Support for the `emmeans` **R** package: The `ssn_lm()` and `ssn_glm()` model objects can be used directly with `emmeans` for estimating marginal means.
+* Applications to large data sets: Via distance matrices created using `ssn_create_bigdist()`, the `local` argument to `ssn_lm()` and `ssn_glm()`, and the `local` argument to `predict()` (i.e., `predict.ssn_lm()` and `predict.ssn_glm()`).
+* Nonspatial random effects: Via the `random` argument to `ssn_lm()` and `ssn_glm()`.
+* Partition factors: Via the `partition_factor` argument to `ssn_lm()` and `ssn_glm()`.
+* Fix covariance parameters at known values: Via the `tailup_initial`, `taildown_initial`, `euclid_initial`, and `nugget_initial`, and `dispersion_initial`.
+* Euclidean covariance anisotropy: Via the `anisotropy` argument to allow the strength of Euclidean covariance to vary with direction.
+* Support for many covariance functions: The `ssn_lm()` and `ssn_glm()` model objects support seven tailup covariance functions, seven taildown covariance functions, and twelve Euclidean covariance functions.
+* Support for cloud and robust Torgegrams: Via additional arguments to `Torgegram()`.
+* Various model selection tools: Via `AIC()`, `AICc()`, `BIC()`, `anova()`, `AUROC()`, `glance()`, `glances()`, and `loocv()`.
+
 # Function Glossary
 
 Here we list the two `SSN2` functions used to fit models:
@@ -743,7 +757,7 @@ Here we present a table of `SSN` functions and provide their relevant successors
 | `BlockPredict()`            | `predict(…, block = TRUE)`                           |
 | `BLUP()`                    | `fitted(…, type)`                                    |
 | `covparms()`                | `coef()`; `tidy(..., effects)`                       |
-| `createDistMat()`           | `ssn_create_distmat()`                               |
+| `createDistMat()`           | `ssn_create_distmat()` ; `ssn_create_bigdist()`      |
 | `CrossValidationSSN()`      | `loocv()`                                            |
 | `CrossValidationStatsSSN()` | `loocv()`                                            |
 | `EmpiricalSemivariogram()`  | `Torgegram(…, type)`                                 |
@@ -770,7 +784,7 @@ In addition to the function name changes above, a few function argument names al
 
 # The Future of `SSN2`
 
-There are several features we have planned for future versions of `SSN2` that did not make it into the initial release due to the October timeline regarding the `rgdal`, `rgeos`, and `maptools` retirements. As such, we plan to regularly update and add features to `SSN2` in the coming years -- so check back often! Some of these features include additional tools for large data sets (both model fitting and prediction), manipulating the `.ssn` object, simulating data, and more. We will do our best to make future versions of `SSN2` backward compatible with this version, but minor changes may occur until we are ready to release version 1.0.0.
+There are several features we have planned for future versions of `SSN2` that did not make it into the initial release due to the October timeline regarding the `rgdal`, `rgeos`, and `maptools` retirements. As such, we plan to regularly update and add features to `SSN2` in the coming years -- so check back often! We will do our best to make future versions of `SSN2` backward compatible with this version, but minor changes may occur until we are ready to release version 1.0.0.
 
 # R Code Appendix {.unnumbered}
 
