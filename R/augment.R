@@ -179,9 +179,9 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
 }
 
 #' @param type.predict The scale (\code{response} or \code{link}) of fitted
-#'   values and predictions obtained using \code{spglm()} or \code{spgautor} objects.
+#'   values and predictions obtained using \code{ssn_glm()} objects.
 #' @param type.residuals The residual type (\code{deviance}, \code{pearson}, or \code{response})
-#'   of fitted models from \code{spglm()} or \code{spgautor} objects. Ignored if
+#'   of fitted models from \code{ssn_glm()} objects. Ignored if
 #'   \code{newdata} is specified.
 #' @param newdata_size The \code{size} value for each observation in \code{newdata}
 #'   used when predicting for the binomial family.

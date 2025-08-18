@@ -67,10 +67,10 @@ which performs exact computations.}
 \item{...}{Additional arguments to \code{predict()} when augmenting \code{newdata}.}
 
 \item{type.predict}{The scale (\code{response} or \code{link}) of fitted
-values and predictions obtained using \code{spglm()} or \code{spgautor} objects.}
+values and predictions obtained using \code{ssn_glm()} objects.}
 
 \item{type.residuals}{The residual type (\code{deviance}, \code{pearson}, or \code{response})
-of fitted models from \code{spglm()} or \code{spgautor} objects. Ignored if
+of fitted models from \code{ssn_glm()} objects. Ignored if
 \code{newdata} is specified.}
 
 \item{newdata_size}{The \code{size} value for each observation in \code{newdata}

@@ -108,7 +108,7 @@ check_likstat_use <- function(model_list) {
       warning('Likelihood-based comparisons (e.g., AIC, AICc, BIC) should not be used to compare models fit with estmethod = "reml" when the models have distinct explanatory variable structures (i.e., distinct formula arguments).', call. = FALSE)
     }
   }
-  if (inherits(model_list[[1]], c("spglm", "spgautor"))) {
+  if (inherits(model_list[[1]], c("ssn_glm"))) {
     check_wrong_family(model_list)
   }
   # NULL

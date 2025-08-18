@@ -670,7 +670,8 @@ Currently, `ssn_simulate()` only works on the observed network (`network = "obs"
 Here we list a few advanced modeling features available in `SSN2`:
 
 * Support for the `emmeans` **R** package: The `ssn_lm()` and `ssn_glm()` model objects can be used directly with `emmeans` for estimating marginal means.
-* Applications to large data sets ($n \geq 3,000$): Via distance matrices created using `ssn_create_bigdist()`, the `local` argument to `ssn_lm()` and `ssn_glm()`, and the `local` argument to `predict()` (i.e., `predict.ssn_lm()` and `predict.ssn_glm()`).
+* Support for the `vif()` function for variance inflation factors from the `car` **R** package.
+* Applications to larger data sets ($n \geq 5,000$ for `ssn_lm()` and $n \geq 3,000$ for `ssn_glm()`): Via distance matrices created using `ssn_create_bigdist()`, the `local` argument to `ssn_lm()` and `ssn_glm()`, and the `local` argument to `predict()` (i.e., `predict.ssn_lm()` and `predict.ssn_glm()`).
 * Nonspatial random effects: Via the `random` argument to `ssn_lm()` and `ssn_glm()`.
 * Partition factors: Via the `partition_factor` argument to `ssn_lm()` and `ssn_glm()`.
 * Fix covariance parameters at known values: Via the `tailup_initial`, `taildown_initial`, `euclid_initial`, and `nugget_initial`, and `dispersion_initial`.
@@ -692,6 +693,7 @@ Here we list some commonly used `SSN2` functions that operate on model fits:
 -   `AICc()`: Compute the AICc.
 -   `anova()`: Perform an analysis of variance.
 -   `augment()`: Augment data with diagnostics or new data with predictions.
+-   `BIC()`: Compute the BIC.
 -   `coef()`: Return coefficients.
 -   `confint()`: Compute confidence intervals.
 -   `cooks.distance()`: Compute Cook's distance.
@@ -717,8 +719,9 @@ Documentation for these functions can be found by running `?function_name.SSN2` 
 
 Here we list some commonly used `SSN2` functions for manipulating `SSN` objects:
 
+-   `ssn_create_bigdist()`: Create big distance matrices in the `.ssn` directory for use with modeling and prediction functions via the `local` argument for big data approximations.
 -   `ssn_create_distmat()`: Create distance matrices in the `.ssn` directory
-     for use with modeling functions.
+     for use with modeling and prediction functions.
 -   `ssn_get_data()`: Extract an `sf` `data.frame` of observed or
     prediction locations from the `SSN` object.
 -   `ssn_get_netgeom()`: Extract topological information from the
@@ -785,6 +788,13 @@ In addition to the function name changes above, a few function argument names al
 # The Future of `SSN2`
 
 There are several features we have planned for future versions of `SSN2` that did not make it into the initial release due to the October timeline regarding the `rgdal`, `rgeos`, and `maptools` retirements. As such, we plan to regularly update and add features to `SSN2` in the coming years -- so check back often! We will do our best to make future versions of `SSN2` backward compatible with this version, but minor changes may occur until we are ready to release version 1.0.0.
+
+# Additional Spatial Stream Network Tools
+
+* SSNbler for creating `SSN` objects and .ssn folders ([link here](https://pet221.github.io/SSNbler/)).
+* The National Hydrography Dataset (NHD) for flowline data ([link here](https://www.usgs.gov/national-hydrography/national-hydrography-dataset)).
+* The National Stream Internet (NSI) for topologically corrected flowline data ([link here](https://research.fs.usda.gov/rmrs/projects/national-stream-internet)).
+* StreamCat for flowline metrics based on COMID ([link here](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset)).
 
 # R Code Appendix {.unnumbered}
 

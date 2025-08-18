@@ -68,7 +68,8 @@
 #'   from different levels of the partition factor are uncorrelated.
 #' @param local An optional logical or list controlling the big data approximation.
 #'   \code{local} can only be used when big data distance matrices have been created
-#'   using [ssn_create_bigdist()] and is most beneficial when the sample size is at least 3,000.
+#'   using [ssn_create_bigdist()] and is most beneficial when the sample size is
+#'   at least 5,000 \code{ssn_lm()} or 3,000 \code{ssn_glm()}.
 #'   If a list is provided, the following arguments detail the big
 #'   data approximation:
 #'   \itemize{
@@ -381,6 +382,7 @@ ssn_lm <- function(formula, ssn.object,
       formula, ssn.object, additive, anisotropy,
       initial_object, random, randcov_initial, partition_factor, local, ...
     )
+    if (data_object$n > 5000) message("Because the sample size exceeds 5000, consider setting local = TRUE to perform computationally efficient approximations. Ensure big data distance matrices have been created using ssn_create_bigdist().")
   } else {
     data_object <- get_data_object_bigdata(
       formula, ssn.object, additive, anisotropy,

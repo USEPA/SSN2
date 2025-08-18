@@ -118,7 +118,8 @@ from different levels of the partition factor are uncorrelated.}
 
 \item{local}{An optional logical or list controlling the big data approximation.
 \code{local} can only be used when big data distance matrices have been created
-using \code{\link[=ssn_create_bigdist]{ssn_create_bigdist()}} and is most beneficial when the sample size is at least 3,000.
+using \code{\link[=ssn_create_bigdist]{ssn_create_bigdist()}} and is most beneficial when the sample size is
+at least 5,000 \code{ssn_lm()} or 3,000 \code{ssn_glm()}.
 If a list is provided, the following arguments detail the big
 data approximation:
 \itemize{

@@ -370,6 +370,7 @@ ssn_glm <- function(formula, ssn.object, family,
       formula, ssn.object, family, additive, anisotropy,
       initial_object, random, randcov_initial, partition_factor, local, ...
     )
+    if (data_object$n > 3000) message("Because the sample size exceeds 3000, consider setting local = TRUE to perform computationally efficient approximations. Ensure big data distance matrices have been created using ssn_create_bigdist().")
   } else {
     data_object <- get_data_object_bigdata_glm(
       formula, ssn.object, family, additive, anisotropy,

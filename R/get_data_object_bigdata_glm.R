@@ -137,14 +137,15 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
     # partition_factor <- reformulate(paste0("as.character(", partition_factor_labels, ")"), intercept = FALSE)
   }
 
-  if (is.null(local)) {
-    if (n > 3000) {
-      local <- TRUE
-      message("Because the sample size exceeds 5000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun ssn_lm() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
-    } else {
-      local <- FALSE
-    }
-  }
+  # if (is.null(local)) {
+  #   if (n > 3000) {
+  #     local <- TRUE
+  #     message("Because the sample size exceeds 3000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun ssn_lm() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
+  #   } else {
+  #     local <- FALSE
+  #   }
+  # }
+
   local <- get_local_list_estimation(local, obdata, n, partition_factor)
   n_local_index <- length(unique(local$index))
 
