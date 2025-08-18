@@ -111,7 +111,7 @@ mf04p <- ssn_import(path, predpts = "pred1km")
 ssn_create_distmat(mf04p, predpts = "pred1km", overwrite = TRUE)
 ```
 
-We fit and summarize an SSN model explaining summer water temperatue (`Summer_mn`) as a function of elevation (`ELEV_DEM`) and precipitation (`AREAWTMAP`) with a exponential, spherical, and Gaussian structures for the tail-up, tail-down, and Euclidean errors, respectively, by running
+We fit and summarize an SSN model explaining summer water temperature (`Summer_mn`) as a function of elevation (`ELEV_DEM`) and precipitation (`AREAWTMAP`) with a exponential, spherical, and Gaussian structures for the tail-up, tail-down, and Euclidean errors, respectively, by running
 
 ```r
 ssn_mod <- ssn_lm(

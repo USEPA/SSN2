@@ -196,7 +196,7 @@ correspond to independent samples.
 Simulate random variables on a stream
 network with a specific mean and covariance structure. Designed to use
 \code{ssn_simulate()}, but individual simulation functions for each
-resposne distribution also exist.
+response distribution also exist.
 }
 \details{
 Random variables are simulated via the product of the covariance matrix's

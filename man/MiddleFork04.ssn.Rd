@@ -42,7 +42,7 @@ datasets. The column names are defined as follows:
 \item rid: Reach identifier
 \item COMID: Common identifier of an NHD feature or relationship
 \item GNIS_Name: Feature name as found in the Geographic Names Information System
-\item REACHCODE: Unique identifier for a reach. The first 8 digits contain the identfier for the HUC8 and the last 6 digits are a unique within-HUC8 identifier for the reach
+\item REACHCODE: Unique identifier for a reach. The first 8 digits contain the identifier for the HUC8 and the last 6 digits are a unique within-HUC8 identifier for the reach
 \item FTYPE: three-digit integer used to classify hydrography features in the NHD and define subtypes
 \item FCODE: Numeric code that contains the feature type and its attributes as found in the NHDFCode lookup table
 \item AREAWTMAP: Area weighted mean annual precipitation (mm) at the lowermost location on the edge
@@ -66,7 +66,7 @@ location on the line segment where the site resides
 \item SLOPE: Slope of the line segment (cm/cm) where the site resides
 \item ELEV_DEM: Elevation at the site based on a 30m DEM
 \item Source: Source of the data - relates to the ID field of the source table
-\item Summer_mn: Overall summer mean termperature (C) of the deployment
+\item Summer_mn: Overall summer mean temperature (C) of the deployment
 \item MaxOver20: Binary variable: 1 represents the maximum summer temperature
 was greater than 20C and 0 indicates that it was less than 20C
 \item C16: Number of times daily stream temperature exceeded 16C
@@ -84,7 +84,7 @@ MWMT = maximum 7-day moving average of the maximum daily temperature
 \item h2oAreaKm2: Watershed area (km2) for the lowermost location on the edge feature the site resides on
 \item ratio: Site ratio value; provides the proportional distance from the downstream node of the edge to the site location
 \item upDist: Distance upstream from the stream outlet (m)
-\item afvArea: Additive function value calculated using waterhsed area (h2oAreaKm2)
+\item afvArea: Additive function value calculated using watershed area (h2oAreaKm2)
 \item locID: Location identifier
 \item netID: Stream network identifier
 \item snapdist: Distance (m) that site was moved when it was snapped to the edges

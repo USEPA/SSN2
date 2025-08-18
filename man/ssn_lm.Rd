@@ -172,7 +172,7 @@ This fitted model list contains the following elements:
 \item \code{crs}: The geographic coordinate reference system.
 \item \code{deviance}: The model deviance.
 \item \code{diagtol}: A tolerance value that may be added to the diagonal
-of  ovariance matrices to encourage decomposition stability.
+of covariance matrices to encourage decomposition stability.
 \item \code{estmethod}: The estimation method.
 \item \code{euclid_max}: The maximum euclidean distance.
 \item \code{fitted}: Fitted values.

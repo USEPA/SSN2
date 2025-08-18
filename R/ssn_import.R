@@ -35,7 +35,7 @@
 #'   is created to store important data representing
 #'   topological relationships in a spatial stream network
 #'   model. These data are stored in character format, which is less
-#'   likely to be inadvertantly changed by users. See
+#'   likely to be inadvertently changed by users. See
 #'   \code{\link[SSN2]{create_netgeom}} for a more detailed description of
 #'   the format and contents of 'netgeom'.
 #'
@@ -48,7 +48,7 @@
 #'   to fit a spatial statistical model to stream network data. If
 #'   \code{overwrite = TRUE} (\code{overwrite = FALSE} is the default) and a binaryID.db
 #'   file already exists within the .ssn directory, it will be
-#'   overwriten when the \code{SSN} object is created. If a 'netgeom' column exists in any of the input datasets (e.g. edges, observed sites, predictions sites) and \code{overwrite = TRUE}, it will be overwriten.
+#'   overwritten when the \code{SSN} object is created. If a 'netgeom' column exists in any of the input datasets (e.g. edges, observed sites, predictions sites) and \code{overwrite = TRUE}, it will be overwriten.
 #'
 #'   At a minimum, an \code{SSN} object must always contain streams,
 #'   which are referred to as edges. The \code{SSN} object would also
@@ -57,7 +57,7 @@
 #'   \code{SSN} object. When \code{include_obs=FALSE}, an \code{SSN}
 #'   object is created without observations. This option provides
 #'   flexibility for users who would like to simulate data on a set of
-#'   artifical sites on an existing stream network. Note that
+#'   artificial sites on an existing stream network. Note that
 #'   observation sites must be included in the \code{SSN} object in
 #'   order to fit models using \command{ssn_lm} or
 #'   \command{ssn_glm}. The \code{SSN} object may contain multiple
