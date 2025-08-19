@@ -15,6 +15,7 @@
 #'     \item \code{value} The optimized value of the fitting function
 #'     \item \code{AIC} The AIC.
 #'     \item \code{AICc} The AICc.
+#'     \item \code{BIC} The BIC.
 #'     \item \code{logLik} The log-likelihood
 #'     \item \code{deviance} The deviance.
 #'     \item \code{pseudo.r.squared} The pseudo r-squared
@@ -48,6 +49,7 @@ glance.ssn_lm <- function(x, ...) {
     value = x$optim$value,
     AIC = ifelse(is_likbased, AIC(x), NA),
     AICc = ifelse(is_likbased, AICc(x), NA),
+    BIC = ifelse(is_likbased, BIC(x), NA),
     logLik = ifelse(is_likbased, logLik(x), NA),
     deviance = ifelse(is_likbased, deviance(x), NA),
     pseudo.r.squared = pseudoR2(x),

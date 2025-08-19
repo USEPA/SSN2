@@ -24,6 +24,8 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
   ## get index in pid (data) order
   observed_index <- which(!na_index)
   missing_index <- which(na_index)
+  # observed_index <- !na_index
+  # missing_index <- na_index
 
   # get ob data and frame objects
   obdata <- ssn.object$obs[observed_index, , drop = FALSE]
@@ -108,7 +110,6 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
     # partition_factor <- reformulate(paste0("as.character(", partition_factor_labels, ")"), intercept = FALSE)
   }
 
-
   # find index (can put back in with local later)
   # if (is.null(local)) {
   #   if (n > 5000) {
@@ -118,9 +119,9 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
   #     local <- FALSE
   #   }
   # }
-
   local <- list(index = rep(1, n))
   local <- get_local_list_estimation(local, obdata, n, partition_factor)
+
 
   # store data list
   obdata_list <- split.data.frame(obdata, local$index)
@@ -191,6 +192,20 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
     }
   }
 
+  # bbox <- st_bbox(obdata)
+  # tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
+  # taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
+  # if (tailup_none && taildown_none) {
+  #   tail_max <- Inf
+  # } else {
+  #   tail_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
+  # }
+  # euclid_none <- inherits(initial_object$euclid_initial, "euclid_none")
+  # if (euclid_none) {
+  #   euclid_max <- Inf
+  # } else {
+  #   euclid_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
+  # }
   # find dist observed object
   dist_object <- get_dist_object_oblist(dist_object, observed_index, local$index)
   # rename as oblist to not store two sets
@@ -220,9 +235,11 @@ get_data_object <- function(formula, ssn.object, additive, anisotropy,
     n = n,
     ncores = local$ncores,
     observed_index = observed_index,
+    obdata_list = NULL,
     offset = offset,
     ones_list = ones_list,
     order = order,
+    order_bigdata = NULL,
     p = p,
     parallel = local$parallel,
     partition_factor_initial = partition_factor,

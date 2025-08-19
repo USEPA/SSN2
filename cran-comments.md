@@ -1,5 +1,4 @@
-This is a minor update that enhances stability and includes updates to `reexports.Rd`
-to reflect changes in `spmodel v0.8.0`'s handling of `AIC()` and `AICc()`. Thank you.
+This is an update that adds a few major features, minor features, and addresses a few bugs. Thank you.
 
 -------
 
@@ -16,4 +15,4 @@ development version of R (accessed by running `devtools::check_win_devel()`).
 
 ## Downstream dependencies
 
-There are no downstream dependencies.
+These updates do not affect downstream dependencies.

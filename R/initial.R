@@ -48,6 +48,7 @@
 #'     \item exponential: \eqn{exp(-r) * W}
 #'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
 #'     \item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
+#'     \item gaussian: \eqn{2 exp(-r^2) * (1 - pnorm(r * 2^{1/2})) * W}
 #'     \item none: \eqn{I} * W
 #'   }
 #'
@@ -65,6 +66,7 @@
 #'     \item exponential: \eqn{exp(-r)}
 #'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
 #'     \item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
+#'     \item gaussian: \eqn{0}
 #'     \item none: \eqn{I}
 #'   }
 #'
@@ -76,9 +78,10 @@
 #'   \itemize{
 #'     \item linear: \eqn{(1 - r2) * (r2 <= 1)}
 #'     \item spherical: \eqn{(1 - 1.5r1 + 0.5r2) * (1 - r2)^2 * (r2 <= 1)}
-#'     \item exponential: \eqn{exp(-(r1 + r2))}
+#'     \item exponential: \eqn{0}
 #'     \item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
 #'     \item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
+#'     \item gaussian: \eqn{2 exp(-(B - A) / range) * (1 - pnorm(r * 2^{1/2})) * W}
 #'     \item none: \eqn{I}
 #'   }
 #'

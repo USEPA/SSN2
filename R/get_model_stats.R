@@ -11,16 +11,16 @@ get_model_stats <- function(cov_est_object, data_object, estmethod) {
 
   # compute eigenproducts for later use
   if (data_object$parallel) { # put back when local implemented
-    # cluster_list <- lapply(seq_along(cov_matrix_list), function(l) {
-    #   cluster_list_element <- list(
-    #     c = cov_matrix_list[[l]],
-    #     x = data_object$X_list[[l]],
-    #     y = data_object$y_list[[l]],
-    #     o = data_object$ones_list[[l]]
-    #   )
-    # })
-    # eigenprods_list <- parallel::parLapply(data_object$cl, cluster_list, get_eigenprods_parallel)
-    # names(eigenprods_list) <- names(cov_matrix_list)
+    cluster_list <- lapply(seq_along(cov_matrix_list), function(l) {
+      cluster_list_element <- list(
+        c = cov_matrix_list[[l]],
+        x = data_object$X_list[[l]],
+        y = data_object$y_list[[l]],
+        o = data_object$ones_list[[l]]
+      )
+    })
+    eigenprods_list <- parallel::parLapply(data_object$cl, cluster_list, get_eigenprods_parallel)
+    names(eigenprods_list) <- names(cov_matrix_list)
   } else {
     eigenprods_list <- mapply(
       c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list, o = data_object$ones_list,

@@ -19,7 +19,7 @@ the SSN2 package."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/aja
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
       </span>
     </div>
 
@@ -93,7 +93,7 @@ datasets. The column names are defined as follows:</p>
 <p><code>edges</code>:</p><ul><li><p>rid: Reach identifier</p></li>
 <li><p>COMID: Common identifier of an NHD feature or relationship</p></li>
 <li><p>GNIS_Name: Feature name as found in the Geographic Names Information System</p></li>
-<li><p>REACHCODE: Unique identifier for a reach. The first 8 digits contain the identfier for the HUC8 and the last 6 digits are a unique within-HUC8 identifier for the reach</p></li>
+<li><p>REACHCODE: Unique identifier for a reach. The first 8 digits contain the identifier for the HUC8 and the last 6 digits are a unique within-HUC8 identifier for the reach</p></li>
 <li><p>FTYPE: three-digit integer used to classify hydrography features in the NHD and define subtypes</p></li>
 <li><p>FCODE: Numeric code that contains the feature type and its attributes as found in the NHDFCode lookup table</p></li>
 <li><p>AREAWTMAP: Area weighted mean annual precipitation (mm) at the lowermost location on the edge</p></li>
@@ -114,7 +114,7 @@ location on the line segment where the site resides</p></li>
 <li><p>SLOPE: Slope of the line segment (cm/cm) where the site resides</p></li>
 <li><p>ELEV_DEM: Elevation at the site based on a 30m DEM</p></li>
 <li><p>Source: Source of the data - relates to the ID field of the source table</p></li>
-<li><p>Summer_mn: Overall summer mean termperature (C) of the deployment</p></li>
+<li><p>Summer_mn: Overall summer mean temperature (C) of the deployment</p></li>
 <li><p>MaxOver20: Binary variable: 1 represents the maximum summer temperature
 was greater than 20C and 0 indicates that it was less than 20C</p></li>
 <li><p>C16: Number of times daily stream temperature exceeded 16C</p></li>
@@ -132,7 +132,7 @@ MWMT = maximum 7-day moving average of the maximum daily temperature
 <li><p>h2oAreaKm2: Watershed area (km2) for the lowermost location on the edge feature the site resides on</p></li>
 <li><p>ratio: Site ratio value; provides the proportional distance from the downstream node of the edge to the site location</p></li>
 <li><p>upDist: Distance upstream from the stream outlet (m)</p></li>
-<li><p>afvArea: Additive function value calculated using waterhsed area (h2oAreaKm2)</p></li>
+<li><p>afvArea: Additive function value calculated using watershed area (h2oAreaKm2)</p></li>
 <li><p>locID: Location identifier</p></li>
 <li><p>netID: Stream network identifier</p></li>
 <li><p>snapdist: Distance (m) that site was moved when it was snapped to the edges</p></li>

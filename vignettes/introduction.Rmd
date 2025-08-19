@@ -3,19 +3,15 @@ title: "An Introduction to Spatial Stream Network Modeling in R Using SSN2"
 author: "Michael Dumelle, Erin Peterson, Jay M. Ver Hoef, Alan Pearse, and Dan Isaak"
 bibliography: '`r system.file("references.bib", package="SSN2")`'
 output:
-  html_document:
-    theme: flatly
-    number_sections: true
-    highlighted: default 
-    toc: yes
-    toc_float:
-      collapsed: no
-      smooth_scroll: no
-    toc_depth: 3
+  pdf_document:
+    toc: true
+    toc_depth: '3'
 vignette: >
-  %\VignetteIndexEntry{An Introduction to SSN2}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Introduction}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include = FALSE}
@@ -99,7 +95,7 @@ citation(package = "SSN2")
 
 # Input Data
 
-The streams, observation, and prediction datasets must be pre-processed prior to fitting SSN models and making predictions at unobserved locations using `SSN2`. Previously, the STARS toolset for ArcGIS Desktop versions 9.3x - 10.8x [@peterson2014stars] or the `openSTARS` **R** package [@kattwinkel2020preparing] were used to generate spatial information required for model fitting and prediction. However, both software packages have recently been retired and are replaced by the `SSNbler` **R** package [@peterson2024SSNbler], which is a new, **R**-based version of the STARS tools. `SSNbler` is currently available on GitHub ([link here](https://github.com/pet221/SSNbler/)), will soon be available on CRAN, and contains several useful resources that guide users through these pre-processing steps. Pre-processing using either `SSNbler`, STARS, or `openSTARS` ends with the creatino of a `.ssn` folder, which is non-proprietary. Files residing in the `.ssn` folder are read into R using `ssn_import()` from `SSN2` and palced into a list structure called an SSN object, which contains all the spatial, topological, and attribute information needed to leverage the modeling tools in `SSN2`. This includes:
+The streams, observation, and prediction datasets must be pre-processed prior to fitting SSN models and making predictions at unobserved locations using `SSN2`. Previously, the STARS toolset for ArcGIS Desktop versions 9.3x - 10.8x [@peterson2014stars] or the `openSTARS` **R** package [@kattwinkel2020openSTARS] were used to generate spatial information required for model fitting and prediction. However, both software packages have recently been retired and are replaced by the `SSNbler` **R** package [@peterson2024SSNbler], which is a new, **R**-based version of the STARS tools. `SSNbler` is currently available on GitHub ([link here](https://github.com/pet221/SSNbler/)), will soon be available on CRAN, and contains several useful resources that guide users through these pre-processing steps. Pre-processing using either `SSNbler`, STARS, or `openSTARS` ends with the creation of a `.ssn` folder, which is non-proprietary. Files residing in the `.ssn` folder are read into R using `ssn_import()` from `SSN2` and placed into a list structure called an SSN object, which contains all the spatial, topological, and attribute information needed to leverage the modeling tools in `SSN2`. This includes:
 
 1. edges: a geopackage of lines representing the linear geometry of the
    stream network(s).
@@ -286,7 +282,7 @@ The `ssn_lm()` function is used to fit linear spatial stream network models and 
 
 It is important to note that the default for `tailup_type`, `taildown_type`, and `euclid_type` is `"none"`, which means that they must be specified if their relevant covariances are desired. The default for `nugget_type` is `"nugget"`, which specifies a nugget effect, useful because many ecological processes have localized variability that is important to capture.  Full parameterizations of each covariance function are given in `ssn_lm()`'s documentation, which can be viewed by running `help("ssn_lm", "SSN2")`. There are different approaches to choosing between covariance functions. One approach is to fit several models and compare their fits using statistics like AIC or cross-validation error. Another approach is to visualize the `Torgegram()` and choose functions appropriately. 
 
-The `Torgegram()` in SSN2 is essentially a semivariogram that describes variability in streams data based on flow-connected, flow-unconnected, and Euclidean spatial relationships. Like other semivariograms, the Torgegram describes how the semivariance (i.e. halved average squared difference) between observations changes with hydrologic or Euclidean distances. If there is strong dependence between sites based on flow-connected or flow-unconnected relationships, the semivariance will increase with respective distance. If, however, there is not strong dependence, the semivariance will be relatively flat. The `Torgegram()` output can be combined with `plot()` to better understand which covariance components may be most suitable in the model. For example, when the semivariance for flow-connected sites increases with hydrologic distance but the semivariance for flow-unconnected sites is flat, then a tail-up component may be sufficient for the model (i.e., a tail-down component is not needed). However, the model would likely benefit from a tail-down component or a combination of tail-up and tail-down models if the semivariance for both flow-connected and flow-unconnected sites increases with distance. Alternatively, if the semivariance is flat, then the model is unlikely to benefit from tail-up or tail-down components. SSN2 also allows users to visualize changes in semivariance based on Euclidean distance, which may provide additional insights about whether a Euclidean component or a mixture of tail-up, tail-down and/or Euclidean models will improve the model. Please see @zimmerman2017torgegram for a more in-depth review of Toregegrams, along with strategies for interpreting and using them to inform model fitting.  For a more formal comparison between models, use statistics like `AIC` or cross-validation error, which we discuss later.
+The `Torgegram()` in SSN2 is essentially a semivariogram that describes variability in streams data based on flow-connected, flow-unconnected, and Euclidean spatial relationships. Like other semivariograms, the Torgegram describes how the semivariance (i.e. halved average squared difference) between observations changes with hydrologic or Euclidean distances. If there is strong dependence between sites based on flow-connected or flow-unconnected relationships, the semivariance will increase with respective distance. If, however, there is not strong dependence, the semivariance will be relatively flat. The `Torgegram()` output can be combined with `plot()` to better understand which covariance components may be most suitable in the model. For example, when the semivariance for flow-connected sites increases with hydrologic distance but the semivariance for flow-unconnected sites is flat, then a tail-up component may be sufficient for the model (i.e., a tail-down component is not needed). However, the model would likely benefit from a tail-down component or a combination of tail-up and tail-down models if the semivariance for both flow-connected and flow-unconnected sites increases with distance. Alternatively, if the semivariance is flat, then the model is unlikely to benefit from tail-up or tail-down components. SSN2 also allows users to visualize changes in semivariance based on Euclidean distance, which may provide additional insights about whether a Euclidean component or a mixture of tail-up, tail-down and/or Euclidean models will improve the model. Please see @zimmerman2017torgegram for a more in-depth review of Torgegrams, along with strategies for interpreting and using them to inform model fitting.  For a more formal comparison between models, use statistics like `AIC` or cross-validation error, which we discuss later.
 
 Suppose that we want to model summer mean stream temperature as a function of elevation and precipitation. We can aid our understanding of what covariance components may be informative by visualizing a Torgegram:
 ```{r}
@@ -297,7 +293,7 @@ tg <- Torgegram(
 )
 ```
 
-The first argument to `Torgegram()` is `formula`. Residuals from a non-spatial linear model specified by `formula` are used by the Toregram to visualize remaining spatial dependence. The `type` argument specifies the Torgegram types and has a default value of `c("flowcon", "flowuncon")` for both flow-connected and flow-unconnected semivariances. Here we also desire to visualize Euclidean semivariance. We visualize all three components by running
+The first argument to `Torgegram()` is `formula`. Residuals from a non-spatial linear model specified by `formula` are used by the Torgegram to visualize remaining spatial dependence. The `type` argument specifies the Torgegram types and has a default value of `c("flowcon", "flowuncon")` for both flow-connected and flow-unconnected semivariances. Here we also desire to visualize Euclidean semivariance. We visualize all three components by running
 
 ```{r}
 plot(tg)
@@ -669,6 +665,21 @@ head(sims)
 
 Currently, `ssn_simulate()` only works on the observed network (`network = "obs"`). However, simulation in `SSN2` will be a focus of future updates, and we plan to add support for simulating on prediction networks as well as observed and prediction networks simultaneously.
 
+# Advanced Modeling Features in `SSN2`
+
+Here we list a few advanced modeling features available in `SSN2`:
+
+* Support for the `emmeans` **R** package: The `ssn_lm()` and `ssn_glm()` model objects can be used directly with `emmeans` for estimating marginal means.
+* Support for the `vif()` function for variance inflation factors from the `car` **R** package.
+* Applications to larger data sets ($n \geq 5,000$ for `ssn_lm()` and $n \geq 3,000$ for `ssn_glm()`): Via distance matrices created using `ssn_create_bigdist()`, the `local` argument to `ssn_lm()` and `ssn_glm()`, and the `local` argument to `predict()` (i.e., `predict.ssn_lm()` and `predict.ssn_glm()`).
+* Nonspatial random effects: Via the `random` argument to `ssn_lm()` and `ssn_glm()`.
+* Partition factors: Via the `partition_factor` argument to `ssn_lm()` and `ssn_glm()`.
+* Fix covariance parameters at known values: Via the `tailup_initial`, `taildown_initial`, `euclid_initial`, and `nugget_initial`, and `dispersion_initial`.
+* Euclidean covariance anisotropy: Via the `anisotropy` argument to allow the strength of Euclidean covariance to vary with direction.
+* Support for many covariance functions: The `ssn_lm()` and `ssn_glm()` model objects support seven tailup covariance functions, seven taildown covariance functions, and twelve Euclidean covariance functions.
+* Support for cloud and robust Torgegrams: Via additional arguments to `Torgegram()`.
+* Various model selection tools: Via `AIC()`, `AICc()`, `BIC()`, `anova()`, `AUROC()`, `glance()`, `glances()`, and `loocv()`.
+
 # Function Glossary
 
 Here we list the two `SSN2` functions used to fit models:
@@ -682,6 +693,7 @@ Here we list some commonly used `SSN2` functions that operate on model fits:
 -   `AICc()`: Compute the AICc.
 -   `anova()`: Perform an analysis of variance.
 -   `augment()`: Augment data with diagnostics or new data with predictions.
+-   `BIC()`: Compute the BIC.
 -   `coef()`: Return coefficients.
 -   `confint()`: Compute confidence intervals.
 -   `cooks.distance()`: Compute Cook's distance.
@@ -707,8 +719,9 @@ Documentation for these functions can be found by running `?function_name.SSN2` 
 
 Here we list some commonly used `SSN2` functions for manipulating `SSN` objects:
 
+-   `ssn_create_bigdist()`: Create big distance matrices in the `.ssn` directory for use with modeling and prediction functions via the `local` argument for big data approximations.
 -   `ssn_create_distmat()`: Create distance matrices in the `.ssn` directory
-     for use with modeling functions.
+     for use with modeling and prediction functions.
 -   `ssn_get_data()`: Extract an `sf` `data.frame` of observed or
     prediction locations from the `SSN` object.
 -   `ssn_get_netgeom()`: Extract topological information from the
@@ -747,7 +760,7 @@ Here we present a table of `SSN` functions and provide their relevant successors
 | `BlockPredict()`            | `predict(…, block = TRUE)`                           |
 | `BLUP()`                    | `fitted(…, type)`                                    |
 | `covparms()`                | `coef()`; `tidy(..., effects)`                       |
-| `createDistMat()`           | `ssn_create_distmat()`                               |
+| `createDistMat()`           | `ssn_create_distmat()` ; `ssn_create_bigdist()`      |
 | `CrossValidationSSN()`      | `loocv()`                                            |
 | `CrossValidationStatsSSN()` | `loocv()`                                            |
 | `EmpiricalSemivariogram()`  | `Torgegram(…, type)`                                 |
@@ -774,7 +787,14 @@ In addition to the function name changes above, a few function argument names al
 
 # The Future of `SSN2`
 
-There are several features we have planned for future versions of `SSN2` that did not make it into the initial release due to the October timeline regarding the `rgdal`, `rgeos`, and `maptools` retirements. As such, we plan to regularly update and add features to `SSN2` in the coming years -- so check back often! Some of these features include additional tools for large data sets (both model fitting and prediction), manipulating the `.ssn` object, simulating data, and more. We will do our best to make future versions of `SSN2` backward compatible with this version, but minor changes may occur until we are ready to release version 1.0.0.
+There are several features we have planned for future versions of `SSN2` that did not make it into the initial release due to the October timeline regarding the `rgdal`, `rgeos`, and `maptools` retirements. As such, we plan to regularly update and add features to `SSN2` in the coming years -- so check back often! We will do our best to make future versions of `SSN2` backward compatible with this version, but minor changes may occur until we are ready to release version 1.0.0.
+
+# Additional Spatial Stream Network Tools
+
+* SSNbler for creating `SSN` objects and .ssn folders ([link here](https://pet221.github.io/SSNbler/)).
+* The National Hydrography Dataset (NHD) for flowline data ([link here](https://www.usgs.gov/national-hydrography/national-hydrography-dataset)).
+* The National Stream Internet (NSI) for topologically corrected flowline data ([link here](https://research.fs.usda.gov/rmrs/projects/national-stream-internet)).
+* StreamCat for flowline metrics based on COMID ([link here](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset)).
 
 # R Code Appendix {.unnumbered}
 

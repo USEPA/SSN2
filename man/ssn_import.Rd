@@ -4,7 +4,13 @@
 \alias{ssn_import}
 \title{Import \code{SSN} object}
 \usage{
-ssn_import(path, include_obs = TRUE, predpts = NULL, overwrite = FALSE)
+ssn_import(
+  path,
+  include_obs = TRUE,
+  predpts = NULL,
+  overwrite = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{path}{Filepath to the .ssn directory. See details.}
@@ -16,9 +22,11 @@ whether observed sites should be included in the SSN object.}
 the .ssn folder. See details.}
 
 \item{overwrite}{default = \code{FALSE}. If \code{TRUE}, overwrite
-existing binaryID.db files and netgeom column(s) if it exists in the
+existing binaryID.db files and netgeom column(s) if they exist in the
 edges, observed sites (if \code{include_obs = TRUE}), and
 prediction site datasets (if they exist).}
+
+\item{verbose}{default = \code{TRUE}. If \code{FALSE}, warning messages will not be printed to the console.}
 }
 \value{
 \code{ssn_import} returns an object of class SSN, which is a list
@@ -62,7 +70,7 @@ prediction sites (optional) as \code{sf data.frame} objects. A new column named 
 is created to store important data representing
 topological relationships in a spatial stream network
 model. These data are stored in character format, which is less
-likely to be inadvertantly changed by users. See
+likely to be inadvertently changed by users. See
 \code{\link[SSN2]{create_netgeom}} for a more detailed description of
 the format and contents of 'netgeom'.
 
@@ -75,7 +83,7 @@ directory. This information is used internally by
 to fit a spatial statistical model to stream network data. If
 \code{overwrite = TRUE} (\code{overwrite = FALSE} is the default) and a binaryID.db
 file already exists within the .ssn directory, it will be
-overwriten when the \code{SSN} object is created.
+overwritten when the \code{SSN} object is created. If a 'netgeom' column exists in any of the input datasets (e.g. edges, observed sites, predictions sites) and \code{overwrite = TRUE}, it will be overwriten.
 
 At a minimum, an \code{SSN} object must always contain streams,
 which are referred to as edges. The \code{SSN} object would also
@@ -84,7 +92,7 @@ have been collected. Only one observed dataset is permitted in an
 \code{SSN} object. When \code{include_obs=FALSE}, an \code{SSN}
 object is created without observations. This option provides
 flexibility for users who would like to simulate data on a set of
-artifical sites on an existing stream network. Note that
+artificial sites on an existing stream network. Note that
 observation sites must be included in the \code{SSN} object in
 order to fit models using \command{ssn_lm} or
 \command{ssn_glm}. The \code{SSN} object may contain multiple

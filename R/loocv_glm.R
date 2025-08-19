@@ -1,7 +1,13 @@
 #' @rdname loocv.SSN2
+#' @param type The scale (\code{response} or \code{link}) of predictions obtained
+#'   when \code{cv_predict = TRUE} and using \code{ssn_glm()} objects.
 #' @method loocv ssn_glm
 #' @export
-loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
+loocv.ssn_glm <- function(object, cv_predict = FALSE, type = c("link", "response"), se.fit = FALSE, ...) {
+
+  # match type argument so the two display
+  type <- match.arg(type)
+
   loocv_val <- get_loocv.ssn_glm(object, cv_predict = TRUE, se.fit = TRUE)
   response_val <- object$y
   error_val <- loocv_val$cv_predict - response_val
@@ -33,7 +39,13 @@ loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
     loocv_out$stats <- loocv_stats
 
     if (cv_predict) {
-      loocv_out$cv_predict <- loocv_val$cv_predict
+      if (type == "link") {
+        loocv_out$cv_predict <- loocv_val$cv_predict_link
+      } else if (type == "response") {
+        loocv_out$cv_predict <- loocv_val$cv_predict
+      } else {
+        stop("Invalid type argument.", call. = FALSE)
+      }
     }
 
     if (se.fit) {
@@ -145,9 +157,9 @@ get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, ...) {
 
   if (cv_predict) {
     if (se.fit) {
-      cv_output <- list(mspe = mean((cv_predict_val_invlink - y)^2), cv_predict = as.vector(cv_predict_val_invlink), se.fit = as.vector(cv_predict_se))
+      cv_output <- list(mspe = mean((cv_predict_val_invlink - y)^2), cv_predict = as.vector(cv_predict_val_invlink), cv_predict_link = as.vector(cv_predict_val), se.fit = as.vector(cv_predict_se))
     } else {
-      cv_output <- list(mspe = mean((cv_predict_val_invlink - y)^2), cv_predict = as.vector(cv_predict_val_invlink))
+      cv_output <- list(mspe = mean((cv_predict_val_invlink - y)^2), cv_predict = as.vector(cv_predict_val_invlink), cv_predict_link = as.vector(cv_predict_val))
     }
   } else {
     if (se.fit) {

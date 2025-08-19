@@ -10,6 +10,7 @@
 amongSitesDistMat <- function(ssn, pids, name = "obs", bin.table) {
   site.no <- length(pids)
 
+
   among_distance_matrix <- matrix(NA, nrow = site.no, ncol = site.no)
   diag(among_distance_matrix) <- 0
   rownames(among_distance_matrix) <- pids

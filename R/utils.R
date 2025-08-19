@@ -14,6 +14,9 @@ generics::augment
 spmodel::AICc
 
 #' @export
+spmodel::AUROC
+
+#' @export
 spmodel::covmatrix
 
 #' @export
@@ -71,12 +74,12 @@ remove_covtype <- function(class_string) {
 }
 
 
-#' CRAN release questions
-#'
-#' @noRd
-release_questions <- function() {
-  c(
-    "Have you changed version numbers in DESCRIPTION, CITATION, and README?",
-    "Have you run pkgdown::build_site() and committed?"
-  )
-}
+#' #' CRAN release questions
+#' #'
+#' #' @noRd
+#' release_questions <- function() {
+#'   c(
+#'     "Have you changed version numbers in DESCRIPTION, CITATION, and README?",
+#'     "Have you run pkgdown::build_site() and committed?"
+#'   )
+#' }

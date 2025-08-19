@@ -1,6 +1,6 @@
 Package: SSN2
 Title: Spatial Modeling on Stream Networks
-Version: 0.2.1
+Version: 0.3.0
 Authors@R: c(
     person(given = "Michael",
            family = "Dumelle",
@@ -39,14 +39,23 @@ Imports:
     spmodel,
     RSQLite,
     utils,
-    withr
+    withr,
+    doParallel,
+    filematrix,
+    foreach, 
+    parallel,
+    itertools,
+    iterators
 Suggests: 
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
     ggplot2,
     sp,
-    statmod
+    statmod,
+    pROC,
+    emmeans (>= 1.4),
+    estimability
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://usepa.github.io/SSN2/

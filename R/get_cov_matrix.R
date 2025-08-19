@@ -18,11 +18,13 @@ get_cov_matrix <- function(params_object, dist_object_oblist,
 
   # could use Reduce if arguments the same
 
+
   # compute spatial covariance matrix
   cov_matrix <- cov_matrix(params_object$tailup, dist_object_oblist) + # tailup covariance
     cov_matrix(params_object$taildown, dist_object_oblist) + # taildown covariance
     cov_matrix(params_object$euclid, dist_object_oblist, anisotropy) + # euclid covariance
     cov_matrix(params_object$nugget, dist_object_oblist, de_scale, diagtol) # nugget covariance
+
 
   # add random effects if necessary
   if (!is.null(randcov_list)) {
@@ -93,4 +95,28 @@ get_cov_matrix_list <- function(params_object, data_object) {
     )
   }
   cov_matrix_list
+}
+
+get_cov_matrix_cross <- function(params_object, dist_object_bigdata_cross_oblist, randcov_params = NULL, randcov_Zs_cross = NULL, partition_matrix_cross = NULL, data_object) {
+
+  # de_scale <- sum(params_object$tailup[["de"]], params_object$taildown[["de"]], params_object$euclid[["de"]])
+  # diagtol <- data_object$diagtol
+  # compute spatial covariance matrix
+  cov_matrix_cross_val <- cov_matrix(params_object$tailup, dist_object_bigdata_cross_oblist) + # tailup covariance
+    cov_matrix(params_object$taildown, dist_object_bigdata_cross_oblist) + # taildown covariance
+    cov_matrix(params_object$euclid, dist_object_bigdata_cross_oblist, data_object$anisotropy, cross = TRUE) + # euclid covariance
+    0 # cov_matrix(params_object$nugget, dist_object_bigdata_cross_oblist, de_scale, diagtol) # nugget covariance (not needed as it's off diagonals)
+
+  # random effects
+  if (!is.null(randcov_params)) {
+    randcov_matrix_cross_val <- randcov_matrix(randcov_params, randcov_Zs_cross)
+    cov_matrix_cross_val <- cov_matrix_cross_val + randcov_matrix_cross_val
+  }
+
+  # partitioning
+  if (!is.null(partition_matrix_cross)) {
+    cov_matrix_cross_val <- cov_matrix_cross_val * partition_matrix_cross
+  }
+
+  cov_matrix_cross_val
 }

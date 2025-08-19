@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
       </span>
     </div>
 
@@ -57,6 +57,48 @@
       <small>Source: <a href="https://github.com/USEPA/SSN2/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.3.0" id="ssn2-030">SSN2 0.3.0<small>2025-08-18</small><a class="anchor" aria-label="anchor" href="#ssn2-030"></a></h2>
+<div class="section level3">
+<h3 id="major-updates-0-3-0">Major Updates<a class="anchor" aria-label="anchor" href="#major-updates-0-3-0"></a></h3>
+<ul><li>Added support for the <code>emmeans</code> <strong>R</strong> package for estimating marginal means of <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> models.</li>
+<li>Added support for applications to large data sets. The <code><a href="../reference/ssn_create_bigdist.html">ssn_create_bigdist()</a></code> function was added to create large distance matrices using the <code>filematrix</code> <strong>R</strong> package. Estimation for large data sets is performed by leveraging the <code>local</code> argument to <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code>. Prediction for large data sets is performed by leveraging the <code>local</code> argument to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> (and <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>). When <code>local</code> is used, <code>SSN2</code> looks for distance matrices created using <code><a href="../reference/ssn_create_bigdist.html">ssn_create_bigdist()</a></code>.</li>
+<li>Added support for Gaussian tail-up and tail-down covariance functions.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-updates-0-3-0">Minor Updates<a class="anchor" aria-label="anchor" href="#minor-updates-0-3-0"></a></h3>
+<ul><li>Updated <code><a href="../reference/ssn_import.html">ssn_import()</a></code> so that it does not force an overwrite of the <code>netgeom</code> column when it already exists.</li>
+<li>Add a <code>verbose</code> argument to <code><a href="../reference/ssn_import.html">ssn_import()</a></code>, <code><a href="../reference/ssn_import_predpts.html">ssn_import_predpts()</a></code>, and <code>createBinaryID()</code> to control whether warning messages are printed to the <strong>R</strong> console.</li>
+<li>Added the <code>na.action</code> argument to <code><a href="../reference/predict.SSN2.html">predict.ssn_lm()</a></code> and <code><a href="../reference/predict.SSN2.html">predict.ssn_glm()</a></code> functions to clarify that missing values in <code>newdata</code> return an error.</li>
+<li>Changed the <code>type</code> argument in <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> for <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> models to <code>type.predict</code> to match <code><a href="https://broom.tidymodels.org/reference/augment.glm.html" class="external-link">broom::augment.glm()</a></code>.</li>
+<li>
+<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> for <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> models now returns fitted values on the link scale by default to match <code><a href="https://broom.tidymodels.org/reference/augment.glm.html" class="external-link">broom::augment.glm()</a></code>.</li>
+<li>Added a <code>type.residuals</code> argument for <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> models to match <code><a href="https://broom.tidymodels.org/reference/augment.glm.html" class="external-link">broom::augment.glm()</a></code>.</li>
+<li>Updated <code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code> to match <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> behavior. <code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code> now returns a vector with class <code>logLik</code> and attributes <code>nobs</code> and <code>df</code>.</li>
+<li>Added support for using <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code> and <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">BIC()</a></code> from <code>stats</code> and removed <code>SSN2</code>-specific <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code> methods.</li>
+<li>Added a <code>warning</code> argument to <code><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances()</a></code> that determines whether relevant warnings should be displayed or not.</li>
+<li>Added a warning message to <code><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances()</a></code> about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when a one model has <code>estmethod = "ml"</code> and another model has <code>estmethod = "reml"</code>.</li>
+<li>Added a warning message to <code><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances()</a></code> about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models with <code>estmethod = "reml"</code> have distinct <code>formula</code> arguments.</li>
+<li>Added a warning message to <code><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances()</a></code> about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different sample sizes.</li>
+<li>Added a warning message to <code><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances()</a></code> about interpreting likelihood-based statistics (e.g., AIC, AICc, BIC) when two models have different family supports (which can happen with <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> models).</li>
+<li>Added a <code>cloud</code> argument to <code><a href="../reference/Torgegram.html">Torgegram()</a></code> to return a cloud Torgegram.</li>
+<li>Added the ability to pass custom <code>cex</code> to <code><a href="../reference/plot.Torgegram.html">plot.Torgegram()</a></code>.</li>
+<li>Added a robust semivariogram option to <code><a href="../reference/Torgegram.html">Torgegram()</a></code>; see the <code>robust</code>argument to <code><a href="../reference/Torgegram.html">Torgegram()</a></code>
+</li>
+<li>Added an <code><a href="https://usepa.github.io/spmodel/reference/AUROC.html" class="external-link">AUROC()</a></code> function to compute the area under the receiver operating characteristic (AUROC) curve for <code>ssn_glm</code> models when <code>family</code> is <code>"binomial"</code> and the response is binary (i.e., represents a single success or failure).</li>
+<li>Added a <code>type</code> argument to <code><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv()</a></code> when <code>cv_predict = TRUE</code> and using <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> models so that predictions may be obtained on the link or response scale.</li>
+<li>Added support for <code>"terms"</code> prediction for <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> models.</li>
+<li>Added <code>scale</code> and <code>df</code> arguments to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> for <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> models.</li>
+<li>Add <code>dispersion</code> argument to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> for <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> models.</li>
+<li>Minor documentation updates.</li>
+<li>Minor code maintenance updates.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-3-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-0"></a></h3>
+<ul><li>Fixed a bug that caused incorrect degrees of freedom for the likelihood ratio test (<code>anova(model1, model2)</code>) when <code>estmethod</code> is <code>"ml"</code> for both models <a href="https://github.com/USEPA/SSN2/issues/25" class="external-link">#25</a>.</li>
+<li>Fixed a bug that caused an error in <code>anova(object1, object2)</code> when the name of <code>object1</code> had special characters (e.g., <code>$</code>).</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.1" id="ssn2-021">SSN2 0.2.1<small>2024-08-28</small><a class="anchor" aria-label="anchor" href="#ssn2-021"></a></h2>
 <div class="section level3">

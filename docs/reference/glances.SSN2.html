@@ -18,7 +18,7 @@ fitted model objects and binds the output together, sorted by a column of intere
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
       </span>
     </div>
 
@@ -66,10 +66,10 @@ fitted model objects and binds the output together, sorted by a column of intere
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for ssn_lm</span></span>
-<span><span class="fu"><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, sort_by <span class="op">=</span> <span class="st">"AICc"</span>, decreasing <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, sort_by <span class="op">=</span> <span class="st">"AICc"</span>, decreasing <span class="op">=</span> <span class="cn">FALSE</span>, warning <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for ssn_glm</span></span>
-<span><span class="fu"><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, sort_by <span class="op">=</span> <span class="st">"AICc"</span>, decreasing <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, sort_by <span class="op">=</span> <span class="st">"AICc"</span>, decreasing <span class="op">=</span> <span class="cn">FALSE</span>, warning <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -90,6 +90,11 @@ The default is <code>"AICc"</code>.</p></dd>
 
 <dt>decreasing</dt>
 <dd><p>Should <code>sort_by</code> be decreasing or not? The default is <code>FALSE</code>.</p></dd>
+
+
+<dt>warning</dt>
+<dd><p>Whether a warning is displayed when model comparisons violate certain rules.
+The default is <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div id="value">
@@ -123,11 +128,12 @@ each fitted model object.</p>
 <span class="r-in"><span>  taildown_type <span class="op">=</span> <span class="st">"exponential"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances</a></span><span class="op">(</span><span class="va">ssn_mod1</span>, <span class="va">ssn_mod2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   model        n     p  npar value   AIC  AICc logLik deviance pseudo.r.squared</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> ssn_mod1    45     2     3  76.9  82.9  83.5  -<span style="color: #BB0000;">38.4</span>     43.0           0.585 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> ssn_mod2    45     2     3 123.  129.  129.   -<span style="color: #BB0000;">61.4</span>     43.4           0.091<span style="text-decoration: underline;">7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 11</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   model        n     p  npar value   AIC  AICc   BIC logLik deviance</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> ssn_mod1    45     2     3  76.9  82.9  83.5  88.3  -<span style="color: #BB0000;">38.4</span>     43.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> ssn_mod2    45     2     3 123.  129.  129.  134.   -<span style="color: #BB0000;">61.4</span>     43.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: pseudo.r.squared &lt;dbl&gt;</span></span>
 </code></pre></div>
     </div>
   </div>

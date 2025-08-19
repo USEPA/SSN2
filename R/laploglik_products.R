@@ -6,31 +6,34 @@
 #'
 #' @noRd
 laploglik_products <- function(params_object, data_object, estmethod) {
-  cov_matrix_list <- get_cov_matrix_list(params_object, data_object)
-  # cholesky products (no local)
-  # if (data_object$parallel) {
-  #   cluster_list <- lapply(seq_along(cov_matrix_list), function(l) {
-  #     cluster_list_element <- list(
-  #       c = cov_matrix_list[[l]],
-  #       x = data_object$X_list[[l]],
-  #       y = data_object$y_list[[l]]
-  #     )
-  #   })
-  #   cholprods_list <- parallel::parLapply(data_object$cl, cluster_list, get_cholprods_glm_parallel)
-  #   names(cholprods_list) <- names(cov_matrix_list)
-  # } else {
-  #   cholprods_list <- mapply(
-  #     c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list,
-  #     function(c, x, y) get_cholprods_glm(c, x, y),
-  #     SIMPLIFY = FALSE
-  #   )
-  # }
 
-  cholprods_list <- mapply(
-    c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list,
-    function(c, x, y) get_cholprods_glm(c, x, y),
-    SIMPLIFY = FALSE
-  )
+
+  cov_matrix_list <- get_cov_matrix_list(params_object, data_object)
+
+  # cholesky products (no local)
+  if (data_object$parallel) {
+    cluster_list <- lapply(seq_along(cov_matrix_list), function(l) {
+      cluster_list_element <- list(
+        c = cov_matrix_list[[l]],
+        x = data_object$X_list[[l]],
+        y = data_object$y_list[[l]]
+      )
+    })
+    cholprods_list <- parallel::parLapply(data_object$cl, cluster_list, get_cholprods_glm_parallel)
+    names(cholprods_list) <- names(cov_matrix_list)
+  } else {
+    cholprods_list <- mapply(
+      c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list,
+      function(c, x, y) get_cholprods_glm(c, x, y),
+      SIMPLIFY = FALSE
+    )
+  }
+
+  # cholprods_list <- mapply(
+  #   c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list,
+  #   function(c, x, y) get_cholprods_glm(c, x, y),
+  #   SIMPLIFY = FALSE
+  # )
 
   SigInv_list <- lapply(cholprods_list, function(x) x$SigInv)
   SigInv <- Matrix::bdiag(SigInv_list)
@@ -178,73 +181,73 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
       # w_and_H_list$mHInv <- mHInv
     }
   } else {
-    # # add cov_betahat_Inv stability by same diagonal tolerance as this can have problems too
-    # diag(cov_betahat_Inv) <- diag(cov_betahat_Inv) + data_object$diagtol
-    #
-    # while (iter < 50 && wdiffmax > 1e-4) {
-    #   iter <- iter + 1
-    #   # compute the d vector
-    #   d <- get_d(family, w, y, size, dispersion)
-    #   # and then the gradient vector
-    #   g <- d - Ptheta %*% w
-    #   # Next, compute H
-    #   D <- get_D(family, w, y, size, dispersion)
-    #   D_diag <- diag(D)
-    #   D_list <- lapply(split(D_diag, sort(data_object$local_index)), function(x) Diagonal(x = x))
-    #   # cholesky products (while local not implemented)
-    #   # if (data_object$parallel) {
-    #   #   cluster_list <- lapply(seq_along(D_list), function(l) {
-    #   #     cluster_list_element <- list(
-    #   #       D = D_list[[l]],
-    #   #       S = SigInv_list[[l]]
-    #   #     )
-    #   #   })
-    #   #   DSigInv_list <- parallel::parLapply(data_object$cl, cluster_list, get_DSigInv_parallel)
-    #   #   names(DSigInv_list) <- names(D_list)
-    #   # } else {
-    #   #   DSigInv_list <- mapply(
-    #   #     D = D_list, S = SigInv_list,
-    #   #     function(D, S) get_DSigInv(D, S),
-    #   #     SIMPLIFY = FALSE
-    #   #   )
-    #   # }
-    #
-    #   DSigInv_list <- mapply(
-    #     D = D_list, S = SigInv_list,
-    #     function(D, S) get_DSigInv(D, S),
-    #     SIMPLIFY = FALSE
-    #   )
-    #
-    #   # while local not impelmented
-    #   # if (data_object$parallel) {
-    #   #   cluster_list <- DSigInv_list
-    #   #   DSigInv_Inv_list <- parallel::parLapply(data_object$cl, cluster_list, solve)
-    #   #   names(DSigInv_Inv_list) <- names(D_list)
-    #   # } else {
-    #   #   DSigInv_Inv_list <- lapply(DSigInv_list, function(x) solve(x))
-    #   # }
-    #
-    #   DSigInv_Inv_list <- lapply(DSigInv_list, function(x) solve(x))
-    #
-    #   DSigInv_Inv <- Matrix::bdiag(DSigInv_Inv_list)
-    #   HInv <- smw_HInv(AInv = DSigInv_Inv, U = SigInv_X, CInv = cov_betahat_Inv)
-    #   solveHg <- HInv %*% g
-    #   wnew <- w - solveHg
-    #   # check overshoot on loglik surface
-    #   dnew <- get_d(family, wnew, y, size, dispersion)
-    #   gnew <- dnew - Ptheta %*% wnew
-    #   if (any(is.na(gnew) | is.infinite(gnew))) stop("Convergence problem. Try using a different family, removing extreme observations, rescaling the response variable (if continuous), fixing ie at a known, non-zero value (via spcov_initial), or fixing dispersion at one (via dispersion_initial).", call. = FALSE)
-    #   if (max(abs(gnew)) > max(abs(g))) wnew <- w - 0.1 * solveHg
-    #   wdiffmax <- max(abs(wnew - w))
-    #   # update w
-    #   w <- wnew
-    # }
-    #
-    # mHldet <- smw_mHldet(A_list = DSigInv_list, AInv = DSigInv_Inv, U = SigInv_X, C = cov_betahat, CInv = cov_betahat_Inv)
-    # w_and_H_list <- list(w = w, H = NULL, mHldet = mHldet)
-    # if (ret_mHInv) {
-    #   w_and_H_list$mHInv <- -HInv
-    # }
+    # add cov_betahat_Inv stability by same diagonal tolerance as this can have problems too
+    diag(cov_betahat_Inv) <- diag(cov_betahat_Inv) + data_object$diagtol
+
+    while (iter < 50 && wdiffmax > 1e-4) {
+      iter <- iter + 1
+      # compute the d vector
+      d <- get_d(family, w, y, size, dispersion)
+      # and then the gradient vector
+      g <- d - Ptheta %*% w
+      # Next, compute H
+      D <- get_D(family, w, y, size, dispersion)
+      D_diag <- diag(D)
+      D_list <- lapply(split(D_diag, sort(data_object$local_index)), function(x) Diagonal(x = x))
+      # cholesky products (while local not implemented)
+      if (data_object$parallel) {
+        cluster_list <- lapply(seq_along(D_list), function(l) {
+          cluster_list_element <- list(
+            D = D_list[[l]],
+            S = SigInv_list[[l]]
+          )
+        })
+        DSigInv_list <- parallel::parLapply(data_object$cl, cluster_list, get_DSigInv_parallel)
+        names(DSigInv_list) <- names(D_list)
+      } else {
+        DSigInv_list <- mapply(
+          D = D_list, S = SigInv_list,
+          function(D, S) get_DSigInv(D, S),
+          SIMPLIFY = FALSE
+        )
+      }
+
+      # DSigInv_list <- mapply(
+      #   D = D_list, S = SigInv_list,
+      #   function(D, S) get_DSigInv(D, S),
+      #   SIMPLIFY = FALSE
+      # )
+
+      # while local not impelmented
+      if (data_object$parallel) {
+        cluster_list <- DSigInv_list
+        DSigInv_Inv_list <- parallel::parLapply(data_object$cl, cluster_list, solve)
+        names(DSigInv_Inv_list) <- names(D_list)
+      } else {
+        DSigInv_Inv_list <- lapply(DSigInv_list, function(x) solve(x))
+      }
+
+      # DSigInv_Inv_list <- lapply(DSigInv_list, function(x) solve(x))
+
+      DSigInv_Inv <- Matrix::bdiag(DSigInv_Inv_list)
+      HInv <- smw_HInv(AInv = DSigInv_Inv, U = SigInv_X, CInv = cov_betahat_Inv)
+      solveHg <- HInv %*% g
+      wnew <- w - solveHg
+      # check overshoot on loglik surface
+      dnew <- get_d(family, wnew, y, size, dispersion)
+      gnew <- dnew - Ptheta %*% wnew
+      if (any(is.na(gnew) | is.infinite(gnew))) stop("Convergence problem. Try using a different family, removing extreme observations, rescaling the response variable (if continuous), fixing ie at a known, non-zero value (via spcov_initial), or fixing dispersion at one (via dispersion_initial).", call. = FALSE)
+      if (max(abs(gnew)) > max(abs(g))) wnew <- w - 0.1 * solveHg
+      wdiffmax <- max(abs(wnew - w))
+      # update w
+      w <- wnew
+    }
+
+    mHldet <- smw_mHldet(A_list = DSigInv_list, AInv = DSigInv_Inv, U = SigInv_X, C = cov_betahat, CInv = cov_betahat_Inv)
+    w_and_H_list <- list(w = w, H = NULL, mHldet = mHldet)
+    if (ret_mHInv) {
+      w_and_H_list$mHInv <- -HInv
+    }
   }
 
 
@@ -382,32 +385,32 @@ get_l00 <- function(family, w, y, size, dispersion) {
   l00
 }
 
-# smw_HInv <- function(AInv, U, CInv) {
-#   mid <- CInv + t(U) %*% AInv %*% U
-#   # solve_mid <- tryCatch(solve(mid), error = function(e) {
-#   #   diag(mid) <- diag(mid) + 1e-4 # inverse stability
-#   #   solve(mid)
-#   # })
-#   # diag(mid) <- diag(mid) + 1e-4
-#   # if (all(mid == 0)) diag(mid) <- diag(mid) + 1e-4
-#   AInv - (AInv %*% U) %*% solve(mid) %*% (t(U) %*% AInv)
-# }
-#
-# smw_mHldet <- function(A_list, AInv, U, C, CInv) {
-#   Aldet <- sum(unlist(lapply(A_list, function(x) determinant(x, logarithm = TRUE)$modulus))) # must be positive det for -H
-#   Cldet <- 2 * sum(log(diag(t(chol(C)))))
-#   mid <- CInv + t(U) %*% AInv %*% U
-#   # diag(mid) <- diag(mid) + 1e-4
-#   midldet <- determinant(mid, logarithm = TRUE)$modulus
-#   as.numeric(Aldet + Cldet + midldet)
-# }
-#
-# get_DSigInv <- function(D, SigInv) {
-#   D - SigInv
-# }
-#
-# get_DSigInv_parallel <- function(cluster_list) {
-#   D <- cluster_list$D
-#   S <- cluster_list$S
-#   get_DSigInv(D, S)
-# }
+smw_HInv <- function(AInv, U, CInv) {
+  mid <- CInv + t(U) %*% AInv %*% U
+  # solve_mid <- tryCatch(solve(mid), error = function(e) {
+  #   diag(mid) <- diag(mid) + 1e-4 # inverse stability
+  #   solve(mid)
+  # })
+  # diag(mid) <- diag(mid) + 1e-4
+  # if (all(mid == 0)) diag(mid) <- diag(mid) + 1e-4
+  AInv - (AInv %*% U) %*% solve(mid) %*% (t(U) %*% AInv)
+}
+
+smw_mHldet <- function(A_list, AInv, U, C, CInv) {
+  Aldet <- sum(unlist(lapply(A_list, function(x) determinant(x, logarithm = TRUE)$modulus))) # must be positive det for -H
+  Cldet <- 2 * sum(log(diag(t(chol(C)))))
+  mid <- CInv + t(U) %*% AInv %*% U
+  # diag(mid) <- diag(mid) + 1e-4
+  midldet <- determinant(mid, logarithm = TRUE)$modulus
+  as.numeric(Aldet + Cldet + midldet)
+}
+
+get_DSigInv <- function(D, SigInv) {
+  D - SigInv
+}
+
+get_DSigInv_parallel <- function(cluster_list) {
+  D <- cluster_list$D
+  S <- cluster_list$S
+  get_DSigInv(D, S)
+}

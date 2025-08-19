@@ -7,6 +7,10 @@
 #'   \code{ssn_glm}.
 #' @param predpts Name of the prediction point dataset to import in
 #'   character format. See details.
+#' @param overwrite default = \code{FALSE}. If \code{TRUE}, overwrite
+#'   existing netgeom column(s) if they exist in the
+#'   prediction site dataset.
+#' @param verbose default = \code{TRUE}. If \code{FALSE}, warning messages will not be printed to the console.
 #'
 #' @details \command{ssn_import_predpts} imports one set of prediction
 #'   points residing in the .ssn directory into an existing
@@ -67,7 +71,8 @@
 #' ssn_gmod <- ssn_import_predpts(ssn_gmod, predpts = "CapeHorn")
 #' names(ssn_gmod$ssn.object$preds)
 #'
-ssn_import_predpts <- function(x, predpts) {
+ssn_import_predpts <- function(x, predpts, overwrite = FALSE,
+                               verbose = TRUE) {
   obj.type <- class(x)
 
   old_wd <- getwd()
@@ -111,24 +116,10 @@ ssn_import_predpts <- function(x, predpts) {
   ## Remove path to predpts files, if included
   predpts <- basename(predpts)
 
-  ################################################
-
-
   ## For fitted model objects- check if predpts already exists
   if (obj.type %in% c("ssn_lm", "ssn_glm")) {
     setwd(x$ssn.object$path)
-    ## count <- 0
 
-    ## if (length(x$ssn.object$preds) > 0) {
-    ##   for (m in seq_len(length(x$ssn.object$preds))) {
-    ##     if (names(x$ssn.object$preds[m]) == p.names) {
-    ##       pred.num <- m
-    ##       count <- count + 1
-    ##     }
-    ##   }
-    ## }
-
-    ## if (count > 0) {
     if(p.names %in% names(x$ssn.object$preds)) {
       stop("Fitted model object already contains predpoints named ", predpts)
     }
@@ -137,16 +128,6 @@ ssn_import_predpts <- function(x, predpts) {
   ## For SSN objects - check if predpts already exits
   if (obj.type == "SSN") {
     setwd(x$path)
-    ## count <- 0
-
-    ## if (length(x$preds) > 0) {
-    ##   for (m in seq_len(length(x$preds))) {
-    ##     if (names(x$preds[m]) == p.names) {
-    ##       pred.num <- m
-    ##       count <- count + 1
-    ##     }
-    ##   }
-    ## }
 
     ## if (count > 0) {
     if(p.names %in% names(x$ssn.object$preds)) {
@@ -163,8 +144,18 @@ ssn_import_predpts <- function(x, predpts) {
   }
 
   ## Add network geometry column
-  predpoints<- create_netgeom(predpoints, type = "POINT",
-                             overwrite = TRUE)
+  if ("netgeom" %in% colnames(predpoints)){
+      if(overwrite == TRUE){
+        predpoints<- create_netgeom(predpoints, type = "POINT",
+                               overwrite = overwrite)
+      } else {
+        if(verbose == TRUE) {
+            message("netgeom exists in predpts and overwrite == FALSE. No changes made to netgeom\n")
+        }
+      }
+    } else {
+      predpoints<- create_netgeom(predpoints, type = "POINT")
+    }
 
   ## Put prediction points in SSN object
   if (obj.type == "SSN") {

@@ -6,9 +6,9 @@
 \alias{glances.ssn_glm}
 \title{Glance at many fitted model objects}
 \usage{
-\method{glances}{ssn_lm}(object, ..., sort_by = "AICc", decreasing = FALSE)
+\method{glances}{ssn_lm}(object, ..., sort_by = "AICc", decreasing = FALSE, warning = TRUE)
 
-\method{glances}{ssn_glm}(object, ..., sort_by = "AICc", decreasing = FALSE)
+\method{glances}{ssn_glm}(object, ..., sort_by = "AICc", decreasing = FALSE, warning = TRUE)
 }
 \arguments{
 \item{object}{Fitted model object from \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}.}
@@ -20,6 +20,9 @@ output from \code{glance()} or the order of model input (\code{sort_by = "order"
 The default is \code{"AICc"}.}
 
 \item{decreasing}{Should \code{sort_by} be decreasing or not? The default is \code{FALSE}.}
+
+\item{warning}{Whether a warning is displayed when model comparisons violate certain rules.
+The default is \code{TRUE}.}
 }
 \value{
 A tibble where each row represents the output of \code{glance()} for

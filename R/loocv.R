@@ -1,7 +1,6 @@
 #' Perform leave-one-out cross validation
 #'
-#' @description Perform leave-one-out cross validation with options for computationally
-#'   efficient approximations for big data.
+#' @description Perform leave-one-out cross validation.
 #'
 #' @param object A fitted model object from [ssn_lm()] or [ssn_glm()].
 #' @param cv_predict A logical indicating whether the leave-one-out fitted values
@@ -13,7 +12,8 @@
 #' @details Each observation is held-out from the data set and the remaining data
 #'   are used to make a prediction for the held-out observation. This is compared
 #'   to the true value of the observation and several model-fit statistics are computed
-#'   across all observations.
+#'   across all observations. Currently only computationally feasible for observed data
+#'   matrices smaller than approximately 10,000.
 #'
 #' @return If \code{cv_predict = FALSE} and \code{se.fit = FALSE},
 #'   a tibble indicating several

@@ -32,6 +32,11 @@
 #'   add to the augmented \code{newdata} output. Passed to \code{predict()} and defaults
 #'   to \code{"none"}.
 #' @param level Tolerance/confidence level. The default is \code{0.95}.
+#' @param local A list or logical. If a list, specific list elements described
+#'   in [predict.ssn_lm()] or [predict.ssn_glm()] control the big data approximation behavior.
+#'   If a logical, \code{TRUE} chooses default list elements for the list version
+#'   of \code{local} as specified in [predict.ssn_lm()] or [predict.ssn_glm()]. Defaults to \code{FALSE},
+#'   which performs exact computations.
 #' @param ... Additional arguments to \code{predict()} when augmenting \code{newdata}.
 #'
 #' @details \code{augment()} returns a tibble as an \code{sf} object.
@@ -87,9 +92,9 @@
 #' augment(ssn_mod, newdata = "CapeHorn")
 augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
                            interval = c("none", "confidence", "prediction"),
-                           level = 0.95, ...) {
-  # save big data for later
-  local <- FALSE
+                           level = 0.95, local, ...) {
+
+
 
   interval <- match.arg(interval)
 
@@ -117,6 +122,7 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
     tibble_out$.ycoord <- coords[, 2, drop = TRUE]
     tibble_out <- sf::st_as_sf(tibble_out, coords = c(".xcoord", ".ycoord"), crs = x$crs)
   } else {
+    if (missing(local)) local <- NULL
     newdata_name <- newdata
     if (newdata_name == "all") {
       newdata_name <- names(x$ssn.object$preds)
@@ -128,7 +134,7 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
       }
       preds_newdata <- predict(x,
         newdata = y, se.fit = se_fit, interval = interval,
-        level = level, ...
+        level = level, local = local, ...
       )
       if (se_fit) {
         if (interval %in% c("confidence", "prediction")) {
@@ -172,8 +178,11 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
   tibble_out
 }
 
-#' @param type The scale (\code{response} or \code{link}) of predictions obtained
-#'   using \code{ssn_glm} objects.
+#' @param type.predict The scale (\code{response} or \code{link}) of fitted
+#'   values and predictions obtained using \code{ssn_glm()} objects.
+#' @param type.residuals The residual type (\code{deviance}, \code{pearson}, or \code{response})
+#'   of fitted models from \code{ssn_glm()} objects. Ignored if
+#'   \code{newdata} is specified.
 #' @param newdata_size The \code{size} value for each observation in \code{newdata}
 #'   used when predicting for the binomial family.
 #' @param var_correct A logical indicating whether to return the corrected prediction
@@ -182,13 +191,13 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
 #' @rdname augment.SSN2
 #' @method augment ssn_glm
 #' @export
-augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type = c("link", "response"), se_fit = FALSE,
+augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("link", "response"),
+                            type.residuals = c("deviance", "pearson", "response"), se_fit = FALSE,
                             interval = c("none", "confidence", "prediction"),
-                            newdata_size, level = 0.95, var_correct = TRUE, ...) {
-  # save big data for later
-  local <- FALSE
+                            newdata_size, level = 0.95, local = local, var_correct = TRUE, ...) {
 
-  type <- match.arg(type)
+  type.predict <- match.arg(type.predict)
+  type.residuals <- match.arg(type.residuals)
   interval <- match.arg(interval)
 
   # set data and newdata
@@ -203,17 +212,19 @@ augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type = c("link", "re
   }
 
   if (is.null(newdata)) {
-    augment_data <- tibble::tibble(.fitted = fitted(x))
+    augment_data <- tibble::tibble(.fitted = fitted(x, type = type.predict))
     if (se_fit) {
-      preds_data <- predict(x, newdata = data, se.fit = se_fit, interval = "confidence", ...)
+      preds_data <- predict(x, newdata = data, type = type.predict, se.fit = se_fit, interval = "confidence", ...)
       augment_data$.se.fit <- preds_data$se.fit
     }
-    tibble_out <- tibble::tibble(cbind(data, augment_data, influence(x)))
+    tibble_out <- tibble::tibble(cbind(data, augment_data, influence(x, type = type.residuals)))
     coords <- sf::st_coordinates(x$ssn.object$obs)
     tibble_out$.xcoord <- coords[, 1, drop = TRUE]
     tibble_out$.ycoord <- coords[, 2, drop = TRUE]
     tibble_out <- sf::st_as_sf(tibble_out, coords = c(".xcoord", ".ycoord"), crs = x$crs)
   } else {
+    if (missing(newdata_size)) newdata_size <- NULL
+    if (missing(local)) local <- NULL
     newdata_name <- newdata
     if (newdata_name == "all") {
       newdata_name <- names(x$ssn.object$preds)
@@ -226,9 +237,9 @@ augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type = c("link", "re
       }
       # need to update newdata size in case there is one for each prediction object
       preds_newdata <- predict(x,
-        newdata = y, type = type, se.fit = se_fit, interval = interval,
+        newdata = y, type = type.predict, se.fit = se_fit, interval = interval,
         newdata_size = newdata_size, level = level,
-        var_correct = FALSE, ...
+        var_correct = FALSE, local = local, ...
       )
       if (se_fit) {
         if (interval %in% c("confidence", "prediction")) {

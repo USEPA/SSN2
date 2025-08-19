@@ -31,7 +31,7 @@ test_that("ssn manipulation functions work", {
   expect_identical(mf04p_new$path, tempdir_path)
 
   # import capehorn prediction data
-  mf04p_new <- ssn_import_predpts(mf04p_new, predpts = "CapeHorn")
+  mf04p_new <- ssn_import_predpts(mf04p_new, predpts = "CapeHorn", verbose = FALSE)
   expect_s3_class(mf04p_new$preds$CapeHorn, "sf")
 
   # update path

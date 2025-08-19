@@ -28,6 +28,9 @@
     <loc>https://usepa.github.io/SSN2/reference/AIC.SSN2.html</loc>
   </url>
   <url>
+    <loc>https://usepa.github.io/SSN2/reference/amongSitesBigDistMat.html</loc>
+  </url>
+  <url>
     <loc>https://usepa.github.io/SSN2/reference/anova.SSN2.html</loc>
   </url>
   <url>
@@ -125,6 +128,9 @@
   </url>
   <url>
     <loc>https://usepa.github.io/SSN2/reference/SSN2-package.html</loc>
+  </url>
+  <url>
+    <loc>https://usepa.github.io/SSN2/reference/ssn_create_bigdist.html</loc>
   </url>
   <url>
     <loc>https://usepa.github.io/SSN2/reference/ssn_create_distmat.html</loc>

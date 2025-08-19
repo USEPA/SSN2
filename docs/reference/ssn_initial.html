@@ -20,7 +20,7 @@ random effect covariance parameter initial objects."><!-- mathjax --><script src
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
       </span>
     </div>
 
@@ -162,6 +162,7 @@ elements of \(R(zu)\) are given below:</p><ul><li><p>linear: \((1 - r) * (r &lt;
 <li><p>exponential: \(exp(-r) * W\)</p></li>
 <li><p>mariah: \(log(90r + 1) / 90r * (D &gt; 0) + 1 * (D = 0) * W\)</p></li>
 <li><p>epa: \((D - range)^2 * F * (r &lt;= 1) * W / 16range^5\)</p></li>
+<li><p>gaussian: \(2 exp(-r^2) * (1 - pnorm(r * 2^{1/2})) * W\)</p></li>
 <li><p>none: \(I\) * W</p></li>
 </ul><p>Details describing the <code>F</code> matrix in the <code>epa</code> covariance are given in Garreta et al. (2010).
 Flow-unconnected elements of \(R(zu)\) are assumed uncorrelated.
@@ -174,6 +175,7 @@ elements of \(R(zd)\) are given below:</p><ul><li><p>linear: \((1 - r) * (r &lt;
 <li><p>exponential: \(exp(-r)\)</p></li>
 <li><p>mariah: \(log(90r + 1) / 90r * (D &gt; 0) + 1 * (D = 0)\)</p></li>
 <li><p>epa: \((D - range)^2 * F1 * (r &lt;= 1) / 16range^5\)</p></li>
+<li><p>gaussian: \(0\)</p></li>
 <li><p>none: \(I\)</p></li>
 </ul><p>Now let \(A\) be a matrix that contains the shorter of the two distances
 between two sites and the common downstream junction, \(r1 = A / range\),
@@ -181,9 +183,10 @@ between two sites and the common downstream junction, \(r1 = A / range\),
 common downstream junction, \(r2 = B / range\),  and \(I\) be an identity matrix.
 Then parametric forms for flow-unconnected elements of \(R(zd)\) are given below:</p><ul><li><p>linear: \((1 - r2) * (r2 &lt;= 1)\)</p></li>
 <li><p>spherical: \((1 - 1.5r1 + 0.5r2) * (1 - r2)^2 * (r2 &lt;= 1)\)</p></li>
-<li><p>exponential: \(exp(-(r1 + r2))\)</p></li>
+<li><p>exponential: \(0\)</p></li>
 <li><p>mariah: \((log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)\)</p></li>
 <li><p>epa: \((B - range)^2 * F2 * (r2 &lt;= 1) / 16range^5\)</p></li>
+<li><p>gaussian: \(2 exp(-(B - A) / range) * (1 - pnorm(r * 2^{1/2})) * W\)</p></li>
 <li><p>none: \(I\)</p></li>
 </ul><p>Details describing the <code>F1</code> and <code>F2</code> matrices in the <code>epa</code>
 covariance are given in Garreta et al. (2010).

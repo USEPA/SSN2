@@ -68,6 +68,16 @@ cov_vector.tailup_epa <- function(params, dist_pred_object, ...) {
 }
 
 #' @export
+cov_vector.tailup_gaussian <- function(params, dist_pred_object, ...) {
+  h <- dist_pred_object$hydro_pred
+  w <- dist_pred_object$w_pred
+  m <- dist_pred_object$mask_pred
+  range <- params[["range"]]
+  dist_ratio <- as.matrix(h / range) # pnorm doesnt take Matrix objects
+  m * 2 * params[["de"]] * exp(-dist_ratio^2) * (1 - pnorm(dist_ratio * sqrt(2))) * w
+}
+
+#' @export
 cov_vector.tailup_none <- function(params, dist_pred_object, ...) {
   0
 }
@@ -159,6 +169,18 @@ cov_vector.taildown_epa <- function(params, dist_pred_object, ...) {
   h_cor_part <- (h - range)^2 * f_eu * dist_ratio_h_less1 / (16 * range^5) * flow_con
   a_cor_part <- (a - range)^2 * f_ed * dist_ratio_a_less1 / (16 * range^5) * (!flow_con)
   m * params[["de"]] * (h_cor_part + a_cor_part)
+}
+
+#' @export
+cov_vector.taildown_gaussian <- function(params, dist_pred_object, ...) {
+  h <- dist_pred_object$hydro_pred
+  a <- dist_pred_object$a_pred # longer
+  b <- dist_pred_object$b_pred # shorter
+  m <- dist_pred_object$mask_pred
+  range <- params[["range"]]
+  dist_ratio_minus <- as.matrix((a - b) / range)
+  dist_ratio_plus <- as.matrix(h / range) # same as (a + b) / range
+  m * 2 * params[["de"]] * exp(-dist_ratio_minus^2) * (1 - pnorm(dist_ratio_plus * sqrt(2)))
 }
 
 #' @export

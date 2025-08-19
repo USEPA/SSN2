@@ -4,7 +4,7 @@
 \alias{ssn_import_predpts}
 \title{Import prediction points into an SSN, ssn_lm, or ssn_glm object}
 \usage{
-ssn_import_predpts(x, predpts)
+ssn_import_predpts(x, predpts, overwrite = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{x}{An object of class\code{SSN}, \code{ssn_lm}, or
@@ -12,6 +12,12 @@ ssn_import_predpts(x, predpts)
 
 \item{predpts}{Name of the prediction point dataset to import in
 character format. See details.}
+
+\item{overwrite}{default = \code{FALSE}. If \code{TRUE}, overwrite
+existing netgeom column(s) if they exist in the
+prediction site dataset.}
+
+\item{verbose}{default = \code{TRUE}. If \code{FALSE}, warning messages will not be printed to the console.}
 }
 \value{
 an object of class \code{SSN}, \code{ssn_lm}, or

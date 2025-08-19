@@ -19,6 +19,12 @@ test_that("generics work ssn_glm point data", {
   expect_s3_class(AIC(ssn_mod1, ssn_mod2), "data.frame")
   expect_equal(AIC(ssn_mod1, ssn_mod2)$AIC, c(181.112, 181.888), tolerance = 0.01)
 
+  # AICc
+  expect_vector(AICc(ssn_mod1))
+  expect_equal(AICc(ssn_mod1), 185.112, tolerance = 0.01)
+  expect_s3_class(AICc(ssn_mod1, ssn_mod2), "data.frame")
+  expect_equal(AICc(ssn_mod1, ssn_mod2)$AIC, c(185.112, 182.888), tolerance = 0.01)
+
   # anova
   anova1 <- anova(ssn_mod1)
   expect_s3_class(anova1, "data.frame")
@@ -35,11 +41,22 @@ test_that("generics work ssn_glm point data", {
   aug_ssn_mod1 <- augment(ssn_mod1)
   expect_s3_class(aug_ssn_mod1, "sf")
   expect_true(all(c(".fitted", ".resid", ".hat", ".cooksd", ".std.resid") %in% names(aug_ssn_mod1)))
-  expect_equal(aug_ssn_mod1$.fitted[1], 14.918, tolerance = 0.01)
+  expect_equal(aug_ssn_mod1$.fitted[1], log(14.918), tolerance = 0.01)
   aug_pred_ssn_mod1 <- augment(ssn_mod1, newdata = "pred1km")
   expect_s3_class(aug_pred_ssn_mod1, "sf")
   expect_true(all(c(".fitted") %in% names(aug_ssn_mod1)))
   expect_equal(aug_pred_ssn_mod1$.fitted[1], 2.687, tolerance = 0.01)
+  aug_ssn_mod1 <- augment(ssn_mod1, type.predict = "response")
+  expect_s3_class(aug_ssn_mod1, "sf")
+  expect_equal(aug_ssn_mod1$.fitted[1], 14.918, tolerance = 0.01)
+  aug_pred_ssn_mod1 <- augment(ssn_mod1, newdata = "pred1km", type.predict = "response")
+  expect_equal(aug_pred_ssn_mod1$.fitted[1], exp(2.687), tolerance = 0.01)
+
+  # BIC
+  expect_vector(BIC(ssn_mod1))
+  expect_equal(BIC(ssn_mod1), 195.57, tolerance = 0.01)
+  expect_s3_class(BIC(ssn_mod1, ssn_mod2), "data.frame")
+  expect_equal(BIC(ssn_mod1, ssn_mod2)$BIC, c(195.57, 189.11), tolerance = 0.01)
 
   # coef
   expect_vector(coef(ssn_mod1))
@@ -128,16 +145,16 @@ test_that("generics work ssn_glm point data", {
 
   # glance
   glance_ssn_mod1 <- glance(ssn_mod1)
-  names_glance <- c("n", "p", "npar", "value", "AIC", "AICc", "logLik", "deviance", "pseudo.r.squared")
+  names_glance <- c("n", "p", "npar", "value", "AIC", "AICc", "BIC", "logLik", "deviance", "pseudo.r.squared")
   expect_s3_class(glance_ssn_mod1, "data.frame")
-  expect_equal(dim(glance_ssn_mod1), c(1, 9))
+  expect_equal(dim(glance_ssn_mod1), c(1, 10))
   expect_identical(names_glance, names(glance_ssn_mod1))
 
   # glances
   expect_identical(glance_ssn_mod1, glances(ssn_mod1)[, -1])
   glance_ssn_mod12 <- glances(ssn_mod1, ssn_mod2)
   expect_s3_class(glances(ssn_mod1, ssn_mod2), "data.frame")
-  expect_equal(dim(glance_ssn_mod12), c(2, 10))
+  expect_equal(dim(glance_ssn_mod12), c(2, 11))
   expect_identical(c("model", names_glance), names(glance_ssn_mod12))
 
   # hatvalues
@@ -156,8 +173,8 @@ test_that("generics work ssn_glm point data", {
   expect_identical(labels(ssn_mod1), "ELEV_DEM")
 
   # logLik
-  expect_vector(logLik(ssn_mod1))
-  expect_equal(logLik(ssn_mod1), -82.556, tolerance = 0.01)
+  expect_vector(as.numeric(logLik(ssn_mod1)))
+  expect_equal(as.numeric(logLik(ssn_mod1)), -82.556, tolerance = 0.01)
 
   # loocv
   loocv_ssn_mod1 <- loocv(ssn_mod1)
@@ -165,6 +182,10 @@ test_that("generics work ssn_glm point data", {
   expect_identical(names(loocv_ssn_mod1), c("bias", "MSPE", "RMSPE", "RAV"))
   expect_equal(loocv_ssn_mod1$MSPE, 0.243, tolerance = 0.01)
   expect_identical(names(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE)), c("stats", "cv_predict", "se.fit"))
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE)$cv_predict[1], 2.695, tolerance = 0.01)
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE)$se.fit[1], 0.0285, tolerance = 0.01)
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE, type = "response")$cv_predict[1], exp(2.695), tolerance = 0.01)
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE, type = "response")$se.fit[1], 0.0285, tolerance = 0.01) # still on link scale
 
   # model.frame
   expect_equal(dim(model.frame(ssn_mod1)), c(45, 2))

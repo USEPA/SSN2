@@ -3,7 +3,7 @@
 #' @description Simulate random variables on a stream
 #'   network with a specific mean and covariance structure. Designed to use
 #'   \code{ssn_simulate()}, but individual simulation functions for each
-#'   resposne distribution also exist.
+#'   response distribution also exist.
 #'
 #' @param family The response distribution family. The default is \code{"Gaussian"}.
 #' @param ssn.object A spatial stream network object with class \code{SSN}. Random

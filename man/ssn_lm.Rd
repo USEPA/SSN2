@@ -21,6 +21,7 @@ ssn_lm(
   random,
   randcov_initial,
   partition_factor,
+  local,
   ...
 )
 }
@@ -33,12 +34,12 @@ the terms on the right, separated by \code{+} operators.}
 
 \item{tailup_type}{The tailup covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, and \code{"none"}. Parameterizations are
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, and \code{"none"}. Parameterizations are
 described in Details.}
 
 \item{taildown_type}{The taildown covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, and \code{"none"}. Parameterizations are
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, and \code{"none"}. Parameterizations are
 described in Details.}
 
 \item{euclid_type}{The euclidean covariance function type. Available options
@@ -101,6 +102,52 @@ known values for the random effect variances. See \code{\link[spmodel:randcov_in
 specifying the partition factor.  The partition factor assumes observations
 from different levels of the partition factor are uncorrelated.}
 
+\item{local}{An optional logical or list controlling the big data approximation.
+\code{local} can only be used when big data distance matrices have been created
+using \code{\link[=ssn_create_bigdist]{ssn_create_bigdist()}} and is most beneficial when the sample size is
+at least 5,000 \code{ssn_lm()} or 3,000 \code{ssn_glm()}.
+If a list is provided, the following arguments detail the big
+data approximation:
+\itemize{
+\item \code{index: }The group indexes. Observations in different
+levels of \code{index} are assumed to be uncorrelated for the
+purposes of estimation. If \code{index} is not provided, it is
+determined by specifying \code{method} and either \code{size} or \code{groups}.
+\item \code{method}: The big data approximation method used to determine \code{index}. Ignored
+if \code{index} is provided. If \code{method = "random"},
+observations are randomly assigned to \code{index} based on \code{size}.
+If \code{method = "kmeans"}, observations assigned to \code{index}
+based on k-means clustering on the coordinates with \code{groups} clusters. The default
+is \code{"kmeans"}. Note that both methods have a random component, which
+means that you may get different results from separate model fitting calls.
+To ensure consistent results, specify \code{index} or set a seed via
+\code{base::set.seed()}.
+\item \code{size}: The number of observations in each \code{index} group
+when \code{method} is \code{"random"}. If the number of observations
+is not divisible by \code{size}, some levels get \code{size - 1} observations.
+The default is 100.
+\item \code{groups: }The number of \code{index} groups. If \code{method}
+is \code{"random"}, \code{size} is \eqn{ceiling(n / groups)}, where
+\eqn{n} is the sample size. Automatically determined if \code{size}
+is specified. If \code{method} is \code{"kmeans"}, \code{groups}
+is the number of clusters.
+\item \code{var_adjust: }The approach for adjusting the variance-covariance
+matrix of the fixed effects. \code{"none"} for no adjustment, \code{"theoretical"}
+for the theoretically-correct adjustment,
+\code{"pooled"} for the pooled adjustment, and \code{"empirical"} for the
+empirical adjustment. The default is \code{"theoretical"} for samples sizes
+up to 100,000 and \code{"none"} for samples sizes exceeding 100,000.
+\item \code{parallel}: If \code{TRUE}, parallel processing via the
+parallel package is automatically used. The default is \code{FALSE}.
+\item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
+parallelize over. The default is the number of available cores on your machine.
+}
+When \code{local} is a list, at least one list element must be provided to
+initialize default arguments for the other list elements.
+If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
+that \code{local} is transformed into
+\code{list(size = 100, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)}.}
+
 \item{...}{Other arguments to \code{stats::optim()}.}
 }
 \value{
@@ -125,7 +172,7 @@ This fitted model list contains the following elements:
 \item \code{crs}: The geographic coordinate reference system.
 \item \code{deviance}: The model deviance.
 \item \code{diagtol}: A tolerance value that may be added to the diagonal
-of  ovariance matrices to encourage decomposition stability.
+of covariance matrices to encourage decomposition stability.
 \item \code{estmethod}: The estimation method.
 \item \code{euclid_max}: The maximum euclidean distance.
 \item \code{fitted}: Fitted values.
@@ -197,6 +244,7 @@ elements of \eqn{R(zu)} are given below:
 \item exponential: \eqn{exp(-r) * W}
 \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
 \item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
+\item gaussian: \eqn{2 exp(-r^2) * (1 - pnorm(r * 2^{1/2})) * W}
 \item none: \eqn{I} * W
 }
 
@@ -214,6 +262,7 @@ elements of \eqn{R(zd)} are given below:
 \item exponential: \eqn{exp(-r)}
 \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
 \item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
+\item gaussian: \eqn{0}
 \item none: \eqn{I}
 }
 
@@ -225,9 +274,10 @@ Then parametric forms for flow-unconnected elements of \eqn{R(zd)} are given bel
 \itemize{
 \item linear: \eqn{(1 - r2) * (r2 <= 1)}
 \item spherical: \eqn{(1 - 1.5r1 + 0.5r2) * (1 - r2)^2 * (r2 <= 1)}
-\item exponential: \eqn{exp(-(r1 + r2))}
+\item exponential: \eqn{0}
 \item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
 \item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
+\item gaussian: \eqn{2 exp(-(B - A) / range) * (1 - pnorm(r * 2^{1/2})) * W}
 \item none: \eqn{I}
 }
 
@@ -291,6 +341,15 @@ elements of \eqn{P} equal one for observations in the same level of the partitio
 factor and zero otherwise. The covariance matrix involving only the
 spatial and random effects components is then multiplied element-wise
 (Hadmard product) by \eqn{P}, yielding the final covariance matrix.
+
+\code{local} Details: The big data approximation works by sorting observations into different levels
+of an index variable. Observations in different levels of the index variable
+are assumed to be uncorrelated for the purposes of model fitting. Sparse matrix methods are then implemented
+for significant computational gains. Parallelization generally further speeds up
+computations when data sizes are larger than a few thousand. Both the \code{"random"} and \code{"kmeans"} values of \code{method}
+in \code{local} have random components. That means you may get slightly different
+results when using the big data approximation and rerunning \code{ssn_lm()} with the same code. For consistent results,
+either set a seed via \code{base::set.seed()} or specify \code{index} to \code{local}.
 
 Other Details: Observations with \code{NA} response values are removed for model
 fitting, but their values can be predicted afterwards by running

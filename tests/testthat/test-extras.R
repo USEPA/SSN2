@@ -37,7 +37,7 @@ test_that("covariance matrix functions run", {
 
   tailup_covs <- c(
     "linear", "spherical", "exponential",
-    "mariah", "epa", "none"
+    "mariah", "epa", "gaussian", "none"
   )
   lapply(tailup_covs, function(x) {
     if (x == "none") {
@@ -59,7 +59,7 @@ test_that("covariance matrix functions run", {
 
   taildown_covs <- c(
     "linear", "spherical", "exponential",
-    "mariah", "epa", "none"
+    "mariah", "epa", "gaussian", "none"
   )
   lapply(taildown_covs, function(x) {
     if (x == "none") {
@@ -184,7 +184,7 @@ test_that("covariance vector functions run", {
 
   tailup_covs <- c(
     "linear", "spherical", "exponential",
-    "mariah", "epa", "none"
+    "mariah", "epa",  "gaussian", "none"
   )
   lapply(tailup_covs, function(x) {
     if (x == "none") {
@@ -205,7 +205,7 @@ test_that("covariance vector functions run", {
 
   taildown_covs <- c(
     "linear", "spherical", "exponential",
-    "mariah", "epa", "none"
+    "mariah", "epa",  "gaussian", "none"
   )
   lapply(taildown_covs, function(x) {
     if (x == "none") {

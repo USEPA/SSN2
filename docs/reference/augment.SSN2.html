@@ -27,7 +27,7 @@ row in the new data set."><!-- mathjax --><script src="https://cdnjs.cloudflare.
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
       </span>
     </div>
 
@@ -91,6 +91,7 @@ row in the new data set.</p>
 <span>  se_fit <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"confidence"</span>, <span class="st">"prediction"</span><span class="op">)</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  <span class="va">local</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -99,11 +100,13 @@ row in the new data set.</p>
 <span>  <span class="va">x</span>,</span>
 <span>  drop <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  newdata <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"link"</span>, <span class="st">"response"</span><span class="op">)</span>,</span>
+<span>  type.predict <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"link"</span>, <span class="st">"response"</span><span class="op">)</span>,</span>
+<span>  type.residuals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"deviance"</span>, <span class="st">"pearson"</span>, <span class="st">"response"</span><span class="op">)</span>,</span>
 <span>  se_fit <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"confidence"</span>, <span class="st">"prediction"</span><span class="op">)</span>,</span>
 <span>  <span class="va">newdata_size</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  local <span class="op">=</span> <span class="va">local</span>,</span>
 <span>  var_correct <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -148,13 +151,27 @@ to <code>"none"</code>.</p></dd>
 <dd><p>Tolerance/confidence level. The default is <code>0.95</code>.</p></dd>
 
 
+<dt>local</dt>
+<dd><p>A list or logical. If a list, specific list elements described
+in <code><a href="predict.SSN2.html">predict.ssn_lm()</a></code> or <code><a href="predict.SSN2.html">predict.ssn_glm()</a></code> control the big data approximation behavior.
+If a logical, <code>TRUE</code> chooses default list elements for the list version
+of <code>local</code> as specified in <code><a href="predict.SSN2.html">predict.ssn_lm()</a></code> or <code><a href="predict.SSN2.html">predict.ssn_glm()</a></code>. Defaults to <code>FALSE</code>,
+which performs exact computations.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>Additional arguments to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> when augmenting <code>newdata</code>.</p></dd>
 
 
-<dt>type</dt>
-<dd><p>The scale (<code>response</code> or <code>link</code>) of predictions obtained
-using <code>ssn_glm</code> objects.</p></dd>
+<dt>type.predict</dt>
+<dd><p>The scale (<code>response</code> or <code>link</code>) of fitted
+values and predictions obtained using <code><a href="ssn_glm.html">ssn_glm()</a></code> objects.</p></dd>
+
+
+<dt>type.residuals</dt>
+<dd><p>The residual type (<code>deviance</code>, <code>pearson</code>, or <code>response</code>)
+of fitted models from <code><a href="ssn_glm.html">ssn_glm()</a></code> objects. Ignored if
+<code>newdata</code> is specified.</p></dd>
 
 
 <dt>newdata_size</dt>

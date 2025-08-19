@@ -113,6 +113,7 @@
 #'     \item exponential: \eqn{exp(-r) * W}
 #'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
 #'     \item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
+#'     \item gaussian: \eqn{2 exp(-r^2) * (1 - pnorm(r * 2^{1/2})) * W}
 #'     \item none: \eqn{I} * W
 #'   }
 #'
@@ -130,6 +131,7 @@
 #'     \item exponential: \eqn{exp(-r)}
 #'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
 #'     \item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
+#'     \item gaussian: \eqn{0}
 #'     \item none: \eqn{I}
 #'   }
 #'
@@ -141,9 +143,10 @@
 #'   \itemize{
 #'     \item linear: \eqn{(1 - r2) * (r2 <= 1)}
 #'     \item spherical: \eqn{(1 - 1.5r1 + 0.5r2) * (1 - r2)^2 * (r2 <= 1)}
-#'     \item exponential: \eqn{exp(-(r1 + r2))}
+#'     \item exponential: \eqn{0}
 #'     \item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
 #'     \item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
+#'     \item gaussian: \eqn{2 exp(-(B - A) / range) * (1 - pnorm(r * 2^{1/2})) * W}
 #'     \item none: \eqn{I}
 #'   }
 #'
@@ -314,7 +317,7 @@ ssn_glm <- function(formula, ssn.object, family,
                     euclid_type = "none", nugget_type = "nugget",
                     tailup_initial, taildown_initial, euclid_initial, nugget_initial,
                     dispersion_initial, additive, estmethod = "reml", anisotropy = FALSE,
-                    random, randcov_initial, partition_factor, ...) {
+                    random, randcov_initial, partition_factor, local, ...) {
   # set defaults
   if (missing(tailup_initial)) tailup_initial <- NULL
   if (missing(taildown_initial)) taildown_initial <- NULL
@@ -325,7 +328,7 @@ ssn_glm <- function(formula, ssn.object, family,
   if (missing(random)) random <- NULL
   if (missing(randcov_initial)) randcov_initial <- NULL
   if (missing(partition_factor)) partition_factor <- NULL
-  local <- NULL
+  if (missing(local)) local <- NULL
 
   # fix family
   if (missing(family)) {
@@ -362,10 +365,18 @@ ssn_glm <- function(formula, ssn.object, family,
   check_ssn_glm(initial_object, ssn.object, additive, estmethod)
 
   # get data object
-  data_object <- get_data_object_glm(
-    formula, ssn.object, family, additive, anisotropy,
-    initial_object, random, randcov_initial, partition_factor, ...
-  )
+  if (is.null(local) || (is.logical(local) && !local)) {
+    data_object <- get_data_object_glm(
+      formula, ssn.object, family, additive, anisotropy,
+      initial_object, random, randcov_initial, partition_factor, local, ...
+    )
+    if (data_object$n > 3000) message("Because the sample size exceeds 3000, consider setting local = TRUE to perform computationally efficient approximations. Ensure big data distance matrices have been created using ssn_create_bigdist().")
+  } else {
+    data_object <- get_data_object_bigdata_glm(
+      formula, ssn.object, family, additive, anisotropy,
+      initial_object, random, randcov_initial, partition_factor, local, ...
+    )
+  }
 
   # add random to initial object
   initial_object$randcov_initial <- data_object$randcov_initial
@@ -374,18 +385,35 @@ ssn_glm <- function(formula, ssn.object, family,
   optim_dotlist <- get_optim_dotlist(...)
 
   # # parallel cluster if necessary
-  # if (data_object$parallel) {
-  #   data_object$cl <- parallel::makeCluster(data_object$ncores)
-  #   # invisible(clusterEvalQ(data_object$cl, library(Matrix)))
-  # }
+  if (data_object$parallel) {
+    data_object$cl <- parallel::makeCluster(data_object$ncores)
+    # invisible(clusterEvalQ(data_object$cl, library(Matrix)))
+  }
 
 
   # covariance parameter estimation
   cov_est_object <- cov_estimate_laploglik(data_object, ssn.object, initial_object, estmethod, optim_dotlist)
 
-  model_stats_glm <- get_model_stats_glm(cov_est_object, data_object, estmethod)
+  # compute model statistics
+  if (is.null(local) || (is.logical(local) && !local)) {
+    model_stats_glm <- get_model_stats_glm(cov_est_object, data_object, estmethod)
+  } else {
+    model_stats_glm <- get_model_stats_bigdata_glm(cov_est_object, data_object, estmethod)
+  }
 
+  # parallel cluster if necessary (add back when local implemented)
+  if (data_object$parallel) {
+    data_object$cl <- parallel::stopCluster(data_object$cl) # makes it NULL
+  }
 
+  # store index if necessary (add back when local implemented)
+  if (is.null(local) || (is.logical(local) && !local)) { # local was stored as NULL in previous function call
+    local_index <- NULL
+  } else {
+    local_index <- data_object$local_index
+    data_object$observed_index <- which(data_object$observed_index)
+    data_object$missing_index <- which(data_object$missing_index)
+  }
 
   output <- list(
     coefficients = model_stats_glm$coefficients,
@@ -413,7 +441,7 @@ ssn_glm <- function(formula, ssn.object, family,
     missing_index = data_object$missing_index,
     contrasts = data_object$contrasts,
     xlevels = data_object$xlevels,
-    local_index = NULL,
+    local_index = local_index,
     sf_column_name = data_object$sf_column_name,
     crs = data_object$crs,
     ssn.object = data_object$ssn.object,
