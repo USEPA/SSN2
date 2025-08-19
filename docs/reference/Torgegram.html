@@ -18,7 +18,7 @@ cutoff values."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/l
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
       </span>
     </div>
 
@@ -69,6 +69,8 @@ cutoff values.</p>
 <span>  <span class="va">formula</span>,</span>
 <span>  <span class="va">ssn.object</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"flowcon"</span>, <span class="st">"flowuncon"</span><span class="op">)</span>,</span>
+<span>  cloud <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  robust <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  bins <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  <span class="va">cutoff</span>,</span>
 <span>  <span class="va">partition_factor</span></span>
@@ -90,6 +92,19 @@ cutoff values.</p>
 for flow-connected distances, <code>"flowuncon"</code> for flow-unconnected distances,
 and <code>"euclid"</code> for Euclidean distances. The default is to show both
 flow-connected and flow-unconnected distances.</p></dd>
+
+
+<dt>cloud</dt>
+<dd><p>A logical indicating whether the empirical semivariogram should
+be summarized by distance class or not. When <code>cloud = FALSE</code> (the default), pairwise semivariances
+are binned and averaged within distance classes. When <code>cloud</code> = TRUE,
+all pairwise semivariances and distances are returned (this is known as
+the "cloud" semivariogram).</p></dd>
+
+
+<dt>robust</dt>
+<dd><p>A logical indicating whether the robust semivariogram
+(Cressie and Hawkins, 1980) is used for each <code>type</code>. The default is <code>FALSE</code>.</p></dd>
 
 
 <dt>bins</dt>
@@ -132,7 +147,8 @@ At a distance <code>h</code>, the empirical semivariance is
 \(1/N(h) \sum (r1 - r2)^2\), where \(N(h)\) is the number of (unique)
 pairs in the set of observations whose distance separation is <code>h</code> and
 <code>r1</code> and <code>r2</code> are residuals corresponding to observations whose
-distance separation is <code>h</code>. In spmodel, these distance bins actually
+distance separation is <code>h</code>. The robust version is described by
+Cressie and Hawkins (1980). In <code>SSN2</code>, these distance bins actually
 contain observations whose distance separation is <code>h +- c</code>,
 where <code>c</code> is a constant determined implicitly by <code>bins</code>. Typically,
 only observations whose distance separation is below some cutoff are used
@@ -140,7 +156,10 @@ to compute the empirical semivariogram (this cutoff is determined by <code>cutof
     </div>
     <div id="references">
     <h2>References</h2>
-    <p>Zimmerman, D. L., &amp; Ver Hoef, J. M. (2017). The Torgegram for fluvial
+    <p>Cressie, N &amp; Hawkins, D.M. 1980. Robust estimation of the variogram.
+<em>Journal of the International Association for Mathematical Geology</em>,
+<strong>12</strong>, 115-125.
+Zimmerman, D. L., &amp; Ver Hoef, J. M. (2017). The Torgegram for fluvial
 variography: characterizing spatial dependence on stream networks.
 <em>Journal of Computational and Graphical Statistics</em>,
 <b>26(2)</b>, 253--264.</p>

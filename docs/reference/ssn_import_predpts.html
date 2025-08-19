@@ -19,7 +19,7 @@ SSN, ssn_lm, or ssn_glm."><!-- mathjax --><script src="https://cdnjs.cloudflare.
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
       </span>
     </div>
 
@@ -67,7 +67,7 @@ directory are imported into an existing object of class
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ssn_import_predpts</span><span class="op">(</span><span class="va">x</span>, <span class="va">predpts</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ssn_import_predpts</span><span class="op">(</span><span class="va">x</span>, <span class="va">predpts</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -80,6 +80,16 @@ directory are imported into an existing object of class
 <dt>predpts</dt>
 <dd><p>Name of the prediction point dataset to import in
 character format. See details.</p></dd>
+
+
+<dt>overwrite</dt>
+<dd><p>default = <code>FALSE</code>. If <code>TRUE</code>, overwrite
+existing netgeom column(s) if they exist in the
+prediction site dataset.</p></dd>
+
+
+<dt>verbose</dt>
+<dd><p>default = <code>TRUE</code>. If <code>FALSE</code>, warning messages will not be printed to the console.</p></dd>
 
 </dl></div>
     <div id="value">
@@ -136,6 +146,7 @@ packages to process streams data in vector format.</p>
 <span class="r-in"><span><span class="va">mf04p</span> <span class="op">&lt;-</span> <span class="fu"><a href="ssn_import.html">ssn_import</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/MiddleFork04.ssn"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mf04p</span> <span class="op">&lt;-</span> <span class="fu">ssn_import_predpts</span><span class="op">(</span><span class="va">mf04p</span>, predpts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>preds1 <span class="op">=</span> <span class="st">"pred1km"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> netgeom exists in predpts and overwrite == FALSE. No changes made to netgeom</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mf04p</span><span class="op">$</span><span class="va">preds</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "preds1"</span>
 <span class="r-in"><span></span></span>
@@ -146,6 +157,7 @@ packages to process streams data in vector format.</p>
 <span class="r-in"><span>  tailup_type <span class="op">=</span> <span class="st">"exponential"</span>, additive <span class="op">=</span> <span class="st">"afvArea"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ssn_gmod</span> <span class="op">&lt;-</span> <span class="fu">ssn_import_predpts</span><span class="op">(</span><span class="va">ssn_gmod</span>, predpts <span class="op">=</span> <span class="st">"CapeHorn"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> netgeom exists in predpts and overwrite == FALSE. No changes made to netgeom</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">ssn_gmod</span><span class="op">$</span><span class="va">ssn.object</span><span class="op">$</span><span class="va">preds</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "preds1"   "CapeHorn"</span>
 <span class="r-in"><span></span></span>

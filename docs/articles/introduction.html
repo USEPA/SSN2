@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0</span>
       </span>
     </div>
 
@@ -215,19 +215,18 @@ running</p>
 pre-processed prior to fitting SSN models and making predictions at
 unobserved locations using <code>SSN2</code>. Previously, the STARS
 toolset for ArcGIS Desktop versions 9.3x - 10.8x <span class="citation">(E. Peterson and Ver Hoef 2014)</span> or the
-<code>openSTARS</code> <strong>R</strong> package <span class="citation">(<strong>kattwinkel2020preparing?</strong>)</span> were
-used to generate spatial information required for model fitting and
-prediction. However, both software packages have recently been retired
-and are replaced by the <code>SSNbler</code> <strong>R</strong> package
-<span class="citation">(Erin E. Peterson et al. 2024)</span>, which is a
-new, <strong>R</strong>-based version of the STARS tools.
+<code>openSTARS</code> <strong>R</strong> package <span class="citation">(Kattwinkel and Szöcs 2022)</span> were used to
+generate spatial information required for model fitting and prediction.
+However, both software packages have recently been retired and are
+replaced by the <code>SSNbler</code> <strong>R</strong> package <span class="citation">(Erin E. Peterson et al. 2024)</span>, which is a new,
+<strong>R</strong>-based version of the STARS tools.
 <code>SSNbler</code> is currently available on GitHub (<a href="https://github.com/pet221/SSNbler/" class="external-link">link here</a>), will soon be
 available on CRAN, and contains several useful resources that guide
 users through these pre-processing steps. Pre-processing using either
 <code>SSNbler</code>, STARS, or <code>openSTARS</code> ends with the
-creatino of a <code>.ssn</code> folder, which is non-proprietary. Files
+creation of a <code>.ssn</code> folder, which is non-proprietary. Files
 residing in the <code>.ssn</code> folder are read into R using
-<code><a href="../reference/ssn_import.html">ssn_import()</a></code> from <code>SSN2</code> and palced into a list
+<code><a href="../reference/ssn_import.html">ssn_import()</a></code> from <code>SSN2</code> and placed into a list
 structure called an SSN object, which contains all the spatial,
 topological, and attribute information needed to leverage the modeling
 tools in <code>SSN2</code>. This includes:</p>
@@ -568,7 +567,7 @@ components. SSN2 also allows users to visualize changes in semivariance
 based on Euclidean distance, which may provide additional insights about
 whether a Euclidean component or a mixture of tail-up, tail-down and/or
 Euclidean models will improve the model. Please see <span class="citation">Zimmerman and Ver Hoef (2017)</span> for a more
-in-depth review of Toregegrams, along with strategies for interpreting
+in-depth review of Torgegrams, along with strategies for interpreting
 and using them to inform model fitting. For a more formal comparison
 between models, use statistics like <code>AIC</code> or cross-validation
 error, which we discuss later.</p>
@@ -584,7 +583,7 @@ Torgegram:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The first argument to <code><a href="../reference/Torgegram.html">Torgegram()</a></code> is
 <code>formula</code>. Residuals from a non-spatial linear model
-specified by <code>formula</code> are used by the Toregram to visualize
+specified by <code>formula</code> are used by the Torgegram to visualize
 remaining spatial dependence. The <code>type</code> argument specifies
 the Torgegram types and has a default value of
 <code>c("flowcon", "flowuncon")</code> for both flow-connected and
@@ -720,10 +719,10 @@ running</p>
 <p>We glance at the model-fit statistics by running</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">ssn_mod</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
-<span><span class="co">#&gt;       n     p  npar value   AIC  AICc logLik deviance pseudo.r.squared</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    45     3     7  76.6  90.6  93.7  -<span style="color: #BB0000;">38.3</span>     41.8            0.416</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 10</span></span></span>
+<span><span class="co">#&gt;       n     p  npar value   AIC  AICc   BIC logLik deviance pseudo.r.squared</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    45     3     7  76.6  90.6  93.7  103.  -<span style="color: #BB0000;">38.3</span>     41.8            0.416</span></span></code></pre>
 <p>The columns of this <code>tibble</code> represent:</p>
 <ul>
 <li>
@@ -759,11 +758,12 @@ model that omits the tail-up and Euclidean components. We do this using
 <span>  taildown_type <span class="op">=</span> <span class="st">"spherical"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances</a></span><span class="op">(</span><span class="va">ssn_mod</span>, <span class="va">ssn_mod2</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 10</span></span></span>
-<span><span class="co">#&gt;   model        n     p  npar value   AIC  AICc logLik deviance pseudo.r.squared</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ssn_mod     45     3     7  76.6  90.6  93.7  -<span style="color: #BB0000;">38.3</span>     41.8            0.416</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ssn_mod2    45     3     3 130.  136.  137.   -<span style="color: #BB0000;">65.1</span>     41.9            0.180</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 11</span></span></span>
+<span><span class="co">#&gt;   model        n     p  npar value   AIC  AICc   BIC logLik deviance</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ssn_mod     45     3     7  76.6  90.6  93.7  103.  -<span style="color: #BB0000;">38.3</span>     41.8</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ssn_mod2    45     3     3 130.  136.  137.   142.  -<span style="color: #BB0000;">65.1</span>     41.9</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: pseudo.r.squared &lt;dbl&gt;</span></span></span></code></pre>
 <p>Often AIC and AICc are used for model selection, as they balance
 model fit and model simplicity. The lower AIC and AICc for the original
 model (<code>ssn_mod</code>) indicates it is a better fit to the data
@@ -798,11 +798,12 @@ compare a model with and without elevation to assess its importance:</p>
 <span>  estmethod <span class="op">=</span> <span class="st">"ml"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances</a></span><span class="op">(</span><span class="va">ml_mod</span>, <span class="va">ml_mod2</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 10</span></span></span>
-<span><span class="co">#&gt;   model       n     p  npar value   AIC  AICc logLik deviance pseudo.r.squared</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ml_mod     45     3     7  60.2  80.2  86.7  -<span style="color: #BB0000;">30.1</span>     45.4           0.461 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ml_mod2    45     2     7  72.9  90.9  96.0  -<span style="color: #BB0000;">36.4</span>     44.9           0.023<span style="text-decoration: underline;">7</span></span></span></code></pre>
+<pre><code><span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 11</span></span></span>
+<span><span class="co">#&gt;   model       n     p  npar value   AIC  AICc   BIC logLik deviance</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ml_mod     45     3     7  60.2  80.2  86.7  98.3  -<span style="color: #BB0000;">30.1</span>     45.4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ml_mod2    45     2     7  72.9  90.9  96.0 107.   -<span style="color: #BB0000;">36.4</span>     44.9</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: pseudo.r.squared &lt;dbl&gt;</span></span></span></code></pre>
 <p>Elevation seems important to model fit, as evidenced by the lower
 AIC. <span class="citation">Erin E. Peterson and Ver Hoef (2010)</span>
 describe a two-step model procedure for model selection based on AIC
@@ -1132,17 +1133,17 @@ variable passed to the <code>partition_factor</code> argument:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients (fixed):</span></span>
 <span><span class="co">#&gt; (Intercept)     ELEV_DEM    AREAWTMAP  </span></span>
-<span><span class="co">#&gt;   77.421289    -0.028431    -0.007938  </span></span>
+<span><span class="co">#&gt;   78.214857    -0.028758    -0.008067  </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients (covariance):</span></span>
 <span><span class="co">#&gt;               Effect     Parameter   Estimate</span></span>
-<span><span class="co">#&gt;   tailup exponential  de (parsill)  1.331e+00</span></span>
-<span><span class="co">#&gt;   tailup exponential         range  9.689e+05</span></span>
-<span><span class="co">#&gt;   taildown spherical  de (parsill)  2.923e+00</span></span>
-<span><span class="co">#&gt;   taildown spherical         range  1.880e+05</span></span>
-<span><span class="co">#&gt;      euclid gaussian  de (parsill)  1.654e-04</span></span>
-<span><span class="co">#&gt;      euclid gaussian         range  2.458e+01</span></span>
-<span><span class="co">#&gt;               nugget        nugget  1.487e-02</span></span></code></pre>
+<span><span class="co">#&gt;   tailup exponential  de (parsill)  1.348e+00</span></span>
+<span><span class="co">#&gt;   tailup exponential         range  8.987e+05</span></span>
+<span><span class="co">#&gt;   taildown spherical  de (parsill)  2.647e+00</span></span>
+<span><span class="co">#&gt;   taildown spherical         range  1.960e+05</span></span>
+<span><span class="co">#&gt;      euclid gaussian  de (parsill)  1.092e-04</span></span>
+<span><span class="co">#&gt;      euclid gaussian         range  1.805e+05</span></span>
+<span><span class="co">#&gt;               nugget        nugget  1.660e-02</span></span></code></pre>
 <p>Here, the partition factor ensures that observations from separate
 stream networks are completely uncorrelated.</p>
 <!-- resulting from Euclidean distance (these observations already do not share any tail-up or tail-down covariance because they are from separate stream networks). -->
@@ -1426,6 +1427,48 @@ prediction networks simultaneously.</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="advanced-modeling-features-in-ssn2">Advanced Modeling Features in <code>SSN2</code><a class="anchor" aria-label="anchor" href="#advanced-modeling-features-in-ssn2"></a>
+</h2>
+<p>Here we list a few advanced modeling features available in
+<code>SSN2</code>:</p>
+<ul>
+<li>Support for the <code>emmeans</code> <strong>R</strong> package: The
+<code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> model objects can be
+used directly with <code>emmeans</code> for estimating marginal
+means.</li>
+<li>Support for the <code>vif()</code> function for variance inflation
+factors from the <code>car</code> <strong>R</strong> package.</li>
+<li>Applications to larger data sets (<span class="math inline">\(n \geq
+5,000\)</span> for <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and <span class="math inline">\(n \geq 3,000\)</span> for <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code>):
+Via distance matrices created using <code><a href="../reference/ssn_create_bigdist.html">ssn_create_bigdist()</a></code>,
+the <code>local</code> argument to <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and
+<code><a href="../reference/ssn_glm.html">ssn_glm()</a></code>, and the <code>local</code> argument to
+<code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> (i.e., <code><a href="../reference/predict.SSN2.html">predict.ssn_lm()</a></code> and
+<code><a href="../reference/predict.SSN2.html">predict.ssn_glm()</a></code>).</li>
+<li>Nonspatial random effects: Via the <code>random</code> argument to
+<code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code>.</li>
+<li>Partition factors: Via the <code>partition_factor</code> argument to
+<code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code>.</li>
+<li>Fix covariance parameters at known values: Via the
+<code>tailup_initial</code>, <code>taildown_initial</code>,
+<code>euclid_initial</code>, and <code>nugget_initial</code>, and
+<code>dispersion_initial</code>.</li>
+<li>Euclidean covariance anisotropy: Via the <code>anisotropy</code>
+argument to allow the strength of Euclidean covariance to vary with
+direction.</li>
+<li>Support for many covariance functions: The <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and
+<code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> model objects support seven tailup covariance
+functions, seven taildown covariance functions, and twelve Euclidean
+covariance functions.</li>
+<li>Support for cloud and robust Torgegrams: Via additional arguments to
+<code><a href="../reference/Torgegram.html">Torgegram()</a></code>.</li>
+<li>Various model selection tools: Via <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>,
+<code><a href="https://usepa.github.io/spmodel/reference/AICc.html" class="external-link">AICc()</a></code>, <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">BIC()</a></code>, <code><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova()</a></code>,
+<code><a href="https://usepa.github.io/spmodel/reference/AUROC.html" class="external-link">AUROC()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, <code><a href="https://usepa.github.io/spmodel/reference/glances.html" class="external-link">glances()</a></code>, and
+<code><a href="https://usepa.github.io/spmodel/reference/loocv.html" class="external-link">loocv()</a></code>.</li>
+</ul>
+</div>
+<div class="section level2">
 <h2 id="function-glossary">Function Glossary<a class="anchor" aria-label="anchor" href="#function-glossary"></a>
 </h2>
 <p>Here we list the two <code>SSN2</code> functions used to fit
@@ -1450,6 +1493,8 @@ operate on model fits:</p>
 <li>
 <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>: Augment data with diagnostics or new data
 with predictions.</li>
+<li>
+<code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">BIC()</a></code>: Compute the BIC.</li>
 <li>
 <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code>: Return coefficients.</li>
 <li>
@@ -1503,8 +1548,14 @@ estimated parameters.</li>
 manipulating <code>SSN</code> objects:</p>
 <ul>
 <li>
+<code><a href="../reference/ssn_create_bigdist.html">ssn_create_bigdist()</a></code>: Create big distance matrices in
+the <code>.ssn</code> directory for use with modeling and prediction
+functions via the <code>local</code> argument for big data
+approximations.</li>
+<li>
 <code><a href="../reference/ssn_create_distmat.html">ssn_create_distmat()</a></code>: Create distance matrices in the
-<code>.ssn</code> directory for use with modeling functions.</li>
+<code>.ssn</code> directory for use with modeling and prediction
+functions.</li>
 <li>
 <code><a href="../reference/ssn_get_data.html">ssn_get_data()</a></code>: Extract an <code>sf</code>
 <code>data.frame</code> of observed or prediction locations from the
@@ -1596,7 +1647,10 @@ their relevant successors in <code>SSN2</code>:</p>
 </tr>
 <tr class="odd">
 <td><code>createDistMat()</code></td>
-<td><code><a href="../reference/ssn_create_distmat.html">ssn_create_distmat()</a></code></td>
+<td>
+<code><a href="../reference/ssn_create_distmat.html">ssn_create_distmat()</a></code> ;
+<code><a href="../reference/ssn_create_bigdist.html">ssn_create_bigdist()</a></code>
+</td>
 </tr>
 <tr class="even">
 <td><code>CrossValidationSSN()</code></td>
@@ -1701,12 +1755,23 @@ function of interest to see its relevant argument name changes.</p>
 the October timeline regarding the <code>rgdal</code>,
 <code>rgeos</code>, and <code>maptools</code> retirements. As such, we
 plan to regularly update and add features to <code>SSN2</code> in the
-coming years – so check back often! Some of these features include
-additional tools for large data sets (both model fitting and
-prediction), manipulating the <code>.ssn</code> object, simulating data,
-and more. We will do our best to make future versions of
-<code>SSN2</code> backward compatible with this version, but minor
-changes may occur until we are ready to release version 1.0.0.</p>
+coming years – so check back often! We will do our best to make future
+versions of <code>SSN2</code> backward compatible with this version, but
+minor changes may occur until we are ready to release version 1.0.0.</p>
+</div>
+<div class="section level2">
+<h2 id="additional-spatial-stream-network-tools">Additional Spatial Stream Network Tools<a class="anchor" aria-label="anchor" href="#additional-spatial-stream-network-tools"></a>
+</h2>
+<ul>
+<li>SSNbler for creating <code>SSN</code> objects and .ssn folders (<a href="https://pet221.github.io/SSNbler/" class="external-link">link here</a>).</li>
+<li>The National Hydrography Dataset (NHD) for flowline data (<a href="https://www.usgs.gov/national-hydrography/national-hydrography-dataset" class="external-link">link
+here</a>).</li>
+<li>The National Stream Internet (NSI) for topologically corrected
+flowline data (<a href="https://research.fs.usda.gov/rmrs/projects/national-stream-internet" class="external-link">link
+here</a>).</li>
+<li>StreamCat for flowline metrics based on COMID (<a href="https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset" class="external-link">link
+here</a>).</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 class="unnumbered" id="r-code-appendix">R Code Appendix<a class="anchor" aria-label="anchor" href="#r-code-appendix"></a>
@@ -1936,6 +2001,10 @@ A Falke, Christian E Torgersen, Colin Sowder, et al. 2014.
 <span>“Applications of Spatial Statistical Network Models to Stream
 Data.”</span> <em>Wiley Interdisciplinary Reviews: Water</em> 1 (3):
 277–94.
+</div>
+<div id="ref-kattwinkel2020openSTARS" class="csl-entry">
+Kattwinkel, Mira, and Eduard Szöcs. 2022. <em>openSTARS: An Open Source
+Implementation of the ’ArcGIS’ Toolbox ’STARS’</em>. <a href="https://CRAN.R-project.org/package=openSTARS" class="external-link">https://CRAN.R-project.org/package=openSTARS</a>.
 </div>
 <div id="ref-mccullagh1989generalized" class="csl-entry">
 McCullagh, Peter, and John A Nelder. 1989. <em>Generalized Linear
