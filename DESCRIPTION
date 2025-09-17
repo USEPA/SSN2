@@ -36,7 +36,7 @@ Imports:
     generics,
     tibble,
     graphics,
-    spmodel,
+    spmodel (>= 0.7.0),
     RSQLite,
     utils,
     withr,

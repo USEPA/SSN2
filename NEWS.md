@@ -1,3 +1,9 @@
+# SSN2 0.3.1
+
+## Bug fixes
+
+* Added a dependency on `spmodel` version at least `0.7.0` so that `AUROC()` methods are properly called.
+
 # SSN2 0.3.0
 
 ## Major Updates
