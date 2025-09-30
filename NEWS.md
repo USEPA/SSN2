@@ -3,6 +3,7 @@
 ## Bug fixes
 
 * Added a dependency on `spmodel` version at least `0.7.0` so that `AUROC()` methods are properly called.
+* Fixed a bug introduced in version 0.3.0 that prevented `partition_factor` from working properly when non-`NULL` ([#32](https://github.com/USEPA/SSN2/issues/32)).
 
 # SSN2 0.3.0
 
