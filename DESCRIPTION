@@ -1,6 +1,6 @@
 Package: SSN2
 Title: Spatial Modeling on Stream Networks
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: c(
     person(given = "Michael",
            family = "Dumelle",
@@ -36,7 +36,7 @@ Imports:
     generics,
     tibble,
     graphics,
-    spmodel,
+    spmodel (>= 0.7.0),
     RSQLite,
     utils,
     withr,

@@ -71,6 +71,9 @@ get_local_list_estimation <- function(local, data, n, partition_factor) {
 
   } # "none", "empirical", "theoretical", and "pooled"
 
+  # setting partition factor
+  local$partition_factor <- partition_factor
+
   if (!"parallel" %in% names_local) {
     local$parallel <- FALSE
     local$ncores <- NULL

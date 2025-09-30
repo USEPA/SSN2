@@ -3,7 +3,7 @@ pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
   introduction: introduction.html
-last_built: 2025-08-19T18:03Z
+last_built: 2025-09-30T22:47Z
 urls:
   reference: https://usepa.github.io/SSN2/reference
   article: https://usepa.github.io/SSN2/articles
