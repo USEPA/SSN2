@@ -14,3 +14,4 @@
 ^CONTRIBUTING\.md$
 ^inst/joss$
 ^inst/tutorials$
+^vignettes/articles$

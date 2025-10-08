@@ -1,0 +1,135 @@
+---
+title: "Adding Explanatory Variables to 'SSN' Objects Directly in R Using StreamCat"
+author: "Michael Dumelle, Marc Weber, and Ryan Hill"
+bibliography: '`r system.file("references.bib", package="SSN2")`'
+output:
+  html_document:
+editor_options:
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Background
+
+Explanatory variables can be added directly to `SSN` objects using StreamCat [@hill2016stream]. StreamCat is a database of over 600 metrics for approximately 2.65 million stream segments in the conterminous United States (CONUS). StreamCat metrics exist at catchment and watershed scales and represent natural and anthropogenic landscape variables. StreamCat is built on the medium resolution National Hydrogrpahy Dataset. To learn more about StreamCat, visit their website at [this link](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset). In this vignette, we will access StreamCat data solely exclusively in **R** using the `StreamCatTools` package. We only highlight a few `StreamCatTools` uses here; for more detail regarding `StreamCatTools`, visit their website at [this link](https://usepa.github.io/StreamCatTools/).
+
+Before proceeding, we load the `SSN2`, `StreamCatTools`, and `ggplot2` **R** packages (which can all be installed directly from CRAN) by running:
+```{r}
+library(SSN2)
+library(StreamCatTools)
+library(ggplot2)
+```
+
+# The `bugs` Data
+
+```{r}
+library(here)
+bugs <- ssn_import(here("vignettes", "articles", "bugs.ssn"), predpts = "pred")
+# bugs <- ssn_import("bugs.ssn", predpts = "pred")
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = bugs$edges, linewidth = 0.2, alpha = 0.2) +
+  geom_sf(data = bugs$preds$pred, color = "black", size = 0.9) +
+  geom_sf(data = bugs$obs, aes(color = Rich), size = 2) +
+  scale_color_viridis_c(option = "H", limits = c(0, 59)) +
+  theme_bw(base_size = 16)
+```
+
+# Adding Explanatory Variables to an `SSN` Object
+
+```{r}
+vars <- c("tmean8110", "pctconif2008")
+sc_vars <- paste(vars, collapse = ",")
+sc_data <- sc_get_data(
+  metric = sc_vars,
+  aoi = "cat",
+  comid = bugs$obs$comid
+)
+bugs$obs <- merge(bugs$obs, sc_data, by = "comid")
+```
+
+```{r}
+sc_pred_data <- sc_get_data(
+  metric = sc_vars,
+  aoi = "cat",
+  comid = bugs$preds$pred$comid
+)
+bugs$preds$pred <- merge(bugs$preds$pred, sc_pred_data, by = "comid")
+```
+
+
+# Fitting an SSN Model
+
+```{r}
+ssn_mod <- ssn_lm(
+  formula = Rich ~ ELEV_DEM + tmean8110cat + pctconif2008cat,
+  ssn.object = bugs,
+  tailup_type = "exponential",
+  taildown_type = "exponential",
+  additive = "afvArea"
+)
+
+ssn_mod2 <- ssn_lm(
+  formula = Rich ~ ELEV_DEM + tmean8110cat + pctconif2008cat,
+  ssn.object = bugs
+)
+
+glances(ssn_mod, ssn_mod2)
+```
+
+# Prediction (Kriging)
+
+```{r}
+aug_preds <- augment(ssn_mod, newdata = "pred")
+```
+
+```{r}
+ggplot(aug_preds, aes(color = .fitted)) +
+  geom_sf() +
+  scale_color_viridis_c(option = "H")
+```
+
+# Other `StreamCatTools` Features
+
+```{r}
+var_info <- sc_get_params(param = "variable_info")
+head(var_info)
+```
+
+```{r}
+sct_comid <- sc_get_comid(bugs$obs)
+sct_comid <- unlist(strsplit(sct_comid, ","))
+dat_comid <- data.frame(
+  bugs_comid = bugs$obs$comid,
+  sct_comid = sct_comid
+)
+head(dat_comid)
+```
+
+
+# Alternatives to StreamCat
+
+
+
+# R Code Appendix {.unnumbered}
+
+```{r get-labels, echo = FALSE}
+labs <- knitr::all_labels()
+labs <- setdiff(labs, c("setup", "get-labels"))
+```
+
+```{r all-code, ref.label=labs, eval = FALSE}
+```
+
+# References {.unnumbered}
+
+<div id="refs"></div>
+
