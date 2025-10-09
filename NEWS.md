@@ -4,6 +4,10 @@
 
 * Added a vignette to the [`SSN2` website](https://usepa.github.io/SSN2/) titled "Adding Explanatory Variables to 'SSN' Objects Directly in R Using StreamCat".
 
+## Bug Fixes
+
+* Fixed a bug that could improperly order observations when `local` was specified (for large data sets).
+
 # SSN2 0.3.1
 
 ## Bug fixes
