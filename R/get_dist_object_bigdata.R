@@ -47,13 +47,12 @@ get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisot
 
 
 
-
+  obs_index <- order_list$observed_index # may need to be sorted
+  order_list <- order_list[obs_index, , drop = FALSE]
   local_index_orig <- local_index
   order_bigdata <- order(local_index, order_list$network_index, order_list$pid)
   local_index <- local_index[order_bigdata]
   order_list <- order_list[order_bigdata, , drop = FALSE]
-  obs_index <- order_list$observed_index # may need to be sorted
-  order_list <- order_list[obs_index, , drop = FALSE]
   order_list <- split(order_list, local_index)
 
   # get list of distance matrices in order of the original data

@@ -121,6 +121,14 @@ get_data_object_bigdata <- function(formula, ssn.object, additive, anisotropy,
       local <- FALSE
     }
   }
+  if (is.list(local)) {
+    if ("index" %in% names(local)) {
+      if (any(missing_index)) {
+        if (length(local$index) == NROW(ssn.object$obs))
+        local$index <- local$index[observed_index]
+      }
+    }
+  }
   local <- get_local_list_estimation(local, obdata, n, partition_factor)
   n_local_index <- length(unique(local$index))
 
