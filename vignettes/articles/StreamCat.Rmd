@@ -1,9 +1,10 @@
 ---
 title: "Adding Explanatory Variables to 'SSN' Objects Directly in R Using StreamCat"
-author: "Michael Dumelle, Marc Weber, and Ryan Hill"
+author: "Michael Dumelle, Erin Peterson, Marc Weber, and Ryan Hill"
 bibliography: '`r system.file("references.bib", package="SSN2")`'
 output:
-  html_document:
+  pdf_document: default
+  html_document: null
 editor_options:
   chunk_output_type: console
 ---
@@ -17,7 +18,7 @@ knitr::opts_chunk$set(
 
 # Background
 
-Explanatory variables can be added directly to `SSN` objects using StreamCat [@hill2016stream]. StreamCat is a database of over 600 metrics for approximately 2.65 million stream segments in the conterminous United States (CONUS). StreamCat metrics exist at catchment and watershed scales and represent natural and anthropogenic landscape variables. StreamCat is built on the medium resolution National Hydrogrpahy Dataset. To learn more about StreamCat, visit their website at [this link](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset). In this vignette, we will access StreamCat data solely exclusively in **R** using the `StreamCatTools` package. We only highlight a few `StreamCatTools` uses here; for more detail regarding `StreamCatTools`, visit their website at [this link](https://usepa.github.io/StreamCatTools/).
+Explanatory variables can be added directly to `SSN` objects using StreamCat. StreamCat is a database of over 600 metrics for approximately 2.65 million stream segments in the conterminous United States (CONUS). StreamCat metrics exist at catchment and watershed scales and represent natural and anthropogenic landscape variables. StreamCat is built on the medium resolution National Hydrogrpahy Dataset. To learn more about StreamCat, visit their website at [this link](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset). In this vignette, we will access StreamCat data solely exclusively in **R** using the `StreamCatTools` package. We only highlight a few `StreamCatTools` uses here; for more detail regarding `StreamCatTools`, visit their website at [this link](https://usepa.github.io/StreamCatTools/).
 
 Before proceeding, we load the `SSN2`, `StreamCatTools`, and `ggplot2` **R** packages (which can all be installed directly from CRAN) by running:
 ```{r}
@@ -28,12 +29,19 @@ library(ggplot2)
 
 # The `bugs` Data
 
+The `bugs` data is an SSN object that contains macroinvertebrate data in the Lower Snake Basin. It can be downloaded via GitHub at [this link](https://github.com/USEPA/SSN2/tree/develop/vignettes/articles). We read in the bugs by running:
 ```{r}
-library(here)
-bugs <- ssn_import(here("vignettes", "articles", "bugs.ssn"), predpts = "pred")
-# bugs <- ssn_import("bugs.ssn", predpts = "pred")
+# library(here)
+# bugs <- ssn_import(here("vignettes", "articles", "bugs.ssn"), predpts = "pred")
+bugs <- ssn_import("bugs.ssn", predpts = "pred")
 ```
 
+There are 549 observed sites and 300 prediction sites:
+```{r}
+bugs
+```
+
+We visualize the flowlines, observed macroinvertebrate richness, and prediction sites by running:
 ```{r}
 ggplot() +
   geom_sf(data = bugs$edges, linewidth = 0.2, alpha = 0.2) +
@@ -45,17 +53,40 @@ ggplot() +
 
 # Adding Explanatory Variables to an `SSN` Object
 
+Any of the 600-plus StreamCat metrics can be added to observed and prediction sites through NHD's common identifier, or COMID. The COMID is a 10 digit code that uniquely identifies an NHD feature. The `bugs` data has `COMID`s available for each observed and prediction site. StreamCat metrics can be searched at [this link](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-metrics-and-definitions) or within `StreamCatTools`, which we discuss later.
+
+In StreamCat, the `"tmean8110"` metric contains 30-year mean annual temperature, and the `pctconif2008` contains the proportion of evergreen forest land cover in 2008 (based on the National Landcover Dataset, or NLCD; see [this link](https://www.usgs.gov/centers/eros/science/national-land-cover-database) for more). StreamCat metrics are defined with respect to an "Area of Interest", or AOI. Typically these are "cat" (for local catchment) or "ws" (for full upstream watershed). Additional AOIs exist for catchments and watersheds restricted to 100 meter riparian buffer. The `sc_get_data()` function in `StreamCatTools` returns metrics in the AOI based on COMID:
 ```{r}
-vars <- c("tmean8110", "pctconif2008")
-sc_vars <- paste(vars, collapse = ",")
+sc_vars <- c("tmean8110", "pctconif2008")
 sc_data <- sc_get_data(
   metric = sc_vars,
   aoi = "cat",
   comid = bugs$obs$comid
 )
+head(sc_data)
+```
+
+`sc_data` is a data frame with column `comid`, column `pctconif2008cat` (for `pctconif2008` in the catchment AOI), and column `tmean8110cat` (for `tmean8110cat`). These metrics are merged to `bugs$obs` via `"comid"` by running:
+```{r}
 bugs$obs <- merge(bugs$obs, sc_data, by = "comid")
 ```
 
+We visualize these new metrics spatially by running:
+```{r, fig.show="hold", out.width="49%"}
+ggplot() +
+  geom_sf(data = bugs$edges, linewidth = 0.2, alpha = 0.2) +
+  geom_sf(data = bugs$obs, aes(color = pctconif2008cat), size = 2) +
+  scale_color_viridis_c(option = "A") +
+  theme_bw(base_size = 16)
+
+ggplot() +
+  geom_sf(data = bugs$edges, linewidth = 0.2, alpha = 0.2) +
+  geom_sf(data = bugs$obs, aes(color = tmean8110cat), size = 2) +
+  scale_color_viridis_c(option = "D") +
+  theme_bw(base_size = 16)
+```
+
+Similarly, these metrics can be added to the prediction sites:
 ```{r}
 sc_pred_data <- sc_get_data(
   metric = sc_vars,
@@ -65,9 +96,9 @@ sc_pred_data <- sc_get_data(
 bugs$preds$pred <- merge(bugs$preds$pred, sc_pred_data, by = "comid")
 ```
 
-
 # Fitting an SSN Model
 
+We fit an SSN model describing species richness (the number of unique species) as a function of site elevation, 30-year mean annual temperature, and the percentage of the catchment with evergreen forest cover by running:
 ```{r}
 ssn_mod <- ssn_lm(
   formula = Rich ~ ELEV_DEM + tmean8110cat + pctconif2008cat,
@@ -76,37 +107,53 @@ ssn_mod <- ssn_lm(
   taildown_type = "exponential",
   additive = "afvArea"
 )
-
-ssn_mod2 <- ssn_lm(
-  formula = Rich ~ ELEV_DEM + tmean8110cat + pctconif2008cat,
-  ssn.object = bugs
-)
-
-glances(ssn_mod, ssn_mod2)
+summary(ssn_mod)
 ```
+
+Here, we modeled the spatial covariance using both a tailup exponential structure and a taildown exponential structure (we omitted a Euclidean structure). Based on the fitted model, there is strong evidence that increasing elevation is associated decreasing richness, on average ($p$-value < 0.01), some evidence that increasing temperature is associated with decreasing richness, on average ($p$-value $\approx$ 0.06), and some evidence that increasing percent evergreen forest cover is associated with increasing richness, on average ($p$-value $\approx$ 0.10).
 
 # Prediction (Kriging)
 
+We augment the prediction sites with predictions by running:
 ```{r}
 aug_preds <- augment(ssn_mod, newdata = "pred")
 ```
 
+We visualize these predictions alongside the observed richness by running:
 ```{r}
-ggplot(aug_preds, aes(color = .fitted)) +
-  geom_sf() +
-  scale_color_viridis_c(option = "H")
+ggplot() +
+  # geom_sf(data = bugs$edges, linewidth = 0.2, alpha = 0.2) +
+  geom_sf(data = aug_preds, aes(color = .fitted), size = 0.9) +
+  geom_sf(data = bugs$obs, aes(color = Rich), size = 2) +
+  scale_color_viridis_c(option = "H", name = "Rich", limits = c(0, 59)) +
+  theme_bw(base_size = 16)
+```
+
+We use block Kriging to predict the average species richness in the Lower Snake Basin alonside a prediction interval by running:
+```{r}
+predict(ssn_mod, newdata = "pred", block = TRUE, interval = "prediction")
 ```
 
 # Other `StreamCatTools` Features
 
+There are several other `StreamCatTools` features which simplify the process of interacting with StreamCat. The `sc_get_params()` function returns parameters available using the StreamCat API. For example, we can learn details like AOI, category, units, and other metadata information for each metric by running:
 ```{r}
 var_info <- sc_get_params(param = "variable_info")
 head(var_info)
 ```
 
+If you only have access to x- and y-coordinates (instead of COMIDs), you can use `sc_get_comid()` to find the NHD feature that contains a coordinate by running:
 ```{r}
 sct_comid <- sc_get_comid(bugs$obs)
+```
+
+The COMIDs are stored in a single comma-separated vector (this is how StreamCat interacts its API). This vector can be seprated into distinct COMIDs for more direct use with **R** by running
+```{r}
 sct_comid <- unlist(strsplit(sct_comid, ","))
+```
+
+The COMIDs stored in `bugs$obs` match the COMIDs we accessed via `sc_get_comid()`:
+```{r}
 dat_comid <- data.frame(
   bugs_comid = bugs$obs$comid,
   sct_comid = sct_comid
@@ -114,10 +161,11 @@ dat_comid <- data.frame(
 head(dat_comid)
 ```
 
+Here, we have only briefly explored the potential for `SSN2` integration with `StreamCatTools`; to learn more about `StreamCatTools`, visit their website at [this link](https://usepa.github.io/StreamCatTools/).
 
 # Alternatives to StreamCat
 
-
+Alternatives to StreamCat? Primarily, other data sources outside CONUS? e.g., Canada, Australia, Europe, New Zealand, Africa, etc.
 
 # R Code Appendix {.unnumbered}
 
@@ -129,7 +177,9 @@ labs <- setdiff(labs, c("setup", "get-labels"))
 ```{r all-code, ref.label=labs, eval = FALSE}
 ```
 
-# References {.unnumbered}
+<!-- # References {.unnumbered} -->
 
-<div id="refs"></div>
+<!-- <div id="refs"></div> -->
+
+<!-- @hill2016StreamCat -->
 
