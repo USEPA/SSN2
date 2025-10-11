@@ -34,6 +34,7 @@ The `bugs` data is an SSN object that contains macroinvertebrate data in the Low
 # library(here)
 # bugs <- ssn_import(here("vignettes", "articles", "bugs.ssn"), predpts = "pred")
 bugs <- ssn_import("bugs.ssn", predpts = "pred")
+# CREATE DISTANCE MATRICES
 ```
 
 There are 549 observed sites and 300 prediction sites:
