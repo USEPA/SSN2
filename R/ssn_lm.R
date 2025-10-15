@@ -89,7 +89,7 @@
 #'     \item \code{size}: The number of observations in each \code{index} group
 #'       when \code{method} is \code{"random"}. If the number of observations
 #'       is not divisible by \code{size}, some levels get \code{size - 1} observations.
-#'       The default is 100.
+#'       The default is 200.
 #'     \item \code{groups: }The number of \code{index} groups. If \code{method}
 #'       is \code{"random"}, \code{size} is \eqn{ceiling(n / groups)}, where
 #'       \eqn{n} is the sample size. Automatically determined if \code{size}
@@ -110,7 +110,7 @@
 #'   initialize default arguments for the other list elements.
 #'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 #'   that \code{local} is transformed into
-#'   \code{list(size = 100, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)}.
+#'   \code{list(size = 200, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)}.
 #' @param ... Other arguments to \code{stats::optim()}.
 #'
 #' @details The linear model for spatial stream networks can be written as

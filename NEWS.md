@@ -4,6 +4,11 @@
 
 * Added a vignette to the [`SSN2` website](https://usepa.github.io/SSN2/) titled "Adding Explanatory Variables to 'SSN' Objects Directly in R Using StreamCat".
 
+## Minor Updates
+
+* Changed the default `size` argument to the `local` argument in `ssn_lm()` and `ssn_glm()` from 100 to 200. This enhances the approximation's accuracy but can slightly increase computational complexity.
+* Changed the default `size` argument to the `local` argument in `predict()` and `augment()` from 2000 to 4000. This enhances the approximation's accuracy but can slightly increases computational complexity.
+
 ## Bug Fixes
 
 * Fixed a bug that could improperly order observations when `local` was specified (for large data sets).
