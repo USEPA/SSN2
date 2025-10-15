@@ -11,7 +11,8 @@
 
 ## Bug Fixes
 
-* Fixed a bug that could improperly order observations when `local` was specified (for large data sets).
+* Fixed a bug that could improperly order observations when `local` was specified (for large data sets) in `ssn_lm()` or `ssn_glm()`.
+* Fixed a bug that could improperly order `local_index` in `ssn_lm()` or `ssn_glm()` model objects.
 
 # SSN2 0.3.1
 

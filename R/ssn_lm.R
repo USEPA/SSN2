@@ -421,6 +421,7 @@ ssn_lm <- function(formula, ssn.object,
     local_index <- NULL
   } else {
     local_index <- data_object$local_index
+    local_index <- local_index[order(data_object$order_bigdata)]
     data_object$observed_index <- which(data_object$observed_index)
     data_object$missing_index <- which(data_object$missing_index)
   }
