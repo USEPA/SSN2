@@ -29,6 +29,8 @@ Other contributors:
 \itemize{
   \item Alan Pearse [contributor]
   \item Dan Isaak [contributor]
+  \item Ryan A. Hill [contributor]
+  \item Marc Weber [contributor]
 }
 
 }
