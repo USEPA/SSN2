@@ -7,7 +7,7 @@
 ## Minor Updates
 
 * Changed the default `size` argument to the `local` argument in `ssn_lm()` and `ssn_glm()` from 100 to 200. This enhances the approximation's accuracy but can slightly increase computational complexity.
-* Changed the default `size` argument to the `local` argument in `predict()` and `augment()` from 2000 to 4000. This enhances the approximation's accuracy but can slightly increases computational complexity.
+* Changed the default `size` argument to the `local` argument in `predict()` and `augment()` from 2000 to 4000. This enhances the approximation's accuracy but can slightly increase computational complexity.
 
 ## Bug Fixes
 
