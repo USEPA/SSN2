@@ -1,6 +1,6 @@
 ---
 title: "Adding Landscape Explanatory Variables to 'SSN' Objects Directly in R Using StreamCatTools"
-author: "Michael Dumelle, Erin Peterson, Marc Weber, and Ryan Hill"
+author: "Michael Dumelle, Marc Weber, and Ryan Hill"
 bibliography: '`r system.file("references.bib", package="SSN2")`'
 output:
   pdf_document: default

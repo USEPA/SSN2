@@ -1,0 +1,241 @@
+---
+title: "Fitting 'SSN' Models to Large Data Sets and Making Predictions (i.e., Kriging)"
+author: "Michael Dumelle"
+bibliography: '`r system.file("references.bib", package="SSN2")`'
+output:
+  pdf_document: default
+  html_document: null
+urlcolor: blue
+editor_options:
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+# Background
+
+It can be challenging to fit SSN models to large data sets because the computation burden associated with estimating spatial covariance parameters increases exponentially with $n$, the sample size. Typically, it is only feasible to fit SSN2 models using the standard (i.e., traditional) approach for data sets having no more than a few thousand observations. @ver2023indexing proposed an approach called spatial indexing that can be used to fit SSN models having tens to hundreds of thousands of observations relatively quickly. @ver2023indexing and @dumelle2024modeling show that spatial indexing tends to approximate the standard solution very accurately at a fraction of the computational cost via several simulation studies and data analyses. Spatial indexing works by splitting the data up into smaller subsets ($n_{subset} << n$) and pooling spatial covariance parameters estimates across these subsets. This vignette aims to compare the standard approach and large data (i.e., spatial indexing) approach directly on a moderately sized data set, whereby the standard approach can be fit relatively quickly. In `SSN2`, spatial indexing is available via the `local` argument to `ssn_lm()` and `ssn_glm()`.
+
+Interestingly, the main computational burden associated with prediction at new locations is actually related to the size of the observed data ($n$), not the number of locations requiring prediction ($n_{pred})$. @ver2023indexing describe an approach to prediction at new locations using models fit to large (observed) data sets called local neighborhood prediction. Local neighborhood prediction subsets the observed data to include only the `size` observations most correlated with the location requiring prediction (where `size` is an integer). Typically, this subsetting is done separately for each prediction location. However, due to computational constraints associated with the hydrologic distance matrices required by SSN models, local neighborhood prediction in `SSN2` subsets the observed data to the `size` observations most correlated (on average) with all locations requiring prediction.  In `SSN2`, local neighborhood prediction is available via the `local` argument to `predict()` and `augment()`.
+
+Before proceeding, we load the `SSN2` and `ggplot2` **R** packages (which can all be installed directly from CRAN) by running:
+```{r}
+library(SSN2)
+library(ggplot2)
+```
+
+# The `bugs` Data
+
+The `bugs` data is an SSN object that contains macroinvertebrate data in the Lower Snake Basin. It can be downloaded via GitHub at [this link](https://github.com/USEPA/SSN2/tree/develop/vignettes/articles). We read in `bugs` by running:
+```{r}
+bugs <- ssn_import("bugs.ssn", predpts = "pred")
+```
+
+```{r local-read, include=FALSE, echo=FALSE}
+# to run locally, run
+# library(here)
+# bugs <- ssn_import(here("vignettes", "articles", "bugs.ssn"), predpts = "pred")
+```
+
+There are 549 observed sites ($n$) and 300 prediction sites ($n_{pred}$):
+```{r}
+bugs
+```
+
+We visualize the flowlines (edges), observed macroinvertebrate richness (obs), and prediction sites (preds) by running:
+```{r}
+ggplot() +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = bugs$preds$pred, color = "black", size = 0.9) +
+  geom_sf(data = bugs$obs, aes(color = Rich), size = 2) +
+  scale_color_viridis_c(option = "H", limits = c(0, 59)) +
+  theme_bw(base_size = 16)
+```
+
+# The Standard SSN Approach
+
+Before fitting a standard SSN model to the `bugs` data, we create the hydrologic distance matrices required for model fitting by running:
+```{r, eval=FALSE}
+ssn_create_distmat(bugs, predpts = "pred", among_predpts = TRUE)
+```
+
+Then we fit a standard SSN model by running:
+```{r}
+standard_start <- Sys.time()
+ssn_mod <- ssn_lm(
+  formula = Rich ~ ELEV_DEM,
+  ssn.object = bugs,
+  tailup_type = "exponential",
+  taildown_type = "exponential",
+  additive = "afvArea"
+)
+standard_time <- Sys.time() - standard_start
+standard_time
+```
+
+The model took `r round(as.numeric(standard_time), digits = 2)` seconds to fit.
+
+We augment the prediction data with predictions by running:
+```{r}
+aug_ssn_mod <- augment(ssn_mod, newdata = "pred", interval = "prediction")
+```
+
+# The Large Data SSN Approach (i.e., Spatial Indexing)
+
+We create the hydrologic distance matrices required for fitting SSN models to large data sets via spatial indexing using `ssn_create_bigdist()`:
+```{r, eval=FALSE}
+ssn_create_bigdist(bugs, predpts = "pred", among_predpts = TRUE, no_cores = 2)
+```
+
+Like `ssn_create_distmat()`, `ssn_create_bigdist()` creates distance matrices in the `distance` folder of the `.ssn`. However, the distance matrices created by `ssn_create_bigdist()` have a special `.bmat` or `.txt` extension (instead of a `.Rdata`) extension. Distance matrices with `.bmat` and `.txt` extensions are accessed when we implement spatial indexing via the `local` argument:
+```{r}
+set.seed(1)
+bd_start <- Sys.time()
+ssn_mod_bd <- ssn_lm(
+  formula = Rich ~ ELEV_DEM,
+  ssn.object = bugs,
+  tailup_type = "exponential",
+  taildown_type = "exponential",
+  additive = "afvArea",
+  local = TRUE
+)
+bd_time <- Sys.time() - bd_start
+bd_time
+```
+
+The model took `r round(as.numeric(bd_time), digits = 2)` seconds to fit.
+
+The `local` argument set to `TRUE` implements default settings of a more complex `local` list that has several options controlling nuances of the spatial indexing. One of these options is the method used to assign observations to smaller subsets. The default approach is k-means clustering, chosen so that each smaller subset has a sample size of approximately 200. We can access the smaller subsets used by the model object and visualize them by running:
+```{r}
+bugs$obs$index <- as.factor(ssn_mod_bd$local_index)
+ggplot() +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = bugs$obs, aes(color = index), size = 2) +
+  scale_color_viridis_d() +
+  theme_bw(base_size = 16)
+```
+
+The `kmeans()` algorithm that determines subsets uses a random start, so setting a seed is required to reproduce results exactly. Model results should not change substantially between random starts, however. A fixed subset list can be provided to `local` so that subset assignment does not change across model fits. For more on the `local` argument, see the `ssn_lm()` documentation by running `?ssn_lm()` or by visiting [this link](https://usepa.github.io/SSN2/reference/ssn_lm.html).
+
+Now we use the model fit via spatial indexing to make local neighborhood predictions. In `predict()` (and `augment()`), the default value for the local neighborhood `size` is 4,000, which is larger than $n = 549$. However, if we set `size` to be 250 (instead of 4,000), we can illustrate some concepts behind local neighborhood prediction in `SSN2` that will be useful when observed data sets are larger and `size` $<< n$. 
+
+When setting `size` to 250, the 250 observations sharing the highest average covariance with the prediction locations are used as the local neighborhood subset. 
+We compute the covariance matrix between the prediction and observed locations by running:
+```{r}
+cov_pred_by_obs <- covmatrix(ssn_mod_bd, newdata = "pred")
+dim(cov_pred_by_obs)
+```
+
+We then find the average covariance between the prediction and observed locations by running:
+```{r}
+avg_cov_with_obs <- colMeans(cov_pred_by_obs)
+```
+
+We then order these (largest covariance first), find indices corresponding to the 250 observations with the highest average covariance, and create a vector called `Include`, that has the value `"Yes"` if the observation is used in the local neighborhood subset and the value `"No"` if it is not:
+```{r}
+cov_order <- order(avg_cov_with_obs, decreasing = TRUE)
+largest_300 <- cov_order[1:250]
+row_number <- seq(from = 1, to = NROW(bugs$obs))
+bugs$obs$Include <- ifelse(row_number %in% largest_300, "Yes", "No")
+```
+
+Using a local neighborhood `size` of 250, we then augment the prediction data with predictions by running:
+```{r}
+aug_ssn_mod_bd <- augment(
+  x = ssn_mod_bd,
+  newdata = "pred",
+  interval = "prediction",
+  local = list(size = 250)
+)
+```
+
+Unsurprisingly, the local neighborhood approach may not perform well when prediction locations are far away from any observed locations in the local neighborhood, which can happen when `size` $<< n$. In this case, one can separate prediction locations into smaller geographically based subsets and stored as separate prediction data sets in `ssn.object$preds`. The local neighborhood is recomputed for each subset separately based on the `size` observations most correlated (on average) with the prediction locations from that subset.
+
+# Comparing the Approaches
+
+So far we fit the same model using the 1) standard and 2) large data set (i.e., spatial indexing) approaches and made predictions at new locations using the 1) standard and 2) large data set (i.e., local neighborhood prediction) approaches. How do the results from the distinct approaches compare? 
+
+## Model Sumamries
+
+The two approaches have very similar summary output, particularly in the fixed effects coefficients table (which is often of primary ecological interest):
+```{r}
+summary(ssn_mod)
+summary(ssn_mod_bd)
+```
+
+## Leave-One-Out Cross Validation
+
+The two approaches have very similar leave-one-out cross validation output:
+```{r}
+loocv(ssn_mod)
+loocv(ssn_mod_bd)
+```
+
+## Prediction
+
+The predictions from the two approaches are very similar. We see the first few rows of the augmented prediction data by running:
+```{r}
+head(aug_ssn_mod[, c("ELEV_DEM", ".fitted", ".lower", ".upper", "pid")])
+head(aug_ssn_mod_bd[, c("ELEV_DEM", ".fitted", ".lower", ".upper", "pid")])
+```
+
+We visualize the predictions from the standard approach and local neighborhood (LNBH) approach by running:
+```{r}
+aug_ssn_mod$type <- "Standard"
+aug_ssn_mod_bd$type <- "LNBH"
+augs <- rbind(aug_ssn_mod, aug_ssn_mod_bd)
+augs$type <- factor(augs$type, levels = c("Standard", "LNBH"))
+ggplot(augs) +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = augs, aes(color = .fitted), size = 2) +
+  facet_wrap(~ type) +
+  scale_color_viridis_c(option = "H", limits = c(0, 59)) +
+  scale_x_continuous(breaks = -c(117, 114)) +
+  theme_bw(base_size = 16)
+```
+
+We predict the average in the entire domain (i.e., block prediction) by running:
+```{r}
+predict(
+  object = ssn_mod,
+  newdata = "pred",
+  block = TRUE,
+  interval = "prediction"
+)
+predict(
+  object = ssn_mod_bd,
+  newdata = "pred",
+  block = TRUE,
+  interval = "prediction",
+  local = list(size = 250)
+)
+```
+
+# Closing Thoughts
+
+The standard and large data set (i.e., spatial indexing; local neighborhood prediction) approaches used here yielded very similar results. For data with larger observed sample sizes ($n > \approx 5,000$), the spatial indexing and local neighborhood prediction approaches are significantly more computationally efficient than their standard approach counterparts (in fact, the standard approaches won't be feasible for very large data sets). See @ver2023indexing and @dumelle2024modeling for a more thorough look at spatial indexing and local neighborhood prediction.
+
+# Why the Computational Burden?
+
+The main computational burden associated with estimation and prediction is computing products that involve the inverse covariance matrix. Inversion scales cubically with the sample size. This means that if the sample size doubles, the inversion computational cost increases eight-fold! For estimating parameters, this inversion is required during each step of the optimization algorithm (generally, dozens of steps are required for convergence of the optimization algorithm). For prediction, this inversion is only required once. So, for data sets having a few thousand observations, one can use spatial indexing to fit the model but then use standard prediction instead of local neighborhood prediction (as the inverse covariance matrix products are only required once).
+
+# R Code Appendix {.unnumbered}
+
+```{r get-labels, echo = FALSE}
+labs <- knitr::all_labels()
+labs <- setdiff(labs, c("setup", "get-labels", "local-read"))
+```
+
+```{r all-code, ref.label=labs, eval = FALSE}
+```
+
+# References {.unnumbered}
+
+<div id="refs"></div>
