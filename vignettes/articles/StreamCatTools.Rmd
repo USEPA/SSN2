@@ -143,7 +143,7 @@ ggplot() +
   theme_bw(base_size = 16)
 ```
 
-We use block Kriging to predict the average species richness in the Lower Snake Basin alonside a prediction interval by running:
+We use block Kriging to predict the average species richness in the Lower Snake Basin alongside a prediction interval by running:
 ```{r}
 predict(ssn_mod, newdata = "pred", block = TRUE, interval = "prediction")
 ```
@@ -166,7 +166,7 @@ If we only have access to x- and y-coordinates (instead of COMIDs), we can use `
 sct_comid <- sc_get_comid(bugs$obs)
 ```
 
-The COMIDs are stored in a single comma-separated vector (this is how StreamCat interacts its API). This vector can be seprated into distinct COMIDs for more direct use with **R** by running
+The COMIDs are stored in a single comma-separated vector (this is how StreamCat interacts its API). This vector can be separated into distinct COMIDs for more direct use with **R** by running
 ```{r}
 sct_comid <- unlist(strsplit(sct_comid, ","))
 ```

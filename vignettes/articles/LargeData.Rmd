@@ -162,7 +162,7 @@ Unsurprisingly, the local neighborhood approach may not perform well when predic
 
 So far we fit the same model using the 1) standard and 2) large data set (i.e., spatial indexing) approaches and made predictions at new locations using the 1) standard and 2) large data set (i.e., local neighborhood prediction) approaches. How do the results from the distinct approaches compare? 
 
-## Model Sumamries
+## Model Summaries
 
 The two approaches have very similar summary output, particularly in the fixed effects coefficients table (which is often of primary ecological interest):
 ```{r}

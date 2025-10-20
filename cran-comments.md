@@ -1,4 +1,4 @@
-This is an update that adds a couple bug fixes. Thank you.
+This is an update that adds a few changes and bugfixes. Thank you.
 
 -------
 

@@ -3,6 +3,7 @@
 ## Major Updates
 
 * Added a vignette to the [`SSN2` website](https://usepa.github.io/SSN2/) titled "Adding Explanatory Variables to 'SSN' Objects Directly in R Using StreamCat".
+* Added a vignette to the [`SSN2` website](https://usepa.github.io/SSN2/) titled "Fitting 'SSN' Models to Large Data Sets and Making Predictions (i.e., Kriging)"
 
 ## Minor Updates
 
