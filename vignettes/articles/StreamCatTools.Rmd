@@ -52,7 +52,7 @@ bugs
 We visualize the flowlines (edges), observed macroinvertebrate richness (obs), and prediction sites (preds) by running:
 ```{r}
 ggplot() +
-  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.8, color = "darkgrey") +
   geom_sf(data = bugs$preds$pred, color = "black", size = 0.9) +
   geom_sf(data = bugs$obs, aes(color = Rich), size = 2) +
   scale_color_viridis_c(option = "H", limits = c(0, 59)) +
@@ -88,13 +88,13 @@ bugs$obs <- merge(bugs$obs, sc_data, by = "comid")
 We visualize these new metrics spatially by running:
 ```{r, fig.show="hold", out.width="49%"}
 ggplot() +
-  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.8, color = "darkgrey") +
   geom_sf(data = bugs$obs, aes(color = pctconif2008cat), size = 2) +
   scale_color_viridis_c(option = "A") +
   theme_bw(base_size = 16)
 
 ggplot() +
-  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.8, color = "darkgrey") +
   geom_sf(data = bugs$obs, aes(color = tmean8110cat), size = 2) +
   scale_color_viridis_c(option = "D") +
   theme_bw(base_size = 16)
@@ -136,7 +136,7 @@ aug_preds <- augment(ssn_mod, newdata = "pred")
 We visualize these predictions alongside the observed richness by running:
 ```{r}
 ggplot() +
-  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.8, color = "darkgrey") +
   geom_sf(data = aug_preds, aes(color = .fitted), size = 0.9) +
   geom_sf(data = bugs$obs, aes(color = Rich), size = 2) +
   scale_color_viridis_c(option = "H", name = "Rich", limits = c(0, 59)) +

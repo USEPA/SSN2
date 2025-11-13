@@ -1,5 +1,5 @@
 ---
-title: "Fitting 'SSN' Models to Large Data Sets and Making Predictions (i.e., Kriging)"
+title: "Fitting Spatial Stream Network Models to Large Data Sets and Making Predictions (i.e., Kriging)"
 author: "Michael Dumelle"
 bibliography: '`r system.file("references.bib", package="SSN2")`'
 output:
@@ -52,7 +52,7 @@ bugs
 We visualize the flowlines (edges), observed macroinvertebrate richness (obs), and prediction sites (preds) by running:
 ```{r}
 ggplot() +
-  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.8, color = "darkgrey") +
   geom_sf(data = bugs$preds$pred, color = "black", size = 0.9) +
   geom_sf(data = bugs$obs, aes(color = Rich), size = 2) +
   scale_color_viridis_c(option = "H", limits = c(0, 59)) +
@@ -116,7 +116,7 @@ The `local` argument set to `TRUE` implements default settings of a more complex
 ```{r}
 bugs$obs$index <- as.factor(ssn_mod_bd$local_index)
 ggplot() +
-  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.8, color = "darkgrey") +
   geom_sf(data = bugs$obs, aes(color = index), size = 2) +
   scale_color_viridis_d() +
   theme_bw(base_size = 16)
@@ -145,6 +145,17 @@ largest_300 <- cov_order[1:250]
 row_number <- seq(from = 1, to = NROW(bugs$obs))
 bugs$obs$Include <- ifelse(row_number %in% largest_300, "Yes", "No")
 ```
+
+We can visualize these designations by running:
+```{r}
+ggplot() +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.8, color = "darkgrey") +
+  geom_sf(data = bugs$preds$pred, color = "black", size = 0.9) +
+  geom_sf(data = bugs$obs, aes(color = Include)) +
+  theme_bw()
+```
+
+The 250 observations with the highest average covariance (`Include = "Yes"`) tend to be nearby several prediction points, while the remaining observations (`Include = "No"`) are often on the basin's boundaries.
 
 Using a local neighborhood `size` of 250, we then augment the prediction data with predictions by running:
 ```{r}
@@ -193,7 +204,7 @@ aug_ssn_mod_bd$type <- "LNBH"
 augs <- rbind(aug_ssn_mod, aug_ssn_mod_bd)
 augs$type <- factor(augs$type, levels = c("Standard", "LNBH"))
 ggplot(augs) +
-  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.3, color = "lightgrey") +
+  geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.8, color = "darkgrey") +
   geom_sf(data = augs, aes(color = .fitted), size = 2) +
   facet_wrap(~ type) +
   scale_color_viridis_c(option = "H", limits = c(0, 59)) +

@@ -2,3 +2,10 @@ url: https://usepa.github.io/SSN2/
 template:
   bootstrap: 3
 
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - introduction
+  - articles/StreamCatTools
+  - articles/LargeData

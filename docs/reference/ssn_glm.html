@@ -21,7 +21,7 @@ and Peterson and Ver Hoef (2010)."><!-- mathjax --><script src="https://cdnjs.cl
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.4.0</span>
       </span>
     </div>
 
@@ -37,6 +37,12 @@ and Peterson and Ver Hoef (2010)."><!-- mathjax --><script src="https://cdnjs.cl
   </a>
   <ul class="dropdown-menu" role="menu"><li>
       <a href="../articles/introduction.html">An Introduction to Spatial Stream Network Modeling in R Using SSN2</a>
+    </li>
+    <li>
+      <a href="../articles/StreamCatTools.html">Adding Landscape Explanatory Variables to 'SSN' Objects Directly in R Using StreamCatTools</a>
+    </li>
+    <li>
+      <a href="../articles/LargeData.html">Fitting Spatial Stream Network Models to Large Data Sets and Making Predictions (i.e., Kriging)</a>
     </li>
   </ul></li>
 <li>
@@ -243,7 +249,7 @@ To ensure consistent results, specify <code>index</code> or set a seed via
 <li><p><code>size</code>: The number of observations in each <code>index</code> group
 when <code>method</code> is <code>"random"</code>. If the number of observations
 is not divisible by <code>size</code>, some levels get <code>size - 1</code> observations.
-The default is 100.</p></li>
+The default is 200.</p></li>
 <li><p><code>groups: </code>The number of <code>index</code> groups. If <code>method</code>
 is <code>"random"</code>, <code>size</code> is \(ceiling(n / groups)\), where
 \(n\) is the sample size. Automatically determined if <code>size</code>
@@ -263,7 +269,7 @@ parallelize over. The default is the number of available cores on your machine.<
 initialize default arguments for the other list elements.
 If <code>local</code> is <code>TRUE</code>, defaults for <code>local</code> are chosen such
 that <code>local</code> is transformed into
-<code>list(size = 100, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)</code>.</p></dd>
+<code>list(size = 200, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)</code>.</p></dd>
 
 
 <dt>...</dt>
@@ -294,7 +300,7 @@ summarize model fit are available for <code>ssn_glm</code> objects, including
 <li><p><code>crs</code>: The geographic coordinate reference system.</p></li>
 <li><p><code>deviance</code>: The model deviance.</p></li>
 <li><p><code>diagtol</code>: A tolerance value that may be added to the diagonal
-of  ovariance matrices to encourage decomposition stability.</p></li>
+of  covariance matrices to encourage decomposition stability.</p></li>
 <li><p><code>estmethod</code>: The estimation method.</p></li>
 <li><p><code>euclid_max</code>: The maximum euclidean distance.</p></li>
 <li><p><code>family</code>: The generalized linear model family</p></li>
