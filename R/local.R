@@ -48,7 +48,7 @@ get_local_list_estimation <- function(local, data, n, partition_factor) {
       if ("groups" %in% names_local) {
         local$size <- ceiling(n / local$groups)
       } else {
-        local$size <- 100
+        local$size <- 200
         local$groups <- ceiling(n / local$size)
       }
     } else {
@@ -62,7 +62,7 @@ get_local_list_estimation <- function(local, data, n, partition_factor) {
 
   # setting var adjust
   if (!"var_adjust" %in% names_local) {
-    if (n <= 100000) {
+    if (n <= 1e5) {
       local$var_adjust <- "theoretical"
     } else {
       message('var_adjust was not specified and the sample size exceeds 100,000, so the default var_adjust value is being changed from "theoretical" to "none". To override this behavior, rerun and set var_adjust in local. Be aware that setting var_adjust to "theoretical" may result in exceedingly long computational times.')
@@ -128,7 +128,7 @@ get_local_list_prediction <- function(local) {
 
   if (is.logical(local)) {
     if (local) {
-      local <- list(method = "covariance", size = 2000, parallel = FALSE)
+      local <- list(method = "covariance", size = 4000, parallel = FALSE)
     } else {
       local <- list(method = "all", parallel = FALSE)
     }
@@ -150,7 +150,7 @@ get_local_list_prediction <- function(local) {
   }
 
   if (local$method %in% c("covariance") && !"size" %in% names_local) {
-    local$size <- 2000
+    local$size <- 4000
   }
 
   if (!"parallel" %in% names_local) {

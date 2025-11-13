@@ -164,38 +164,38 @@ get_model_stats_bigdata_glm <- function(cov_est_object, data_object, estmethod) 
   # reorder relevant quantities to match data order
   model_stats_glm_names <- data_object$pid[data_object$observed_index]
   ## fitted values
-  fitted$response <- fitted$response[order(data_object$order)]
+  fitted$response <- fitted$response[order(data_object$order_bigdata)]
   names(fitted$response) <- model_stats_glm_names
-  fitted$link <- fitted$link[order(data_object$order)]
+  fitted$link <- fitted$link[order(data_object$order_bigdata)]
   names(fitted$link) <- model_stats_glm_names
-  fitted$tailup <- fitted$tailup[order(data_object$order)]
+  fitted$tailup <- fitted$tailup[order(data_object$order_bigdata)]
   names(fitted$tailup) <- model_stats_glm_names
-  fitted$taildown <- fitted$taildown[order(data_object$order)]
+  fitted$taildown <- fitted$taildown[order(data_object$order_bigdata)]
   names(fitted$taildown) <- model_stats_glm_names
-  fitted$euclid <- fitted$euclid[order(data_object$order)]
+  fitted$euclid <- fitted$euclid[order(data_object$order_bigdata)]
   names(fitted$euclid) <- model_stats_glm_names
-  fitted$nugget <- fitted$nugget[order(data_object$order)]
+  fitted$nugget <- fitted$nugget[order(data_object$order_bigdata)]
   names(fitted$nugget) <- model_stats_glm_names
   ## hat values
-  hatvalues <- hatvalues[order(data_object$order)]
+  hatvalues <- hatvalues[order(data_object$order_bigdata)]
   names(hatvalues) <- model_stats_glm_names
   ## residuals
-  residuals$response <- residuals$response[order(data_object$order)]
+  residuals$response <- residuals$response[order(data_object$order_bigdata)]
   names(residuals$response) <- model_stats_glm_names
-  residuals$deviance <- residuals$deviance[order(data_object$order)]
+  residuals$deviance <- residuals$deviance[order(data_object$order_bigdata)]
   names(residuals$deviance) <- model_stats_glm_names
-  residuals$pearson <- residuals$pearson[order(data_object$order)]
+  residuals$pearson <- residuals$pearson[order(data_object$order_bigdata)]
   names(residuals$pearson) <- model_stats_glm_names
-  residuals$standardized <- residuals$standardized[order(data_object$order)]
+  residuals$standardized <- residuals$standardized[order(data_object$order_bigdata)]
   names(residuals$standardized) <- model_stats_glm_names
   ## cook's distance
-  cooks_distance <- cooks_distance[order(data_object$order)]
+  cooks_distance <- cooks_distance[order(data_object$order_bigdata)]
   names(cooks_distance) <- model_stats_glm_names
-  y <- y[order(data_object$order)]
+  y <- y[order(data_object$order_bigdata)]
   if (is.null(data_object$size)) {
     size <- NULL
   } else {
-    size <- data_object$size[order(data_object$order)]
+    size <- data_object$size[order(data_object$order_bigdata)]
     names(size) <- model_stats_glm_names
   }
 

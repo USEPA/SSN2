@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.4.0</span>
       </span>
     </div>
 
@@ -33,6 +33,12 @@
   </a>
   <ul class="dropdown-menu" role="menu"><li>
       <a href="../articles/introduction.html">An Introduction to Spatial Stream Network Modeling in R Using SSN2</a>
+    </li>
+    <li>
+      <a href="../articles/StreamCatTools.html">Adding Landscape Explanatory Variables to 'SSN' Objects Directly in R Using StreamCatTools</a>
+    </li>
+    <li>
+      <a href="../articles/LargeData.html">Fitting Spatial Stream Network Models to Large Data Sets and Making Predictions (i.e., Kriging)</a>
     </li>
   </ul></li>
 <li>
@@ -58,7 +64,25 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="0.3.1" id="ssn2-031">SSN2 0.3.1<a class="anchor" aria-label="anchor" href="#ssn2-031"></a></h2>
+<h2 class="page-header" data-toc-text="0.4.0" id="ssn2-040">SSN2 0.4.0<small>2025-10-21</small><a class="anchor" aria-label="anchor" href="#ssn2-040"></a></h2>
+<div class="section level3">
+<h3 id="major-updates-0-4-0">Major Updates<a class="anchor" aria-label="anchor" href="#major-updates-0-4-0"></a></h3>
+<ul><li>Added a vignette to the <a href="https://usepa.github.io/SSN2/"><code>SSN2</code> website</a> titled “Adding Explanatory Variables to ‘SSN’ Objects Directly in R Using StreamCat”.</li>
+<li>Added a vignette to the <a href="https://usepa.github.io/SSN2/"><code>SSN2</code> website</a> titled “Fitting ‘SSN’ Models to Large Data Sets and Making Predictions (i.e., Kriging)”</li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-updates-0-4-0">Minor Updates<a class="anchor" aria-label="anchor" href="#minor-updates-0-4-0"></a></h3>
+<ul><li>Changed the default <code>size</code> argument to the <code>local</code> argument in <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> from 100 to 200. This enhances the approximation’s accuracy but can slightly increase computational complexity.</li>
+<li>Changed the default <code>size</code> argument to the <code>local</code> argument in <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> and <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> from 2000 to 4000. This enhances the approximation’s accuracy but can slightly increase computational complexity.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-4-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-4-0"></a></h3>
+<ul><li>Fixed a bug that could improperly order observations when <code>local</code> was specified (for large data sets) in <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> or <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code>.</li>
+<li>Fixed a bug that could improperly order <code>local_index</code> in <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> or <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code> model objects.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.3.1" id="ssn2-031">SSN2 0.3.1<small>2025-09-30</small><a class="anchor" aria-label="anchor" href="#ssn2-031"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-3-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-1"></a></h3>
 <ul><li>Added a dependency on <code>spmodel</code> version at least <code>0.7.0</code> so that <code><a href="https://usepa.github.io/spmodel/reference/AUROC.html" class="external-link">AUROC()</a></code> methods are properly called.</li>

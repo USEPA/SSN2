@@ -237,7 +237,7 @@
 #'     \item \code{crs}: The geographic coordinate reference system.
 #'     \item \code{deviance}: The model deviance.
 #'     \item \code{diagtol}: A tolerance value that may be added to the diagonal
-#'       of  ovariance matrices to encourage decomposition stability.
+#'       of  covariance matrices to encourage decomposition stability.
 #'     \item \code{estmethod}: The estimation method.
 #'     \item \code{euclid_max}: The maximum euclidean distance.
 #'     \item \code{family}: The generalized linear model family
@@ -411,6 +411,7 @@ ssn_glm <- function(formula, ssn.object, family,
     local_index <- NULL
   } else {
     local_index <- data_object$local_index
+    local_index <- local_index[order(data_object$order_bigdata)]
     data_object$observed_index <- which(data_object$observed_index)
     data_object$missing_index <- which(data_object$missing_index)
   }

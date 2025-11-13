@@ -47,9 +47,12 @@ get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisot
 
 
 
-  order_list <- order_list[order(order_list$network_index, order_list$pid), , drop = FALSE]
-  obs_index <- order_list$observed_index
+  obs_index <- order_list$observed_index # may need to be sorted
   order_list <- order_list[obs_index, , drop = FALSE]
+  local_index_orig <- local_index
+  order_bigdata <- order(local_index, order_list$network_index, order_list$pid)
+  local_index <- local_index[order_bigdata]
+  order_list <- order_list[order_bigdata, , drop = FALSE]
   order_list <- split(order_list, local_index)
 
   # get list of distance matrices in order of the original data
@@ -65,10 +68,11 @@ get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisot
     dist_matlist <- lapply(dist_matlist, function(x) c(x, list(euclid_mat = NULL)))
     # dist_matlist$euclid_matix <- NULL does not return anything
   } else {
-    # store euclid coordinates (in original data order)
+    # store euclid coordinates (in original data order but then changed)
     obs_coords <- sf::st_coordinates(ssn.object$obs)
     obs_coords <- obs_coords[obs_index, , drop = FALSE]
-    obs_coords_list <- split.data.frame(obs_coords, local_index)
+    obs_coords <- obs_coords[order_bigdata, , drop = FALSE]
+    obs_coords_list <- split.data.frame(obs_coords, local_index) # local index should already be sorted
 
     dist_matlist <- mapply(d = dist_matlist, c = obs_coords_list, function(d, c) {
       if (anisotropy) {

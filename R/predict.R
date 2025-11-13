@@ -49,7 +49,7 @@
 #'       The default
 #'       is \code{"covariance"}. Only used with models fit using [ssn_lm()].
 #'     \item \code{size}: The number of data observations to use when \code{method}
-#'       is \code{"distance"} or \code{"covariance"}. The default is 2000. Only used
+#'       is \code{"distance"} or \code{"covariance"}. The default is 4000. Only used
 #'       with models fit using [ssn_lm()].
 #'     \item \code{parallel}: If \code{TRUE}, parallel processing via the
 #'       parallel package is automatically used. This can significantly speed
@@ -63,7 +63,7 @@
 #'   initialize default arguments for the other list elements.
 #'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 #'   that \code{local} is transformed into
-#'   \code{list(size = 2000, method = "covariance", parallel = FALSE)}.
+#'   \code{list(size = 4000, method = "covariance", parallel = FALSE)}.
 #' @param terms If \code{type} is \code{"terms"}, the type of terms to be returned,
 #'   specified via either numeric position or name. The default is all terms are included.
 #' @param na.action Missing (\code{NA}) values in \code{newdata} will return an error and should

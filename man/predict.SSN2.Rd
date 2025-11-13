@@ -95,7 +95,7 @@ having the average highest covariance with the prediction locations are used.
 The default
 is \code{"covariance"}. Only used with models fit using \code{\link[=ssn_lm]{ssn_lm()}}.
 \item \code{size}: The number of data observations to use when \code{method}
-is \code{"distance"} or \code{"covariance"}. The default is 2000. Only used
+is \code{"distance"} or \code{"covariance"}. The default is 4000. Only used
 with models fit using \code{\link[=ssn_lm]{ssn_lm()}}.
 \item \code{parallel}: If \code{TRUE}, parallel processing via the
 parallel package is automatically used. This can significantly speed
@@ -109,7 +109,7 @@ When \code{local} is a list, at least one list element must be provided to
 initialize default arguments for the other list elements.
 If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 that \code{local} is transformed into
-\code{list(size = 2000, method = "covariance", parallel = FALSE)}.}
+\code{list(size = 4000, method = "covariance", parallel = FALSE)}.}
 
 \item{terms}{If \code{type} is \code{"terms"}, the type of terms to be returned,
 specified via either numeric position or name. The default is all terms are included.}

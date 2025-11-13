@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.4.0</span>
       </span>
     </div>
 
@@ -33,6 +33,12 @@
   </a>
   <ul class="dropdown-menu" role="menu"><li>
       <a href="../articles/introduction.html">An Introduction to Spatial Stream Network Modeling in R Using SSN2</a>
+    </li>
+    <li>
+      <a href="../articles/StreamCatTools.html">Adding Landscape Explanatory Variables to 'SSN' Objects Directly in R Using StreamCatTools</a>
+    </li>
+    <li>
+      <a href="../articles/LargeData.html">Fitting Spatial Stream Network Models to Large Data Sets and Making Predictions (i.e., Kriging)</a>
     </li>
   </ul></li>
 <li>
@@ -173,7 +179,7 @@ having the average highest covariance with the prediction locations are used.
 The default
 is <code>"covariance"</code>. Only used with models fit using <code><a href="ssn_lm.html">ssn_lm()</a></code>.</p></li>
 <li><p><code>size</code>: The number of data observations to use when <code>method</code>
-is <code>"distance"</code> or <code>"covariance"</code>. The default is 2000. Only used
+is <code>"distance"</code> or <code>"covariance"</code>. The default is 4000. Only used
 with models fit using <code><a href="ssn_lm.html">ssn_lm()</a></code>.</p></li>
 <li><p><code>parallel</code>: If <code>TRUE</code>, parallel processing via the
 parallel package is automatically used. This can significantly speed
@@ -186,7 +192,7 @@ parallelize over. The default is the number of available cores on your machine.<
 initialize default arguments for the other list elements.
 If <code>local</code> is <code>TRUE</code>, defaults for <code>local</code> are chosen such
 that <code>local</code> is transformed into
-<code>list(size = 2000, method = "covariance", parallel = FALSE)</code>.</p></dd>
+<code>list(size = 4000, method = "covariance", parallel = FALSE)</code>.</p></dd>
 
 
 <dt>terms</dt>

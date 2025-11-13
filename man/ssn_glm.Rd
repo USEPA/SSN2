@@ -139,7 +139,7 @@ To ensure consistent results, specify \code{index} or set a seed via
 \item \code{size}: The number of observations in each \code{index} group
 when \code{method} is \code{"random"}. If the number of observations
 is not divisible by \code{size}, some levels get \code{size - 1} observations.
-The default is 100.
+The default is 200.
 \item \code{groups: }The number of \code{index} groups. If \code{method}
 is \code{"random"}, \code{size} is \eqn{ceiling(n / groups)}, where
 \eqn{n} is the sample size. Automatically determined if \code{size}
@@ -160,7 +160,7 @@ When \code{local} is a list, at least one list element must be provided to
 initialize default arguments for the other list elements.
 If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 that \code{local} is transformed into
-\code{list(size = 100, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)}.}
+\code{list(size = 200, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)}.}
 
 \item{...}{Other arguments to \code{stats::optim()}.}
 }
@@ -186,7 +186,7 @@ This fitted model list contains the following elements:
 \item \code{crs}: The geographic coordinate reference system.
 \item \code{deviance}: The model deviance.
 \item \code{diagtol}: A tolerance value that may be added to the diagonal
-of  ovariance matrices to encourage decomposition stability.
+of  covariance matrices to encourage decomposition stability.
 \item \code{estmethod}: The estimation method.
 \item \code{euclid_max}: The maximum euclidean distance.
 \item \code{family}: The generalized linear model family

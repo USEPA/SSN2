@@ -137,24 +137,33 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
     # partition_factor <- reformulate(paste0("as.character(", partition_factor_labels, ")"), intercept = FALSE)
   }
 
-  # if (is.null(local)) {
-  #   if (n > 3000) {
-  #     local <- TRUE
-  #     message("Because the sample size exceeds 3000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun ssn_lm() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
-  #   } else {
-  #     local <- FALSE
-  #   }
-  # }
+  if (is.null(local)) {
+    if (n > 3000) {
+      local <- TRUE
+      message("Because the sample size exceeds 3000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun ssn_lm() with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
+    } else {
+      local <- FALSE
+    }
+  }
+  if (is.list(local)) {
+    if ("index" %in% names(local)) {
+      if (any(missing_index)) {
+        if (length(local$index) == NROW(ssn.object$obs))
+          local$index <- local$index[observed_index]
+      }
+    }
+  }
 
   local <- get_local_list_estimation(local, obdata, n, partition_factor)
   n_local_index <- length(unique(local$index))
 
   # reorder
-  order_bigdata <- order(local$index, obdata_netgeom$NetworkID, obdata_netgeom$pid)
-  order_before_index <- order(obdata_netgeom$NetworkID, original_pid)
-  obdata <- obdata[order_before_index, , drop = FALSE]
-  X <- X[order_before_index, , drop = FALSE]
-  y <- y[order_before_index, , drop = FALSE]
+  order_bigdata <- order(local$index, as.numeric(obdata_netgeom$NetworkID), original_pid)
+  obdata <- obdata[order_bigdata, , drop = FALSE]
+  local_index_orig <- local$index
+  local$index <- local$index[order_bigdata]
+  X <- X[order_bigdata, , drop = FALSE]
+  y <- y[order_bigdata, , drop = FALSE]
 
   # store data list
   obdata_list <- split.data.frame(obdata, local$index)
@@ -206,7 +215,7 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
     partition_list <- NULL
   }
 
-  dist_object <- get_dist_object_bigdata(ssn.object, initial_object, additive, anisotropy, local$index, observed_index)
+  dist_object <- get_dist_object_bigdata(ssn.object, initial_object, additive, anisotropy, local_index_orig, observed_index)
   bbox <- st_bbox(obdata)
   tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
   taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
@@ -234,7 +243,6 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
 
   # restructure ssn
   ssn.object <- restruct_ssn_missing_bigdata(ssn.object, observed_index, missing_index)
-
   list(
     anisotropy = anisotropy,
     additive = additive,
@@ -255,6 +263,7 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
     offset = offset,
     ones_list = ones_list,
     order = order,
+    order_bigdata = order_bigdata,
     p = p,
     parallel = local$parallel,
     partition_factor_initial = partition_factor,

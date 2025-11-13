@@ -456,7 +456,7 @@ We visualize these predictions (overlain onto the stream network) by running
 ggplot() +
   geom_sf(data = mf04p$edges) +
   geom_sf(data = aug_preds, aes(color = .fitted), size = 2) +
-  scale_color_viridis_c(limits = c(0, 17), option = "H") +
+  scale_color_viridis_c(limits = c(-3.6, 17), option = "H") +
   theme_bw()
 ```
 
