@@ -1,3 +1,22 @@
+#' Predict each model term's contribution to the linear predictor
+#'
+#' @param object A fitted model object from [ssn_lm()] or [ssn_glm()]
+#' @param X_newdata The design matrix for the data requiring prediction
+#' @param se.fit Whether to compute standard errors for each term
+#' @param scale A scale multiplier for the standard errors (or \code{NULL})
+#' @param df Degrees of freedom used for interval quantiles
+#' @param interval The type of interval (\code{"none"} or \code{"confidence"}; \code{"prediction"} is not supported)
+#' @param level The confidence interval level
+#' @param add_newdata_rows Whether to name output rows using \code{object$missing_index}
+#'   rather than \code{rownames(X_newdata)}
+#' @param terms Optional subset of terms to return
+#' @param ... Additional arguments passed to \code{vcov()}
+#'
+#' @return A matrix (or list of matrices, if \code{se.fit} or \code{interval == "confidence"})
+#'   with one column per model term (collapsing over factor levels within a
+#'   term) and one row per prediction, mirroring \code{predict.lm(type = "terms")}
+#'
+#' @noRd
 predict_terms <- function(object, X_newdata, se.fit, scale, df, interval, level, add_newdata_rows, terms, ...) {
 
   if (interval == "prediction") {
@@ -13,7 +32,7 @@ predict_terms <- function(object, X_newdata, se.fit, scale, df, interval, level,
   # get the covariance matrix of the regression coefficients
   vc <- vcov(object, ...)
   # the predict.lm function sweeps the newdata by the means of the observed data
-  # that is, it subracts the column means of observed data from the columns of
+  # that is, it subtracts the column means of observed data from the columns of
   # the prediction data
   hasIntercept <- attr(terms(object), "intercept") > 0L
   if (hasIntercept) {
@@ -60,8 +79,9 @@ predict_terms <- function(object, X_newdata, se.fit, scale, df, interval, level,
     if (se.fit || interval == "confidence") {
       X_newdata_cent_sub <- X_newdata_cent[, X_index, drop = FALSE]
       vc_sub <- vc[X_index, X_index, drop = FALSE]
-      # the fits are just linear combinations, so standard variance rules apply
-      se[, i] = sqrt(diag(X_newdata_cent_sub %*% tcrossprod(vc_sub, X_newdata_cent_sub)))
+      # the fits are just linear combinations, so standard variance rules apply;
+      # only the diagonal is needed, so avoid the full n_pred x n_pred product
+      se[, i] = sqrt(get_diag_XVXt(X_newdata_cent_sub, vc_sub))
     }
   }
 

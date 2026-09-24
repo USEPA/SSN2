@@ -39,7 +39,7 @@
 #'     \item h2oAreaKm2: Watershed area (km2) for the lowermost location on the edge feature
 #'     \item areaPI: Segment proportional influence value, calculated using watershed area (h2oAreaKm2)
 #'     \item afvArea: Additive function value, calculated using areaPI
-#'     \item upDist: Distance from the stream outlet (most downstream location in the the stream network) to the uppermost location on the line segment
+#'     \item upDist: Distance from the stream outlet (most downstream location in the stream network) to the uppermost location on the line segment
 #'     \item Length: Length of line segment (m)
 #'     \item netID: Network identifier
 #' }
@@ -109,7 +109,7 @@
 #'
 #' @name MiddleFork04.ssn
 #'
-#' @seealso [mf04p] for the Middle For 04 data as an \code{SSN} object.
+#' @seealso [mf04p] for the Middle Fork 04 data as an \code{SSN} object.
 NULL
 
 

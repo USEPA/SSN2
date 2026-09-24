@@ -36,6 +36,9 @@
 #' )
 #' cooks.distance(ssn_mod)
 cooks.distance.ssn_lm <- function(model, ...) {
+  # Cook's distance is expensive (it needs leverage and residual quantities from
+  # the fitted covariance), so it is computed once during model fitting and cached
+  # on the model object rather than recomputed here
   model$cooks_distance
 }
 

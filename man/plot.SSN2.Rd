@@ -29,7 +29,7 @@ quantile-quantile, scale-location, Cook's distance, residuals vs leverage,
 and Cook's distance vs leverage.
 }
 \details{
-For all fitted model objects,, the values of \code{which} make the
+For all fitted model objects, the values of \code{which} make the
 corresponding plot:
 \itemize{
 \item 1: Standardized residuals vs fitted values (of the response)

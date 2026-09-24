@@ -81,7 +81,7 @@ test_that("covariance matrix functions run", {
 
   euclid_covs <- c(
     "exponential", "spherical", "gaussian", "cubic",
-    "pentaspherical", "cosine", "wave", "jbessel", "gravity",
+    "pentaspherical", "circular", "wave", "jbessel", "gravity",
     "rquad", "magnetic", "none"
   )
   lapply(euclid_covs, function(x) {
@@ -226,7 +226,7 @@ test_that("covariance vector functions run", {
 
   euclid_covs <- c(
     "exponential", "spherical", "gaussian", "cubic",
-    "pentaspherical", "cosine", "wave", "jbessel", "gravity",
+    "pentaspherical", "circular", "wave", "jbessel", "gravity",
     "rquad", "magnetic", "none"
   )
   lapply(euclid_covs, function(x) {

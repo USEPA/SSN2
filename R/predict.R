@@ -2,7 +2,8 @@
 #'
 #' @description Predicted values and intervals based on a fitted model object.
 #'
-#' @param object A fitted model object from [ssn_lm()] or [ssn_glm()].
+#' @param object A fitted model object from [ssn_lm()], [ssn_glm()],
+#'   [ssn_lmRF()], or [ssn_decorrelate()].
 #' @param newdata A character vector that indicates the name of the prediction data set
 #'   for which predictions are desired (accessible via \code{object$ssn.object$preds}).
 #'   Note that the prediction data must be in the original SSN object used to fit the model.
@@ -21,23 +22,32 @@
 #'   (ignored if \code{scale} is not specified). The default is \code{Inf}.
 #' @param interval Type of interval calculation. The default is \code{"none"}.
 #'   Other options are \code{"confidence"} (for confidence intervals) and
-#'   \code{"prediction"} (for prediction intervals).
+#'   \code{"prediction"} (for prediction intervals). When \code{interval}
+#'   is \code{"none"} or \code{"prediction"}, predictions are returned (and when
+#'   requested, their corresponding uncertainties). When \code{interval}
+#'   is \code{"confidence"}, mean estimates are returned (and when
+#'   requested, their corresponding uncertainties). This \code{"none"} behavior
+#'   differs from that of \code{lm()}, as \code{lm()} returns confidence
+#'   uncertainties (in \code{.$se.fit}).
 #' @param level Tolerance/confidence level. The default is \code{0.95}.
 #' @param terms If \code{type} is \code{"terms"}, the type of terms to be returned,
 #'   specified via either numeric position or name. The default is all terms are included.
 #' @param block A logical indicating whether a block prediction over the entire
-#'  region in \code{newdata} should be returned. The default is \code{FALSE}, which returns point
-#'  predictions for each location in \code{newdata}. Currently only available for
-#'  model fit using \code{ssn_lm()} or models fit using \code{ssn_glm()} where
-#'  \code{family} is \code{"gaussian"}.
+#'  region in \code{newdata} should be returned. When \code{block} is \code{TRUE},
+#'  \code{newdata} should be a dense grid of prediction locations that span
+#'  the entire region. The default is \code{FALSE}, which returns point
+#'  predictions for each location in \code{newdata}.
 #' @param local A optional logical or list controlling the big data approximation. If omitted, \code{local}
 #'   is set to \code{TRUE} or \code{FALSE} based on the observed data sample size (i.e., sample size of the fitted
 #'   model object) -- if the sample size exceeds 10,000, \code{local} is
 #'   set to \code{TRUE}, otherwise it is set to \code{FALSE}. This default behavior
-#'   occurs because main computational
+#'   occurs because for point prediction the main computational
 #'   burden of the big data approximation depends almost exclusively on the
 #'   observed data sample size, not the number of predictions desired
-#'   (which we feel is not intuitive at first glance).
+#'   (which we feel is not intuitive at first glance). For block prediction
+#'   (\code{block = TRUE}) the density of the prediction grid also matters, so
+#'   \code{local} is additionally set to approximate the theoretical solution
+#'   when \code{nrow(newdata)} exceeds 10,000 (see below).
 #'   If \code{local} is \code{FALSE}, no big data approximation
 #'   is implemented. If a list is provided, the following arguments detail the big
 #'   data approximation:
@@ -45,12 +55,11 @@
 #'     \item \code{method}: The big data approximation method. If \code{method = "all"},
 #'       all observations are used and \code{size} is ignored.
 #'       If \code{method = "covariance"}, the \code{size} data observations
-#'       having the average highest covariance with the prediction locations are used.
-#'       The default
-#'       is \code{"covariance"}. Only used with models fit using [ssn_lm()].
+#'       having the largest absolute covariance with each prediction location
+#'       are used.
+#'       The default is \code{"covariance"}.
 #'     \item \code{size}: The number of data observations to use when \code{method}
-#'       is \code{"distance"} or \code{"covariance"}. The default is 4000. Only used
-#'       with models fit using [ssn_lm()].
+#'       is \code{"covariance"}. The default is 200.
 #'     \item \code{parallel}: If \code{TRUE}, parallel processing via the
 #'       parallel package is automatically used. This can significantly speed
 #'       up computations even when \code{method = "all"} (i.e., no big data
@@ -58,26 +67,79 @@
 #'       are spread out over multiple cores. The default is \code{FALSE}.
 #'     \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
 #'       parallelize over. The default is the number of available cores on your machine.
+#'     \item \code{chunk_size}: Maximum number of prediction rows per
+#'       covariance-construction chunk (default 1000). Relevant primarily
+#'       with prediction for large \code{newdata}.
 #'   }
 #'   When \code{local} is a list, at least one list element must be provided to
 #'   initialize default arguments for the other list elements.
 #'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 #'   that \code{local} is transformed into
-#'   \code{list(size = 4000, method = "covariance", parallel = FALSE)}.
-#' @param terms If \code{type} is \code{"terms"}, the type of terms to be returned,
-#'   specified via either numeric position or name. The default is all terms are included.
+#'   \code{list(size = 200, method = "covariance", chunk_size = 1000, parallel = FALSE)}.
+#'
+#'   If \code{block} is \code{TRUE}, \code{local} controls two separate big
+#'   data approximations, one for the observed data and one for the prediction
+#'   grid (\code{newdata}):
+#'   \itemize{
+#'     \item \code{method} and \code{size} act on the observed data exactly as
+#'       when \code{block} is \code{FALSE} (\code{method} takes \code{"all"} or
+#'       \code{"covariance"}; the default \code{method}
+#'       is \code{"covariance"} with \code{size} \code{4000}. This default
+#'       \code{size} is much larger than when \code{block} is \code{FALSE}
+#'       because block prediction averages covariances and explanatory
+#'       variables before prediction.
+#'     \item \code{method_new} controls the big data prediction grid density.
+#'       \code{method_new = "basis"} (the default)
+#'       approximates the block variance using a basis of
+#'       \code{size_new} well-spread grid nodes. \code{method_new = "subset"}
+#'       approximates the block mean and variance by subsampling \code{newdata}
+#'       so that its size is only \code{size_new}. The default \code{size_new}
+#'       is \code{4000}.
+#'     \item \code{ordering} chooses the \code{size_new} nodes from
+#'       \code{newdata} and takes the same values as the \code{ordering}
+#'       argument of \code{\link{ssn_simulate}()}/\code{\link{conditional}()} under
+#'       \code{approximation = "vecchia"} (\code{"pid"}, \code{"maxmin"}, \code{"grts"},
+#'       \code{"random"}, \code{"none"}, \code{"middleout"},
+#'       \code{"outsidein"}, \code{"coordinate"}). The default is
+#'       \code{"pid"}.
+#'     \item \code{parallel} and \code{ncores} parallelize the
+#'       covariance-chunk calculations. Their defaults are the same as for
+#'       point prediction.
+#'     \item \code{chunk_size}: Maximum number of prediction rows per
+#'       covariance-construction chunk (default 1000). Relevant primarily
+#'       with prediction for large \code{newdata}.
+#'   }
+#'   When \code{local} is a list, at least one list element must be provided to
+#'   initialize default arguments for the other list elements.
+#'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
+#'   that \code{local} is transformed into
+#'   \code{list(method = "covariance", size = 4000, method_new = "basis",
+#'   size_new = 4000, ordering = "pid", chunk_size = 1000)}.
 #' @param na.action Missing (\code{NA}) values in \code{newdata} will return an error and should
 #'   be removed before proceeding.
-#' @param ... Other arguments. Not used (needed for generic consistency).
+#' @param ... Other arguments. Only used for models fit using \code{ssn_lmRF()}
+#'   where \code{...} indicates other
+#'   arguments to \code{ranger::predict.ranger()}.
 #'
-#' @details The (empirical) best linear unbiased predictions (i.e., Kriging
+#' @details For \code{ssn_lm} and \code{ssn_glm} objects, the (empirical)
+#'   best linear unbiased predictions (i.e., Kriging
 #'   predictions) at each site are returned when \code{interval} is \code{"none"}
 #'   or \code{"prediction"} alongside standard errors. Prediction intervals
 #'   are also returned if \code{interval} is \code{"prediction"}. When
 #'   \code{interval} is \code{"confidence"}, the estimated mean is returned
 #'   alongside standard errors and confidence intervals for the mean.
+#' 
+#'   For `ssn_lmRF` objects, random forest spatial residual model
+#'   predictions combine the random forest prediction with the (empirical)
+#'   best linear unbiased prediction for the residual. This approach is called
+#'   random forest regression Kriging.
+#' 
+#'   For \code{decorrelate} objects, the spatial decorrelation transformation
+#'   predictions recorrelated to the original scale. For \code{decorrelate_list}
+#'   objects, predictions are returned for each list element.
 #'
-#' @return If \code{se.fit} is \code{FALSE}, \code{predict.ssn()} returns
+#' @return For \code{ssn_lm} and \code{ssn_glm} objects, if \code{se.fit}
+#'   is \code{FALSE}, \code{predict()} returns
 #'   a vector of predictions or a matrix of predictions with column names
 #'   \code{fit}, \code{lwr}, and \code{upr} if \code{interval} is \code{"confidence"}
 #'   or \code{"prediction"}. If \code{se.fit} is \code{TRUE}, a list with the following components is returned:
@@ -85,6 +147,9 @@
 #'     \item \code{fit}: vector or matrix as above
 #'     \item \code{se.fit:} standard error of each fit
 #'   }
+#'
+#'   For \code{ssn_lmRF} and \code{ssn_decorrelate} objects, a vector of
+#'   predictions.
 #'
 #' @name predict.SSN2
 #' @method predict ssn_lm
@@ -106,27 +171,34 @@
 #' )
 #' predict(ssn_mod, "pred1km")
 predict.ssn_lm <- function(object, newdata, se.fit = FALSE, scale = NULL, df = Inf, interval = c("none", "confidence", "prediction"),
-                           level = 0.95, type = c("response", "terms"), block = FALSE, local, terms = NULL, na.action = na.fail, ...) {
-
+                           level = 0.95, type = c("response", "terms", "weight"), block = FALSE, local, terms = NULL, na.action = na.fail, ...) {
 
   # match interval argument so the three display
   interval <- match.arg(interval)
   type <- match.arg(type)
 
-  # call predict_block if necessary
-  # if (block) { # gives ::: warning so no rd exported
-  #   call_val <- match.call()
-  #   call_val[[1]] <- as.symbol("predict_block")
-  #   call_list <- as.list(call_val)
-  #   call_list <- call_list[-which(names(call_list) %in% c("block"))]
-  #   # call_list[[1]] <- quote(SSN2:::predict_block)
-  #   call_val <- as.call(call_list)
-  #   object <- eval(call_val, envir = parent.frame())
-  #   return(object)
-  # }
+  if (!is.null(scale) && !is.numeric(scale)) {
+    stop("scale must be numeric.", call. = FALSE)
+  }
+
+  if (type == "weight") {
+    if (block) {
+      stop("type = \"weight\" is not supported for block prediction (block = TRUE).", call. = FALSE)
+    }
+    se.fit <- FALSE
+    interval <- "none"
+  }
 
   if (missing(newdata)) newdata <- "all"
   if (missing(local)) local <- NULL
+  if (block) {
+    return(predict_block(
+      object, newdata, se.fit = se.fit, scale = scale, df = df,
+      interval = interval, level = level, type = type, local = local,
+      terms = terms, na.action = na.action, ...
+    ))
+  }
+
   # deal with local
   if (is.null(local)) {
     if (newdata != "all") {
@@ -143,18 +215,6 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, scale = NULL, df = I
   local_list <- get_local_list_prediction(local)
   local <- local_list
 
-  # if (is.list(local) || local && (object$n > 15000 || NROW(object$ssn.object$preds[[newdata]]) * object$n > 15000^2)) {
-  #   object <- predict_bigdata_ssn_lm(object, newdata, se.fit, interval, level, block, local, ...)
-  #   return(object)
-  # }
-
-  #  safter but potentially passes block
-  if (block) {
-    object <- predict_block(object, newdata, se.fit, interval, level, local, ...)
-    return(object)
-  }
-
-  # deal with local (omitted for now)
   # if (missing(local)) local <- NULL
   # if (is.null(local)) local <- FALSE
 
@@ -162,210 +222,48 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, scale = NULL, df = I
   if (missing(newdata)) newdata <- NULL
   newdata_name <- newdata
   # iterate through prediction names
-  if (is.null(newdata_name) || newdata_name == "all") {
-    newdata_name <- names(object$ssn.object$preds)
-  }
+  newdata_name <- resolve_newdata_name(object, newdata_name)
   if (length(newdata_name) > 1) {
-    pred_list <- lapply(newdata_name, function(x) predict(object, x, se.fit = se.fit, interval = interval, level = level, local = local, ...))
+    pred_list <- lapply(newdata_name, function(x) {
+      predict(object, x,
+        se.fit = se.fit, scale = scale, df = df, interval = interval, level = level,
+        type = type, terms = terms, na.action = na.action, local = local, ...
+      )
+    })
     names(pred_list) <- newdata_name
     return(pred_list)
   }
 
-  if (newdata_name == ".missing") {
-    add_newdata_rows <- TRUE
-  } else {
-    add_newdata_rows <- FALSE
-  }
-
-  # rename relevant quantities
-  obdata <- object$ssn.object$obs
-
-  # newdata and newdata name
-  newdata <- object$ssn.object$preds[[newdata_name]]
+  pn <- get_prediction_newdata(object, newdata_name)
+  obdata <- pn$obdata
+  newdata <- pn$newdata
+  add_newdata_rows <- pn$add_newdata_rows
 
   # stop if zero rows
   if (NROW(newdata) == 0) {
     return(NULL)
   }
 
-  # get params object
-  params_object <- object$coefficients$params_object
-
-  # make covariance object
-  cov_vector <- covmatrix(object, newdata_name)
-  if (local_list$method == "covariance") {
-    cov_vector_means <- colMeans(cov_vector)
-    cov_index <- order(as.numeric(cov_vector_means))[seq(from = object$n, to = max(1, object$n - local$size + 1))]
-    cov_vector <- cov_vector[, cov_index, drop = FALSE]
-  } else {
-    cov_index <- NULL
-  }
-  cov_vector_list <- split(cov_vector, seq_len(NROW(cov_vector)))
-
-  formula_newdata <- delete.response(terms(object))
-  # fix model frame bug with degree 2 basic polynomial and one prediction row
-  # e.g. poly(x, y, degree = 2) and newdata has one row
-  if (any(grepl("nmatrix.", attributes(formula_newdata)$dataClasses, fixed = TRUE)) && NROW(newdata) == 1) {
-    newdata <- newdata[c(1, 1), , drop = FALSE]
-    newdata_model_frame <- model.frame(formula_newdata, newdata, drop.unused.levels = FALSE, na.action = na.pass, xlev = object$xlevels)
-    newdata_model <- model.matrix(formula_newdata, newdata_model_frame, contrasts = object$contrasts)
-    newdata_model <- newdata_model[1, , drop = FALSE]
-    # find offset
-    offset <- model.offset(newdata_model_frame)
-    if (!is.null(offset)) {
-      offset <- offset[1]
-    }
-    newdata <- newdata[1, , drop = FALSE]
-  } else {
-    newdata_model_frame <- model.frame(formula_newdata, newdata, drop.unused.levels = FALSE, na.action = na.pass, xlev = object$xlevels)
-    # assumes that predicted observations are not outside the factor levels
-    newdata_model <- model.matrix(formula_newdata, newdata_model_frame, contrasts = object$contrasts)
-    # find offset
-    offset <- model.offset(newdata_model_frame)
-  }
-
-  attr_assign <- attr(newdata_model, "assign")
-  attr_contrasts <- attr(newdata_model, "contrasts")
-  keep_cols <- which(colnames(newdata_model) %in% colnames(model.matrix(object)))
-  newdata_model <- newdata_model[, keep_cols, drop = FALSE]
-  attr(newdata_model, "assign") <- attr_assign[keep_cols]
-  attr(newdata_model, "contrasts") <- attr_contrasts
+  nm <- get_newdata_model_matrix(object, newdata)
+  newdata <- nm$newdata
+  newdata_model <- nm$newdata_model
+  newdata_offset <- nm$offset
 
   # call terms if needed
   if (type == "terms") {
     return(predict_terms(object, newdata_model, se.fit, scale, df, interval, level, add_newdata_rows, terms, ...))
   }
 
-  # storing newdata as a list
-  newdata_rows_list <- split(newdata, seq_len(NROW(newdata)))
-
-  # storing newdata as a list
-  newdata_model_list <- split(newdata_model, seq_len(NROW(newdata)))
-
-  # storing newdata as a list
-  newdata_list <- mapply(
-    x = newdata_rows_list, y = newdata_model_list, c = cov_vector_list,
-    FUN = function(x, y, c) list(row = x, x0 = y, c0 = c), SIMPLIFY = FALSE
-  )
-
-  # storing cov matrix
-  cov_matrix_val <- covmatrix(object)
-
-
-
-  # total var (could do sums params object)
-  total_var <- cov_matrix_val[1, 1]
-
-  if (interval %in% c("none", "prediction")) {
-    # local_list <- get_local_list_prediction(local)
-
-    if (local_list$method == "all") {
-      cov_lowchol <- t(chol(cov_matrix_val))
-    } else {
-      cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
-      cov_lowchol <- t(chol(cov_matrix_val))
-    }
-
-    Xmat <- model.matrix(object)
-    y <- model.response(model.frame(object))
-    offset <- model.offset(model.frame(object))
-
-    if (!is.null(cov_index)) {
-      Xmat <- Xmat[cov_index, , drop = FALSE]
-      y <- y[cov_index]
-      if (!is.null(offset)) {
-        offset <- offset[cov_index]
-      }
-    }
-    # until big data back
-    if (local_list$parallel) {
-      cl <- parallel::makeCluster(local_list$ncores)
-      pred_val <- parallel::parLapply(cl, newdata_list, get_pred,
-                                      se.fit = se.fit, interval = interval, formula = object$formula,
-                                      obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-                                      Xmat = Xmat, y = y,
-                                      offset = offset,
-                                      betahat = coefficients(object), cov_betahat = vcov(object),
-                                      contrasts = object$contrasts, local = local_list,
-                                      xlevels = object$xlevels, cov_index)
-      cl <- parallel::stopCluster(cl)
-    } else {
-      pred_val <- lapply(newdata_list, get_pred,
-                         se.fit = se.fit, interval = interval, formula = object$formula,
-                         obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-                         Xmat = Xmat, y = y,
-                         offset = offset,
-                         betahat = coefficients(object), cov_betahat = vcov(object),
-                         contrasts = object$contrasts, local = local_list,
-                         xlevels = object$xlevels, cov_index)
-    }
-
-    # pred_val <- lapply(newdata_list, get_pred,
-    #   se.fit = se.fit, interval = interval, formula = object$formula,
-    #   obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-    #   Xmat = model.matrix(object), y = model.response(model.frame(object)),
-    #   offset = model.offset(model.frame(object)),
-    #   betahat = coefficients(object), cov_betahat = vcov(object),
-    #   contrasts = object$contrasts, local = local_list,
-    #   xlevels = object$xlevels
-    # )
-
-
-    if (interval == "none") {
-      fit <- vapply(pred_val, function(x) x$fit, numeric(1))
-      if (se.fit) {
-        vars <- vapply(pred_val, function(x) x$var, numeric(1))
-        se <- sqrt(vars)
-        if (!is.null(scale)) {
-          se <- se * scale
-        }
-        if (add_newdata_rows) {
-          names(fit) <- object$missing_index
-          names(se) <- object$missing_index
-        }
-        return(list(fit = fit, se.fit = se))
-      } else {
-        if (add_newdata_rows) {
-          names(fit) <- object$missing_index
-        }
-        return(fit)
-      }
-    }
-
-    if (interval == "prediction") {
-      fit <- vapply(pred_val, function(x) x$fit, numeric(1))
-      vars <- vapply(pred_val, function(x) x$var, numeric(1))
-      se <- sqrt(vars)
-      if (!is.null(scale)) {
-        se <- se * scale
-        df <- df
-      } else {
-        df <- Inf
-      }
-      tstar <- qt(1 - (1 - level) / 2, df = df)
-      # tstar <- qt(1 - (1 - level) / 2, df = object$n - object$p)
-      # tstar <- qnorm(1 - (1 - level) / 2)
-      lwr <- fit - tstar * se
-      upr <- fit + tstar * se
-      fit <- cbind(fit, lwr, upr)
-      row.names(fit) <- seq_len(NROW(fit))
-      if (se.fit) {
-        if (add_newdata_rows) {
-          row.names(fit) <- object$missing_index
-          names(se) <- object$missing_index
-        }
-        return(list(fit = fit, se.fit = se))
-      } else {
-        if (add_newdata_rows) {
-          row.names(fit) <- object$missing_index
-        }
-        return(fit)
-      }
-    }
-  } else if (interval == "confidence") {
+  # confidence intervals for the mean only need the fixed-effect design and
+  # coefficient covariance, so return before reading any prediction-to-observed
+  # distance/covariance data
+  if (interval == "confidence") {
     # finding fitted values of the mean parameters
     fit <- as.numeric(newdata_model %*% coef(object))
-    vars <- as.numeric(vapply(newdata_model_list, function(x) crossprod(x, vcov(object) %*% x), numeric(1)))
+    if (!is.null(newdata_offset)) {
+      fit <- fit + newdata_offset
+    }
+    vars <- get_diag_XVXt(newdata_model, vcov(object))
     se <- sqrt(vars)
     if (!is.null(scale)) {
       se <- se * scale
@@ -378,252 +276,274 @@ predict.ssn_lm <- function(object, newdata, se.fit = FALSE, scale = NULL, df = I
     # tstar <- qnorm(1 - (1 - level) / 2)
     lwr <- fit - tstar * se
     upr <- fit + tstar * se
-    fit <- cbind(fit, lwr, upr)
-    row.names(fit) <- seq_len(NROW(fit))
+    return(finalize_interval_bounds(fit, lwr, upr, se, se.fit, add_newdata_rows, object$missing_index))
+  }
+
+  # make covariance object, in bounded row-chunks over newdata (mirroring
+  # block prediction's chunking) so the full n_obs x n_pred covariance is
+  # never materialized at once; ctx also bundles the marginal-variance and
+  # random-effect setup below so it is built once per call, not once per row
+  ctx <- get_point_pred_context(object, newdata_name, newdata, newdata_model, local_list)
+  newdata_list <- ctx$newdata_list
+  cov_matrix_val <- ctx$cov_matrix_val
+  spatial_nugget_var <- ctx$spatial_nugget_var
+  randcov_params <- ctx$randcov_params
+  cov_lowchol <- ctx$cov_lowchol
+  randcov_context <- ctx$randcov_context
+  Xmat <- ctx$Xmat
+  y <- ctx$y
+  offset <- ctx$offset
+
+  # only "none" and "prediction" reach this point (match.arg() at the top
+  # restricts interval to one of "none"/"confidence"/"prediction", and
+  # "confidence" already returned above)
+
+  pred_val <- run_pred_dispatch(get_pred, newdata_list, local_list = local_list,
+    se.fit = se.fit, interval = interval, formula = object$formula,
+    obdata = obdata, cov_matrix_val = cov_matrix_val,
+    spatial_nugget_var = spatial_nugget_var, randcov_params = randcov_params, cov_lowchol = cov_lowchol,
+    randcov_context = randcov_context,
+    Xmat = Xmat, y = y, offset = offset,
+    betahat = coefficients(object), cov_betahat = vcov(object),
+    contrasts = object$contrasts, local = local_list,
+    xlevels = object$xlevels, type = type
+  )
+
+  if (type == "weight") {
+    fit <- do.call("rbind", lapply(pred_val, function(x) x$fit))
+    fit <- as.matrix(fit)
+    colnames(fit) <- object$observed_index
+    if (add_newdata_rows) {
+      rownames(fit) <- object$missing_index
+    }
+    return(fit)
+  }
+
+  if (interval == "none") {
+    fit <- vapply(pred_val, function(x) x$fit, numeric(1))
+    if (!is.null(newdata_offset)) {
+      fit <- fit + newdata_offset
+    }
+    se <- NULL
     if (se.fit) {
-      if (add_newdata_rows) {
-        row.names(fit) <- object$missing_index
-        names(se) <- object$missing_index
+      vars <- vapply(pred_val, function(x) x$var, numeric(1))
+      se <- sqrt(vars)
+      if (!is.null(scale)) {
+        se <- se * scale
       }
-      return(list(fit = fit, se.fit = se))
-    } else {
-      if (add_newdata_rows) {
-        row.names(fit) <- object$missing_index
-      }
-      return(fit)
     }
-  } else {
-    stop("Interval must be none, confidence, or prediction")
+    return(finalize_interval_none(fit, se, add_newdata_rows, object$missing_index))
+  }
+
+  if (interval == "prediction") {
+    fit <- vapply(pred_val, function(x) x$fit, numeric(1))
+    if (!is.null(newdata_offset)) {
+      fit <- fit + newdata_offset
+    }
+    vars <- vapply(pred_val, function(x) x$var, numeric(1))
+    se <- sqrt(vars)
+    if (!is.null(scale)) {
+      se <- se * scale
+      df <- df
+    } else {
+      df <- Inf
+    }
+    tstar <- qt(1 - (1 - level) / 2, df = df)
+    # tstar <- qt(1 - (1 - level) / 2, df = object$n - object$p)
+    # tstar <- qnorm(1 - (1 - level) / 2)
+    lwr <- fit - tstar * se
+    upr <- fit + tstar * se
+    return(finalize_interval_bounds(fit, lwr, upr, se, se.fit, add_newdata_rows, object$missing_index))
   }
 }
 
-  ' Title
-#'
-  #' @param newdata_list A row of prediction data
-  #' @param se.fit Whether standard errors should be returned
-  #' @param interval The interval type
-  #' @param formula Model formula
-  #' @param obdata Observed data
-  #' @param cov_matrix_val Covariance matrix
-  #' @param total_var Total variance in the process
-  #' @param cov_lowchol Lower triangular of Cholesky decomposition matrix
-  #' @param Xmat Model matrix
-  #' @param y Response variable
-  #' @param offset A possible offset
-  #' @param betahat Fixed effect estimates
-  #' @param cov_betahat Covariance of fixed effects
-  #' @param contrasts Possible contrasts
-  #' @param local Local neighborhood options (not yet implemented)
-  #' @param xlevels Levels of explanatory variables
-  #'
-  #' @noRd
-  get_pred <- function(newdata_list, se.fit, interval, formula, obdata, cov_matrix_val, total_var, cov_lowchol,
-                       Xmat, y, offset, betahat, cov_betahat, contrasts, local, xlevels, cov_index) {
+get_pred <- function(newdata_list, se.fit, interval, formula, obdata, cov_matrix_val, spatial_nugget_var, randcov_params, cov_lowchol,
+                     Xmat, y, offset, betahat, cov_betahat, contrasts, local, xlevels, type = "response", randcov_context = NULL) {
 
-
-
-    cov_vector_val <- newdata_list$c0
-
-    # moved indexing of relevant quantities outside the function (cov_index no longer needed)
-    # if (!is.null(cov_index)) {
-    #   obdata <- obdata[cov_index, , drop = FALSE]
-    #   model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
-    #   Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
-    #   y <- model.response(model_frame)
-    #   offset <- model.offset(model_frame)
-    #   # Xmat <- Xmat[cov_index, , drop = FALSE]
-    #   # y <- y[cov_index]
-    #   # if (!is.null(offset)) {
-    #   #   offset <- offset[cov_index]
-    #   # }
-    # }
-
-    # if (local$method == "covariance") {
-    #   n <- length(cov_vector_val)
-    #   cov_index <- order(as.numeric(cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
-    #   obdata <- obdata[cov_index, , drop = FALSE]
-    #   cov_vector_val <- cov_vector_val[cov_index]
-    #   cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
-    #   cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
-    #   model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
-    #   Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
-    #   y <- model.response(model_frame)
-    #   offset <- model.offset(model_frame)
-    # }
-
-    # handle offset
-    if (!is.null(offset)) {
-      y <- y - offset
-    }
-
-
-
-    c0 <- as.numeric(cov_vector_val)
-    SqrtSigInv_X <- forwardsolve(cov_lowchol, Xmat)
-    SqrtSigInv_y <- forwardsolve(cov_lowchol, y)
-    residuals_pearson <- SqrtSigInv_y - SqrtSigInv_X %*% betahat
-    SqrtSigInv_c0 <- forwardsolve(cov_lowchol, c0)
-    x0 <- newdata_list$x0
-
-    fit <- as.numeric(x0 %*% betahat + Matrix::crossprod(SqrtSigInv_c0, residuals_pearson))
-    H <- x0 - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_X)
-
-    if (se.fit || interval == "prediction") {
-      total_var <- total_var
-      var <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
-      pred_list <- list(fit = fit, var = var)
-    } else {
-      pred_list <- list(fit = fit)
-    }
-    pred_list
-}
-
-predict_block <- function(object, newdata, se.fit, interval, level, local, ...) {
-  # deal with local (omitted for now)
-  # if (missing(local)) local <- NULL
-  # if (is.null(local)) local <- FALSE
-
-  # new data name
-  if (missing(newdata)) newdata <- NULL
-  newdata_name <- newdata
-  # iterate through prediction names
-  if (is.null(newdata_name) || newdata_name == "all") {
-    newdata_name <- names(object$ssn.object$preds)
-  }
-  if (length(newdata_name) > 1) {
-    pred_list <- lapply(newdata_name, function(x) predict_block(object, x, se.fit = se.fit, interval = interval, level = level, local = local, ...))
-    names(pred_list) <- newdata_name
-    return(pred_list)
-  }
-
-  # rename relevant quantities
-  obdata <- object$ssn.object$obs
-
-  # newdata and newdata name
-  newdata <- object$ssn.object$preds[[newdata_name]]
-
-  # stop if zero rows
-  if (NROW(newdata) == 0) {
-    return(NULL)
-  }
-
-  # get params object
-  params_object <- object$coefficients$params_object
-
-  # make covariance object
-  cov_vector <- covmatrix(object, newdata_name)
-  # adjustment one for local
+  cov_vector_val <- newdata_list$c0
+  n <- length(cov_vector_val)
   if (local$method == "covariance") {
-    cov_vector_means <- colMeans(cov_vector)
-    cov_index <- order(as.numeric(cov_vector_means))[seq(from = object$n, to = max(1, object$n - local$size + 1))]
-    cov_vector <- cov_vector[, cov_index, drop = FALSE]
-  } else {
-    cov_index <- NULL
+    keep <- order(abs(as.numeric(cov_vector_val)))[seq.int(n, max(1L, n - local$size + 1L))]
+    cov_vector_val <- cov_vector_val[keep]
+    cov_lowchol <- t(chol(cov_matrix_val[keep, keep, drop = FALSE]))
+    Xmat <- Xmat[keep, , drop = FALSE]
+    y <- y[keep]
+    if (!is.null(offset)) offset <- offset[keep]
   }
-  formula_newdata <- delete.response(terms(object))
-  newdata_model_frame <- model.frame(formula_newdata, newdata, drop.unused.levels = FALSE, na.action = na.pass, xlev = object$xlevels)
-  # assumes that predicted observations are not outside the factor levels
-  newdata_model <- model.matrix(formula_newdata, newdata_model_frame, contrasts = object$contrasts)
-  # find offset
-  offset <- model.offset(newdata_model_frame)
 
-  # newdata model stuff
-  attr_assign <- attr(newdata_model, "assign")
-  attr_contrasts <- attr(newdata_model, "contrasts")
-  keep_cols <- which(colnames(newdata_model) %in% colnames(model.matrix(object)))
-  newdata_model <- newdata_model[, keep_cols, drop = FALSE]
-  attr(newdata_model, "assign") <- attr_assign[keep_cols]
-  attr(newdata_model, "contrasts") <- attr_contrasts
+  c0 <- as.numeric(cov_vector_val)
+  SqrtSigInv_X <- forwardsolve(cov_lowchol, Xmat)
+  SqrtSigInv_c0 <- forwardsolve(cov_lowchol, c0)
+  x0 <- newdata_list$x0
 
-  # block Kriging stuff
+  if (type == "weight") {
+    Xt_SigInv <- t(backsolve(t(cov_lowchol), SqrtSigInv_X))
+    betahat_wt <- cov_betahat %*% Xt_SigInv
+    residuals_weight <- -1 * Xmat %*% betahat_wt
+    diag(residuals_weight) <- diag(residuals_weight) + 1
+    fit <- x0 %*% betahat_wt + Matrix::crossprod(SqrtSigInv_c0, forwardsolve(cov_lowchol, residuals_weight))
+    if (local$method == "covariance") {
+      weights <- matrix(0, 1L, n)
+      weights[, keep] <- fit
+      fit <- weights
+    }
+    return(list(fit = fit))
+  }
 
-  Xmat <- model.matrix(object)
-  x0 <- colMeans(newdata_model)
-  c0 <- colMeans(cov_vector)
-  y <- model.response(model.frame(object))
-  fitted_val <- fitted(object)
+  # handle offset
   if (!is.null(offset)) {
     y <- y - offset
   }
 
-  # storing cov matrix
-  cov_matrix_val <- covmatrix(object)
+  SqrtSigInv_y <- forwardsolve(cov_lowchol, y)
+  residuals_pearson <- SqrtSigInv_y - SqrtSigInv_X %*% betahat
 
-  # adjustment two for local
-  if (local$method == "covariance") {
-   Xmat <- Xmat[cov_index, , drop = FALSE]
-   y <- y[cov_index]
-   cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
-   fitted_val <- fitted_val[cov_index]
-  }
+  fit <- as.numeric(x0 %*% betahat + Matrix::crossprod(SqrtSigInv_c0, residuals_pearson))
+  H <- x0 - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_X)
 
-
-
-  # cholesky
-  cov_lowchol <- t(chol(cov_matrix_val))
-
-  # total var (could do sums params object)
-  cov_matrix_preds <- covmatrix(object, newdata = newdata_name, cov_type = "pred.pred")
-  total_var <- mean(cov_matrix_preds)
-
-  # betahat
-  betahat <- coefficients(object)
-  cov_betahat <- vcov(object)
-
-  # block Kriging prediction
-  if (interval %in% c("none", "prediction")) {
-    # should use cholesky matrix not eigendecomposition matrix
-    # ie can't call residuals(object, type = "pearson") directly
-    residuals_pearson <- forwardsolve(cov_lowchol, y - fitted_val)
-    SqrtSigInv_c0 <- forwardsolve(cov_lowchol, c0)
-    fit <- as.numeric(x0 %*% betahat + Matrix::crossprod(SqrtSigInv_c0, residuals_pearson))
-    names(fit) <- "1"
-
-    if (interval == "none") {
-      if (se.fit) {
-        SqrtSigInv_X <- forwardsolve(cov_lowchol, Xmat)
-        H <- x0 - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_X)
-        vars <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
-        se <- sqrt(vars)
-        names(se) <- "1"
-        return(list(fit = fit, se.fit = se))
-      } else {
-        return(fit)
-      }
-    } else if (interval == "prediction") {
-      SqrtSigInv_X <- forwardsolve(cov_lowchol, Xmat)
-      H <- x0 - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_X)
-      vars <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
-      se <- sqrt(vars)
-      tstar <- qnorm(1 - (1 - level) / 2)
-      lwr <- fit - tstar * se
-      upr <- fit + tstar * se
-      fit <- cbind(fit, lwr, upr)
-      row.names(fit) <- "1"
-      if (se.fit) {
-        names(se) <- "1"
-        return(list(fit = fit, se.fit = se))
-      } else {
-        return(fit)
-      }
-    }
-  } else if (interval == "confidence") {
-    fit <- as.numeric(x0 %*% betahat)
-    vars <- as.numeric(crossprod(x0, cov_betahat %*% x0))
-    se <- sqrt(vars)
-    # tstar <- qt(1 - (1 - level) / 2, df = object$n - object$p)
-    tstar <- qnorm(1 - (1 - level) / 2)
-    lwr <- fit - tstar * se
-    upr <- fit + tstar * se
-    fit <- cbind(fit, lwr, upr)
-    row.names(fit) <- "1"
-    if (se.fit) {
-      names(se) <- "1"
-      return(list(fit = fit, se.fit = se))
-    } else {
-      return(fit)
-    }
+  if (se.fit || interval == "prediction") {
+    total_var <- spatial_nugget_var + randcov_newvar(randcov_params, newdata_list$row, context = randcov_context)
+    var <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
+    pred_list <- list(fit = fit, var = var)
   } else {
-    stop("Interval must be none, confidence, or prediction")
+    pred_list <- list(fit = fit)
   }
+  pred_list
+}
+
+predict_block <- function(object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
+                          interval = c("none", "confidence", "prediction"), level = 0.95,
+                          type = c("response", "terms", "weight"), local = NULL,
+                          terms = NULL, na.action = na.fail, ...) {
+  interval <- match.arg(interval)
+  type <- match.arg(type)
+  if (identical(type, "weight")) {
+    stop("type = \"weight\" is not supported for block prediction (block = TRUE).", call. = FALSE)
+  }
+  newdata_name <- resolve_newdata_name(object, newdata)
+  if (length(newdata_name) > 1L) {
+    result <- lapply(newdata_name, function(name) {
+      predict_block(
+        object, name, se.fit = se.fit, scale = scale, df = df, interval = interval,
+        level = level, type = type, local = local, terms = terms,
+        na.action = na.action, ...
+      )
+    })
+    names(result) <- newdata_name
+    return(result)
+  }
+
+  grid <- object$ssn.object$preds[[newdata_name]]
+  if (!NROW(grid)) return(NULL)
+  local_unset <- is.null(local)
+  if (local_unset) {
+    if (object$n > 10000 || NROW(grid) > 10000) {
+      local <- list(
+        method = if (object$n > 10000) "covariance" else "all",
+        size = 4000L, method_new = "basis",
+        size_new = if (NROW(grid) > 10000) 4000L else Inf,
+        ordering = "pid", chunk_size = 1000L, parallel = FALSE
+      )
+      message("Because the fitted sample size or block grid exceeds 10,000, we are using a computationally efficient block-prediction approximation. To compute the exact solution instead, rerun predict() with local = FALSE.")
+    } else {
+      local <- FALSE
+    }
+  }
+  local <- get_local_list_prediction_block(local)
+
+  nm <- get_newdata_model_matrix(object, grid)
+  grid_size <- NROW(grid)
+  nodes <- if (local$size_new >= grid_size) {
+    seq_len(grid_size)
+  } else {
+    get_block_nodes(grid, local$size_new, local$ordering)
+  }
+  x0 <- matrix(colMeans(nm$newdata_model), nrow = 1)
+  colnames(x0) <- colnames(nm$newdata_model)
+  offset_block <- if (is.null(nm$offset)) NULL else mean(nm$offset)
+
+  if (identical(type, "terms")) {
+    return(predict_terms(
+      object, x0, se.fit, scale, df, interval, level, FALSE, terms, ...
+    ))
+  }
+  if (identical(interval, "confidence")) {
+    fit <- as.numeric(x0 %*% coefficients(object))
+    if (!is.null(offset_block)) fit <- fit + offset_block
+    variance <- as.numeric(x0 %*% vcov(object) %*% t(x0))
+    se <- sqrt(pmax(variance, 0))
+    if (!is.null(scale)) {
+      se <- se * scale
+    } else {
+      df <- Inf
+    }
+    tstar <- stats::qt(1 - (1 - level) / 2, df = df)
+    output <- cbind(fit = fit, lwr = fit - tstar * se, upr = fit + tstar * se)
+    rownames(output) <- "1"
+    if (se.fit) return(list(fit = output, se.fit = stats::setNames(se, "1")))
+    return(output)
+  }
+
+  subset_newdata <- identical(local$method_new, "subset") && length(nodes) < grid_size
+  covariance_rows <- if (subset_newdata) nodes else seq_len(grid_size)
+  need_s0 <- se.fit || identical(interval, "prediction")
+  quantities <- get_block_quantities(
+    object, newdata_name, c0_rows = covariance_rows, s0_rows = covariance_rows,
+    nodes = nodes, chunk_size = local$chunk_size, compute_s0 = need_s0,
+    parallel = local$parallel, ncores = local$ncores
+  )
+  if (subset_newdata && need_s0) {
+    # built once and reused for both diagonal sums below, instead of
+    # re-deriving the training-side random-effect grouping per row
+    randcov_context <- get_randcov_context(
+      object$coefficients$params_object$randcov, object$ssn.object$obs, grid
+    )
+    quantities$s0 <- quantities$s0 -
+      get_block_diagonal_sum(object, newdata_name, nodes, randcov_context = randcov_context) / length(nodes)^2 +
+      get_block_diagonal_sum(object, newdata_name, seq_len(grid_size), randcov_context = randcov_context) / grid_size^2
+  }
+  c0 <- quantities$c0
+  covariance <- covmatrix(object)
+  Xmat <- model.matrix(object)
+  y <- model.response(model.frame(object))
+  offset <- model.offset(model.frame(object))
+  if (!is.null(offset)) y <- y - as.vector(offset)
+  if (identical(local$method, "covariance")) {
+    cov_index <- order(as.numeric(c0))[seq(from = object$n, to = max(1, object$n - local$size + 1L))]
+    c0 <- c0[cov_index]
+    covariance <- covariance[cov_index, cov_index, drop = FALSE]
+    Xmat <- Xmat[cov_index, , drop = FALSE]
+    y <- y[cov_index]
+  }
+
+  cov_lowchol <- t(chol(covariance))
+  sqrt_siginv_x <- forwardsolve(cov_lowchol, Xmat)
+  sqrt_siginv_y <- forwardsolve(cov_lowchol, y)
+  residuals_pearson <- sqrt_siginv_y - sqrt_siginv_x %*% coefficients(object)
+  sqrt_siginv_c0 <- forwardsolve(cov_lowchol, c0)
+  fit <- as.numeric(x0 %*% coefficients(object) + Matrix::crossprod(sqrt_siginv_c0, residuals_pearson))
+  if (!is.null(offset_block)) fit <- fit + offset_block
+  names(fit) <- "1"
+  if (!se.fit && identical(interval, "none")) return(fit)
+
+  H <- x0 - Matrix::crossprod(sqrt_siginv_c0, sqrt_siginv_x)
+  variance <- as.numeric(
+    quantities$s0 - Matrix::crossprod(sqrt_siginv_c0, sqrt_siginv_c0) +
+      H %*% Matrix::tcrossprod(vcov(object), H)
+  )
+  se <- sqrt(pmax(variance, 0))
+  if (!is.null(scale)) {
+    se <- se * scale
+  } else {
+    df <- Inf
+  }
+  if (identical(interval, "prediction")) {
+    tstar <- stats::qt(1 - (1 - level) / 2, df = df)
+    output <- cbind(fit = fit, lwr = fit - tstar * se, upr = fit + tstar * se)
+    rownames(output) <- "1"
+  } else {
+    output <- fit
+  }
+  if (se.fit) return(list(fit = output, se.fit = stats::setNames(se, "1")))
+  output
 }

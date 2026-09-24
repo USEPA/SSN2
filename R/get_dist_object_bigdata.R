@@ -1,13 +1,21 @@
-#' Get the distance matrix oibject
+#' Get the distance matrix object
 #'
 #' @param ssn.object SSN object.
 #' @param initial_object Initial value object.
 #' @param additive Name of the additive function value column.
 #' @param anisotropy Whether there is anisotropy.
+#' @param backend \code{"dense"} or \code{"bigdata"}; see
+#'   \code{\link{select_square_dist_backend}()}. Resolve this once
+#'   (local model fitting prefers \code{"bigdata"} when the big-data
+#'   \code{.bmat} filematrix backend exists, since it only ever reads small
+#'   submatrices at a time, falling back to \code{"dense"} otherwise) rather
+#'   than hardcoding it, matching \code{\link{get_dist_matlist}()}'s
+#'   exact-path convention of resolving a backend explicitly instead of
+#'   defaulting silently.
 #'
 #' @return A distance matrix object that contains various distance matrices used in modeling.
 #' @noRd
-get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisotropy, local_index, observed_index) {
+get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisotropy, local_index, observed_index, backend = "bigdata") {
   # get netgeom
   netgeom <- ssn_get_netgeom(ssn.object$obs, reformat = TRUE)
 
@@ -58,7 +66,8 @@ get_dist_object_bigdata <- function(ssn.object, initial_object, additive, anisot
   # get list of distance matrices in order of the original data
   dist_matlist <- get_dist_matlist_bigdata(
     ssn.object, initial_object,
-    order_list
+    order_list,
+    backend = backend
   )
 
   # see whether euclid is none to avoid unnecessary computations
@@ -120,12 +129,14 @@ get_dist_object_oblist_bigdata <- function(dist_object) {
 #' @param initial_object Initial value object.
 #' @param additive Name of the additive function value column.
 #' @param order_list A list of order by pid and network.
+#' @param backend \code{"dense"} or \code{"bigdata"}; see
+#'   \code{\link{get_dist_object_bigdata}()}.
 #'
 #' @noRd
 get_dist_matlist_bigdata <- function(ssn.object, initial_object,
-                             order_list) {
+                             order_list, backend = "bigdata") {
 
-  # see whether tailup and taildown are none to avoid unnecssary computations
+  # see whether tailup and taildown are none to avoid unnecessary computations
   tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
   taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
 
@@ -145,8 +156,16 @@ get_dist_matlist_bigdata <- function(ssn.object, initial_object,
     # otherwise
 
     # get dist junction matrices as a list (for efficiency, do things
-    # network by network and then combine so zeroes populate accordingly)
-    distjunc_matlist <- lapply(order_list, function(x) get_distjunc_matlist_bigdata(x$network_index, x$pid, ssn.object))
+    # network by network and then combine so zeroes populate accordingly).
+    # Each local group only needs a subset of a network's pids, so this uses
+    # the same pid-matching "cross" readers get_block_pred_covariance()/etc.
+    # use for arbitrary row subsets, not the whole-network readers
+    # get_dist_matlist()'s exact path uses.
+    distjunc_matlist <- if (identical(backend, "bigdata")) {
+      lapply(order_list, function(x) get_distjunc_matlist_bigdata(x$network_index, x$pid, ssn.object))
+    } else {
+      lapply(order_list, function(x) get_distjunc_matlist_dense(x$network_index, x$pid, ssn.object))
+    }
 
 
     dist_matlist <- lapply(names(order_list), function(x) {
@@ -180,7 +199,7 @@ get_dist_matlist_bigdata <- function(ssn.object, initial_object,
     # })
     names(dist_matlist) <- names(order_list)
 
-    # if only taildown covariacne, do not need additive matrix
+    # if only taildown covariance, do not need additive matrix
     if (tailup_none) {
       # store additive matrix as NULL
       dist_matlist <- lapply(dist_matlist, function(x) c(x, list(w_mat = NULL)))
@@ -200,42 +219,53 @@ get_dist_matlist_bigdata <- function(ssn.object, initial_object,
 }
 
 
-#' Get distance to the nearest junction matrix
+#' Get distance to the nearest junction matrix (big-data/.bmat backend)
 #'
 #' @param network_index Network index
 #' @param ssn.object SSN object
 #' @param newdata_name Name of the newdata matrix (if relevant)
 #'
 #' @noRd
-get_distjunc_matlist_bigdata <- function(network_index, pid, ssn.object) {
+get_distjunc_matlist_bigdata <- function(network_index, pid, ssn.object, newdata_name = NULL) {
+  ext <- if (is.null(newdata_name)) "obs" else newdata_name
+  network_index_num <- as.numeric(as.character(network_index))
+  network_index_vals <- sort(unique(network_index_num))
 
-  ext <- "obs"
+  lapply(network_index_vals, function(x) {
+    pid_x <- as.character(sort(as.numeric(pid[network_index_num == x])))
+    get_distjunc_matlist_bigdata_cross(
+      rep(x, length(pid_x)), pid_x,
+      rep(x, length(pid_x)), pid_x,
+      ssn.object,
+      ext = ext
+    )
+  })
+}
 
-  # get unique network index vals (from STARS)
-  network_index_vals <- sort(as.numeric(as.character(unique(network_index))))
+#' Get distance to the nearest junction matrix (dense/.RData backend)
+#'
+#' The dense-backend counterpart to \code{\link{get_distjunc_matlist_bigdata}()},
+#' used for the same per-local-group, per-network pid subsetting when the
+#' standard dense (\code{.RData}) distance matrices are available.
+#'
+#' @param network_index Network index
+#' @param ssn.object SSN object
+#' @param newdata_name Name of the newdata matrix (if relevant)
+#'
+#' @noRd
+get_distjunc_matlist_dense <- function(network_index, pid, ssn.object, newdata_name = NULL) {
+  ext <- if (is.null(newdata_name)) "obs" else newdata_name
+  network_index_num <- as.numeric(as.character(network_index))
+  network_index_vals <- sort(unique(network_index_num))
 
-  # find distance junction list by iterating through each network
-  distjunc_list <- lapply(network_index_vals, function(x) {
-    # on the disk, distance matrices are stored by network
-    workspace_name <- paste("dist.net", x, ".bmat", sep = "")
-    # path to the distance matrices on disk
-    path <- file.path(ssn.object$path, "distance", ext, workspace_name)
-    # check to see if the file exists on the disk
-    if (!file.exists(path)) {
-      stop("Unable to locate required distance matrix", call. = FALSE)
-    }
-    distjunc_fm <- fm.open(path)
-    rownames_val <- rownames(distjunc_fm)
-    pid_index <- rownames_val %in% as.character(pid)
-    dist_mat <- distjunc_fm[pid_index, pid_index]
-    rownames(dist_mat) <- rownames_val[pid_index]
-    # get pid order
-    # could also get this as dist_order[network_index == x]
-    pid_order <- order(as.numeric(rownames(dist_mat)))
-    # get distance juncture
-    distjunc <- dist_mat[pid_order, pid_order, drop = FALSE]
-    close(distjunc_fm)
-    distjunc
+  lapply(network_index_vals, function(x) {
+    pid_x <- as.character(sort(as.numeric(pid[network_index_num == x])))
+    get_distjunc_matlist_dense_cross(
+      rep(x, length(pid_x)), pid_x,
+      rep(x, length(pid_x)), pid_x,
+      ssn.object,
+      ext = ext
+    )
   })
 }
 

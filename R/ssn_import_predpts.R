@@ -46,18 +46,21 @@
 #'
 #' @export
 #' @examples
-#' ## Create local temporary copy of MiddleFork04.ssn found in
-#' # SSN2/lsndata folder. Only necessary for this example.
+#' \donttest{
+#' # Copy the mf04p .ssn data to a local directory and read it into R
+#' # When modeling with your .ssn object, you will load it using the relevant
+#' # path to the .ssn data on your machine
 #' copy_lsn_to_temp()
+#' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
 #'
 #' ## Import SSN object with no prediction sites
-#' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+#' mf04p <- ssn_import(temp_path,
 #'   overwrite = TRUE
 #' )
 #'
 #' ## Import pred1km prediction dataset into SSN object and assign the
 #' ## name preds1
-#' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+#' mf04p <- ssn_import(temp_path,
 #'     overwrite = TRUE)
 #' mf04p <- ssn_import_predpts(mf04p, predpts = c(preds1 = "pred1km"))
 #' names(mf04p$preds)
@@ -70,6 +73,7 @@
 #' )
 #' ssn_gmod <- ssn_import_predpts(ssn_gmod, predpts = "CapeHorn")
 #' names(ssn_gmod$ssn.object$preds)
+#' }
 #'
 ssn_import_predpts <- function(x, predpts, overwrite = FALSE,
                                verbose = TRUE) {
@@ -121,11 +125,11 @@ ssn_import_predpts <- function(x, predpts, overwrite = FALSE,
     setwd(x$ssn.object$path)
 
     if(p.names %in% names(x$ssn.object$preds)) {
-      stop("Fitted model object already contains predpoints named ", predpts)
+      stop("Fitted model object already contains a prediction dataset named ", predpts)
     }
   }
 
-  ## For SSN objects - check if predpts already exits
+  ## For SSN objects - check if predpts already exists
   if (obj.type == "SSN") {
     setwd(x$path)
 

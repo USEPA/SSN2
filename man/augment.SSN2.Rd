@@ -27,7 +27,7 @@
   interval = c("none", "confidence", "prediction"),
   newdata_size,
   level = 0.95,
-  local = local,
+  local,
   var_correct = TRUE,
   ...
 )
@@ -45,15 +45,18 @@ All of the original explanatory variables used to create the fitted model object
 must be present in each prediction \code{sf} object represented by \code{newdata}.
 Defaults to \code{NULL}, which indicates
 that nothing has been passed to \code{newdata} and augmenting occurs
-for the original data. The value \code{"ssn"} is shorthand for specifying
+for the original data. The value \code{"all"} is shorthand for specifying
 all prediction \code{sf} objects.}
 
 \item{se_fit}{Logical indicating whether or not a \code{.se.fit} column should
-be added to augmented output. Passed to \code{predict()} and
-defaults to \code{FALSE}.}
+be added to augmented output. Defaults to \code{FALSE}. When \code{newdata}
+is not supplied, \code{.se.fit}
+is the standard error of the fitted mean at the observed locations (on the
+link scale for \code{ssn_glm()} model objects), matching
+\code{predict(interval = "confidence")}.}
 
-\item{interval}{Character indicating the type of confidence interval columns to
-add to the augmented \code{newdata} output. Passed to \code{predict()} and defaults
+\item{interval}{Character indicating the type of interval columns
+(\code{.lower} and \code{.upper}) to add to the augmented output. Defaults
 to \code{"none"}.}
 
 \item{level}{Tolerance/confidence level. The default is \code{0.95}.}
@@ -83,20 +86,20 @@ variances when predicting via models fit using \code{ssn_glm}. The default is
 \value{
 When augmenting the original data set, a tibble with additional columns
 \itemize{
-\item \code{.fitted}: Fitted value
-\item \code{.resid}: Response residual (the difference between observed and fitted values)
-\item \code{.hat}: Leverage (diagonal of the hat matrix)
-\item \code{.cooksd}: Cook's distance
-\item \code{.std.resid}: Standardized residuals
-\item \code{.se.fit}: Standard error of the fitted value.
+\item \code{.fitted} Fitted value
+\item \code{.resid} Response residual (the difference between observed and fitted values)
+\item \code{.hat} Leverage (diagonal of the hat matrix)
+\item \code{.cooksd} Cook's distance
+\item \code{.std.resid} Standardized residuals
+\item \code{.se.fit} Standard error of the fitted value.
 }
 
 When augmenting a new data set, a tibble with additional columns
 \itemize{
-\item \code{.fitted}: Predicted (or fitted) value
-\item \code{.lower}: Lower bound on interval
-\item \code{.upper}: Upper bound on interval
-\item \code{.se.fit}: Standard error of the predicted (or fitted) value
+\item \code{.fitted} Predicted (or fitted) value
+\item \code{.lower} Lower bound on interval
+\item \code{.upper} Upper bound on interval
+\item \code{.se.fit} Standard error of the predicted (or fitted) value
 }
 
 When predictions for all prediction objects are desired, the output is a list
@@ -112,9 +115,9 @@ data set.
 Augment behaves differently depending on whether the original data or new data
 requires augmenting. Typically, when augmenting the original data, only the fitted
 model object is specified, and when augmenting new data, the fitted model object
-and \code{newdata} are specified. When augmenting the original data, diagnostic
+and \code{newdata} is specified. When augmenting the original data, diagnostic
 statistics are augmented to each row in the data set. When augmenting new data,
-predictions and optional intervals (confidence or prediction) or standard errors are augmented to each
+predictions and optional intervals or standard errors are augmented to each
 row in the new data set.
 }
 \details{
@@ -142,5 +145,5 @@ augment(ssn_mod)
 augment(ssn_mod, newdata = "CapeHorn")
 }
 \seealso{
-\code{\link[=tidy.SSN2]{tidy.SSN2()}} \code{\link[=glance.SSN2]{glance.SSN2()}}
+\code{\link[=tidy.SSN2]{tidy.SSN2()}} \code{\link[=glance.SSN2]{glance.SSN2()}} \code{\link[=predict.SSN2]{predict.SSN2()}}
 }

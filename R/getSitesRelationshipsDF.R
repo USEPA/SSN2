@@ -16,7 +16,7 @@ getSitesRelationshipsDF <- function(ssn, pid, junk, ind, ob_by_locID, bin,
     ## Returns a data.frame that relates all sites to pid.i:
     ## pid: numeric
     ## locID: numeric
-    ## fc: logical - is the sute fc with the pid of interest
+    ## fc: logical - is the site fc with the pid of interest
     ## binaryID: binaryID of the common downstream junction
     ## junc.rid: rid for the common downstream junction
     ## upDist.j: upDist for each site
@@ -49,7 +49,6 @@ getSitesRelationshipsDF <- function(ssn, pid, junk, ind, ob_by_locID, bin,
       ## Create some funky rownames, with extension .fc - ADDED OB.J INSTEAD OF OB
       rownames(ob.j) <- paste(rownames(ob.j), ".fc", sep = "")
 
-      ## Don't know why we're doing this...
       ##ob.j$pid <- ob_by_locID$pid[ind]
 
       ## juncDist is the upstream distance of the common downstream rid junction

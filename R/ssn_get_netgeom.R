@@ -46,8 +46,6 @@
 #' ssn_get_netgeom(mf04p$obs)
 #' ssn_get_netgeom(mf04p$edges, "DistanceUpstream")
 ssn_get_netgeom <- function(x, netvars = "all", reformat = FALSE) {
-  # I think this should be an SSN obejct and we should have another column
-  # for "type" which can be "edges", "obs", or a prediction name
   if (inherits(x, "SSN")) {
     stop("An object of class SSN is not a valid input", call. = FALSE)
   }

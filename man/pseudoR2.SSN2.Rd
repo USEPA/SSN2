@@ -26,13 +26,13 @@ The pseudo r-squared as a numeric vector.
 Compute a pseudo r-squared for a fitted model object.
 }
 \details{
-Several pseudo r-squared statistics exist for in the literature.
+Several pseudo r-squared statistics exist in the literature.
 We define this pseudo r-squared as one minus the ratio of the deviance of a full model
 relative to the deviance of a null (intercept only) model. This pseudo r-squared
 can be viewed as a generalization of the classical r-squared definition
 seen as one minus the ratio of error sums of squares from the full model relative
 to the error sums of squares from the null model. If adjusted, the adjustment
-is analogous to the the classical r-squared adjustment.
+is analogous to the classical r-squared adjustment.
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

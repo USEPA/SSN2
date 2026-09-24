@@ -8,13 +8,13 @@
 #'   default is \code{FALSE}.
 #' @param ... Other arguments. Not used (needed for generic consistency).
 #'
-#' @details Several pseudo r-squared statistics exist for in the literature.
+#' @details Several pseudo r-squared statistics exist in the literature.
 #'   We define this pseudo r-squared as one minus the ratio of the deviance of a full model
 #'   relative to the deviance of a null (intercept only) model. This pseudo r-squared
 #'   can be viewed as a generalization of the classical r-squared definition
 #'   seen as one minus the ratio of error sums of squares from the full model relative
 #'   to the error sums of squares from the null model. If adjusted, the adjustment
-#'   is analogous to the the classical r-squared adjustment.
+#'   is analogous to the classical r-squared adjustment.
 #'
 #' @return The pseudo r-squared as a numeric vector.
 #'
@@ -39,6 +39,8 @@
 #' pseudoR2(ssn_mod)
 pseudoR2.ssn_lm <- function(object, adjust = FALSE, ...) {
   if (adjust) {
+    # the adjustment degrees-of-freedom baseline differs depending on whether
+    # an intercept is estimated, analogous to classical adjusted r-squared
     has_intercept <- "(Intercept)" %in% tidy(object)$term
     pr2 <- object$pseudoR2
     pr2_adj <- 1 - (1 - pr2) * (object$n - 1 * has_intercept) / (object$n - object$p)
@@ -51,4 +53,6 @@ pseudoR2.ssn_lm <- function(object, adjust = FALSE, ...) {
 #' @rdname pseudoR2.SSN2
 #' @method pseudoR2 ssn_glm
 #' @export
+# ssn_glm reuses the ssn_lm pseudo r-squared formula since both store a
+# precomputed object$pseudoR2 (deviance ratio) the same way
 pseudoR2.ssn_glm <- pseudoR2.ssn_lm

@@ -31,6 +31,9 @@
 #' )
 #' deviance(ssn_mod)
 deviance.ssn_lm <- function(object, ...) {
+  # deviance (twice the saturated-vs-fitted log-likelihood difference) is only
+  # meaningful when the model was fit by (RE)ML, since other estimation methods
+  # don't optimize a likelihood the deviance can be compared against
   if (object$estmethod %in% c("reml", "ml")) {
     deviance <- object$deviance
     return(deviance)
@@ -42,4 +45,4 @@ deviance.ssn_lm <- function(object, ...) {
 #' @rdname deviance.SSN2
 #' @method deviance ssn_glm
 #' @export
-deviance.ssn_glm <- deviance.ssn_lm
+deviance.ssn_glm <- deviance.ssn_lm # glm variant reuses the same reml/ml check and lookup as the linear case

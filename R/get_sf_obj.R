@@ -1,4 +1,4 @@
-#' Read relevant sf objects from user shalpefiles or geopackages
+#' Read relevant sf objects from user shapefiles or geopackages
 #'
 #' @param fn Path to shapefile or geopackage
 #'

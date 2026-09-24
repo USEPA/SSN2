@@ -31,6 +31,9 @@
 #' model.frame(ssn_mod)
 model.frame.ssn_lm <- function(formula, ...) {
   # model.frame(formula(formula, ...), data = formula$data, ...) too much customization
+  # na.action = na.omit and drop.unused.levels = TRUE are fixed rather than
+  # passed through ... so the returned frame always matches the rows/factor
+  # levels actually used when the model was fit
   model.frame(formula(formula),
     data = sf::st_drop_geometry(formula$ssn.object$obs),
     drop.unused.levels = TRUE, na.action = na.omit
@@ -40,4 +43,6 @@ model.frame.ssn_lm <- function(formula, ...) {
 #' @rdname model.frame.SSN2
 #' @method model.frame ssn_glm
 #' @export
+# ssn_glm objects store data the same way as ssn_lm objects ($ssn.object$obs),
+# so the same extraction logic applies unchanged
 model.frame.ssn_glm <- model.frame.ssn_lm

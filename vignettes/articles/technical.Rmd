@@ -1,0 +1,35 @@
+---
+title: "Technical Details"
+author: "Michael Dumelle, Erin Peterson, Jay M. Ver Hoef, Alan Pearse, and Dan Isaak"
+bibliography: '`r system.file("references.bib", package="SSN2")`'
+toc: true
+toc-title: Contents
+toc-depth: 3
+number-sections: true
+documentclass: article
+geometry:
+  - margin=1in
+output:
+  html_document:
+    number_sections: true
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: no
+    toc_depth: 3
+    includes:
+      in_header: mathjax-equation-numbers.html
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: yes
+    latex_engine: xelatex
+editor_options:
+  chunk_output_type: console
+---
+
+These are the technical details for `SSN2` regarding the construction of covariance matrices involving hydrologic distances. Technical details that are based only on the covariance matrix (e.g., model-fitting and prediction) are available in [`spmodel`'s technical documentation](https://usepa.github.io/spmodel/articles/technical.html); @dumelle2023spmodel.
+
+# References {.unnumbered}
+
+<div id="refs"></div>

@@ -9,8 +9,8 @@
 \arguments{
 \item{x}{A Torgegram object from \code{\link[=Torgegram]{Torgegram()}}.}
 
-\item{type}{The type of semivariogram. Can take character values that are a subset
-of objects in \code{x}. The default is \code{names(x)}.}
+\item{type}{The diagnostic pair type. Can take character values that are a
+subset of objects in \code{x}. The default is \code{names(x)}.}
 
 \item{separate}{When \code{type} is length greater than one, whether each
 \code{type} be placed in a separate plot. The default is \code{FALSE}.}
@@ -21,7 +21,8 @@ of objects in \code{x}. The default is \code{names(x)}.}
 No return value. Function called for plotting side effects.
 }
 \description{
-Plot Torgegram
+Plot the empirical semivariogram or empirical autocovariance
+diagnostic pairs summarized in a fitted Torgegram object.
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

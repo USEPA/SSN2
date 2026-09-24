@@ -2,19 +2,9 @@
 # GENERIC SETUP
 ###############################################################################
 
-
-#' Create a covariance matrix
-#'
-#' @param params Parameter object.
-#' @param dist_object Distance matrix object.
-#' @param ... Additional arguments
-#'
-#' @return A covariance matrix
-#' @noRd
 cov_matrix <- function(params, dist_object, ...) {
   UseMethod("cov_matrix", params)
 }
-
 
 # m is first for comp reasons (a sparse matrix)
 
@@ -144,7 +134,6 @@ cov_matrix.taildown_mariah <- function(params, dist_object, ...) {
   dist_ratio_b <- 90 * b / params[["range"]]
   a_eq_b <- which(a == b)
 
-
   h_cor_part <- log(dist_ratio_h + 1) / dist_ratio_h * flow_con
   h_cor_part[h == 0] <- 1
   ab_cor_part <- (log(dist_ratio_a + 1) - log(dist_ratio_b + 1)) / (dist_ratio_a - dist_ratio_b)
@@ -219,7 +208,32 @@ cov_matrix.euclid_gaussian <- function(params, dist_object, anisotropy, ...) {
 }
 
 #' @export
-cov_matrix.euclid_cosine <- function(params, dist_object, anisotropy, ...) {
+cov_matrix.euclid_matern <- function(params, dist_object, anisotropy, ...) {
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
+  h_matrix <- as.matrix(h)
+  extra <- params[["extra"]]
+  eta <- sqrt(2 * extra) * h_matrix / params[["range"]]
+  cor_part <- 2^(1 - extra) / gamma(extra) * eta^extra * besselK(eta, nu = extra)
+  cor_part[h_matrix == 0] <- 1
+  params[["de"]] * cor_part
+}
+
+#' @export
+cov_matrix.euclid_cauchy <- function(params, dist_object, anisotropy, ...) {
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
+  dist_ratio <- h / params[["range"]]
+  # Original: de * (1 + (h / range)^2)^(-extra); log1p preserves small squared ratios.
+  params[["de"]] * exp(-params[["extra"]] * log1p(dist_ratio^2))
+}
+
+#' @export
+cov_matrix.euclid_pexponential <- function(params, dist_object, anisotropy, ...) {
+  h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
+  params[["de"]] * exp(-(h^params[["extra"]]) / params[["range"]])
+}
+
+#' @export
+cov_matrix.euclid_circular <- function(params, dist_object, anisotropy, ...) {
   h <- get_euclid_mat_observed(params, dist_object, anisotropy, ...)
   dist_ratio <- h / params[["range"]]
   min_val <- pmin(dist_ratio, 1)
@@ -311,7 +325,7 @@ cov_matrix.nugget_none <- function(params, dist_object, de_scale, diagtol = 0, .
 }
 
 ###############################################################################
-# EUCILD MATRIX OBSERVED
+# EUCLID MATRIX OBSERVED
 ###############################################################################
 
 get_euclid_mat_observed <- function(params, dist_object, anisotropy, cross = FALSE) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/amongSitesBigDistMat.R
 \name{amongSitesBigDistMat}
 \alias{amongSitesBigDistMat}
-\title{Helper function to determining distance matrices among sites}
+\title{Helper function to determine distance matrices among sites}
 \usage{
 amongSitesBigDistMat(
   ssn,
@@ -30,5 +30,5 @@ amongSitesBigDistMat(
 A distance matrix
 }
 \description{
-Helper function to determining distance matrices among sites
+Helper function to determine distance matrices among sites
 }

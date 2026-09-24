@@ -32,10 +32,15 @@
 #' model.matrix(ssn_mod)
 model.matrix.ssn_lm <- function(object, ...) {
   # model.matrix(formula(object, ...), model.frame(object, ...), ...) too much customization
+  # passing object$contrasts explicitly (rather than letting model.matrix()
+  # pick fresh defaults) ensures factor columns are coded exactly as they
+  # were when the model was originally fit
   model.matrix(object$formula, model.frame(object), contrasts = object$contrasts)
 }
 
 #' @rdname model.matrix.SSN2
 #' @method model.matrix ssn_glm
 #' @export
+# ssn_glm objects use the same underlying data storage as ssn_lm, so the same
+# construction logic applies unchanged
 model.matrix.ssn_glm <- model.matrix.ssn_lm

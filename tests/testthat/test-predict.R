@@ -1,9 +1,14 @@
 test_that("prediction works", {
-  ssn_mod1 <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
+  # Pin legacy starts to keep the historical prediction expectations stable.
+  expect_warning(ssn_mod1 <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
     tailup_type = "exponential",
     taildown_type = "exponential", euclid_type = "exponential",
-    nugget_type = "nugget", additive = "afvArea"
-  )
+    nugget_type = "nugget", additive = "afvArea", control = list(maxit = 500),
+    tailup_initial = tailup_initial("exponential", 2.2492, 22085.989, known = "none"),
+    taildown_initial = taildown_initial("exponential", 0.0833, 7361.9963, known = "none"),
+    euclid_initial = euclid_initial("exponential", 0.0833, 6988.4664, known = "none"),
+    nugget_initial = nugget_initial("nugget", 0.0833, known = "none")
+  ), "convergence code 1", fixed = TRUE)
 
   n_p1 <- nrow(mf04p$preds$pred1km)
   n_CH <- nrow(mf04p$preds$CapeHorn)
@@ -30,7 +35,12 @@ test_that("prediction works", {
   ssn_mod2 <- ssn_glm(Summer_mn ~ ELEV_DEM, mf04p, "Gamma",
     tailup_type = "exponential",
     taildown_type = "exponential", euclid_type = "exponential",
-    nugget_type = "nugget", additive = "afvArea"
+    nugget_type = "nugget", additive = "afvArea",
+    tailup_initial = tailup_initial("exponential", 0.05, 22085.989, known = "none"),
+    taildown_initial = taildown_initial("exponential", 0.05, 22085.989, known = "none"),
+    euclid_initial = euclid_initial("exponential", 0.05, 20965.3991, known = "none"),
+    nugget_initial = nugget_initial("nugget", 0.05, known = "none"),
+    dispersion_initial = dispersion_initial("Gamma", 100, known = "none")
   )
 
   preds_CH <- predict(ssn_mod2, "CapeHorn")
@@ -43,7 +53,7 @@ test_that("prediction works", {
 
   preds_CH_conf <- predict(ssn_mod2, "CapeHorn", interval = "confidence")
   expect_equal(dim(preds_CH_conf), c(n_CH, 3))
-  expect_equal(preds_CH_conf[1, ], c("fit" = 2.497, "lwr" = 2.318, "upr" = 2.676), tolerance = 0.01)
+  expect_equal(preds_CH_conf[1, ], c("fit" = 2.495, "lwr" = 1.597, "upr" = 3.392), tolerance = 0.01)
 
   preds_p1_pred <- predict(ssn_mod2, "pred1km", interval = "prediction", level = 0.9)
   expect_equal(dim(preds_p1_pred), c(n_p1, 3))

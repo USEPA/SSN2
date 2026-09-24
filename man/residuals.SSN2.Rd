@@ -68,5 +68,10 @@ ssn_mod <- ssn_lm(
 )
 residuals(ssn_mod)
 resid(ssn_mod)
+residuals(ssn_mod, type = "pearson")
+residuals(ssn_mod, type = "standardized")
 rstandard(ssn_mod)
+}
+\seealso{
+\code{\link[=augment.SSN2]{augment.SSN2()}} \code{\link[=cooks.distance.SSN2]{cooks.distance.SSN2()}} \code{\link[=hatvalues.SSN2]{hatvalues.SSN2()}} \code{\link[=influence.SSN2]{influence.SSN2()}}
 }

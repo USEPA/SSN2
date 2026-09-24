@@ -11,7 +11,7 @@
 #'   using \code{<Return>}. The default is \code{which = c(1, 2)}
 #' @param ... Other arguments passed to other methods.
 #'
-#' @details For all fitted model objects,, the values of \code{which} make the
+#' @details For all fitted model objects, the values of \code{which} make the
 #'   corresponding plot:
 #'   \itemize{
 #'     \item 1: Standardized residuals vs fitted values (of the response)
@@ -51,7 +51,7 @@ plot.ssn_lm <- function(x, which, ...) {
     which <- c(1, 2)
   }
 
-  if (any(!(which %in% 1:10))) {
+  if (any(!(which %in% 1:6))) {
     stop("Values of which can only take on 1, 2, 3, 4, 5, or 6.", call. = FALSE)
   }
 
@@ -63,7 +63,6 @@ plot.ssn_lm <- function(x, which, ...) {
   if (length(which) > 1) {
     par(ask = TRUE)
   }
-
 
   cal <- x$call
   if (!is.na(m.f <- match("formula", names(cal)))) {
@@ -100,7 +99,6 @@ plot.ssn_lm <- function(x, which, ...) {
     title(sub = sub.caption)
   }
 
-
   # plot 3
   if (3 %in% which) {
     plot(
@@ -113,9 +111,6 @@ plot.ssn_lm <- function(x, which, ...) {
     )
     title(sub = sub.caption)
   }
-
-
-
 
   # plot 4
   if (4 %in% which) {
@@ -130,7 +125,6 @@ plot.ssn_lm <- function(x, which, ...) {
     )
     title(sub = sub.caption)
   }
-
 
   # plot 5
   if (5 %in% which) {
@@ -163,17 +157,19 @@ plot.ssn_lm <- function(x, which, ...) {
 #' @rdname plot.SSN2
 #' @method plot ssn_glm
 #' @export
+# diagnostic plots only use generics (fitted(), rstandard(), etc.), which
+# already dispatch correctly on ssn_glm objects, so the ssn_lm plotting code
+# works unchanged
 plot.ssn_glm <- plot.ssn_lm
-
-
 
 #' Plot Torgegram
 #'
-#' @description Plot Torgegram
+#' @description Plot the empirical semivariogram or empirical autocovariance
+#'   diagnostic pairs summarized in a fitted Torgegram object.
 #'
 #' @param x A Torgegram object from [Torgegram()].
-#' @param type The type of semivariogram. Can take character values that are a subset
-#'   of objects in \code{x}. The default is \code{names(x)}.
+#' @param type The diagnostic pair type. Can take character values that are a
+#'   subset of objects in \code{x}. The default is \code{names(x)}.
 #' @param separate When \code{type} is length greater than one, whether each
 #'   \code{type} be placed in a separate plot. The default is \code{FALSE}.
 #' @param ... Other arguments passed to other methods.
@@ -199,6 +195,8 @@ plot.ssn_glm <- plot.ssn_lm
 plot.Torgegram <- function(x, type, separate = FALSE, ...) {
 
   cloud <- attr(x, "cloud")
+  eacf <- isTRUE(attr(x, "eacf"))
+  value_name <- if (eacf) "acov" else "gamma"
 
   if (missing(type)) {
     type <- names(x)
@@ -217,9 +215,14 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
 
   x <- do.call("rbind", x)
   x$type <- droplevels(factor(x$type, levels = c("flowcon", "flowuncon", "euclid")))
+  if (eacf && !NROW(x)) {
+    stop("No complete Torgegram values are available to plot.", call. = FALSE)
+  }
   # scale to [1, 3]
   if (cloud) {
     x$cex <- 1
+  } else if (eacf && diff(range(x$np)) == 0) {
+    x$cex <- rep(2, NROW(x))
   } else {
     x$cex <- (x$np - min(x$np)) / (max(x$np) - min(x$np)) * 2 + 1
   }
@@ -235,6 +238,7 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
   # set defaults
   if (!"main" %in% names_dotlist) {
     dotlist$main <- "Torgegram"
+    if (eacf) dotlist$main <- paste0(dotlist$main, " (Empirical Autocovariance)")
     if (cloud) dotlist$main <- paste0(dotlist$main, " (Cloud)")
   }
 
@@ -243,7 +247,7 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
   }
 
   if (!"ylab" %in% names_dotlist) {
-    dotlist$ylab <- "Semivariance"
+    dotlist$ylab <- if (eacf) "Empirical autocovariance" else "Semivariance"
   }
 
   if (!"pch" %in% names_dotlist) {
@@ -255,10 +259,15 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
     dotlist$cex <- NULL
   }
 
-
   # hard code to FALSE if length type only one
   if (length(type) == 1) {
     separate <- FALSE
+  }
+
+  if (eacf) {
+    y_range <- range(c(0, x[[value_name]]), finite = TRUE)
+    padding <- if (diff(y_range) == 0) max(abs(y_range), 1) * 0.1 else diff(y_range) * 0.1
+    y_limits <- y_range + c(-padding, padding)
   }
 
   if (separate) {
@@ -272,17 +281,17 @@ plot.Torgegram <- function(x, type, separate = FALSE, ...) {
 
     invisible(lapply(tg_split, function(p) {
       do.call("plot", args = c(list(
-        x = p$dist, y = p$gamma, cex = p$cex,
-        xlim = c(0, max(x$dist)), ylim = c(0, max(x$gamma) * 1.6),
+        x = p$dist, y = p[[value_name]], cex = p$cex,
+        xlim = c(0, max(x$dist)), ylim = if (eacf) y_limits else c(0, max(x$gamma) * 1.6),
         col = p$col
       ), dotlist))
-      legend(0, max(x$gamma) * 1.6, legend = levels(droplevels(p$type)), col = col_key[levels(droplevels(p$type))], pch = dotlist$pch)
+      legend(0, if (eacf) y_limits[[2]] else max(x$gamma) * 1.6, legend = levels(droplevels(p$type)), col = col_key[levels(droplevels(p$type))], pch = dotlist$pch)
     }))
   } else {
     do.call("plot", args = c(list(
-      x = x$dist, y = x$gamma, cex = x$cex, xlim = c(0, max(x$dist)), ylim = c(0, max(x$gamma) * 1.6),
+      x = x$dist, y = x[[value_name]], cex = x$cex, xlim = c(0, max(x$dist)), ylim = if (eacf) y_limits else c(0, max(x$gamma) * 1.6),
       col = x$col
     ), dotlist))
-    legend(0, max(x$gamma) * 1.6, legend = levels(x$type), col = col_key[levels(x$type)], pch = dotlist$pch)
+    legend(0, if (eacf) y_limits[[2]] else max(x$gamma) * 1.6, legend = levels(x$type), col = col_key[levels(x$type)], pch = dotlist$pch)
   }
 }

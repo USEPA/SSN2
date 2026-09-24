@@ -26,10 +26,10 @@
 #' relationships based on stream distance:
 #'
 #' \itemize{
-#' \item{Flow-connected: Water flows from an upstream site to a
-#' downstream site.}
-#' \item{Flow-unconnected: Two sites reside on the
-#' same stream network, but do not share flow.}
+#' \item Flow-connected: Water flows from an upstream site to a
+#' downstream site.
+#' \item Flow-unconnected: Two sites reside on the
+#' same stream network, but do not share flow.
 #' }
 #'
 #' For example, if two sites are flow-connected the downstream
@@ -54,7 +54,7 @@
 #' and prediction sites. The label "a" represents the downstream
 #' stream distance \emph{from} prediction sites \emph{to} observation
 #' sites, and the label "b" represents the distance \emph{from}
-#' observation sites \emph{to} predictions sites.  Thus, the list of
+#' observation sites \emph{to} prediction sites.  Thus, the list of
 #' prediction matrices are labeled "dist.net1.a" for the downstream
 #' only distance from prediction sites in the columns, to observation
 #' sites in the rows, for the first network. A prediction matrix
@@ -63,9 +63,9 @@
 #' rows, for the first network. The downstream only distance matrices
 #' for observations and predictions will be rectangular, unless the
 #' number of observation and prediction locations are equal.  If the
-#' argument \code{amongPreds = TRUE} was used in the function
+#' argument \code{among_predpts = TRUE} was used in the function
 #' \code{ssn_create_distmat}, then the distance between prediction sites
-#' themselves is also returned, using the same labelling convention as
+#' themselves is also returned, using the same labeling convention as
 #' for among observation sites. That is, the matrices for each network
 #' will be labeled "dist.net1", "dist.net2", etc., for the first and
 #' second network, etc.
@@ -80,11 +80,13 @@
 #' \bold{105(489)}, 22--24
 #' @export
 #' @examples
-#' ## For this example only, copy MiddleFork04.ssn directory to R's
-#' ## temporary directory
+#' # Copy the mf04p .ssn data to a local directory and read it into R
+#' # When modeling with your .ssn object, you will load it using the relevant
+#' # path to the .ssn data on your machine
 #' copy_lsn_to_temp()
+#' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
 #' ## Create an SSN object with prediction sites
-#' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+#' mf04p <- ssn_import(temp_path,
 #'   predpts = "pred1km", overwrite = TRUE
 #' )
 #'

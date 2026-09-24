@@ -60,18 +60,21 @@ the functionality found in the \code{sf} and \code{igraph}
 packages to process streams data in vector format.
 }
 \examples{
-## Create local temporary copy of MiddleFork04.ssn found in
-# SSN2/lsndata folder. Only necessary for this example.
+\donttest{
+# Copy the mf04p .ssn data to a local directory and read it into R
+# When modeling with your .ssn object, you will load it using the relevant
+# path to the .ssn data on your machine
 copy_lsn_to_temp()
+temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
 
 ## Import SSN object with no prediction sites
-mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+mf04p <- ssn_import(temp_path,
   overwrite = TRUE
 )
 
 ## Import pred1km prediction dataset into SSN object and assign the
 ## name preds1
-mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+mf04p <- ssn_import(temp_path,
     overwrite = TRUE)
 mf04p <- ssn_import_predpts(mf04p, predpts = c(preds1 = "pred1km"))
 names(mf04p$preds)
@@ -84,5 +87,6 @@ ssn_gmod <- ssn_glm(Summer_mn ~ netID, mf04p,
 )
 ssn_gmod <- ssn_import_predpts(ssn_gmod, predpts = "CapeHorn")
 names(ssn_gmod$ssn.object$preds)
+}
 
 }

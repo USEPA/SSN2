@@ -15,13 +15,13 @@ ssn_put_data(data, x, name = "obs", resize_data = FALSE)
 \code{x}. For observed data, this will always be "obs", the
 default.}
 
-\item{resize_data}{Logical. Indicates whether sf_df can have a
+\item{resize_data}{Logical. Indicates whether data can have a
 different number of features than the current data.frame in the
 object. Default is FALSE.}
 }
 \value{
 Returns an object of the same class as x, which contains
-the sf data.frame sf_data.
+the sf data.frame data.
 }
 \description{
 The \command{ssn_put_data} function puts an sf
@@ -37,10 +37,10 @@ these names are obtained using the call \code{names(x$preds)}. For
 all other object classes, the names are obtained using the call
 names(x$ssn.object$preds).
 
-The \code{resize_sf_data} argument specifies whether sf_data can have a
+The \code{resize_data} argument specifies whether data can have a
 different number of features (i.e., rows) than the sf data.frame
-it is replacing. Care should be taken when resize_df is set to
-TRUE, especially if the new sf_data has more features than the
+it is replacing. Care should be taken when resize_data is set to
+TRUE, especially if the new data has more features than the
 existing sf data.frame. In these cases, the user is responsible
 for ensuring that the additional features have the correct
 spatial, topological, and attribute data to accurately represent
@@ -51,6 +51,7 @@ data(mf04p)
 ## Extract observation data.frame from SSN object
 obs.df <- ssn_get_data(mf04p)
 ## Create a new column for summer mean temperature and set Value in
+## first row to NA
 obs.df$Value <- obs.df$Summer_mn
 obs.df$Value[1] <- NA
 

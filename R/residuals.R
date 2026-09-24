@@ -27,6 +27,8 @@
 #' @method residuals ssn_lm
 #' @export
 #'
+#' @seealso [augment.SSN2()] [cooks.distance.SSN2()] [hatvalues.SSN2()] [influence.SSN2()]
+#'
 #' @examples
 #' # Copy the mf04p .ssn data to a local directory and read it into R
 #' # When modeling with your .ssn object, you will load it using the relevant
@@ -43,6 +45,8 @@
 #' )
 #' residuals(ssn_mod)
 #' resid(ssn_mod)
+#' residuals(ssn_mod, type = "pearson")
+#' residuals(ssn_mod, type = "standardized")
 #' rstandard(ssn_mod)
 residuals.ssn_lm <- function(object, type = "response", ...) {
   if (type == "response") {

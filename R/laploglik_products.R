@@ -7,7 +7,6 @@
 #' @noRd
 laploglik_products <- function(params_object, data_object, estmethod) {
 
-
   cov_matrix_list <- get_cov_matrix_list(params_object, data_object)
 
   # cholesky products (no local)
@@ -29,12 +28,6 @@ laploglik_products <- function(params_object, data_object, estmethod) {
     )
   }
 
-  # cholprods_list <- mapply(
-  #   c = cov_matrix_list, x = data_object$X_list, y = data_object$y_list,
-  #   function(c, x, y) get_cholprods_glm(c, x, y),
-  #   SIMPLIFY = FALSE
-  # )
-
   SigInv_list <- lapply(cholprods_list, function(x) x$SigInv)
   SigInv <- Matrix::bdiag(SigInv_list)
   SigInv_X <- do.call("rbind", lapply(cholprods_list, function(x) x$SigInv_X))
@@ -54,7 +47,7 @@ laploglik_products <- function(params_object, data_object, estmethod) {
   # find dispersion
   dispersion <- as.vector(params_object$dispersion) # take class away
 
-  # newton rhapson
+  # Newton-Raphson
   w_and_H <- get_w_and_H(
     data_object, dispersion,
     SigInv_list, SigInv_X, cov_betahat, Xt_SigInv_X, estmethod
@@ -65,16 +58,15 @@ laploglik_products <- function(params_object, data_object, estmethod) {
   mHldet <- w_and_H$mHldet
 
   betahat <- tcrossprod(cov_betahat, SigInv_X) %*% w
-  # reset w after finding betahat
-  if (!is.null(data_object$offset)) {
-    w <- w + data_object$offset
-  }
   X <- do.call("rbind", data_object$X_list)
   r <- w - X %*% betahat
   rt_SigInv_r <- crossprod(r, SigInv) %*% r
 
   # get wolfinger objects
   y <- as.vector(do.call("rbind", data_object$y_list))
+  if (!is.null(data_object$offset)) {
+    w <- w + data_object$offset
+  }
   l00 <- get_l00(data_object$family, w, y, data_object$size, dispersion)
   l01 <- mHldet
   l1 <- sum(unlist(lapply(cholprods_list, function(x) 2 * sum(log(diag(x$Sig_lowchol))))))
@@ -135,30 +127,22 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
   wdiffmax <- Inf
   iter <- 0
 
-
+  offset <- if (is.null(data_object$offset)) 0 else as.vector(data_object$offset)
 
   if (length(SigInv_list) == 1) {
     while (iter < 50 && wdiffmax > 1e-4) {
       iter <- iter + 1
-      # if (family %in% c("binomial", "beta")) {
-      #   w <- pmax(pmin(w, 8), -8)
-      # }
-      # compute the d vector
-      d <- get_d(family, w, y, size, dispersion)
+      d <- get_d(family, w + offset, y, size, dispersion)
       # and then the gradient vector
       g <- d - Ptheta %*% w
       # Next, compute H
-      D <- get_D(family, w, y, size, dispersion)
+      D <- get_D(family, w + offset, y, size, dispersion)
       H <- D - Ptheta # not PD but -H is
       solveHg <- solve(H, g)
       wnew <- w - solveHg
-      # mH_upchol <- chol(Matrix::forceSymmetric(-H))
-      # solveHg <- backsolve(mH_upchol, forwardsolve(t(mH_upchol), g))
-      # wnew <- w + solveHg # + because -H is already applied
-      # check overshoot on loglik surface
-      dnew <- get_d(family, wnew, y, size, dispersion)
+      dnew <- get_d(family, wnew + offset, y, size, dispersion)
       gnew <- dnew - Ptheta %*% wnew
-      if (any(is.na(gnew) | is.infinite(gnew))) stop("Convergence problem. Try using a different family, removing extreme observations, rescaling the response variable (if continuous), fixing ie at a known, non-zero value (via spcov_initial), or fixing dispersion at one (via dispersion_initial).", call. = FALSE)
+      if (any(is.na(gnew) | is.infinite(gnew))) stop("Convergence problem. Try using a different family, removing extreme observations, rescaling the response variable (if continuous), fixing nugget at a known, non-zero value (via nugget_initial), or fixing dispersion at one (via dispersion_initial).", call. = FALSE)
       if (max(abs(gnew)) > max(abs(g))) wnew <- w - 0.1 * solveHg # + because -H is already applied
       # if (max(abs(gnew)) > max(abs(g))) wnew <- w + 0.1 * solveHg
       wdiffmax <- max(abs(wnew - w))
@@ -187,11 +171,11 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
     while (iter < 50 && wdiffmax > 1e-4) {
       iter <- iter + 1
       # compute the d vector
-      d <- get_d(family, w, y, size, dispersion)
+      d <- get_d(family, w + offset, y, size, dispersion)
       # and then the gradient vector
       g <- d - Ptheta %*% w
       # Next, compute H
-      D <- get_D(family, w, y, size, dispersion)
+      D <- get_D(family, w + offset, y, size, dispersion)
       D_diag <- diag(D)
       D_list <- lapply(split(D_diag, sort(data_object$local_index)), function(x) Diagonal(x = x))
       # cholesky products (while local not implemented)
@@ -212,12 +196,6 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
         )
       }
 
-      # DSigInv_list <- mapply(
-      #   D = D_list, S = SigInv_list,
-      #   function(D, S) get_DSigInv(D, S),
-      #   SIMPLIFY = FALSE
-      # )
-
       # while local not impelmented
       if (data_object$parallel) {
         cluster_list <- DSigInv_list
@@ -234,9 +212,9 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
       solveHg <- HInv %*% g
       wnew <- w - solveHg
       # check overshoot on loglik surface
-      dnew <- get_d(family, wnew, y, size, dispersion)
+      dnew <- get_d(family, wnew + offset, y, size, dispersion)
       gnew <- dnew - Ptheta %*% wnew
-      if (any(is.na(gnew) | is.infinite(gnew))) stop("Convergence problem. Try using a different family, removing extreme observations, rescaling the response variable (if continuous), fixing ie at a known, non-zero value (via spcov_initial), or fixing dispersion at one (via dispersion_initial).", call. = FALSE)
+      if (any(is.na(gnew) | is.infinite(gnew))) stop("Convergence problem. Try using a different family, removing extreme observations, rescaling the response variable (if continuous), fixing nugget at a known, non-zero value (via nugget_initial), or fixing dispersion at one (via dispersion_initial).", call. = FALSE)
       if (max(abs(gnew)) > max(abs(g))) wnew <- w - 0.1 * solveHg
       wdiffmax <- max(abs(wnew - w))
       # update w
@@ -248,12 +226,6 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
     if (ret_mHInv) {
       w_and_H_list$mHInv <- -HInv
     }
-  }
-
-
-  # handle offset
-  if (!is.null(data_object$offset)) {
-    w_and_H_list$w <- w_and_H_list$w - data_object$offset
   }
 
   w_and_H_list
@@ -314,7 +286,7 @@ get_D <- function(family, w, y, size, dispersion) {
   } else if (family == "beta") {
     one_expw <- 1 + exp(w)
     k0 <- digamma(dispersion * exp(w) / one_expw) - digamma(dispersion / one_expw) + log(1 / y - 1)
-    k1 <- dispersion * (trigamma(dispersion * exp(w) / one_expw) + trigamma(dispersion / one_expw)) - 2 * sinh(w) * (k0 + 2 * atanh(1 - 2 * y))
+    k1 <- dispersion * (trigamma(dispersion * exp(w) / one_expw) + trigamma(dispersion / one_expw)) - 2 * sinh(w) * k0
     D_vec <- -dispersion * exp(2 * w) * k1 / one_expw^4
   }
   D <- Diagonal(x = D_vec)
@@ -387,12 +359,6 @@ get_l00 <- function(family, w, y, size, dispersion) {
 
 smw_HInv <- function(AInv, U, CInv) {
   mid <- CInv + t(U) %*% AInv %*% U
-  # solve_mid <- tryCatch(solve(mid), error = function(e) {
-  #   diag(mid) <- diag(mid) + 1e-4 # inverse stability
-  #   solve(mid)
-  # })
-  # diag(mid) <- diag(mid) + 1e-4
-  # if (all(mid == 0)) diag(mid) <- diag(mid) + 1e-4
   AInv - (AInv %*% U) %*% solve(mid) %*% (t(U) %*% AInv)
 }
 

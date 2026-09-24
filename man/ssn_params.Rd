@@ -6,13 +6,13 @@
 \alias{taildown_params}
 \alias{euclid_params}
 \alias{nugget_params}
-\title{Create covariance parameter objects.}
+\title{Create covariance parameter objects}
 \usage{
 tailup_params(tailup_type, de, range)
 
 taildown_params(taildown_type, de, range)
 
-euclid_params(euclid_type, de, range, rotate, scale)
+euclid_params(euclid_type, de, range, rotate, scale, extra)
 
 nugget_params(nugget_type, nugget)
 }
@@ -30,36 +30,49 @@ a partial sill.}
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
 \code{"mariah"}, \code{"epa"}, and \code{"none"}.}
 
-\item{euclid_type}{The euclidean covariance function type. Available options
+\item{euclid_type}{The Euclidean covariance function type. Available options
 include \code{"spherical"}, \code{"exponential"}, \code{"gaussian"},
-\code{"cosine"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
-\code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"}, and
-\code{"none"}.}
+\code{"circular"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
+\code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"},
+\code{"matern"}, \code{"cauchy"}, \code{"pexponential"}, and \code{"none"}.}
 
 \item{rotate}{Anisotropy rotation parameter (from 0 to \eqn{\pi} radians) for
-the euclidean portion of the covariance. A value of 0 (the default) implies no rotation.}
+the Euclidean portion of the covariance. A value of 0 (the default) implies no rotation.}
 
 \item{scale}{Anisotropy scale parameter (from 0 to 1) for
-the euclidean portion of the covariance. A value of 1 (the default) implies no scaling.}
+the Euclidean portion of the covariance. A value of 1 (the default) implies no scaling.}
+
+\item{extra}{An extra covariance parameter used when \code{spcov_type} is
+\code{"matern"}, \code{"cauchy"}, \code{"pexponential"}.}
 
 \item{nugget_type}{The nugget covariance function type. Available options
 include \code{"nugget"} or \code{"none"}.}
 
-\item{nugget}{The spatially independent (not correlated) random error variance. Commonly referred to as
+\item{nugget}{The spatially independent (uncorrelated) random error variance. Commonly referred to as
 a nugget.}
 }
 \value{
-A parameter object with class that matches the relevant \code{type} argument.
+A named numeric vector of covariance parameters with class that
+matches the relevant \code{type} argument.
 }
 \description{
-Create a covariance parameter object for us with other functions.
+Create a covariance parameter object for use with other functions.
 See \code{\link[spmodel:randcov_params]{spmodel::randcov_params()}} for documentation regarding
 random effect covariance parameter objects.
+}
+\details{
+Generally, all arguments to \code{tailup_params()}, \code{taildown_params()},
+\code{euclid_params()}, and \code{nugget_params()} must be specified, though
+default arguments are chosen when the relevant \code{_type} is \code{"none"}.
+For full parameterizations of all tailup, taildown, Euclidean, and nugget
+covariance functions, see \code{\link[=tailup_initial]{tailup_initial()}}, \code{\link[=taildown_initial]{taildown_initial()}},
+\code{\link[=euclid_initial]{euclid_initial()}}, and \code{\link[=nugget_initial]{nugget_initial()}}.
 }
 \examples{
 tailup_params("exponential", de = 1, range = 20)
 taildown_params("exponential", de = 1, range = 20)
 euclid_params("exponential", de = 1, range = 20, rotate = 0, scale = 1)
+euclid_params("matern", de = 1, range = 20, extra = 1)
 nugget_params("nugget", nugget = 1)
 }
 \references{

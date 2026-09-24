@@ -12,7 +12,7 @@ tailup_initial(tailup_type, de, range, known)
 
 taildown_initial(taildown_type, de, range, known)
 
-euclid_initial(euclid_type, de, range, rotate, scale, known)
+euclid_initial(euclid_type, de, range, rotate, scale, known, extra)
 
 nugget_initial(nugget_type, nugget, known)
 }
@@ -34,22 +34,26 @@ covariance parameters given to \code{*_initial()} are assumed known.}
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
 \code{"mariah"}, \code{"epa"}, and \code{"none"}.}
 
-\item{euclid_type}{The euclidean covariance function type. Available options
+\item{euclid_type}{The Euclidean covariance function type. Available options
 include \code{"spherical"}, \code{"exponential"}, \code{"gaussian"},
-\code{"cosine"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
-\code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"}, and
-\code{"none"}.}
+\code{"circular"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
+\code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"},
+\code{"matern"}, \code{"cauchy"}, \code{"pexponential"}, and \code{"none"}.}
 
 \item{rotate}{Anisotropy rotation parameter (from 0 to \eqn{\pi} radians) for
-the euclidean portion of the covariance. A value of 0 (the default) implies no rotation.}
+the Euclidean portion of the covariance. A value of 0 (the default) implies no rotation.}
 
 \item{scale}{Anisotropy scale parameter (from 0 to 1) for
-the euclidean portion of the covariance. A value of 1 (the default) implies no scaling.}
+the Euclidean portion of the covariance. A value of 1 (the default) implies no scaling.}
+
+\item{extra}{An optional initial or known Matérn smoothness, Cauchy shape,
+or powered-exponential exponent. Omit it to initialize the parameter by
+the covariance search.}
 
 \item{nugget_type}{The nugget covariance function type. Available options
 include \code{"nugget"} or \code{"none"}.}
 
-\item{nugget}{The spatially independent (not correlated) random error variance. Commonly referred to as
+\item{nugget}{The spatially independent (uncorrelated) random error variance. Commonly referred to as
 a nugget.}
 }
 \value{
@@ -58,7 +62,7 @@ A list with two elements: \code{initial} and \code{is_known}.
 with specified initial and/or known values. \code{is_known} is a named
 numeric vector indicating whether the spatial covariance parameters in
 \code{initial} are known or not. The class of the list
-matches the the relevant spatial covariance type.
+matches the relevant spatial covariance type.
 }
 \description{
 Create a covariance parameter initial object that specifies
@@ -68,9 +72,10 @@ random effect covariance parameter initial objects.
 }
 \details{
 Create an initial object for use with \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}.
-\code{NA} values can be given for \code{ie}, \code{rotate}, and \code{scale}, which lets
-these functions find initial values for parameters that are sometimes
-otherwise assumed known (e.g., \code{rotate} and \code{scale} with \code{\link[=ssn_lm]{ssn_lm()}} and \code{\link[=ssn_glm]{ssn_glm()}}.
+\code{NA} values can be given for \code{rotate} and \code{scale}, which lets
+these functions find initial values for parameters that are otherwise
+assumed known by default (\code{rotate = 0} and \code{scale = 1} when
+anisotropy is not modeled with \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}).
 Parametric forms for each spatial covariance type are presented below.
 
 \code{tailup_type} Details: Let \eqn{D} be a matrix of hydrologic distances,
@@ -134,14 +139,18 @@ forms for elements of \eqn{R(ze)} are given below:
 \item gaussian: \eqn{exp(- r^2 )}
 \item cubic: \eqn{(1 - 7r^2 + 8.75r^3 - 3.5r^5 + 0.75r^7) * (r <= 1)}
 \item pentaspherical: \eqn{(1 - 1.875r + 1.25r^3 - 0.375r^5) * (r <= 1)}
-\item cosine: \eqn{cos(r)}
+\item circular: \eqn{1 - (2 / \pi) * (r * sqrt(1 - r^2) + \arcsin(r))} for \eqn{0 \le r \le 1}, and zero for \eqn{r > 1}
 \item wave: \eqn{sin(r) * (h > 0) / r + (h = 0)}
 \item jbessel: \eqn{Bj(h * range)}, Bj is Bessel-J function
 \item gravity: \eqn{(1 + r^2)^{-0.5}}
 \item rquad: \eqn{(1 + r^2)^{-1}}
 \item magnetic: \eqn{(1 + r^2)^{-1.5}}
+\item matern: \eqn{2^{1-extra} eta^{extra} K_{extra}(eta) / Gamma(extra)}, where \eqn{eta = \sqrt{2 extra} D / range}
+\item cauchy: \eqn{(1 + r^2)^{-extra}}
+\item pexponential: \eqn{exp(-D^{extra} / range)}
 \item none: \eqn{I}
 }
+The powered-exponential range has units of distance raised to \code{extra}.
 
 \code{nugget_type} Details: Let \eqn{I} be an identity matrix and \eqn{0}
 be the zero matrix. Then parametric
@@ -160,6 +169,7 @@ Dispersion and random effect initial objects are specified via
 tailup_initial("exponential", de = 1, range = 20, known = "range")
 tailup_initial("exponential", de = 1, range = 20, known = "given")
 euclid_initial("spherical", de = 2, range = 4, scale = 0.8, known = c("range", "scale"))
+euclid_initial("matern", de = 2, range = 4, extra = 1, known = "extra")
 dispersion_initial("nbinomial", dispersion = 5)
 
 }

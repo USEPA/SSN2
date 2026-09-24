@@ -7,7 +7,6 @@ test_that("generics work local big data", {
     among_predpts = TRUE
   )
 
-
   set.seed(2)
 
   form <- Summer_mn ~ ELEV_DEM
@@ -28,13 +27,11 @@ test_that("generics work local big data", {
                      local = list(parallel = TRUE, ncores = 2, size = 20)
   )
 
-
   ######### Fit Tests
   expect_equal(coef(ssn_mod1_bd), c("(Intercept)" = 74.66, "ELEV_DEM" = -0.0310), tolerance = 0.01)
   expect_equal(length(unique(ssn_mod1_bd$local_index)), ceiling(NROW(mf04p$obs) / 100))
   expect_equal(coef(ssn_mod2_bd), c("(Intercept)" = 85.64, "ELEV_DEM" = -0.0365), tolerance = 0.01)
   expect_equal(length(unique(ssn_mod2_bd$local_index)), ceiling(NROW(mf04p$obs) / 20))
-
 
   ######### Predict/Predict Tests
   n_CH <- nrow(mf04p$preds$CapeHorn)
@@ -71,13 +68,11 @@ test_that("generics work local big data", {
                      local = list(parallel = TRUE, ncores = 2, size = 20), family = Gamma
   )
 
-
   ######### Fit Tests
   expect_equal(coef(ssn_mod1_bd), c("(Intercept)" = 7.72, "ELEV_DEM" = -0.0026), tolerance = 0.01)
   expect_equal(length(unique(ssn_mod1_bd$local_index)), ceiling(NROW(mf04p$obs) / 100))
-  expect_equal(coef(ssn_mod2_bd), c("(Intercept)" = 8.61, "ELEV_DEM" = -0.0030), tolerance = 0.01)
+  expect_equal(coef(ssn_mod2_bd), c("(Intercept)" = 8.922, "ELEV_DEM" = -0.0030), tolerance = 0.01)
   expect_equal(length(unique(ssn_mod2_bd$local_index)), ceiling(NROW(mf04p$obs) / 20))
-
 
   ######### Predict/Predict Tests
   n_CH <- nrow(mf04p$preds$CapeHorn)

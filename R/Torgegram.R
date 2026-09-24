@@ -1,29 +1,37 @@
-#' Compute the empirical semivariogram
+#' Compute an empirical stream-network diagnostic
 #'
-#' @description Compute the empirical semivariogram for varying bin sizes and
-#'   cutoff values.
+#' @description Compute the empirical semivariogram or autocovariance for
+#'   varying bin sizes and cutoff values.
 #'
 #' @param formula A formula describing the fixed effect structure.
 #' @param ssn.object A spatial stream network object with class \code{SSN}.
 #' @param type The Torgegram type. A vector with possible values \code{"flowcon"}
 #'   for flow-connected distances, \code{"flowuncon"} for flow-unconnected distances,
-#'   and \code{"euclid"} for Euclidean distances. The default is to show both
-#'   flow-connected and flow-unconnected distances.
-#' @param cloud A logical indicating whether the empirical semivariogram should
-#'   be summarized by distance class or not. When \code{cloud = FALSE} (the default), pairwise semivariances
-#'   are binned and averaged within distance classes. When \code{cloud} = TRUE,
-#'   all pairwise semivariances and distances are returned (this is known as
-#'   the "cloud" semivariogram).
+#'   and \code{"euclid"} for Euclidean distances.
+#'   The default is to show both flow-connected and
+#'   flow-unconnected distances.
+#' @param cloud A logical indicating whether the selected diagnostic should be
+#'   summarized by distance class or not. When \code{cloud = FALSE} (the
+#'   default), pairwise values are binned and averaged within distance classes.
+#'   When \code{cloud} = TRUE, all selected pairwise values and distances are
+#'   returned.
 #' @param robust A logical indicating whether the robust semivariogram
 #' (Cressie and Hawkins, 1980) is used for each \code{type}. The default is \code{FALSE}.
-#' @param bins The number of equally spaced bins. The default is 15.
-#' @param cutoff The maximum distance considered.
-#'   The default is half the diagonal of the bounding box from the coordinates.
+#' @param eacf A logical indicating whether to compute the empirical
+#'   autocovariance rather than the empirical semivariogram. The default is
+#'   \code{FALSE}. The same pairs, distances, bins, cutoff, and partition
+#'   restrictions are used in either case. When \code{TRUE},
+#'   \code{robust = TRUE} is not available.
+#' @param bins The number of equally spaced bins. The default is 15. Ignored if
+#'   \code{cloud = TRUE}.
+#' @param cutoff The maximum distance considered. The default is half the
+#'   maximum observed distance for each selected pair type.
 #' @param partition_factor An optional formula specifying the partition factor.
-#'   If specified, semivariances are only computed for observations sharing the
-#'   same level of the partition factor.
+#'   If specified, diagnostic values are only computed for observations sharing
+#'   the same level of the partition factor.
 #'
-#' @details The Torgegram is an empirical semivariogram is a tool used to visualize and model
+#' @details With \code{eacf = FALSE}, the Torgegram is an empirical semivariogram
+#'   used to visualize and model
 #'   spatial dependence by estimating the semivariance of a process at varying distances
 #'   separately for flow-connected, flow-unconnected, and Euclidean distances.
 #'   For a constant-mean process, the
@@ -34,20 +42,40 @@
 #'   least squares fit defined by \code{formula} are second-order stationary with
 #'   mean zero. These residuals are used to compute the empirical semivariogram.
 #'   At a distance \code{h}, the empirical semivariance is
-#'   \eqn{1/N(h) \sum (r1 - r2)^2}, where \eqn{N(h)} is the number of (unique)
+#'   \eqn{1/(2N(h)) \sum (r1 - r2)^2}, where \eqn{N(h)} is the number of (unique)
 #'   pairs in the set of observations whose distance separation is \code{h} and
 #'   \code{r1} and \code{r2} are residuals corresponding to observations whose
 #'   distance separation is \code{h}. The robust version is described by
-#'   Cressie and Hawkins (1980). In \code{SSN2}, these distance bins actually
+#'   Cressie and Hawkins (1980).
+#'
+#'   With \code{eacf = TRUE}, the Torgegram is an empirical autocovariance used to visualize and model
+#'   spatial dependence by estimating the autocovariance of a process at varying distances.
+#'   For a constant-mean process, the
+#'   autocovariance at distance \eqn{h} is denoted \eqn{Cov(h)} and defined as
+#'   \eqn{Cov(z1, z2)}. Under second-order stationarity,
+#'   \eqn{Cov(h) = Cov(0) - \gamma(h)}, where \eqn{\gamma(h)} is the semivariance function at distance \code{h}. Typically the residuals from an ordinary
+#'   least squares fit defined by \code{formula} are second-order stationary with
+#'   mean zero. These residuals are used to compute the empirical autocovariance.
+#'   At a distance \code{h}, the empirical autocovariance is
+#'   \eqn{1/N(h) \sum (r1 \times r2)}, where \eqn{N(h)} is the number of (unique)
+#'   pairs in the set of observations whose distance separation is \code{h} and
+#'   \code{r1} and \code{r2} are residuals corresponding to observations whose
+#'   distance separation is \code{h}.
+#'
+#'   In \code{SSN2}, the Torgegram distance bins actually
 #'   contain observations whose distance separation is \code{h +- c},
 #'   where \code{c} is a constant determined implicitly by \code{bins}. Typically,
 #'   only observations whose distance separation is below some cutoff are used
-#'   to compute the empirical semivariogram (this cutoff is determined by \code{cutoff}).
+#'   to compute either diagnostic (this cutoff is determined by \code{cutoff}).
 #'
-#' @return A list with elements correspond to \code{type}. Each element
+#' @return With \code{eacf = FALSE}, a list with elements corresponding to \code{type}. Each element
 #'   is data frame with distance bins (\code{bins}), the  average distance
 #'   (\code{dist}), the semivariance (\code{gamma}), and the
 #'   number of (unique) pairs (\code{np}) for the respective \code{type}.
+#'   With \code{eacf = TRUE}, the empirical autocovariance (\code{acov})
+#'   replaces \code{gamma}; the other columns are unchanged. When
+#'   \code{cloud = TRUE}, each element contains \code{dist} and either
+#'   \code{gamma} or \code{acov}, with one row for each unique pair.
 #'
 #' @export
 #'
@@ -63,6 +91,7 @@
 #'
 #' tg <- Torgegram(Summer_mn ~ 1, mf04p)
 #' plot(tg)
+#' Torgegram(Summer_mn ~ 1, mf04p, eacf = TRUE)
 #' @references
 #' Cressie, N & Hawkins, D.M. 1980. Robust estimation of the variogram.
 #'   \emph{Journal of the International Association for Mathematical Geology},
@@ -73,7 +102,20 @@
 #'   \bold{26(2)}, 253--264.
 Torgegram <- function(formula, ssn.object,
                       type = c("flowcon", "flowuncon"), cloud = FALSE, robust = FALSE,
-                      bins = 15, cutoff, partition_factor) {
+                      bins = 15, cutoff, partition_factor, eacf = FALSE) {
+  if (!is.logical(eacf) || length(eacf) != 1 || is.na(eacf)) {
+    stop("eacf must be a single non-missing logical value.", call. = FALSE)
+  }
+
+  if (eacf) {
+    if (!is.logical(robust) || length(robust) != 1 || is.na(robust)) {
+      stop("robust must be a single non-missing logical value.", call. = FALSE)
+    }
+    if (robust) {
+      stop("robust = TRUE is not available when eacf = TRUE.", call. = FALSE)
+    }
+  }
+
   Torgegram_initial_object <- get_Torgegram_initial_object(type)
   # find distance object
   dist_object <- get_dist_object(ssn.object, Torgegram_initial_object,
@@ -83,7 +125,8 @@ Torgegram <- function(formula, ssn.object,
   # find residuals
   lmod <- lm(formula = formula, data = ssn.object$obs)
   residuals <- residuals(lmod)
-  residual_mat_sqrt <- as.matrix(dist(residuals))
+
+  warn_torgegram_zero_distance(ssn.object$obs)
 
   # find relevant vectors
   if ("flowcon" %in% type || "flowuncon" %in% type) {
@@ -99,8 +142,14 @@ Torgegram <- function(formula, ssn.object,
     euclid_vector <- as.matrix(dist_object$euclid_mat)[upper.tri(dist_object$euclid_mat)]
   }
 
-  residual_vector <- residual_mat_sqrt[upper.tri(residual_mat_sqrt)]
-  residual2_vector <- residual_vector^2
+  if (eacf) {
+    residual_products <- tcrossprod(as.numeric(residuals))
+    residual2_vector <- residual_products[upper.tri(residual_products)]
+  } else {
+    residual_mat_sqrt <- as.matrix(dist(residuals))
+    residual_vector <- residual_mat_sqrt[upper.tri(residual_mat_sqrt)]
+    residual2_vector <- residual_vector^2
+  }
 
   # handle partition factor
   if (!missing(partition_factor) && !is.null(partition_factor)) {
@@ -133,15 +182,15 @@ Torgegram <- function(formula, ssn.object,
   if (cloud) {
 
     if ("flowcon" %in% type) {
-      esv_list$flowcon <- get_esv_cloud(residual2_vector, flowcon_vector, formula)
+      esv_list$flowcon <- get_esv_cloud(residual2_vector, flowcon_vector, cutoff, eacf)
     }
 
     if ("flowuncon" %in% type) {
-      esv_list$flowuncon <- get_esv_cloud(residual2_vector, flowuncon_vector, formula)
+      esv_list$flowuncon <- get_esv_cloud(residual2_vector, flowuncon_vector, cutoff, eacf)
     }
 
     if ("euclid" %in% type) {
-      esv_list$euclid <- get_esv_cloud(residual2_vector, euclid_vector, formula)
+      esv_list$euclid <- get_esv_cloud(residual2_vector, euclid_vector, cutoff, eacf)
     }
 
   } else {
@@ -156,39 +205,53 @@ Torgegram <- function(formula, ssn.object,
         esv_list$flowuncon <- get_esv_robust(residual12_vector, flowuncon_vector, bins, cutoff)
       }
 
-
       if ("euclid" %in% type) {
         esv_list$euclid <- get_esv_robust(residual12_vector, euclid_vector, bins, cutoff)
       }
     } else {
       if ("flowcon" %in% type) {
-        esv_list$flowcon <- get_esv(residual2_vector, flowcon_vector, bins, cutoff)
+        esv_list$flowcon <- get_esv(residual2_vector, flowcon_vector, bins, cutoff, eacf)
       }
 
       if ("flowuncon" %in% type) {
-        esv_list$flowuncon <- get_esv(residual2_vector, flowuncon_vector, bins, cutoff)
+        esv_list$flowuncon <- get_esv(residual2_vector, flowuncon_vector, bins, cutoff, eacf)
       }
 
-
       if ("euclid" %in% type) {
-        esv_list$euclid <- get_esv(residual2_vector, euclid_vector, bins, cutoff)
+        esv_list$euclid <- get_esv(residual2_vector, euclid_vector, bins, cutoff, eacf)
       }
     }
   }
 
   new_esv_list <- structure(esv_list, class = "Torgegram", call = match.call(), cloud = cloud)
+  if (eacf) attr(new_esv_list, "eacf") <- TRUE
   new_esv_list
 }
 
-#' Get a single empirical semivariogram for flow-connected, flow-unconnected, or Euclidean distance
+#' Warn once when a Torgegram will drop zero-distance (coincident-site) pairs
 #'
-#' @param dist_vector Distance vector
-#' @param resid2_vector Residual squared vector
-#' @param bins Distance bins
-#' @param cutoff Distance cutoff
+#' Matches spmodel's \code{esv()} zero-distance warning. A zero hydrologic
+#' distance can mean either a genuine coincident-site pair or a masked-out
+#' cross-network pair (hydrologic distance is undefined between networks, so
+#' \code{hydro_mat} is forced to zero there too), so checking a hydrologic or
+#' Euclidean distance vector directly for zeros is ambiguous. Physical
+#' coincidence -- the actual condition being warned about -- is unambiguous in
+#' the raw observation coordinates directly, regardless of which Torgegram
+#' type is being computed, so it's checked there instead.
+#'
+#' @param obs An sf object of observations (\code{ssn.object$obs}).
+#'
+#' @return \code{NULL}, invisibly.
 #'
 #' @noRd
-get_esv <- function(resid2_vector, dist_vector, bins, cutoff) {
+warn_torgegram_zero_distance <- function(obs) {
+  if (anyDuplicated(sf::st_coordinates(obs)) > 0) {
+    warning("Zero distances observed between at least one pair. Ignoring pairs.", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+get_esv <- function(resid2_vector, dist_vector, bins, cutoff, eacf = FALSE) {
   if (is.null(cutoff)) {
     cutoff <- max(dist_vector) * 0.5
   }
@@ -198,8 +261,7 @@ get_esv <- function(resid2_vector, dist_vector, bins, cutoff) {
 
   dist_classes <- cut(dist_vector, breaks = seq(0, cutoff, length.out = bins + 1))
 
-  # compute squared differences within each class
-  gamma <- tapply(resid2, dist_classes, function(x) mean(x) / 2)
+  gamma <- tapply(resid2, dist_classes, function(x) if (eacf) mean(x) else mean(x) / 2)
 
   # compute pairs within each class
   np <- tapply(resid2, dist_classes, length)
@@ -212,6 +274,7 @@ get_esv <- function(resid2_vector, dist_vector, bins, cutoff) {
 
   # return output
   esv_out <- data.frame(bins = factor(levels(dist_classes), levels = levels(dist_classes)), dist, gamma, np)
+  if (eacf) names(esv_out)[names(esv_out) == "gamma"] <- "acov"
 
   # set row names to NULL
   row.names(esv_out) <- NULL
@@ -221,7 +284,10 @@ get_esv <- function(resid2_vector, dist_vector, bins, cutoff) {
 }
 
 get_esv_robust <- function(resid12_vector, dist_vector, bins, cutoff, formula) {
-
+  # Cressie's robust estimator: averages sqrt(|differences|) instead of squared
+  # differences (resid12_vector is already on that scale), then raises back
+  # to the 4th power with a bias correction -- less sensitive to outlier pairs
+  # than the classical estimator above
   if (is.null(cutoff)) {
     cutoff <- max(dist_vector) * 0.5
   }
@@ -260,49 +326,22 @@ get_esv_robust <- function(resid12_vector, dist_vector, bins, cutoff, formula) {
   esv_out
 }
 
-get_esv_cloud <- function(residual2_vector, dist_vector, formula) {
-
-  index <- dist_vector > 0
+get_esv_cloud <- function(residual2_vector, dist_vector, cutoff, eacf = FALSE) {
+  # no binning/averaging -- every pair is returned as its own row for
+  # plotting, but still restricted to pairs within cutoff, matching the
+  # binned and robust paths (get_esv()/get_esv_robust())
+  if (is.null(cutoff)) {
+    cutoff <- max(dist_vector) * 0.5
+  }
+  index <- dist_vector > 0 & dist_vector <= cutoff
   dist_vector <- dist_vector[index]
   resid2 <- residual2_vector[index]
 
-  esv_out <- tibble::tibble(dist = dist_vector, gamma = resid2 / 2)
+  esv_out <- tibble::tibble(dist = dist_vector, gamma = if (eacf) resid2 else resid2 / 2)
+  if (eacf) names(esv_out)[names(esv_out) == "gamma"] <- "acov"
 
   # set row names to NULL
   # row.names(esv_out) <- NULL
 
   esv_out
-}
-
-get_esv_dotlist_defaults <- function(x, dotlist, cloud) {
-
-  names_dotlist <- names(dotlist)
-
-  # set defaults
-  if (!"main" %in% names_dotlist) {
-    dotlist$main <- "Torgegram"
-    if (cloud) dotlist$main <- paste0(dotlist$main, " (Cloud)")
-  }
-
-  if (!"xlab" %in% names_dotlist) {
-    dotlist$xlab <- "Distance"
-  }
-
-  if (!"ylab" %in% names_dotlist) {
-    dotlist$ylab <- "Semivariance"
-  }
-
-  if (!cloud && !"pch" %in% names_dotlist) {
-    dotlist$pch <- 19
-  }
-
-  # if (!cloud && !"cex" %in% names_dotlist) {
-  #   dotlist$cex <- (x$np - min(x$np)) / (max(x$np) - min(x$np)) * 2 + 1
-  # }
-
-  # if (!"ylim" %in% names_dotlist) {
-  #   dotlist$ylim <- c(0, 1.1 * max(x$gamma))
-  # }
-
-  dotlist
 }

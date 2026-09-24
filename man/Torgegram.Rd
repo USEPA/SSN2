@@ -2,7 +2,7 @@
 % Please edit documentation in R/Torgegram.R
 \name{Torgegram}
 \alias{Torgegram}
-\title{Compute the empirical semivariogram}
+\title{Compute an empirical stream-network diagnostic}
 \usage{
 Torgegram(
   formula,
@@ -12,7 +12,8 @@ Torgegram(
   robust = FALSE,
   bins = 15,
   cutoff,
-  partition_factor
+  partition_factor,
+  eacf = FALSE
 )
 }
 \arguments{
@@ -22,39 +23,52 @@ Torgegram(
 
 \item{type}{The Torgegram type. A vector with possible values \code{"flowcon"}
 for flow-connected distances, \code{"flowuncon"} for flow-unconnected distances,
-and \code{"euclid"} for Euclidean distances. The default is to show both
-flow-connected and flow-unconnected distances.}
+and \code{"euclid"} for Euclidean distances.
+The default is to show both flow-connected and
+flow-unconnected distances.}
 
-\item{cloud}{A logical indicating whether the empirical semivariogram should
-be summarized by distance class or not. When \code{cloud = FALSE} (the default), pairwise semivariances
-are binned and averaged within distance classes. When \code{cloud} = TRUE,
-all pairwise semivariances and distances are returned (this is known as
-the "cloud" semivariogram).}
+\item{cloud}{A logical indicating whether the selected diagnostic should be
+summarized by distance class or not. When \code{cloud = FALSE} (the
+default), pairwise values are binned and averaged within distance classes.
+When \code{cloud} = TRUE, all selected pairwise values and distances are
+returned.}
 
 \item{robust}{A logical indicating whether the robust semivariogram
 (Cressie and Hawkins, 1980) is used for each \code{type}. The default is \code{FALSE}.}
 
-\item{bins}{The number of equally spaced bins. The default is 15.}
+\item{bins}{The number of equally spaced bins. The default is 15. Ignored if
+\code{cloud = TRUE}.}
 
-\item{cutoff}{The maximum distance considered.
-The default is half the diagonal of the bounding box from the coordinates.}
+\item{cutoff}{The maximum distance considered. The default is half the
+maximum observed distance for each selected pair type.}
 
 \item{partition_factor}{An optional formula specifying the partition factor.
-If specified, semivariances are only computed for observations sharing the
-same level of the partition factor.}
+If specified, diagnostic values are only computed for observations sharing
+the same level of the partition factor.}
+
+\item{eacf}{A logical indicating whether to compute the empirical
+autocovariance rather than the empirical semivariogram. The default is
+\code{FALSE}. The same pairs, distances, bins, cutoff, and partition
+restrictions are used in either case. When \code{TRUE},
+\code{robust = TRUE} is not available.}
 }
 \value{
-A list with elements correspond to \code{type}. Each element
+With \code{eacf = FALSE}, a list with elements corresponding to \code{type}. Each element
 is data frame with distance bins (\code{bins}), the  average distance
 (\code{dist}), the semivariance (\code{gamma}), and the
 number of (unique) pairs (\code{np}) for the respective \code{type}.
+With \code{eacf = TRUE}, the empirical autocovariance (\code{acov})
+replaces \code{gamma}; the other columns are unchanged. When
+\code{cloud = TRUE}, each element contains \code{dist} and either
+\code{gamma} or \code{acov}, with one row for each unique pair.
 }
 \description{
-Compute the empirical semivariogram for varying bin sizes and
-cutoff values.
+Compute the empirical semivariogram or autocovariance for
+varying bin sizes and cutoff values.
 }
 \details{
-The Torgegram is an empirical semivariogram is a tool used to visualize and model
+With \code{eacf = FALSE}, the Torgegram is an empirical semivariogram
+used to visualize and model
 spatial dependence by estimating the semivariance of a process at varying distances
 separately for flow-connected, flow-unconnected, and Euclidean distances.
 For a constant-mean process, the
@@ -65,15 +79,31 @@ at distance \code{h}. Typically the residuals from an ordinary
 least squares fit defined by \code{formula} are second-order stationary with
 mean zero. These residuals are used to compute the empirical semivariogram.
 At a distance \code{h}, the empirical semivariance is
-\eqn{1/N(h) \sum (r1 - r2)^2}, where \eqn{N(h)} is the number of (unique)
+\eqn{1/(2N(h)) \sum (r1 - r2)^2}, where \eqn{N(h)} is the number of (unique)
 pairs in the set of observations whose distance separation is \code{h} and
 \code{r1} and \code{r2} are residuals corresponding to observations whose
 distance separation is \code{h}. The robust version is described by
-Cressie and Hawkins (1980). In \code{SSN2}, these distance bins actually
+Cressie and Hawkins (1980).
+
+With \code{eacf = TRUE}, the Torgegram is an empirical autocovariance used to visualize and model
+spatial dependence by estimating the autocovariance of a process at varying distances.
+For a constant-mean process, the
+autocovariance at distance \eqn{h} is denoted \eqn{Cov(h)} and defined as
+\eqn{Cov(z1, z2)}. Under second-order stationarity,
+\eqn{Cov(h) = Cov(0) - \gamma(h)}, where \eqn{\gamma(h)} is the semivariance function at distance \code{h}. Typically the residuals from an ordinary
+least squares fit defined by \code{formula} are second-order stationary with
+mean zero. These residuals are used to compute the empirical autocovariance.
+At a distance \code{h}, the empirical autocovariance is
+\eqn{1/N(h) \sum (r1 \times r2)}, where \eqn{N(h)} is the number of (unique)
+pairs in the set of observations whose distance separation is \code{h} and
+\code{r1} and \code{r2} are residuals corresponding to observations whose
+distance separation is \code{h}.
+
+In \code{SSN2}, the Torgegram distance bins actually
 contain observations whose distance separation is \code{h +- c},
 where \code{c} is a constant determined implicitly by \code{bins}. Typically,
 only observations whose distance separation is below some cutoff are used
-to compute the empirical semivariogram (this cutoff is determined by \code{cutoff}).
+to compute either diagnostic (this cutoff is determined by \code{cutoff}).
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R
@@ -85,6 +115,7 @@ mf04p <- ssn_import(temp_path, overwrite = TRUE)
 
 tg <- Torgegram(Summer_mn ~ 1, mf04p)
 plot(tg)
+Torgegram(Summer_mn ~ 1, mf04p, eacf = TRUE)
 }
 \references{
 Cressie, N & Hawkins, D.M. 1980. Robust estimation of the variogram.

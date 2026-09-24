@@ -22,7 +22,7 @@
 #'  statistical model using the tail-up and tail-down autocovariance
 #'  functions described in Ver Hoef and Peterson (2010). These models
 #'  are implemented in R via \command{ssn_lm} and \command{ssn_glm} in
-#'  the\code{SSN2} package. The hydrologic distance information needed to
+#'  the \code{SSN2} package. The hydrologic distance information needed to
 #'  model the covariance between flow-connected (i.e. water flows
 #'  from one location to the other) and flow-unconnected (i.e. water
 #'  does not flow from one location to the other, but they reside on
@@ -53,12 +53,12 @@
 #'  The downstream hydrologic distances are calculated based on the
 #'  binaryIDs and stored as matrices. The matrices are stored in a
 #'  directory named \sQuote{distance}, which is created by the
-#'  \command{ssn_create_distmat} function within the .ssn directory. The distance
+#'  \command{ssn_create_bigdist} function within the .ssn directory. The distance
 #'  directory will always contain at least one directory named
-#'  \sQuote{obs}, which contains a number of .RData files, one for each
+#'  \sQuote{obs}, which contains a number of .bmat files, one for each
 #'  network that has observed sites residing on it. The naming
 #'  convention for the files is based on the netID number
-#'  (e.g. dist.net1.RData). Each matrix in the \sQuote{obs} folder
+#'  (e.g. dist.net1.bmat). Each matrix in the \sQuote{obs} folder
 #'  contains the information to form a square matrix, which contains
 #'  the downstream hydrologic distance between each pair of observed
 #'  sites on the network. Direction is preserved, with columns
@@ -71,7 +71,7 @@
 #'  created within the distance directory, with the name corresponding
 #'  to the names attribute for the preds
 #'  (e.g. \code{attributes(ssn.object$preds)$names}). A sequence of
-#'  .RData files is created within this directory, similar to the
+#'  .bmat files is created within this directory, similar to the
 #'  structure for the observed sites, except that two objects are
 #'  stored for each network that contains \emph{both} observed and
 #'  prediction sites. The letters \code{a} and \code{b} are used in
@@ -92,18 +92,18 @@
 #'  directory with the name corresponding to the prediction points
 #'  dataset. The naming convention for these prediction to prediction
 #'  site distance matrices is the same as the distance matrices stored
-#'  in the \sQuote{obs} directory (e.g. dist.net1.RData). These extra
+#'  in the \sQuote{obs} directory (e.g. dist.net1.bmat). These extra
 #'  distance matrices are needed to perform block Kriging using
 #'  \code{\link[SSN2]{predict.ssn_lm}}.
 #'
 #'  If \code{only_predpts = TRUE}, the downstream
 #'  hydrologic distances will not be calculated between observed sites
 #'  themselves. Pairwise distances will only be calculated for observed
-#'  and prediction locations and. Pairwise distances between prediction
+#'  and prediction locations. Pairwise distances between prediction
 #'  locations will also be calculated if \code{among_predpts = TRUE}.
 #'
 #'
-#' @return The \command{ssn_create_distmat} function creates a collection
+#' @return The \command{ssn_create_bigdist} function creates a collection
 #'   of hierarchical directories in the \code{ssn$path} directory,
 #'   which store the pairwise distances between sites associated with
 #'   the \code{SSN} object. See details section for additional information.
@@ -111,18 +111,20 @@
 #' @export
 #'
 #' @examples
-#' ## Copy the MiddleForke04.ssn data to a local temporary directory.
+#' \donttest{
+#' ## Copy the MiddleFork04.ssn data to a local temporary directory.
 #' ## Only needed for this example.
 #' copy_lsn_to_temp()
+#' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
 #' ## Import SSN data
-#' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+#' mf04p <- ssn_import(temp_path,
 #'   predpts = c("pred1km.gpkg", "CapeHorn"),
 #'   overwrite = TRUE
 #' )
 #'
 #' ## Create distance matrices for observations and one set of prediction sites
 #' ## Include hydrologic distance matrices among prediction sites.
-#' ssn_create_distmat(mf04p,
+#' ssn_create_bigdist(mf04p,
 #'   predpts = "pred1km", overwrite = TRUE,
 #'   among_predpts = TRUE
 #' )
@@ -130,10 +132,11 @@
 #' ## Create distance matrices for an additional set of prediction points.
 #' ## Distance matrices for observations and pred1km prediction sites are
 #' ## not recalculated.
-#' ssn_create_distmat(mf04p,
+#' ssn_create_bigdist(mf04p,
 #'   predpts = "CapeHorn", overwrite = TRUE,
 #'   among_predpts = TRUE, only_predpts = TRUE
 #' )
+#' }
 ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
                                among_predpts = FALSE, only_predpts = FALSE,
                                no_cores = 1, verbose = TRUE) {

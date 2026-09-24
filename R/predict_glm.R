@@ -1,24 +1,43 @@
-#' @param type The scale (\code{response} or \code{link}) of predictions obtained
-#'   using \code{ssn_glm} objects.
+#' @param type The prediction type, either on the response scale, link scale (only for
+#'   \code{ssn_glm()} model objects), terms scale,
+#'   or prediction (i.e., Kriging) weight scale.
 #' @param newdata_size The \code{size} value for each observation in \code{newdata}
-#'   used when predicting for the binomial family.
+#'   used when predicting for the binomial family, with a default value of 1.
 #' @param var_correct A logical indicating whether to return the corrected prediction
-#'   variances when predicting via models fit using \code{ssn_glm}. The default is
+#'   variances when predicting via models fit using \code{ssn_glm()}. The default is
 #'   \code{TRUE}.
-#' @param dispersion The dispersion of assumed when computing the prediction standard errors
+#' @param dispersion The dispersion assumed when computing the prediction standard errors
 #'   for \code{ssn_glm()} model objects when \code{family}
 #'   is \code{"nbinomial"}, \code{"beta"}, \code{"Gamma"}, or \code{"inverse.gaussian"}.
 #'   If omitted, the model object dispersion parameter is used.
+#' @param delta A logical indicating whether to return delta method standard errors
+#' on the response scale when \code{se.fit = TRUE} and \code{type = "response"}. The default is \code{FALSE}.
 #' @rdname predict.SSN2
 #' @method predict ssn_glm
 #' @export
-predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms"), se.fit = FALSE, interval = c("none", "confidence", "prediction"),
-                            level = 0.95, dispersion = NULL, terms = NULL, local, var_correct = TRUE, newdata_size, na.action = na.fail, ...) {
+predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms", "weight"), se.fit = FALSE, interval = c("none", "confidence", "prediction"),
+                            level = 0.95, block = FALSE, dispersion = NULL, terms = NULL, local, var_correct = TRUE, delta = FALSE, newdata_size, na.action = na.fail, ...) {
   # match type argument so the two display
   type <- match.arg(type)
 
   # match interval argument so the three display
   interval <- match.arg(interval)
+
+  if (!is.logical(block) || length(block) != 1L || is.na(block)) {
+    stop("block must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (block) {
+    stop("Block prediction is not supported for ssn_glm() models.", call. = FALSE)
+  }
+
+  if (type == "weight") {
+    se.fit <- FALSE
+    interval <- "none"
+  }
+
+  if (!is.logical(delta)) {
+    stop("delta must be TRUE or FALSE", call. = FALSE)
+  }
 
   # new data name
   if (missing(newdata)) newdata <- "all"
@@ -35,7 +54,6 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
     object$coefficients$params_object$dispersion[1] <- dispersion
   }
 
-  # handle local for now
   if (missing(local)) local <- NULL
   # deal with local
   if (is.null(local)) {
@@ -54,75 +72,37 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
   local <- local_list
 
   # iterate through prediction names
-  if (is.null(newdata_name) || newdata_name == "all") {
-    newdata_name <- names(object$ssn.object$preds)
-  }
+  newdata_name <- resolve_newdata_name(object, newdata_name)
   if (length(newdata_name) > 1) {
-    pred_list <- lapply(newdata_name, function(x) predict(object, x, se.fit = se.fit, interval = interval, level = level, local = local, ...))
+    if (!is.null(newdata_size)) {
+      stop("newdata_size cannot be used when predicting for multiple newdata sets (newdata = \"all\" or omitted); call predict() separately for the single relevant dataset.", call. = FALSE)
+    }
+    pred_list <- lapply(newdata_name, function(x) {
+      predict(object, x,
+        type = type, se.fit = se.fit, interval = interval, level = level,
+        terms = terms, var_correct = var_correct, delta = delta, na.action = na.action, local = local, ...
+      )
+    })
     names(pred_list) <- newdata_name
     return(pred_list)
   }
 
-  if (newdata_name == ".missing") {
-    add_newdata_rows <- TRUE
-  } else {
-    add_newdata_rows <- FALSE
-  }
-
-  # rename relevant quantities
-  obdata <- object$ssn.object$obs
-
-  # newdata and newdata name
-  newdata <- object$ssn.object$preds[[newdata_name]]
+  pn <- get_prediction_newdata(object, newdata_name)
+  obdata <- pn$obdata
+  newdata <- pn$newdata
+  add_newdata_rows <- pn$add_newdata_rows
 
   # stop if zero rows
   if (NROW(newdata) == 0) {
     return(NULL)
   }
 
-  # get params object
-  params_object <- object$coefficients$params_object
   dispersion_params_val <- as.vector(coef(object, type = "dispersion"))
 
-  # make covariance object
-  cov_vector <- covmatrix(object, newdata_name)
-  if (local_list$method == "covariance") {
-    cov_vector_means <- colMeans(cov_vector)
-    cov_index <- order(as.numeric(cov_vector_means))[seq(from = object$n, to = max(1, object$n - local$size + 1))]
-    cov_vector <- cov_vector[, cov_index, drop = FALSE]
-  } else {
-    cov_index <- NULL
-  }
-  cov_vector_list <- split(cov_vector, seq_len(NROW(cov_vector)))
-
-  formula_newdata <- delete.response(terms(object))
-  # fix model frame bug with degree 2 basic polynomial and one prediction row
-  # e.g. poly(x, y, degree = 2) and newdata has one row
-  if (any(grepl("nmatrix.", attributes(formula_newdata)$dataClasses, fixed = TRUE)) && NROW(newdata) == 1) {
-    newdata <- newdata[c(1, 1), , drop = FALSE]
-    newdata_model_frame <- model.frame(formula_newdata, newdata, drop.unused.levels = FALSE, na.action = na.pass, xlev = object$xlevels)
-    newdata_model <- model.matrix(formula_newdata, newdata_model_frame, contrasts = object$contrasts)
-    newdata_model <- newdata_model[1, , drop = FALSE]
-    # find offset
-    offset <- model.offset(newdata_model_frame)
-    if (!is.null(offset)) {
-      offset <- offset[1]
-    }
-    newdata <- newdata[1, , drop = FALSE]
-  } else {
-    newdata_model_frame <- model.frame(formula_newdata, newdata, drop.unused.levels = FALSE, na.action = na.pass, xlev = object$xlevels)
-    # assumes that predicted observations are not outside the factor levels
-    newdata_model <- model.matrix(formula_newdata, newdata_model_frame, contrasts = object$contrasts)
-    # find offset
-    offset <- model.offset(newdata_model_frame)
-  }
-
-  attr_assign <- attr(newdata_model, "assign")
-  attr_contrasts <- attr(newdata_model, "contrasts")
-  keep_cols <- which(colnames(newdata_model) %in% colnames(model.matrix(object)))
-  newdata_model <- newdata_model[, keep_cols, drop = FALSE]
-  attr(newdata_model, "assign") <- attr_assign[keep_cols]
-  attr(newdata_model, "contrasts") <- attr_contrasts
+  nm <- get_newdata_model_matrix(object, newdata)
+  newdata <- nm$newdata
+  newdata_model <- nm$newdata_model
+  newdata_offset <- nm$offset
 
   # call terms if needed
   if (type == "terms") {
@@ -131,51 +111,56 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
     return(predict_terms(object, newdata_model, se.fit, scale = NULL, df = Inf, interval, level, add_newdata_rows, terms, ...))
   }
 
-  # storing newdata as a list
-  newdata_rows_list <- split(newdata, seq_len(NROW(newdata)))
+  # confidence intervals for the mean only need the fixed-effect design and
+  # coefficient covariance, so return before reading any prediction-to-observed
+  # distance/covariance data
+  if (interval == "confidence") {
+    # finding fitted values of the mean parameters
+    fit <- as.numeric(newdata_model %*% coef(object))
+    if (!is.null(newdata_offset)) {
+      fit <- fit + newdata_offset
+    }
+    vars <- get_diag_XVXt(newdata_model, vcov(object))
+    se <- sqrt(vars)
+    # tstar <- qt(1 - (1 - level) / 2, df = object$n - object$p)
+    tstar <- qnorm(1 - (1 - level) / 2)
+    lwr <- fit - tstar * se
+    upr <- fit + tstar * se
+    if (type == "response") {
+      fit <- invlink(fit, object$family, newdata_size)
+      lwr <- invlink(lwr, object$family, newdata_size)
+      upr <- invlink(upr, object$family, newdata_size)
+    }
+    return(finalize_interval_bounds(fit, lwr, upr, se, se.fit, add_newdata_rows, object$missing_index))
+  }
 
-  # storing newdata as a list
-  newdata_model_list <- split(newdata_model, seq_len(NROW(newdata)))
+  # make covariance object, in bounded row-chunks over newdata (mirroring
+  # block prediction's chunking) so the full n_obs x n_pred covariance is
+  # never materialized at once; ctx also bundles the marginal-variance and
+  # random-effect setup below so it is built once per call, not once per row
+  ctx <- get_point_pred_context(object, newdata_name, newdata, newdata_model, local_list)
+  cov_vector_list <- ctx$cov_vector_list
+  newdata_list <- ctx$newdata_list
+  cov_matrix_val <- ctx$cov_matrix_val
+  spatial_nugget_var <- ctx$spatial_nugget_var
+  randcov_params <- ctx$randcov_params
+  cov_lowchol <- ctx$cov_lowchol
+  randcov_context <- ctx$randcov_context
+  Xmat <- ctx$Xmat
+  y <- ctx$y
+  offset <- ctx$offset
 
-  # storing newdata as a list
-  newdata_list <- mapply(
-    x = newdata_rows_list, y = newdata_model_list, c = cov_vector_list,
-    FUN = function(x, y, c) list(row = x, x0 = y, c0 = c), SIMPLIFY = FALSE
-  )
+  # only "none" and "prediction" reach this point (match.arg() at the top
+  # restricts interval to one of "none"/"confidence"/"prediction", and
+  # "confidence" already returned above)
 
-  # storing cov matrix
-  cov_matrix_val <- covmatrix(object)
-
-  # total var (could do sums params object)
-  total_var <- cov_matrix_val[1, 1]
-
-  if (interval %in% c("none", "prediction")) {
-    local_list <- get_local_list_prediction(local)
-
-    if (local_list$method == "all") {
-      cov_lowchol <- t(chol(cov_matrix_val))
+  if (local_list$method == "all") {
       predvar_adjust_ind <- FALSE
       predvar_adjust_all <- TRUE
     } else {
-      cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
-      cov_lowchol <- t(chol(cov_matrix_val))
-      # predvar_adjust_ind <- TRUE
-      # predvar_adjust_all <- FALSE
-      predvar_adjust_ind <- FALSE
-      predvar_adjust_all <- TRUE # changed to this with averaging subsetting
+      predvar_adjust_ind <- TRUE
+      predvar_adjust_all <- FALSE
     }
-
-    # # matrix cholesky
-    # if (local_list$method == "all") {
-    #   cov_matrix_val <- covmatrix(object)
-    #   cov_lowchol <- t(chol(cov_matrix_val))
-    #   predvar_adjust_ind <- FALSE
-    #   predvar_adjust_all <- TRUE
-    # } else {
-    #   cov_lowchol <- NULL
-    #   predvar_adjust_ind <- TRUE
-    #   predvar_adjust_all <- FALSE
-    # }
 
     # change predvar adjust based on var correct
     if (!var_correct) {
@@ -183,74 +168,38 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
       predvar_adjust_all <- FALSE
     }
 
-    Xmat <- model.matrix(object)
-    y <- model.response(model.frame(object))
-    offset <- model.offset(model.frame(object))
     w <- fitted(object, type = "link")
     size <- object$size
-    if (!is.null(cov_index)) {
-      Xmat <- Xmat[cov_index, , drop = FALSE]
-      y <- y[cov_index]
-      w <- w[cov_index]
-      if (!is.null(offset)) {
-        offset <- offset[cov_index]
+
+    pred_val <- run_pred_dispatch(get_pred_glm, newdata_list, local_list = local_list,
+      se.fit = se.fit, interval = interval, formula = object$formula,
+      obdata = obdata, cov_matrix_val = cov_matrix_val,
+      spatial_nugget_var = spatial_nugget_var, randcov_params = randcov_params, cov_lowchol = cov_lowchol,
+      randcov_context = randcov_context,
+      Xmat = Xmat, y = y, offset = offset,
+      betahat = coefficients(object), cov_betahat = vcov(object, var_correct = FALSE),
+      contrasts = object$contrasts, local = local_list,
+      family = object$family, w = w,
+      size = size, dispersion = dispersion_params_val,
+      predvar_adjust_ind = predvar_adjust_ind, xlevels = object$xlevels, type = type
+    )
+
+    if (type == "weight") {
+      fit <- do.call("rbind", lapply(pred_val, function(x) x$fit))
+      fit <- as.matrix(fit)
+      colnames(fit) <- object$observed_index
+      if (add_newdata_rows) {
+        rownames(fit) <- object$missing_index
       }
-      if (!is.null(size)) {
-        size <- size[cov_index]
-      }
+      return(fit)
     }
-
-    # until big data back
-    if (local_list$parallel) {
-      cl <- parallel::makeCluster(local_list$ncores)
-      pred_val <- parallel::parLapply(cl, newdata_list, get_pred_glm,
-                                      se.fit = se.fit, interval = interval, formula = object$formula,
-                       obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-                       Xmat = Xmat, y = y,
-                       betahat = coefficients(object), cov_betahat = vcov(object, var_correct = FALSE),
-                       contrasts = object$contrasts, local = local_list,
-                       family = object$family, w = w,
-                       size = size, dispersion = dispersion_params_val,
-                       predvar_adjust_ind = predvar_adjust_ind, xlevels = object$xlevels, cov_index = cov_index)
-      cl <- parallel::stopCluster(cl)
-    } else {
-      pred_val <- lapply(newdata_list, get_pred_glm,
-                       se.fit = se.fit, interval = interval, formula = object$formula,
-                       obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-                       Xmat = Xmat, y = y,
-                       betahat = coefficients(object), cov_betahat = vcov(object, var_correct = FALSE),
-                       contrasts = object$contrasts, local = local_list,
-                       family = object$family, w = w,
-                       size = size, dispersion = dispersion_params_val,
-                       predvar_adjust_ind = predvar_adjust_ind, xlevels = object$xlevels, cov_index = cov_index)
-
-    }
-
-    # pred_val <- lapply(newdata_list, get_pred_glm,
-    #   se.fit = se.fit, interval = interval, formula = object$formula,
-    #   obdata = obdata, cov_matrix_val = cov_matrix_val, total_var = total_var, cov_lowchol = cov_lowchol,
-    #   Xmat = model.matrix(object), y = model.response(model.frame(object)),
-    #   betahat = coefficients(object), cov_betahat = vcov(object, var_correct = FALSE),
-    #   contrasts = object$contrasts, local = local_list,
-    #   family = object$family, w = fitted(object, type = "link"),
-    #   size = object$size, dispersion = dispersion_params_val,
-    #   predvar_adjust_ind = predvar_adjust_ind, xlevels = object$xlevels, cov_index
-    # )
-
-
-
-
-
 
     if (interval == "none") {
       fit <- vapply(pred_val, function(x) x$fit, numeric(1))
-      # apply offset
-      if (!is.null(offset)) {
-        fit <- fit + offset
+      if (!is.null(newdata_offset)) {
+        fit <- fit + newdata_offset
       }
-      if (type == "response") {
-        fit <- invlink(fit, object$family, newdata_size)
-      }
+      se <- NULL
       if (se.fit) {
         vars <- vapply(pred_val, function(x) x$var, numeric(1))
         if (predvar_adjust_all) {
@@ -265,31 +214,25 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
             dispersion = dispersion_params_val,
             cov_lowchol = cov_lowchol,
             x0 = newdata_model,
-            c0 = cov_vector,
-            cov_index = cov_index,
-            cov_betahat = vcov(object, var_correct = FALSE)
+            c0 = do.call(rbind, cov_vector_list)
           )
           vars <- vars_adj + vars
         }
         se <- sqrt(vars)
-        if (add_newdata_rows) {
-          names(fit) <- object$missing_index
-          names(se) <- object$missing_index
+        if (type == "response" && delta) {
+          se <- get_delta_se(fit, se, object$family, newdata_size)
         }
-        return(list(fit = fit, se.fit = se))
-      } else {
-        if (add_newdata_rows) {
-          names(fit) <- object$missing_index
-        }
-        return(fit)
       }
+      if (type == "response") {
+        fit <- invlink(fit, object$family, newdata_size)
+      }
+      return(finalize_interval_none(fit, se, add_newdata_rows, object$missing_index))
     }
 
     if (interval == "prediction") {
       fit <- vapply(pred_val, function(x) x$fit, numeric(1))
-      # apply offset
-      if (!is.null(offset)) {
-        fit <- fit + offset
+      if (!is.null(newdata_offset)) {
+        fit <- fit + newdata_offset
       }
       vars <- vapply(pred_val, function(x) x$var, numeric(1))
       if (predvar_adjust_all) {
@@ -302,9 +245,7 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
           dispersion = dispersion_params_val,
           cov_lowchol = cov_lowchol,
           x0 = newdata_model,
-          c0 = cov_vector,
-          cov_index = cov_index,
-          cov_betahat = vcov(object, var_correct = FALSE)
+          c0 = do.call(rbind, cov_vector_list)
         )
         vars <- vars_adj + vars
       }
@@ -313,62 +254,16 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
       tstar <- qnorm(1 - (1 - level) / 2)
       lwr <- fit - tstar * se
       upr <- fit + tstar * se
+      if (type == "response" && se.fit && delta) {
+        se <- get_delta_se(fit, se, object$family, newdata_size)
+      }
       if (type == "response") {
         fit <- invlink(fit, object$family, newdata_size)
         lwr <- invlink(lwr, object$family, newdata_size)
         upr <- invlink(upr, object$family, newdata_size)
       }
-      fit <- cbind(fit, lwr, upr)
-      row.names(fit) <- seq_len(NROW(fit))
-      if (se.fit) {
-        if (add_newdata_rows) {
-          row.names(fit) <- object$missing_index
-          names(se) <- object$missing_index
-        }
-        return(list(fit = fit, se.fit = se))
-      } else {
-        if (add_newdata_rows) {
-          row.names(fit) <- object$missing_index
-        }
-        return(fit)
-      }
+      return(finalize_interval_bounds(fit, lwr, upr, se, se.fit, add_newdata_rows, object$missing_index))
     }
-  } else if (interval == "confidence") {
-    # finding fitted values of the mean parameters
-    fit <- as.numeric(newdata_model %*% coef(object))
-    # apply offset
-    if (!is.null(offset)) {
-      fit <- fit + offset
-    }
-    newdata_model_list <- split(newdata_model, seq_len(NROW(newdata_model)))
-    vars <- as.numeric(vapply(newdata_model_list, function(x) crossprod(x, vcov(object) %*% x), numeric(1)))
-    se <- sqrt(vars)
-    # tstar <- qt(1 - (1 - level) / 2, df = object$n - object$p)
-    tstar <- qnorm(1 - (1 - level) / 2)
-    lwr <- fit - tstar * se
-    upr <- fit + tstar * se
-    if (type == "response") {
-      fit <- invlink(fit, object$family, newdata_size)
-      lwr <- invlink(lwr, object$family, newdata_size)
-      upr <- invlink(upr, object$family, newdata_size)
-    }
-    fit <- cbind(fit, lwr, upr)
-    row.names(fit) <- seq_len(NROW(fit))
-    if (se.fit) {
-      if (add_newdata_rows) {
-        row.names(fit) <- object$missing_index
-        names(se) <- object$missing_index
-      }
-      return(list(fit = fit, se.fit = se))
-    } else {
-      if (add_newdata_rows) {
-        row.names(fit) <- object$missing_index
-      }
-      return(fit)
-    }
-  } else {
-    stop("Interval must be none, confidence, or prediction")
-  }
 }
 
 
@@ -398,61 +293,57 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
 #' @param dispersion Dispersion parameter
 #' @param predvar_adjust_ind Whether prediction variance should be adjusted for uncertainty in w
 #' @param xlevels Levels of explanatory variables
+#' @param type type scale
+#' @param randcov_context random effect context
 #'
 #' @noRd
 get_pred_glm <- function(newdata_list, se.fit, interval,
-                         formula, obdata, cov_matrix_val, total_var, cov_lowchol,
-                         Xmat, y, betahat, cov_betahat, contrasts, local,
-                         family, w, size, dispersion, predvar_adjust_ind, xlevels, cov_index) {
+                         formula, obdata, cov_matrix_val, spatial_nugget_var, randcov_params, cov_lowchol,
+                         Xmat, y, offset, betahat, cov_betahat, contrasts, local,
+                         family, w, size, dispersion, predvar_adjust_ind, xlevels, type = "link", randcov_context = NULL) {
   cov_vector_val <- newdata_list$c0
-
-  # moved indexing of relevant quantities outside the function (cov_index no longer needed)
-  # if (!is.null(cov_index)) {
-  #   obdata <- obdata[cov_index, , drop = FALSE]
-  #   model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
-  #   Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
-  #   # Xmat <- Xmat[cov_index, , drop = FALSE]
-  #   y <- model.response(model_frame)
-  #   # y <- y[cov_index]
-  #   offset <- model.offset(model_frame)
-  #   # if (!is.null(offset)) {
-  #   #   offset <- offset[cov_index]
-  #   # }
-  #   w <- w[cov_index]
-  #   if (!is.null(size)) {
-  #     size <- size[cov_index]
-  #   }
-  # }
-
-  # if (local$method == "covariance") {
-  #   # n <- length(cov_vector_val)
-  #   # cov_index <- order(as.numeric(cov_vector_val))[seq(from = n, to = max(1, n - local$size + 1))] # use abs() here?
-  #   # obdata <- obdata[cov_index, , drop = FALSE]
-  #   # cov_vector_val <- cov_vector_val[cov_index]
-  #   # cov_matrix_val <- cov_matrix_val[cov_index, cov_index, drop = FALSE]
-  #   # w <- w[cov_index]
-  #   # y <- y[cov_index]
-  #   # if (!is.null(size)) {
-  #   #   size <- size[cov_index]
-  #   # }
-  #   # cov_lowchol <- t(Matrix::chol(Matrix::forceSymmetric(cov_matrix_val)))
-  #   # model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass, xlev = xlevels)
-  #   # Xmat <- model.matrix(formula, model_frame, contrasts = contrasts)
-  # }
+  n <- length(cov_vector_val)
+  if (local$method == "covariance") {
+    keep <- order(abs(as.numeric(cov_vector_val)))[seq.int(n, max(1L, n - local$size + 1L))]
+    cov_vector_val <- cov_vector_val[keep]
+    cov_lowchol <- t(chol(cov_matrix_val[keep, keep, drop = FALSE]))
+    Xmat <- Xmat[keep, , drop = FALSE]
+    y <- y[keep]
+    w <- w[keep]
+    if (!is.null(offset)) offset <- offset[keep]
+    if (!is.null(size)) size <- size[keep]
+  }
 
   c0 <- as.numeric(cov_vector_val)
   SqrtSigInv_X <- forwardsolve(cov_lowchol, Xmat)
-  SqrtSigInv_w <- forwardsolve(cov_lowchol, w)
-  residuals_pearson <- SqrtSigInv_w - SqrtSigInv_X %*% betahat
   SqrtSigInv_c0 <- forwardsolve(cov_lowchol, c0)
   x0 <- newdata_list$x0
+
+  if (type == "weight") {
+    Xt_SigInv <- t(backsolve(t(cov_lowchol), SqrtSigInv_X))
+    betahat_wt <- cov_betahat %*% Xt_SigInv
+    residuals_weight <- -1 * Xmat %*% betahat_wt
+    diag(residuals_weight) <- diag(residuals_weight) + 1
+    fit <- x0 %*% betahat_wt + Matrix::crossprod(SqrtSigInv_c0, forwardsolve(cov_lowchol, residuals_weight))
+    if (local$method == "covariance") {
+      weights <- matrix(0, 1L, n)
+      weights[, keep] <- fit
+      fit <- weights
+    }
+    return(list(fit = fit))
+  }
+
+  w_free <- if (!is.null(offset)) w - offset else w
+  SqrtSigInv_w <- forwardsolve(cov_lowchol, w_free)
+  residuals_pearson <- SqrtSigInv_w - SqrtSigInv_X %*% betahat
 
   fit <- as.numeric(x0 %*% betahat + Matrix::crossprod(SqrtSigInv_c0, residuals_pearson))
   H <- x0 - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_X)
   if (se.fit || interval == "prediction") {
+    total_var <- spatial_nugget_var + randcov_newvar(randcov_params, newdata_list$row, context = randcov_context)
     var <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
     if (predvar_adjust_ind) {
-      var_adj <- get_wts_varw(family, Xmat, y, w, size, dispersion, cov_lowchol, x0, c0, cov_index = cov_index, cov_betahat = cov_betahat)
+      var_adj <- get_wts_varw(family, Xmat, y, w, size, dispersion, cov_lowchol, x0, c0)
       var <- var_adj + var
     }
     pred_list <- list(fit = fit, var = var)
@@ -480,24 +371,11 @@ get_wts_varw <- function(family, Xmat, y, w, size, dispersion, cov_lowchol, x0, 
 
   SigInv <- chol2inv(t(cov_lowchol)) # works on upchol
 
-  if (!is.null(cov_index)) {
-    Xmat <- Xmat[cov_index, , drop = FALSE]
-    y <- y[cov_index]
-    w <- w[cov_index]
-    if (!is.null(size)) {
-      size <- size[cov_index]
-    }
-  }
   SigInv_X <- SigInv %*% Xmat
-  # cov_betahat <- chol2inv(chol(Matrix::forceSymmetric(crossprod(Xmat, SigInv_X)))) # invertibility issues big data
-  cov_betahat <- cov_betahat
+  cov_betahat <- chol2inv(chol(crossprod(Xmat, SigInv_X)))
   wts_beta <- tcrossprod(cov_betahat, SigInv_X)
   Ptheta <- SigInv - SigInv_X %*% wts_beta
 
-  d <- get_d(family, w, y, size, dispersion)
-  # and then the gradient vector
-  # g <-  d - Ptheta %*% w
-  # Next, compute H
   D <- get_D(family, w, y, size, dispersion)
   H <- D - Ptheta
   mHInv <- solve(-H) # chol2inv(chol(Matrix::forceSymmetric(-H))) # solve(-H)

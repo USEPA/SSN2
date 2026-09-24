@@ -3,21 +3,21 @@
 #' @description Create netgeom column for edges, observed sites,
 #'   and/or prediction sites in a Landscape Network (LSN).
 #'
-#' @param sf_data An \code{sf} object with LINESTING or POINT geometry
-#'   created using \code{link{lsn_to_ssn}} (see Details).
+#' @param sf_data An \code{sf} object with LINESTRING or POINT geometry
+#'   created using \code{ssn_assemble()} from SSNbler (see Details).
 #' @param type Character string defining geometry type of
-#'   \code{sf_data}. Default = \code{NULL}.
+#'   \code{sf_data}: \code{"POINT"} or \code{"LINESTRING"}.
 #' @param overwrite Logical indicating whether existing data should be
 #'   overwritten if present. Default = \code{FALSE}.
 #'
 #' @details Most users will not need to run \code{create_netgeom}
-#'   themselves because it is called internally when \code{lsn_to_ssn}
+#'   themselves because it is called internally when \code{ssn_assemble()}
 #'   is run or an \code{SSN} is imported using
-#'   \code{link[SSN2]{ssn_import}} found in the \code{SSN2}
+#'   \code{\link[SSN2]{ssn_import}} found in the \code{SSN2}
 #'   package. For users who do wish to run \code{create_netgeom}, the
 #'   \code{sf_data} object must represent edges, observed sites, or
 #'   prediction sites in a \code{SSN} object created using
-#'   \code{link{lsn_to_ssn}}.
+#'   \code{ssn_assemble()} from SSNbler.
 #'
 #'   The netgeom column contains information in character format used
 #'   to describe the topology of the LSN. The format and content of
@@ -25,13 +25,13 @@
 #'   contains LINESTRING (edges) or POINT (observed or prediction
 #'   sites) geometry. For edges, the netgeom format is:
 #'   \itemize{
-#'       \item{\code{'ENETWORK (netID, rid, upDist)'}}
+#'       \item \code{'ENETWORK (netID, rid, upDist)'}
 #'   }
 #'
 #'
 #'   For observed or prediction sites, the netgeom format is:
 #'   \itemize{
-#'       \item{\code{'SNETWORK (netID, rid, upDist, ratio, pid, locID)'}}
+#'       \item \code{'SNETWORK (netID, rid, upDist, ratio, pid, locID)'}
 #'   }
 #'
 #' The rid, ratio, upDist, netID, pid, and locID columns must be
@@ -45,8 +45,9 @@
 #'
 #' @export
 #' @examples
-#' ## Create local temporary copy of MiddleFork04.ssn found in
-#' ## the SSN2 package. Only necessary for this example.
+#' # Copy the mf04p .ssn data to a local directory and read it into R
+#' # When modeling with your .ssn object, you will load it using the relevant
+#' # path to the .ssn data on your machine
 #' copy_lsn_to_temp()
 #'
 #' # Import the SSN object with prediction points, pred1km
@@ -69,7 +70,7 @@
 #'     type = "LINESTRING",
 #'     overwrite = TRUE
 #' )
-create_netgeom <- function(sf_data, type = NULL, overwrite = FALSE) {
+create_netgeom <- function(sf_data, type, overwrite = FALSE) {
   ## check sf object
   if (!inherits(sf_data, "sf")) {
     stop("sf_data must be an sf object.", call. = FALSE)
@@ -81,7 +82,7 @@ create_netgeom <- function(sf_data, type = NULL, overwrite = FALSE) {
   }
 
   ## Check type argument
-  if (type != "POINT" & type != "LINESTRING") {
+  if (missing(type) || is.null(type) || !type %in% c("POINT", "LINESTRING")) {
     stop("type argument must be set to POINT or LINESTRING")
   }
 
@@ -129,8 +130,8 @@ create_netgeom <- function(sf_data, type = NULL, overwrite = FALSE) {
 
 # The rid, upDist and netID columns must already be present in edges
 #   before netgeom is added. These columns are created using
-#   \code{link{lines_to_lsn}}, \code{\link{updist_edges}}, and
-#   \code{link{lsn_to_ssn}}, respectively.
+#   \code{\link{lines_to_lsn}}, \code{\link{updist_edges}}, and
+#   \code{\link{lsn_to_ssn}}, respectively.
 #
 #   For observed or prediction sites, the netgeom format is:
 #   \itemize{

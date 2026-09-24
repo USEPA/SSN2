@@ -6,13 +6,23 @@
 \alias{loocv.ssn_glm}
 \title{Perform leave-one-out cross validation}
 \usage{
-\method{loocv}{ssn_lm}(object, cv_predict = FALSE, se.fit = FALSE, ...)
+\method{loocv}{ssn_lm}(
+  object,
+  cv_predict = FALSE,
+  se.fit = FALSE,
+  local,
+  interval = c("none", "prediction"),
+  level = 0.95,
+  ...
+)
 
 \method{loocv}{ssn_glm}(
   object,
   cv_predict = FALSE,
   type = c("link", "response"),
   se.fit = FALSE,
+  delta = FALSE,
+  local,
   ...
 )
 }
@@ -20,57 +30,68 @@
 \item{object}{A fitted model object from \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}.}
 
 \item{cv_predict}{A logical indicating whether the leave-one-out fitted values
-should be returned. Defaults to \code{FALSE}.}
+should be returned. Defaults to \code{FALSE}. If \code{object} is from \code{\link[=ssn_glm]{ssn_glm()}},
+the fitted values returned are on the link scale.}
 
 \item{se.fit}{A logical indicating whether the leave-one-out
-prediction standard errors should be returned. Defaults to \code{FALSE}.}
+prediction standard errors should be returned. Defaults to \code{FALSE}.
+If \code{object} is from \code{\link[=ssn_glm]{ssn_glm()}},
+the standard errors correspond to the fitted values returned on the link scale.}
+
+\item{local}{A list or logical. If a list, specific list elements described
+in \code{\link[=predict.SSN2]{predict.SSN2()}} control the big data approximation behavior.
+If a logical, \code{TRUE} chooses default list elements for the list version
+of \code{local} as specified in \code{\link[=predict.SSN2]{predict.SSN2()}}. Defaults to \code{FALSE},
+which performs exact computations.}
+
+\item{interval}{Whether to report coverage at a requested prediction interval
+level. \code{"none"} preserves the legacy coverage columns; \code{"prediction"}
+additionally reports coverage at \code{level}. Only available for
+\code{ssn_lm()} objects.}
+
+\item{level}{The requested prediction interval coverage level. Defaults to
+\code{0.95}.}
 
 \item{...}{Other arguments. Not used (needed for generic consistency).}
 
 \item{type}{The scale (\code{response} or \code{link}) of predictions obtained
 when \code{cv_predict = TRUE} and using \code{ssn_glm()} objects.}
+
+\item{delta}{A logical indicating whether to return delta method standard errors
+on the response scale when \code{se.fit = TRUE} and \code{type = "response"}. The default is \code{FALSE}.}
 }
 \value{
 If \code{cv_predict = FALSE} and \code{se.fit = FALSE},
-a tibble indicating several
-leave-one-out cross validation error metrics. If \code{cv_predict = TRUE} or \code{se.fit = TRUE},
-a list with elements: \code{stats}, a tibble indicating several
-leave-one-out cross validation metrics; \code{cv_predict}, a numeric vector
+a fit statistics tibble (with bias, MSPE, RMSPE, and cor2; see Details).
+If \code{cv_predict = TRUE} or \code{se.fit = TRUE},
+a list with elements: \code{stats}, a fit statistics tibble
+(with bias, MSPE, RMSPE, and cor2; see Details); \code{cv_predict}, a numeric vector
 with leave-one-out predictions for each observation (if \code{cv_predict = TRUE});
 and \code{se.fit}, a numeric vector with leave-one-out prediction standard
-errors for each observation (if \code{se.fit = TRUE}).
-
-If an \code{ssn_lm} object, the cross validation error metrics are:
-\itemize{
-\item bias: The average difference between the predicted value and true value
-\item std.bias: The average standardized difference between the predicted value and true value
-\item MSPE: The average squared difference between the predicted value and true value
-\item RMSPE: The root average squared difference between the predicted value and true value
-\item std.MSPE: The average standardized squared difference between the predicted value and true value
-\item RAV: The root of the average estimated variance of the predicted value
-\item cor2: The squared correlation between the predicted and true values
-\item cover.80: Coverage rates of 80\% prediction intervals built for the true values
-\item cover.90: Coverage rates of 90\% prediction intervals built for the true values
-\item cover.95: Coverage rates of 95\% prediction intervals built for the true values
-}
-
-If an \code{ssn_glm} object, the cross validation error metrics are:
-\itemize{
-\item bias: The average difference between the predicted value and true value
-\item MSPE: The average squared difference between the predicted value and true value
-\item RMSPE: The root average squared difference between the predicted value and true value
-\item RAV: The root of the average estimated variance of the predicted value (on the link scale)
-}
+errors for each observation (if \code{se.fit = TRUE}). When \code{object} is from
+\code{splm()} or \code{spautor()} and \code{interval = "prediction"}, the fit
+statistics tibble also has \code{cover.XX} columns (e.g. \code{cover.95}
+for \code{level = 0.95}; see Details).
 }
 \description{
-Perform leave-one-out cross validation.
+Perform leave-one-out cross validation with options for computationally
+efficient approximations for big data.
 }
 \details{
 Each observation is held-out from the data set and the remaining data
 are used to make a prediction for the held-out observation. This is compared
-to the true value of the observation and several model-fit statistics are computed
-across all observations. Currently only computationally feasible for observed data
-matrices smaller than approximately 10,000.
+to the true value of the observation and several fit statistics are (sometimes optionally) computed:
+bias, mean-squared-prediction error (MSPE), root-mean-squared-prediction
+error (RMSPE), and the squared correlation (cor2) between the observed data
+and leave-one-out predictions (regarded as a prediction version of r-squared
+appropriate for comparing across spatial and nonspatial models), and
+prediction interval coverage (cover.XX). Generally,
+bias should be near zero and prediction interval coverage at the
+intended level for well-fitting models. The lower the MSPE and RMSPE,
+the better the model fit (according to the leave-out-out criterion).
+The higher the cor2, the better the model fit (according to the leave-out-out
+criterion). cor2 and cover.XX are not returned when \code{object} was fit using
+\code{ssn_glm()} because we do not observe the underlying latent mean.
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

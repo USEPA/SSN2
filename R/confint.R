@@ -9,7 +9,7 @@
 #' @param level The confidence level required. The default is \code{0.95}.
 #' @param ... Other arguments. Not used (needed for generic consistency).
 #'
-#' @return Gaussian-based confidence intervals (two-sided and equal-tailed) for the
+#' @return Confidence intervals (two-sided and equal-tailed) for the
 #'   fixed effect coefficients based on the confidence level specified by \code{level}.
 #'   For \code{ssn_glm()} objects, confidence intervals are on the link scale.
 #'
@@ -36,10 +36,23 @@
 confint.ssn_lm <- function(object, parm, level = 0.95, ...) {
   # if (type == "fixed") ## may add other confidence intervals later
   alpha <- 1 - level
-  # tstar <- qt(1 - alpha / 2, df = object$n - object$p)
-  tstar <- qnorm(1 - alpha / 2)
   estimates <- coef(object, type = "fixed")
+  # standard errors come from the diagonal of the fixed-effect covariance
+  # matrix; off-diagonal covariances are ignored for these marginal intervals
   variances <- diag(vcov(object, type = "fixed"))
+
+  if (!is.null(object$ddf)) {
+    # equal-tailed t interval using per-coefficient Satterthwaite denominator
+    # degrees of freedom (see ssn_lm()'s ddf argument) -- matches
+    # summary()/tidy()'s own t-based inference when degrees of freedom are
+    # available
+    df <- object$ddf[names(estimates)]
+    tstar <- qt(1 - alpha / 2, df = df)
+  } else {
+    # equal-tailed Wald interval using the normal (infinite t) quantile, since
+    # spatial covariance parameters are estimated via GLS-type asymptotics
+    tstar <- qnorm(1 - alpha / 2)
+  }
   lower <- estimates - tstar * sqrt(variances)
   upper <- estimates + tstar * sqrt(variances)
   confints <- cbind(lower, upper)
@@ -48,6 +61,7 @@ confint.ssn_lm <- function(object, parm, level = 0.95, ...) {
   if (missing(parm)) {
     return(confints)
   } else {
+    # subset to only the requested coefficient(s) by name
     return(confints[row.names(confints) %in% parm, , drop = FALSE])
   }
 }

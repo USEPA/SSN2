@@ -12,18 +12,20 @@
 #'     \item \code{n} The sample size.
 #'     \item \code{p} The number of fixed effects.
 #'     \item \code{npar} The number of estimated covariance parameters.
-#'     \item \code{value} The optimized value of the fitting function
+#'     \item \code{value} The optimized value of the fitting function.
 #'     \item \code{AIC} The AIC.
 #'     \item \code{AICc} The AICc.
 #'     \item \code{BIC} The BIC.
-#'     \item \code{logLik} The log-likelihood
+#'     \item \code{logLik} The log-likelihood.
 #'     \item \code{deviance} The deviance.
-#'     \item \code{pseudo.r.squared} The pseudo r-squared
+#'     \item \code{pseudo.r.squared} The pseudo r-squared.
 #'   }
 #'
 #' @name glance.SSN2
 #' @method glance ssn_lm
 #' @export
+#'
+#' @seealso [stats::AIC()] [AICc()] [stats::BIC()] [logLik.SSN2()] [deviance.SSN2()] [pseudoR2()] [tidy.SSN2()] [augment.SSN2()]
 #'
 #' @examples
 #' # Copy the mf04p .ssn data to a local directory and read it into R

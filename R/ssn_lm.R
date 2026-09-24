@@ -1,14 +1,16 @@
-#' Fitting Linear Models for Spatial Stream Networks
+#' Fit spatial linear models for stream networks
 #'
-#' @description This function works on spatial stream network objects to fit
-#'   linear models with spatially autocorrelated errors using likelihood methods, allowing for
-#'   non-spatial random effects, anisotropy, partition factors, big data methods, and more.
+#' @description Fit spatial linear models for stream-network data using
+#'   likelihood methods, allowing for non-spatial random effects, anisotropy,
+#'   partition factors, and big data methods.
 #'   The spatial formulation is described in Ver Hoef and Peterson (2010)
 #'   and Peterson and Ver Hoef (2010).
 #'
 #' @param formula A two-sided linear formula describing the fixed effect structure
 #'   of the model, with the response to the left of the \code{~} operator and
 #'   the terms on the right, separated by \code{+} operators.
+#'   \code{.} on the right-hand side represents every variable in \code{data}
+#'   except the geometry column.
 #' @param ssn.object A spatial stream network object with class \code{SSN}.
 #' @param tailup_type The tailup covariance function type. Available options
 #'   include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
@@ -20,9 +22,9 @@
 #'   described in Details.
 #' @param euclid_type The euclidean covariance function type. Available options
 #'   include \code{"spherical"}, \code{"exponential"}, \code{"gaussian"},
-#'   \code{"cosine"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
-#'    \code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"}, and
-#'    \code{"none"}. Parameterizations are
+#'   \code{"circular"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
+#'    \code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"},
+#'    \code{"matern"}, \code{"cauchy"}, \code{"pexponential"}, and \code{"none"}. Parameterizations are
 #'   described in Details.
 #' @param nugget_type The nugget covariance function type. Available options
 #'   include \code{"nugget"} or \code{"none"}. Parameterizations are
@@ -44,7 +46,7 @@
 #'   \code{"reml"} for restricted maximum likelihood and \code{"ml"} for maximum
 #'   likelihood. The default is \code{"reml"}.
 #' @param anisotropy A logical indicating whether (geometric) anisotropy should
-#'   be modeled. Not required if \code{spcov_initial} is provided with 1) \code{rotate}
+#'   be modeled. Not required if \code{euclid_initial} is provided with 1) \code{rotate}
 #'   assumed unknown or assumed known and non-zero or 2) \code{scale} assumed unknown
 #'   or assumed known and less than one. When \code{anisotropy} is \code{TRUE},
 #'   computational times can significantly increase. The default is \code{FALSE}.
@@ -64,7 +66,8 @@
 #' @param randcov_initial An optional object specifying initial and/or
 #'   known values for the random effect variances. See [spmodel::randcov_initial()].
 #' @param partition_factor A one-sided linear formula with a single term
-#'   specifying the partition factor.  The partition factor assumes observations
+#'   specifying the partition factor. The variable named must be a factor,
+#'   ordered factor, or character. The partition factor assumes observations
 #'   from different levels of the partition factor are uncorrelated.
 #' @param local An optional logical or list controlling the big data approximation.
 #'   \code{local} can only be used when big data distance matrices have been created
@@ -111,7 +114,22 @@
 #'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 #'   that \code{local} is transformed into
 #'   \code{list(size = 200, method = "kmeans", var_adjust = "theoretical", parallel = FALSE)}.
-#' @param ... Other arguments to \code{stats::optim()}.
+#' @param range_constrain An optional logical that indicates whether the range
+#'   should be constrained to enhance numerical stability. If \code{range_constrain = TRUE},
+#'   the maximum possible range value is 4 times the maximum Euclidean distance in the domain.
+#'   The same value of \code{range_constrain} is applied to tailup, taildown, and Euclidean covariances.
+#'   If \code{range_constrain = FALSE}, then maximum possible range is unbounded.
+#'   The default is \code{FALSE}.
+#'   Note that if \code{range_constrain = TRUE} and the value of \code{range} in \code{spcov_initial}
+#'   is larger than \code{range_constrain}, then \code{range_constrain} is set to
+#'   \code{FALSE}.
+#' @param ddf The denominator degrees of freedom to be used for eventual hypothesis testing
+#'   (e.g., \code{confint()}, \code{summary()}, or \code{tidy()} calls on the fitted model object).
+#'   \code{"asymptotic"} assumes infinite degrees of freedom, implying z-tests.
+#'   \code{"satterthwaite"} implements Satterthwaite degrees of freedom, implying t-tests
+#'   that are generally more appropriate for small samples. The default is \code{"satterthwaite"} when the sample size is
+#'   less than or equal to 500 and \code{"asymptotic"} otherwise.
+#' @param ... Other arguments to [esv()] or \code{stats::optim()}.
 #'
 #' @details The linear model for spatial stream networks can be written as
 #'   \eqn{y = X \beta + zu + zd + ze + n}, where \eqn{X} is the fixed effects design
@@ -119,13 +137,13 @@
 #'   \eqn{zd} is taildown random error, and \eqn{ze} is Euclidean random error,
 #'   and \eqn{n} is nugget random error. The tailup random errors capture spatial
 #'   covariance moving downstream (and depend on downstream distance), the taildown
-#'   random errors capture spatial covariance moving upstream (and depend on upstream)
-#'   distance, the Euclidean random errors capture spatial covariance that depends on
+#'   random errors capture spatial covariance moving upstream (and depend on upstream
+#'   distance), the Euclidean random errors capture spatial covariance that depends on
 #'   Euclidean distance, and the nugget random errors captures variability
 #'   independent of spatial locations. The response \eqn{y} is modeled using a
 #'   spatial covariance function expressed as
 #'   \eqn{de(zu) * R(zu) + de(zd) * R(zd) + de(ze) * R(ze) + nugget * I}.
-#'   \eqn{de(zu)}, \eqn{de(zu)}, and \eqn{de(zd)} represent the tailup, taildown, and Euclidean
+#'   \eqn{de(zu)}, \eqn{de(ze)}, and \eqn{de(zd)} represent the tailup, taildown, and Euclidean
 #'   variances, respectively. \eqn{R(zu)}, \eqn{R(zd)}, and \eqn{R(ze)} represent the tailup,
 #'   taildown, and Euclidean correlation matrices, respectively. Each correlation
 #'   matrix depends on a range parameter that controls the distance-decay behavior
@@ -193,14 +211,18 @@
 #'     \item gaussian: \eqn{exp(- r^2 )}
 #'     \item cubic: \eqn{(1 - 7r^2 + 8.75r^3 - 3.5r^5 + 0.75r^7) * (r <= 1)}
 #'     \item pentaspherical: \eqn{(1 - 1.875r + 1.25r^3 - 0.375r^5) * (r <= 1)}
-#'     \item cosine: \eqn{cos(r)}
+#'     \item circular: \eqn{1 - (2 / \pi) * (r * sqrt(1 - r^2) + \arcsin(r))} for \eqn{0 \le r \le 1}, and zero for \eqn{r > 1}
 #'     \item wave: \eqn{sin(r) * (h > 0) / r + (h = 0)}
 #'     \item jbessel: \eqn{Bj(h * range)}, Bj is Bessel-J function
 #'     \item gravity: \eqn{(1 + r^2)^{-0.5}}
 #'     \item rquad: \eqn{(1 + r^2)^{-1}}
 #'     \item magnetic: \eqn{(1 + r^2)^{-1.5}}
+#'     \item matern: \eqn{2^{1-extra} eta^{extra} K_{extra}(eta) / Gamma(extra)}, where \eqn{eta = \sqrt{2 extra} D / range}
+#'     \item cauchy: \eqn{(1 + r^2)^{-extra}}
+#'     \item pexponential: \eqn{exp(-D^{extra} / range)}
 #'     \item none: \eqn{I}
 #'   }
+#'   The powered-exponential range has units of distance raised to \code{extra}.
 #'
 #'   \code{nugget_type} Details: Let \eqn{I} be an identity matrix and \eqn{0}
 #'    be the zero matrix. Then parametric
@@ -219,7 +241,8 @@
 #'   }
 #'
 #' \code{anisotropy} Details: By default, all Euclidean covariance parameters except \code{rotate}
-#'   and \code{scale} are assumed unknown, requiring estimation. If either \code{rotate} or \code{scale}
+#'   and \code{scale} as well as all random effect variance parameters
+#'   are assumed unknown, requiring estimation. If either \code{rotate} or \code{scale}
 #'   are given initial values other than 0 and 1 (respectively) or are assumed unknown
 #'   in [euclid_initial()], \code{anisotropy} is implicitly set to \code{TRUE}.
 #'   (Geometric) Anisotropy is modeled by transforming a Euclidean covariance function that
@@ -232,14 +255,14 @@
 #'   covariance is then computed using these transformed coordinates.
 #'
 #'  \code{random} Details: If random effects are used, the model
-#'   can be written as \eqn{y = X \beta + W1\gamma 1 + ... Wj\gamma j + zu + zd + ze + n},
+#'   can be written as \eqn{y = X \beta + Z1u1 + ... Zjuj + zu + zd + ze + n},
 #'   where each Z is a random effects design matrix and each u is a random effect.
 #'
 #'  \code{partition_factor} Details: The partition factor can be represented in matrix form as \eqn{P}, where
 #'   elements of \eqn{P} equal one for observations in the same level of the partition
 #'   factor and zero otherwise. The covariance matrix involving only the
 #'   spatial and random effects components is then multiplied element-wise
-#'   (Hadmard product) by \eqn{P}, yielding the final covariance matrix.
+#'   (Hadamard product) by \eqn{P}, yielding the final covariance matrix.
 #'
 #' \code{local} Details: The big data approximation works by sorting observations into different levels
 #'   of an index variable. Observations in different levels of the index variable
@@ -256,62 +279,18 @@
 #'
 #'
 #' @return A list with many elements that store information about
-#'   the fitted model object and has class \code{ssn_lm}. Many generic functions that
+#'   the fitted model object. The list has class \code{ssn_lm}. Many generic functions that
 #'   summarize model fit are available for \code{ssn_lm} objects, including
-#'   \code{AIC}, \code{AICc}, \code{anova}, \code{augment}, \code{coef},
+#'   \code{AIC}, \code{AICc}, \code{anova}, \code{augment}, \code{BIC}, \code{coef},
 #'   \code{cooks.distance}, \code{covmatrix}, \code{deviance}, \code{fitted}, \code{formula},
 #'   \code{glance}, \code{glances}, \code{hatvalues}, \code{influence},
 #'   \code{labels}, \code{logLik}, \code{loocv}, \code{model.frame}, \code{model.matrix},
-#'   \code{plot}, \code{predict}, \code{print}, \code{pseudoR2}, \code{summary},
+#'   \code{plot}, \code{predict}, \code{print}, \code{pseudoR2},
+#'   \code{\link[=satterthwaite.SSN2]{satterthwaite}}, \code{summary},
 #'   \code{terms}, \code{tidy}, \code{update}, \code{varcomp}, and \code{vcov}.
 #'
-#'   This fitted model list contains the following elements:
-#'   \itemize{
-#'     \item \code{additive}: The name of the additive function value column.
-#'     \item \code{anisotropy}: Whether euclidean anisotropy was modeled.
-#'     \item \code{call}: The function call.
-#'     \item \code{coefficients}: Model coefficients.
-#'     \item \code{contrasts}: Any user-supplied contrasts.
-#'     \item \code{cooks_distance}: Cook's distance values.
-#'     \item \code{crs}: The geographic coordinate reference system.
-#'     \item \code{deviance}: The model deviance.
-#'     \item \code{diagtol}: A tolerance value that may be added to the diagonal
-#'       of covariance matrices to encourage decomposition stability.
-#'     \item \code{estmethod}: The estimation method.
-#'     \item \code{euclid_max}: The maximum euclidean distance.
-#'     \item \code{fitted}: Fitted values.
-#'     \item \code{formula}: The model formula.
-#'     \item \code{hatvalues}: The hat (leverage) values.
-#'     \item \code{is_known}: An object that identifies which parameters are known.
-#'     \item \code{local_index}: An index identifier used internally for sorting.
-#'     \item \code{missing_index}: Which rows in the "obs" object had missing responses.
-#'     \item \code{n}: The sample size.
-#'     \item \code{npar}: The number of estimated covariance parameters.
-#'     \item \code{observed_index}: Which rows in the "obs" object had observed responses.
-#'     \item \code{optim}: The optimization output.
-#'     \item \code{p}: The number of fixed effects.
-#'     \item \code{partition_factor}: The partition factor formula.
-#'     \item \code{pseudoR2}: The pseudo R-squared.
-#'     \item \code{random}: The random effect formula.
-#'     \item \code{residuals}: The residuals.
-#'     \item \code{sf_column_name}: The name of the geometry columns \code{ssn.object}
-#'     \item \code{ssn.object}: An updated \code{ssn.object}.
-#'     \item \code{tail_max}: The maximum stream distance.
-#'     \item \code{terms}: The model terms.
-#'     \item \code{vcov}: Variance-covariance matrices
-#'     \item \code{xlevels}: The levels of factors in the model matrix.
-#'   }
-#'
-#'   These list elements are meant to be used with various generic functions
-#'   (\code{e.g., residuals()} that operate on the model object.
-#'   While possible to access elements of the fitted model list directly, we strongly
-#'   advise against doing so when there is a generic available to return the element
-#'   of interest. For example, we strongly recommend using \code{residuals()} to
-#'   obtain model residuals instead of accessing the fitted model list directly via
-#'   \code{object$residuals}.
-#'
 #' @note This function does not perform any internal scaling. If optimization is not
-#'   stable due to large extremely large variances, scale relevant variables
+#'   stable due to extremely large variances, scale relevant variables
 #'   so they have variance 1 before optimization.
 #'
 #' @export
@@ -350,7 +329,8 @@ ssn_lm <- function(formula, ssn.object,
                    euclid_type = "none", nugget_type = "nugget",
                    tailup_initial, taildown_initial, euclid_initial, nugget_initial,
                    additive, estmethod = "reml", anisotropy = FALSE,
-                   random, randcov_initial, partition_factor, local, ...) {
+                   random, randcov_initial, partition_factor, local,
+                   range_constrain, ddf, ...) {
   # set defaults
   if (missing(tailup_initial)) tailup_initial <- NULL
   if (missing(taildown_initial)) taildown_initial <- NULL
@@ -361,6 +341,9 @@ ssn_lm <- function(formula, ssn.object,
   if (missing(randcov_initial)) randcov_initial <- NULL
   if (missing(partition_factor)) partition_factor <- NULL
   if (missing(local)) local <- NULL
+  if (missing(range_constrain)) range_constrain <- FALSE
+  if (missing(ddf)) ddf <- NULL
+  if (!is.null(ddf)) determine_ddf(ddf, n = 0L)
 
   # fix additive
   if (is.symbol(substitute(additive))) { # or is.language
@@ -375,18 +358,19 @@ ssn_lm <- function(formula, ssn.object,
 
   # perform checks to return errors
   check_ssn_lm(initial_object, ssn.object, additive, estmethod)
+  check_formula_vars_in_data(formula, ssn.object$obs, random, partition_factor)
 
   # get data object
   if (is.null(local) || (is.logical(local) && !local)) {
     data_object <- get_data_object(
       formula, ssn.object, additive, anisotropy,
-      initial_object, random, randcov_initial, partition_factor, local, ...
+      initial_object, random, randcov_initial, partition_factor, local, range_constrain, ...
     )
     if (data_object$n > 5000) message("Because the sample size exceeds 5000, consider setting local = TRUE to perform computationally efficient approximations. Ensure big data distance matrices have been created using ssn_create_bigdist().")
   } else {
     data_object <- get_data_object_bigdata(
       formula, ssn.object, additive, anisotropy,
-      initial_object, random, randcov_initial, partition_factor, local, ...
+      initial_object, random, randcov_initial, partition_factor, local, range_constrain, ...
     )
   }
 
@@ -397,26 +381,42 @@ ssn_lm <- function(formula, ssn.object,
   optim_dotlist <- get_optim_dotlist(...)
 
   if (data_object$parallel) {
-    data_object$cl <- parallel::makeCluster(data_object$ncores)
-    # invisible(clusterEvalQ(data_object$cl, library(Matrix)))
+    data_object$cl <- make_ssn_cluster(data_object$ncores)
+    on.exit(if (!is.null(data_object$cl)) parallel::stopCluster(data_object$cl), add = TRUE)
   }
 
   # covariance parameter estimation
   cov_est_object <- cov_estimate_gloglik(data_object, ssn.object, initial_object, estmethod, optim_dotlist)
 
+  warn_optim_convergence(cov_est_object$optim_output$convergence)
+
+  # the iid special case (no spatial dependence, no random effects) has a
+  # diagonal covariance matrix, so model statistics can be computed with
+  # cheaper, non-spatial formulas instead of the general dense-matrix path
+  is_iid_stats_eligible <- inherits(cov_est_object$params_object$tailup, "tailup_none") &&
+    inherits(cov_est_object$params_object$taildown, "taildown_none") &&
+    inherits(cov_est_object$params_object$euclid, "euclid_none") &&
+    is.null(random)
+
   # compute model statistics
   if (is.null(local) || (is.logical(local) && !local)) {
-    model_stats <- get_model_stats(cov_est_object, data_object, estmethod)
+    if (is_iid_stats_eligible) {
+      model_stats <- get_model_stats_iid(cov_est_object, data_object, estmethod)
+    } else {
+      model_stats <- get_model_stats(cov_est_object, data_object, estmethod)
+    }
   } else {
-    model_stats <- get_model_stats_bigdata(cov_est_object, data_object, estmethod)
+    if (is_iid_stats_eligible) {
+      model_stats <- get_model_stats_bigdata_iid(cov_est_object, data_object, estmethod)
+    } else {
+      model_stats <- get_model_stats_bigdata(cov_est_object, data_object, estmethod)
+    }
   }
 
-  # parallel cluster if necessary (add back when local implemented)
   if (data_object$parallel) {
     data_object$cl <- parallel::stopCluster(data_object$cl) # makes it NULL
   }
 
-  # store index if necessary (add back when local implemented)
   if (is.null(local) || (is.logical(local) && !local)) { # local was stored as NULL in previous function call
     local_index <- NULL
   } else {
@@ -425,8 +425,6 @@ ssn_lm <- function(formula, ssn.object,
     data_object$observed_index <- which(data_object$observed_index)
     data_object$missing_index <- which(data_object$missing_index)
   }
-
-
 
   output <- list(
     coefficients = model_stats$coefficients,
@@ -440,13 +438,15 @@ ssn_lm <- function(formula, ssn.object,
     p = data_object$p,
     n = data_object$n,
     npar = model_stats$npar,
-    formula = formula,
+    formula = data_object$formula,
     terms = data_object$terms,
     call = match.call(),
     estmethod = estmethod,
     anisotropy = data_object$anisotropy,
     optim = cov_est_object$optim_output,
     random = random,
+    random_xlev = data_object$randcov_xlev,
+    partition_xlev = data_object$partition_xlev,
     is_known = cov_est_object$is_known,
     partition_factor = partition_factor,
     observed_index = data_object$observed_index,
@@ -465,5 +465,12 @@ ssn_lm <- function(formula, ssn.object,
 
   output <- output[sort(names(output))]
   new_output <- structure(output, class = "ssn_lm")
+
+  # ddf = "satterthwaite" also produces the covariance matrix of the
+  # covariance parameter estimates, stored to prevent further recomputation
+  fit_ddf <- get_fit_ddf(new_output, ddf)
+  new_output$ddf <- fit_ddf$ddf
+  new_output$vcov$cov <- fit_ddf$vcov_cov
+
   new_output
 }

@@ -47,24 +47,26 @@ tidy.ssn_lm <- function(x, conf.int = FALSE,
   }
 
   if (effects == "fixed") {
-    result <- tibble::as_tibble(summary(x)$coefficients$fixed,
+    summary_fixed <- summary(x)$coefficients$fixed
+    result <- tibble::as_tibble(summary_fixed,
       rownames = "term", .name_repair = "minimal"
     )
-    colnames(result) <- c(
-      "term", "estimate", "std.error",
-      "statistic", "p.value"
-    )
+    if ("df" %in% colnames(summary_fixed)) {
+      colnames(result) <- c("term", "estimate", "std.error", "df", "statistic", "p.value")
+    } else {
+      colnames(result) <- c(
+        "term", "estimate", "std.error",
+        "statistic", "p.value"
+      )
+    }
 
     if (conf.int) {
       ci <- tibble::as_tibble(
-        confint(x,
-          level = conf.level,
-          type = "fixed"
-        ),
+        confint(x, level = conf.level, type = "fixed"),
         rownames = "term", .name_repair = "minimal"
       )
       colnames(ci) <- c("term", "conf.low", "conf.high")
-      result <- tibble::as_tibble(base::merge(result, ci, by = "term"), .name_repair = "minimal")
+      result <- tibble::as_tibble(base::merge(result, ci, by = "term", sort = FALSE), .name_repair = "minimal")
     }
   } else if (effects == "ssn") {
     tailup_coef <- unclass(coefficients(x, type = "tailup"))
@@ -155,10 +157,6 @@ tidy.ssn_lm <- function(x, conf.int = FALSE,
   result
 }
 
-
-
-
-
 #' @rdname tidy.SSN2
 #' @method tidy ssn_glm
 #' @export
@@ -169,24 +167,26 @@ tidy.ssn_glm <- function(x, conf.int = FALSE,
   }
 
   if (effects == "fixed") {
-    result <- tibble::as_tibble(summary(x)$coefficients$fixed,
+    summary_fixed <- summary(x)$coefficients$fixed
+    result <- tibble::as_tibble(summary_fixed,
       rownames = "term", .name_repair = "minimal"
     )
-    colnames(result) <- c(
-      "term", "estimate", "std.error",
-      "statistic", "p.value"
-    )
+    if ("df" %in% colnames(summary_fixed)) {
+      colnames(result) <- c("term", "estimate", "std.error", "df", "statistic", "p.value")
+    } else {
+      colnames(result) <- c(
+        "term", "estimate", "std.error",
+        "statistic", "p.value"
+      )
+    }
 
     if (conf.int) {
       ci <- tibble::as_tibble(
-        confint(x,
-          level = conf.level,
-          type = "fixed"
-        ),
+        confint(x, level = conf.level, type = "fixed"),
         rownames = "term", .name_repair = "minimal"
       )
       colnames(ci) <- c("term", "conf.low", "conf.high")
-      result <- tibble::as_tibble(base::merge(result, ci, by = "term"), .name_repair = "minimal")
+      result <- tibble::as_tibble(base::merge(result, ci, by = "term", sort = FALSE), .name_repair = "minimal")
     }
   } else if (effects == "ssn") {
     tailup_coef <- unclass(coefficients(x, type = "tailup"))

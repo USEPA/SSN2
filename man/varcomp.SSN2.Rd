@@ -16,18 +16,37 @@
 \item{...}{Other arguments. Not used (needed for generic consistency).}
 }
 \value{
-A tibble that partitions the the total variability by the fixed effects
-and each variance parameter. The proportion of variability explained by the
-fixed effects is the pseudo R-squared obtained by \code{psuedoR2()}. The
-remaining proportion is spread accordingly among each variance parameter:
-\code{"tailup_de"}, \code{"taildown_de"}, \code{"euclid_de"}, \code{"nugget"},
-and if random effects are used, each named random effect. For \code{ssn_glm()},
-models, only the variances on the link scale are considered (i.e., the variance
+A tibble that partitions the total variability by the fixed effects
+and each variance parameter (see Details). For \code{ssn_glm()} models,
+only the variances on the link scale are considered (i.e., the variance
 function of the response is omitted).
 }
 \description{
 Compare the proportion of total variability explained by the fixed effects
 and each variance parameter.
+}
+\details{
+The total variability in the response is decomposed into a
+portion explained by the fixed effects and a portion explained by each
+variance parameter in the fitted covariance structure:
+\itemize{
+\item \code{tailup_de}: the tailup (downstream-moving) random error variance.
+\item \code{taildown_de}: the taildown (upstream-moving) random error variance.
+\item \code{euclid_de}: the Euclidean random error variance.
+\item \code{nugget}: the nugget (spatially independent) random error variance.
+\item random effects: if \code{object} was fit with a \code{random}
+argument, one additional variance parameter per named random effect
+term (e.g., a random intercept's grouping variable), representing
+the variance attributable to that grouping.
+}
+The proportion of variability
+explained by the fixed effects is the pseudo R-squared returned by
+\code{\link[=pseudoR2]{pseudoR2()}}. The remaining
+\code{1 - pseudoR2} proportion is then split among \code{tailup_de},
+\code{taildown_de}, \code{euclid_de}, \code{nugget}, and any random
+effect variances, in proportion to their share of the total variance
+(the sum of \code{tailup_de}, \code{taildown_de}, \code{euclid_de},
+\code{nugget}, and all random effect variances).
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

@@ -8,6 +8,9 @@ ssn_rbeta <- function(ssn.object, network = "obs",
     stop("network must be \"obs\".", call. = FALSE)
   }
 
+  # re-dispatch this call to ssn_rnorm() (dropping the "dispersion" argument,
+  # which ssn_rnorm() does not accept) to simulate the shared latent
+  # Gaussian process, then transform it below into the target distribution
   call_val <- match.call()
   call_val[[1]] <- as.symbol("ssn_rnorm")
   call_list <- as.list(call_val)
@@ -25,6 +28,8 @@ ssn_rbeta <- function(ssn.object, network = "obs",
       a <- x * dispersion
       b <- (1 - x) * dispersion
       val <- rbeta(n, shape1 = a, shape2 = b)
+      # clamp away from the open interval's boundary, which the beta
+      # distribution never actually reaches but floating point can round to
       val <- pmax(1e-4, val)
       val <- pmin(1 - 1e-4, val)
     }, numeric(n))

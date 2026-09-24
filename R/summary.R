@@ -2,10 +2,10 @@
 #'
 #' @description Summarize a fitted model object.
 #'
-#' @param object A fitted model object from [ssn_lm()] or [ssn_glm()].
+#' @param object A fitted model object from [ssn_lm()], [ssn_glm()], or [ssn_lmRF()].
 #' @param ... Other arguments. Not used (needed for generic consistency).
 #'
-#' @details \code{summary.ssn()} creates a summary of a fitted model object
+#' @details \code{summary()} creates a summary of a fitted model object
 #'   intended to be printed using \code{print()}. This summary contains
 #'   useful information like the original function call, residuals,
 #'   a coefficients table, a pseudo r-squared, and estimated covariance
@@ -36,13 +36,28 @@
 #' )
 #' summary(ssn_mod)
 summary.ssn_lm <- function(object, ...) {
+  # standard errors come from the square root of the diagonal of the fixed
+  # effect covariance matrix (off-diagonal covariances are ignored here,
+  # as is standard when reporting per-coefficient standard errors)
   summary_coefficients_fixed <- data.frame(
     estimates = coef(object, type = "fixed"),
     Std_Error = sqrt(diag(vcov(object, type = "fixed")))
   )
 
-  summary_coefficients_fixed$z_value <- summary_coefficients_fixed$estimates / summary_coefficients_fixed$Std_Error
-  summary_coefficients_fixed$p <- 2 * (1 - pnorm(abs(summary_coefficients_fixed$z_value)))
+  if (!is.null(object$ddf)) {
+    # denominator degrees of freedom available (see ssn_lm()'s ddf argument)
+    # -- t-test each fixed effect using them instead of the asymptotic
+    # z-test below, matching lmerTest's Satterthwaite summary()
+    summary_coefficients_fixed$df <- object$ddf[rownames(summary_coefficients_fixed)]
+    summary_coefficients_fixed$t_value <- summary_coefficients_fixed$estimates / summary_coefficients_fixed$Std_Error
+    summary_coefficients_fixed$p <- 2 * pt(abs(summary_coefficients_fixed$t_value), summary_coefficients_fixed$df, lower.tail = FALSE)
+  } else {
+    # Wald z-test for each fixed effect: estimate / se ~ N(0, 1) under the null
+    # that the true coefficient is zero, so the two-sided p-value uses the
+    # standard normal (infinite t df) distribution
+    summary_coefficients_fixed$z_value <- summary_coefficients_fixed$estimates / summary_coefficients_fixed$Std_Error
+    summary_coefficients_fixed$p <- 2 * (1 - pnorm(abs(summary_coefficients_fixed$z_value)))
+  }
 
   params_object <- object$coefficients$params_object
   coefficients <- list(fixed = summary_coefficients_fixed, params_object = params_object)
@@ -57,6 +72,8 @@ summary.ssn_lm <- function(object, ...) {
     # fn = object$fn,
     anisotropy = object$anisotropy
   )
+  # tag the class as "summary.<original class>" (e.g. summary.ssn_lm) so
+  # print.SSN2() can dispatch on the fitted model's type
   new_summary_list <- structure(summary_list, class = paste0("summary.", class(object)))
   new_summary_list
 }

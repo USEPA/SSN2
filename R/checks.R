@@ -1,11 +1,23 @@
-#' Various model checks for ssn_lm
-#'
-#' @param initial_object Initial value object.
-#' @param ssn.object SSN object.
-#' @param additive Additive function value name.
-#' @param estmethod Estimation method.
-#'
-#' @noRd
+check_formula_vars_in_data <- function(formula, data, random = NULL, partition_factor = NULL) {
+  if ("." %in% all.vars(random)) {
+    stop("The `.` shorthand is not supported in random. Explicitly list the desired variable(s).", call. = FALSE)
+  }
+  if ("." %in% all.vars(partition_factor)) {
+    stop("The `.` shorthand is not supported in partition_factor. Explicitly list the desired variable(s).", call. = FALSE)
+  }
+  formula_vars <- unique(c(all.vars(formula), all.vars(random), all.vars(partition_factor)))
+  formula_vars <- setdiff(formula_vars, ".")
+  missing_vars <- setdiff(formula_vars, names(data))
+  if (length(missing_vars) > 0) {
+    stop(
+      "Variable(s) ", paste0("\"", missing_vars, "\"", collapse = ", "),
+      " used in formula, random, or partition_factor not found in data.",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
 check_ssn_lm <- function(initial_object, ssn.object, additive, estmethod) {
   if (is.null(additive)) {
     if (!grepl("none", class(initial_object$tailup))) {
@@ -22,14 +34,6 @@ check_ssn_lm <- function(initial_object, ssn.object, additive, estmethod) {
   }
 }
 
-#' Various model checks for ssn_glm
-#'
-#' @param initial_object Initial value object.
-#' @param ssn.object SSN object.
-#' @param additive Additive function value name.
-#' @param estmethod Estimation method.
-#'
-#' @noRd
 check_ssn_glm <- function(initial_object, ssn.object, additive, estmethod) {
   if (is.null(additive)) {
     if (!grepl("none", class(initial_object$tailup_initial))) {
@@ -46,12 +50,6 @@ check_ssn_glm <- function(initial_object, ssn.object, additive, estmethod) {
   }
 }
 
-
-#' Check for valid tailup type
-#'
-#' @param tailup_type The tailup covariance type.
-#'
-#' @noRd
 check_tailup_type <- function(tailup_type) {
   tailup_valid <- c("linear", "spherical", "exponential", "mariah", "epa", "gaussian", "none")
 
@@ -60,11 +58,6 @@ check_tailup_type <- function(tailup_type) {
   }
 }
 
-#' Check for valid taildown type
-#'
-#' @param taildown_type The taildown covariance type.
-#'
-#' @noRd
 check_taildown_type <- function(taildown_type) {
   taildown_valid <- c("linear", "spherical", "exponential", "mariah", "epa", "gaussian", "none")
 
@@ -73,16 +66,14 @@ check_taildown_type <- function(taildown_type) {
   }
 }
 
-#' Check for valid Euclidean type
-#'
-#' @param euclid_type The Euclidean covariance type.
-#'
-#' @noRd
 check_euclid_type <- function(euclid_type) {
+  if (identical(euclid_type, "cosine")) {
+    stop("'cosine' is no longer a supported Euclidean covariance name. Use 'circular' for the covariance previously named 'cosine' in SSN2.", call. = FALSE)
+  }
   euclid_valid <- c(
-    "spherical", "exponential", "gaussian", "cosine",
+    "spherical", "exponential", "gaussian", "circular",
     "cubic", "pentaspherical", "wave", "jbessel", "gravity",
-    "rquad", "magnetic", "none"
+    "rquad", "magnetic", "matern", "cauchy", "pexponential", "none"
   )
 
   if (!(euclid_type %in% euclid_valid)) {
@@ -90,11 +81,63 @@ check_euclid_type <- function(euclid_type) {
   }
 }
 
-#' Check for valid nugget type
-#'
-#' @param nugget_type The nugget covariance type.
-#'
-#' @noRd
+euclid_has_extra <- function(euclid_type) {
+  euclid_type %in% c("matern", "cauchy", "pexponential")
+}
+
+check_euclid_parameter <- function(value, name, lower = -Inf, upper = Inf,
+                                   lower_open = FALSE, allow_na = FALSE, allow_inf = FALSE) {
+  if (is.null(value)) return(invisible(NULL))
+  if (allow_na && length(value) == 1 && is.na(value)) return(invisible(NULL))
+  if (!is.numeric(value) || length(value) != 1 || is.na(value)) {
+    stop(name, " must be a single finite numeric value.", call. = FALSE)
+  }
+  if (!allow_inf && !is.finite(value)) {
+    stop(name, " must be a single finite numeric value.", call. = FALSE)
+  }
+  below <- if (lower_open) value <= lower else value < lower
+  if (below || value > upper) {
+    lower_text <- if (lower_open) "greater than" else "at least"
+    if (is.finite(upper)) {
+      stop(name, " must be ", lower_text, " ", lower, " and at most ", upper, ".", call. = FALSE)
+    }
+    stop(name, " must be ", lower_text, " ", lower, ".", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+check_tailup_taildown_parameters <- function(de, range, allow_na = FALSE) {
+  check_euclid_parameter(de, "de", lower = 0, allow_na = allow_na)
+  # range = Inf is a legitimate, pervasively-used sentinel for the "none"
+  # covariance type (no spatial dependence), not just a user-facing bound
+  check_euclid_parameter(range, "range", lower = 0, lower_open = TRUE, allow_na = allow_na, allow_inf = TRUE)
+  invisible(NULL)
+}
+
+check_nugget_parameter <- function(nugget, allow_na = FALSE) {
+  check_euclid_parameter(nugget, "nugget", lower = 0, allow_na = allow_na)
+  invisible(NULL)
+}
+
+check_euclid_extra_parameters <- function(euclid_type, de, range, extra,
+                                          rotate, scale, allow_na = FALSE) {
+  check_euclid_parameter(de, "de", lower = 0, allow_na = allow_na)
+  # range = Inf is a legitimate, pervasively-used sentinel for the "none"
+  # covariance type (no spatial dependence), not just a user-facing bound
+  check_euclid_parameter(range, "range", lower = 0, lower_open = TRUE, allow_na = allow_na, allow_inf = TRUE)
+  check_euclid_parameter(rotate, "rotate", lower = 0, upper = pi, allow_na = allow_na)
+  check_euclid_parameter(scale, "scale", lower = 0, upper = 1, lower_open = TRUE, allow_na = allow_na)
+
+  if (euclid_type == "matern") {
+    check_euclid_parameter(extra, "extra", lower = 0.2, upper = 5, allow_na = allow_na)
+  } else if (euclid_type == "cauchy") {
+    check_euclid_parameter(extra, "extra", lower = 0, lower_open = TRUE, allow_na = allow_na)
+  } else if (euclid_type == "pexponential") {
+    check_euclid_parameter(extra, "extra", lower = 0, upper = 2, lower_open = TRUE, allow_na = allow_na)
+  }
+  invisible(NULL)
+}
+
 check_nugget_type <- function(nugget_type) {
   nugget_valid <- c("nugget", "none")
   if (!(nugget_type %in% nugget_valid)) {
@@ -102,12 +145,6 @@ check_nugget_type <- function(nugget_type) {
   }
 }
 
-#' Check for valid ssn_glm family and dispersion parameter
-#'
-#' @param family The ssn_glm family.
-#' @param dispersion The dispersion parameter.
-#'
-#' @noRd
 check_dispersion <- function(family, dispersion) {
   # family must be a character here
   family_valid <- c("binomial", "poisson", "nbinomial", "Gamma", "inverse.gaussian", "beta")
@@ -121,13 +158,6 @@ check_dispersion <- function(family, dispersion) {
   }
 }
 
-#' Various checks on the response variable in ssn_glm
-#'
-#' @param family The ssn_glm family.
-#' @param y The response variable.
-#' @param size The number of trials (if family is binomial)
-#'
-#' @noRd
 response_checks_glm <- function(family, y, size) {
   # checks on y
   if (family == "binomial") {
@@ -171,13 +201,24 @@ response_checks_glm <- function(family, y, size) {
   }
 }
 
-
-#' Check if value is a whole number.
-#'
-#' @param x A vector.
-#' @param tol Tolerance to check whether x is a whole number.
-#'
-#' @noRd
 is.wholenumber <- function(x, tol = .Machine$double.eps^0.5) {
   abs(x - round(x)) < tol
+}
+
+# a prediction interval needs a location that has not been observed; without
+# newdata, augment() describes the observed data, where only a confidence
+# interval (around the fitted mean) is meaningful -- shared by augment.ssn_lm()
+# and augment.ssn_glm() so both degrade the combination identically, matching
+# spmodel's check_interval_augment() (warn + reset to "none" rather than error)
+check_interval_augment <- function(interval, newdata_given) {
+  if (!newdata_given && interval == "prediction") {
+    warning(
+      "interval = \"prediction\" is ignored when newdata is not supplied, because a prediction interval ",
+      "requires a location that has not been observed. Supply newdata for prediction intervals, or use ",
+      "interval = \"confidence\" for an interval around the fitted mean at the observed locations.",
+      call. = FALSE
+    )
+    interval <- "none"
+  }
+  interval
 }

@@ -1,6 +1,6 @@
 #' @title Split a prediction dataset in an \code{SSN} object
 #'
-#' @description The \command{splitPrediction} function is used to
+#' @description The \command{ssn_split_predpts} function is used to
 #'   split prediction sets in an \code{SSN} object into smaller
 #'   prediction sets. It returns a \code{SSN} object with additional
 #'   prediction sets based on equal interval splits, a factor,
@@ -68,8 +68,12 @@
 #' @export
 #' @examples
 #' ## Import SSN object
+#' # Copy the mf04p .ssn data to a local directory and read it into R
+#' # When modeling with your .ssn object, you will load it using the relevant
+#' # path to the .ssn data on your machine
 #' copy_lsn_to_temp() ## Only needed for this example
-#' ssn <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+#' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
+#' ssn <- ssn_import(temp_path,
 #'   predpts = c("pred1km", "CapeHorn"),
 #'   overwrite = TRUE
 #' )
@@ -118,7 +122,7 @@ ssn_split_predpts <- function(ssn, predpts, size_predpts, by,
       stop("Input 'id_predpts' must be specified if input 'subset' is used")
     }
     if (!predpts %in% names(ssn$preds)) {
-      stop("predpts no found in ssn")
+      stop("predpts not found in ssn")
     }
 
     ## Get vector of pids in obs and all sets of preds

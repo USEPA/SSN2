@@ -1,8 +1,10 @@
-get_dist_object_bigdata_cross <- function(d1, d2, params_object, data_object) {
-
+get_dist_object_bigdata_cross <- function(d1, d2, params_object, data_object,
+                                          ext = "obs", backend = "bigdata") {
 
   # get list of distance matrices in order of the original data
-  dist_matlist <- get_dist_matlist_bigdata_cross(d1, d2, params_object, data_object)
+  dist_matlist <- get_dist_matlist_bigdata_cross(
+    d1, d2, params_object, data_object, ext = ext, backend = backend
+  )
 
   # see whether euclid is none to avoid unnecessary computations
   euclid_none <- inherits(params_object$euclid, "euclid_none")
@@ -34,8 +36,8 @@ get_dist_object_bigdata_cross <- function(d1, d2, params_object, data_object) {
   dist_object_bigdata_cross_oblist
 }
 
-get_dist_matlist_bigdata_cross <- function(d1, d2, params_object, data_object) {
-
+get_dist_matlist_bigdata_cross <- function(d1, d2, params_object, data_object,
+                                           ext = "obs", backend = "bigdata") {
 
   d1_netgeom <- ssn_get_netgeom(d1)
   d2_netgeom <- ssn_get_netgeom(d2)
@@ -52,9 +54,7 @@ get_dist_matlist_bigdata_cross <- function(d1, d2, params_object, data_object) {
     d2_additive_val <- d2[[data_object$additive]]
   }
 
-
-
-  # see whether tailup and taildown are none to avoid unnecssary computations
+  # see whether tailup and taildown are none to avoid unnecessary computations
   tailup_none <- inherits(params_object$tailup, "tailup_none")
   taildown_none <- inherits(params_object$taildown, "taildown_none")
 
@@ -73,13 +73,22 @@ get_dist_matlist_bigdata_cross <- function(d1, d2, params_object, data_object) {
 
     # get dist junction matrices as a list (for efficiency, do things
     # network by network and then combine so zeroes populate accordingly)
-    distjunc_matlist1 <- get_distjunc_matlist_bigdata_cross(
-      d1_network_index, d1_pid, d2_network_index, d2_pid, data_object$ssn.object
+    get_cross <- if (identical(backend, "dense")) {
+      get_distjunc_matlist_dense_cross
+    } else if (identical(backend, "bigdata")) {
+      get_distjunc_matlist_bigdata_cross
+    } else {
+      stop("Invalid cross-distance backend.", call. = FALSE)
+    }
+    distjunc_matlist1 <- get_cross(
+      d1_network_index, d1_pid, d2_network_index, d2_pid,
+      data_object$ssn.object, ext = ext
     )
 
     # to get the transpose
-    distjunc_matlist2 <- get_distjunc_matlist_bigdata_cross(
-      d2_network_index, d2_pid, d1_network_index, d1_pid, data_object$ssn.object
+    distjunc_matlist2 <- get_cross(
+      d2_network_index, d2_pid, d1_network_index, d1_pid,
+      data_object$ssn.object, ext = ext
     )
 
     # turn these into a matrix object when its 1x1 the get_a, get_b below fail
@@ -91,7 +100,7 @@ get_dist_matlist_bigdata_cross <- function(d1, d2, params_object, data_object) {
       hydro_mat = Matrix::Matrix(get_hydro_matlist_bigdata_cross(distjunc_matlist1, distjunc_matlist2), sparse = TRUE)
     )
 
-    # if only taildown covariacne, do not need additive matrix
+    # if only taildown covariance, do not need additive matrix
     if (tailup_none) {
       # store additive matrix as NULL
       dist_matlist <- c(dist_matlist, list(w_mat = NULL))
@@ -102,21 +111,58 @@ get_dist_matlist_bigdata_cross <- function(d1, d2, params_object, data_object) {
   dist_matlist
 }
 
-#' Get distance to the nearest junction matrix
-#'
-#' @param network_index Network index
-#' @param ssn.object SSN object
-#' @param newdata_name Name of the newdata matrix (if relevant)
-#'
-#' @noRd
-get_distjunc_matlist_bigdata_cross <- function(d1_network_index, d1_pid, d2_network_index, d2_pid, ssn.object) {
+get_distjunc_matlist_dense_cross <- function(d1_network_index, d1_pid,
+                                              d2_network_index, d2_pid,
+                                              ssn.object, ext = "obs") {
+  d1_network_num <- as.numeric(as.character(d1_network_index))
+  d2_network_num <- as.numeric(as.character(d2_network_index))
+  network_index_vals <- sort(unique(d1_network_num))
+  distjunc <- matrix(0, nrow = length(d1_pid), ncol = length(d2_pid))
+  rownames(distjunc) <- d1_pid
+  colnames(distjunc) <- d2_pid
+  row_found <- rep(FALSE, length(d1_pid))
+  read_matrix <- function(path) {
+    con <- file(path, open = "rb")
+    on.exit(close(con), add = TRUE)
+    # Full distance matrix loaded before chunk subsetting; consider per-call caching for block kriging.
+    unserialize(con)
+  }
 
-  # REMEMBER OBDATA_LIST ALREADY ORDERED BY SPLIT ID, NETWORK ID, PID
-  ext <- "obs"
+  for (x in network_index_vals) {
+    path <- file.path(ssn.object$path, "distance", ext, paste0("dist.net", x, ".RData"))
+    if (!file.exists(path)) {
+      stop("Unable to locate required distance matrix", call. = FALSE)
+    }
+    distjunc_x <- read_matrix(path)
+
+    rows_x <- which(d1_network_num == x)
+    cols_x <- which(d2_network_num == x)
+    row_match <- match(as.character(d1_pid[rows_x]), rownames(distjunc_x))
+    col_match <- match(as.character(d2_pid[cols_x]), colnames(distjunc_x))
+    rows_out <- rows_x[!is.na(row_match)]
+    cols_out <- cols_x[!is.na(col_match)]
+    row_found[rows_out] <- TRUE
+    if (length(rows_out) && length(cols_out)) {
+      distjunc[rows_out, cols_out] <- distjunc_x[row_match[!is.na(row_match)], col_match[!is.na(col_match)], drop = FALSE]
+    }
+  }
+
+  if (!all(row_found)) {
+    stop(
+      "Unable to locate stored distance information for the following pid(s): ",
+      paste(d1_pid[!row_found], collapse = ", "), call. = FALSE
+    )
+  }
+  distjunc
+}
+
+get_distjunc_matlist_bigdata_cross <- function(d1_network_index, d1_pid, d2_network_index, d2_pid, ssn.object, ext = "obs") {
 
   # get unique network index vals (from STARS)
   # only looking for unique networks on rows as cols will zero out from masking anyways
-  network_index_vals <- sort(as.numeric(as.character(unique(d1_network_index))))
+  d1_network_num <- as.numeric(as.character(d1_network_index))
+  d2_network_num <- as.numeric(as.character(d2_network_index))
+  network_index_vals <- sort(unique(d1_network_num))
 
   # regular matrix object as this causes 1x1 matrices to fail in spatial indexing
   # distjunc <- Matrix::Matrix(0, nrow = length(d1_pid), ncol = length(d2_pid), sparse = TRUE)
@@ -124,8 +170,12 @@ get_distjunc_matlist_bigdata_cross <- function(d1_network_index, d1_pid, d2_netw
   # already ordered by PID
   rownames(distjunc) <- d1_pid
   colnames(distjunc) <- d2_pid
-  # find distance junction list by iterating through each network
-  for (x in network_index_vals) { # order by net ID
+  row_found <- rep(FALSE, length(d1_pid))
+
+  # reads one network's file and returns the matched (unordered-index) values;
+  # a separate call frame so on.exit() closes exactly this call's handle on
+  # success or error, without the handle-reuse hazard of a shared loop variable
+  read_one_network <- function(x) {
     # on the disk, distance matrices are stored by network
     workspace_name <- paste("dist.net", x, ".bmat", sep = "")
     # path to the distance matrices on disk
@@ -135,21 +185,41 @@ get_distjunc_matlist_bigdata_cross <- function(d1_network_index, d1_pid, d2_netw
       stop("Unable to locate required distance matrix", call. = FALSE)
     }
     distjunc_fm <- fm.open(path)
-    rows_keep <- d1_pid[rownames(distjunc) %in% rownames(distjunc_fm)]
-    cols_keep <- d2_pid[colnames(distjunc) %in% colnames(distjunc_fm)]
-    rows_keep_distjunc_fm <- which(rownames(distjunc_fm) %in% rows_keep)
-    cols_keep_distjunc_fm <- which(colnames(distjunc_fm) %in% cols_keep)
-    if (length(rows_keep_distjunc_fm) > 0 && length(cols_keep_distjunc_fm)) {
-      rows_keep_distjunc <- which(rownames(distjunc) %in% rows_keep)
-      cols_keep_distjunc <- which(colnames(distjunc) %in% cols_keep)
-      distjunc_fm_sub <- distjunc_fm[rows_keep_distjunc_fm, cols_keep_distjunc_fm]
-      # order by PID
-      distjunc_fm_sub <- distjunc_fm_sub[order(as.numeric(rows_keep)), order(as.numeric(cols_keep))]
-      # put in distance junction matrix which is already ordered by local ID, net ID, PID
-      distjunc[rows_keep_distjunc, cols_keep_distjunc] <- distjunc_fm_sub
+    on.exit(close(distjunc_fm))
+
+    # key each requested pid directly to its position in this network's
+    # stored axes (NA where absent); this preserves th requested
+    # d1_pid/d2_pid order exactly, unlike sorting the matched submatrix
+    rows_x <- which(d1_network_num == x)
+    cols_x <- which(d2_network_num == x)
+    row_match <- match(d1_pid[rows_x], rownames(distjunc_fm))
+    col_match <- match(d2_pid[cols_x], colnames(distjunc_fm))
+    rows_out <- rows_x[!is.na(row_match)]
+    cols_out <- cols_x[!is.na(col_match)]
+    values <- if (length(rows_out) > 0 && length(cols_out) > 0) {
+      distjunc_fm[row_match[!is.na(row_match)], col_match[!is.na(col_match)]]
+    } else {
+      NULL
     }
-    close(distjunc_fm)
+    list(rows_out = rows_out, cols_out = cols_out, values = values)
   }
+
+  # find distance junction list by iterating through each network
+  for (x in network_index_vals) { # order by net ID
+    result <- read_one_network(x)
+    row_found[result$rows_out] <- TRUE
+    if (!is.null(result$values)) {
+      distjunc[result$rows_out, result$cols_out] <- result$values
+    }
+  }
+
+  if (!all(row_found)) {
+    stop(
+      "Unable to locate stored distance information for the following pid(s): ",
+      paste(d1_pid[!row_found], collapse = ", "), call. = FALSE
+    )
+  }
+
   distjunc
 }
 

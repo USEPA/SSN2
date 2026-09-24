@@ -9,7 +9,7 @@
 #' @param name the internal name of the data set in the object
 #'   \code{x}. For observed data, this will always be "obs", the
 #'   default.
-#' @param resize_data Logical. Indicates whether sf_df can have a
+#' @param resize_data Logical. Indicates whether data can have a
 #'   different number of features than the current data.frame in the
 #'   object. Default is FALSE.
 #'
@@ -21,17 +21,17 @@
 #'   all other object classes, the names are obtained using the call
 #'   names(x$ssn.object$preds).
 #'
-#'   The \code{resize_sf_data} argument specifies whether sf_data can have a
+#'   The \code{resize_data} argument specifies whether data can have a
 #'   different number of features (i.e., rows) than the sf data.frame
-#'   it is replacing. Care should be taken when resize_df is set to
-#'   TRUE, especially if the new sf_data has more features than the
+#'   it is replacing. Care should be taken when resize_data is set to
+#'   TRUE, especially if the new data has more features than the
 #'   existing sf data.frame. In these cases, the user is responsible
 #'   for ensuring that the additional features have the correct
 #'   spatial, topological, and attribute data to accurately represent
 #'   spatial relationships in the SSN object.
 #'
 #' @return Returns an object of the same class as x, which contains
-#'   the sf data.frame sf_data.
+#'   the sf data.frame data.
 #'
 #' @name ssn_put_data
 #' @export
@@ -43,7 +43,7 @@
 #' ## Extract observation data.frame from SSN object
 #' obs.df <- ssn_get_data(mf04p)
 #' ## Create a new column for summer mean temperature and set Value in
-## first row to NA
+#' ## first row to NA
 #' obs.df$Value <- obs.df$Summer_mn
 #' obs.df$Value[1] <- NA
 #'
@@ -82,7 +82,7 @@ ssn_put_data <-
     if (name == "obs") {
       ## Compare number of rows in sf_data vs x1$obs
       if ((nrow(sf_data) != nrow(x1$obs)) & resize_sf_data == FALSE) {
-        stop("The current sf data.frame in x has a different number of point features than sf_data and resize_sf_data == FALSE. If this is not an error, set resize_sf_data = TRUE.")
+        stop("The current sf data.frame in x has a different number of point features than data and resize_data == FALSE. If this is not an error, set resize_data = TRUE.")
       } else {
         x1$obs <- sf_data
       }
@@ -102,7 +102,7 @@ ssn_put_data <-
 
       ## Compare number of rows in sf_data vs x1$preds[[name]]
       if ((nrow(sf_data) != nrow(x1$preds[[name]])) & resize_sf_data == FALSE) {
-        stop("The current sf data.frame in x has a different number of point features than sf_data and resize_sf_data == FALSE. If this is not an error, set resize_sf_data = TRUE.")
+        stop("The current sf data.frame in x has a different number of point features than data and resize_data == FALSE. If this is not an error, set resize_data = TRUE.")
       } else {
         x1$preds[[name]] <- sf_data
       }

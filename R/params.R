@@ -1,6 +1,6 @@
-#' Create covariance parameter objects.
+#' Create covariance parameter objects
 #'
-#' @description Create a covariance parameter object for us with other functions.
+#' @description Create a covariance parameter object for use with other functions.
 #'   See [spmodel::randcov_params()] for documentation regarding
 #'   random effect covariance parameter objects.
 #'
@@ -10,32 +10,44 @@
 #' @param taildown_type The taildown covariance function type. Available options
 #'   include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
 #'   \code{"mariah"}, \code{"epa"}, and \code{"none"}.
-#' @param euclid_type The euclidean covariance function type. Available options
+#' @param euclid_type The Euclidean covariance function type. Available options
 #'   include \code{"spherical"}, \code{"exponential"}, \code{"gaussian"},
-#'   \code{"cosine"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
-#'    \code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"}, and
-#'    \code{"none"}.
+#'   \code{"circular"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
+#'    \code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"},
+#'    \code{"matern"}, \code{"cauchy"}, \code{"pexponential"}, and \code{"none"}.
 #' @param nugget_type The nugget covariance function type. Available options
 #'   include \code{"nugget"} or \code{"none"}.
 #' @param de The spatially dependent (correlated) random error variance. Commonly referred to as
 #'   a partial sill.
 #' @param range The correlation parameter.
+#' @param extra An extra covariance parameter used when \code{spcov_type} is
+#'   \code{"matern"}, \code{"cauchy"}, \code{"pexponential"}.
 #' @param rotate Anisotropy rotation parameter (from 0 to \eqn{\pi} radians) for
-#'   the euclidean portion of the covariance. A value of 0 (the default) implies no rotation.
+#'   the Euclidean portion of the covariance. A value of 0 (the default) implies no rotation.
 #' @param scale Anisotropy scale parameter (from 0 to 1) for
-#'   the euclidean portion of the covariance. A value of 1 (the default) implies no scaling.
-#' @param nugget The spatially independent (not correlated) random error variance. Commonly referred to as
+#'   the Euclidean portion of the covariance. A value of 1 (the default) implies no scaling.
+#' @param nugget The spatially independent (uncorrelated) random error variance. Commonly referred to as
 #'   a nugget.
+#'
+#' @details
+#'   Generally, all arguments to \code{tailup_params()}, \code{taildown_params()},
+#'   \code{euclid_params()}, and \code{nugget_params()} must be specified, though
+#'   default arguments are chosen when the relevant \code{_type} is \code{"none"}.
+#'   For full parameterizations of all tailup, taildown, Euclidean, and nugget
+#'   covariance functions, see [tailup_initial()], [taildown_initial()],
+#'   [euclid_initial()], and [nugget_initial()].
 #'
 #' @name ssn_params
 #'
-#' @return A parameter object with class that matches the relevant \code{type} argument.
+#' @return A named numeric vector of covariance parameters with class that
+#'   matches the relevant \code{type} argument.
 #' @export
 #'
 #' @examples
 #' tailup_params("exponential", de = 1, range = 20)
 #' taildown_params("exponential", de = 1, range = 20)
 #' euclid_params("exponential", de = 1, range = 20, rotate = 0, scale = 1)
+#' euclid_params("matern", de = 1, range = 20, extra = 1)
 #' nugget_params("nugget", nugget = 1)
 #' @references
 #' Peterson, E.E. and Ver Hoef, J.M. (2010) A mixed-model moving-average approach
@@ -52,6 +64,8 @@ tailup_params <- function(tailup_type, de, range) {
   if (tailup_type == "none") {
     de <- 0
     range <- Inf
+  } else {
+    check_tailup_taildown_parameters(de, range)
   }
   object <- c(de = de, range = range)
   new_object <- structure(object, class = paste("tailup", tailup_type, sep = "_"))
@@ -66,6 +80,8 @@ taildown_params <- function(taildown_type, de, range) {
   if (taildown_type == "none") {
     de <- 0
     range <- Inf
+  } else {
+    check_tailup_taildown_parameters(de, range)
   }
   object <- c(de = de, range = range)
   new_object <- structure(object, class = paste("taildown", taildown_type, sep = "_"))
@@ -74,9 +90,8 @@ taildown_params <- function(taildown_type, de, range) {
 
 #' @rdname ssn_params
 #' @export
-euclid_params <- function(euclid_type, de, range, rotate, scale) {
+euclid_params <- function(euclid_type, de, range, rotate, scale, extra) {
   check_euclid_type(euclid_type)
-
 
   if (euclid_type == "none") {
     de <- 0
@@ -90,8 +105,25 @@ euclid_params <- function(euclid_type, de, range, rotate, scale) {
   if (missing(scale)) {
     scale <- 1
   }
+  if (euclid_has_extra(euclid_type)) {
+    if (missing(extra)) {
+      stop("extra must be specified for this Euclidean covariance type.", call. = FALSE)
+    }
+  } else if (!missing(extra)) {
+    stop("extra is only used by euclid_type = \"matern\", \"cauchy\", or \"pexponential\".", call. = FALSE)
+  } else {
+    extra <- NULL
+  }
 
-  object <- c(de = de, range = range, rotate = rotate, scale = scale)
+  if (euclid_type != "none") {
+    check_euclid_extra_parameters(euclid_type, de, range, extra, rotate, scale)
+  }
+
+  object <- if (euclid_has_extra(euclid_type)) {
+    c(de = de, range = range, extra = extra, rotate = rotate, scale = scale)
+  } else {
+    c(de = de, range = range, rotate = rotate, scale = scale)
+  }
   new_object <- structure(object, class = paste("euclid", euclid_type, sep = "_"))
   new_object
 }
@@ -103,11 +135,21 @@ nugget_params <- function(nugget_type, nugget) {
 
   if (nugget_type == "none") {
     nugget <- 0
+  } else {
+    check_nugget_parameter(nugget)
   }
 
   object <- c(nugget = nugget)
   new_object <- structure(object, class = paste("nugget", nugget_type, sep = "_"))
   new_object
+}
+
+make_euclid_params <- function(euclid_type, de, range, rotate, scale, extra = NULL) {
+  if (euclid_has_extra(euclid_type)) {
+    euclid_params(euclid_type, de = de, range = range, rotate = rotate, scale = scale, extra = extra)
+  } else {
+    euclid_params(euclid_type, de = de, range = range, rotate = rotate, scale = scale)
+  }
 }
 
 get_params_object <- function(classes, cov_orig_val) {
@@ -118,11 +160,6 @@ get_params_object <- function(classes, cov_orig_val) {
     range = cov_orig_val$orig_ssn[["tailup_range"]]
   )
 
-  # class(tailup_params_val) <- remove_covtype(tailup_params_val)
-  # replace class as it has tailup_tailup_exponential structure
-  # and don't want to edit user side *_params functions
-  # class(tailup_params_val) <- classes[["tailup"]]
-
   taildown_params_val <- taildown_params(
     classes[["taildown"]],
     de = cov_orig_val$orig_ssn[["taildown_de"]],
@@ -131,12 +168,13 @@ get_params_object <- function(classes, cov_orig_val) {
 
   # class(taildown_params_val) <- classes[["taildown"]]
 
-  euclid_params_val <- euclid_params(
+  euclid_params_val <- make_euclid_params(
     classes[["euclid"]],
     de = cov_orig_val$orig_ssn[["euclid_de"]],
     range = cov_orig_val$orig_ssn[["euclid_range"]],
     rotate = cov_orig_val$orig_ssn[["euclid_rotate"]],
-    scale = cov_orig_val$orig_ssn[["euclid_scale"]]
+    scale = cov_orig_val$orig_ssn[["euclid_scale"]],
+    extra = cov_orig_val$orig_ssn[["euclid_extra"]]
   )
 
   # class(euclid_params_val) <- classes[["euclid"]]
@@ -147,7 +185,6 @@ get_params_object <- function(classes, cov_orig_val) {
   )
 
   # class(nugget_params_val) <- classes[["nugget"]]
-
 
   randcov_params_val <- randcov_params(cov_orig_val$orig_randcov)
 
@@ -186,12 +223,13 @@ get_params_object_known <- function(initial_object) {
     range = initial_object$taildown_initial$initial[["range"]]
   )
 
-  euclid_params_val <- euclid_params(
+  euclid_params_val <- make_euclid_params(
     classes[["euclid"]],
     de = initial_object$euclid_initial$initial[["de"]],
     range = initial_object$euclid_initial$initial[["range"]],
     rotate = initial_object$euclid_initial$initial[["rotate"]],
-    scale = initial_object$euclid_initial$initial[["scale"]]
+    scale = initial_object$euclid_initial$initial[["scale"]],
+    extra = initial_object$euclid_initial$initial[["extra"]]
   )
 
   nugget_params_val <- nugget_params(
@@ -200,7 +238,6 @@ get_params_object_known <- function(initial_object) {
   )
 
   randcov_params_val <- randcov_params(initial_object$randcov_initial$initial)
-
 
   params_object <- list(
     tailup = tailup_params_val,
@@ -228,11 +265,6 @@ get_params_object_glm <- function(classes, cov_orig_val) {
     range = cov_orig_val$orig_ssn[["tailup_range"]]
   )
 
-  # class(tailup_params_val) <- remove_covtype(tailup_params_val)
-  # replace class as it has tailup_tailup_exponential structure
-  # and don't want to edit user side *_params functions
-  # class(tailup_params_val) <- classes[["tailup"]]
-
   taildown_params_val <- taildown_params(
     classes[["taildown"]],
     de = cov_orig_val$orig_ssn[["taildown_de"]],
@@ -241,12 +273,13 @@ get_params_object_glm <- function(classes, cov_orig_val) {
 
   # class(taildown_params_val) <- classes[["taildown"]]
 
-  euclid_params_val <- euclid_params(
+  euclid_params_val <- make_euclid_params(
     classes[["euclid"]],
     de = cov_orig_val$orig_ssn[["euclid_de"]],
     range = cov_orig_val$orig_ssn[["euclid_range"]],
     rotate = cov_orig_val$orig_ssn[["euclid_rotate"]],
-    scale = cov_orig_val$orig_ssn[["euclid_scale"]]
+    scale = cov_orig_val$orig_ssn[["euclid_scale"]],
+    extra = cov_orig_val$orig_ssn[["euclid_extra"]]
   )
 
   # class(euclid_params_val) <- classes[["euclid"]]
@@ -302,12 +335,13 @@ get_params_object_glm_known <- function(initial_object) {
     range = initial_object$taildown_initial$initial[["range"]]
   )
 
-  euclid_params_val <- euclid_params(
+  euclid_params_val <- make_euclid_params(
     classes[["euclid"]],
     de = initial_object$euclid_initial$initial[["de"]],
     range = initial_object$euclid_initial$initial[["range"]],
     rotate = initial_object$euclid_initial$initial[["rotate"]],
-    scale = initial_object$euclid_initial$initial[["scale"]]
+    scale = initial_object$euclid_initial$initial[["scale"]],
+    extra = initial_object$euclid_initial$initial[["extra"]]
   )
 
   nugget_params_val <- nugget_params(
@@ -321,7 +355,6 @@ get_params_object_glm_known <- function(initial_object) {
   )
 
   randcov_params_val <- randcov_params(initial_object$randcov_initial$initial)
-
 
   params_object <- list(
     tailup = tailup_params_val,
@@ -361,12 +394,13 @@ get_params_object_grid <- function(cov_grid_vector, initial_NA_object) {
     range = cov_grid_vector[["taildown_range"]]
   )
 
-  euclid_params_val <- euclid_params(
+  euclid_params_val <- make_euclid_params(
     classes[["euclid"]],
     de = cov_grid_vector[["euclid_de"]],
     range = cov_grid_vector[["euclid_range"]],
     rotate = cov_grid_vector[["rotate"]],
-    scale = cov_grid_vector[["scale"]]
+    scale = cov_grid_vector[["scale"]],
+    extra = cov_grid_vector[["euclid_extra"]]
   )
 
   nugget_params_val <- nugget_params(
@@ -417,12 +451,13 @@ get_params_object_grid_glm <- function(cov_grid_vector, initial_NA_object) {
     range = cov_grid_vector[["taildown_range"]]
   )
 
-  euclid_params_val <- euclid_params(
+  euclid_params_val <- make_euclid_params(
     classes[["euclid"]],
     de = cov_grid_vector[["euclid_de"]],
     range = cov_grid_vector[["euclid_range"]],
     rotate = cov_grid_vector[["rotate"]],
-    scale = cov_grid_vector[["scale"]]
+    scale = cov_grid_vector[["scale"]],
+    extra = cov_grid_vector[["euclid_extra"]]
   )
 
   nugget_params_val <- nugget_params(

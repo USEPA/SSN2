@@ -1,3 +1,37 @@
+# SSN2 0.5.0
+
+This update was focused on enhancing `SSN2` alignment with `spmodel`.
+
+## Major Updates
+
+* Added support for conditional simulation via `conditional()` for `ssn_lm()` and `ssn_glm()` model objects, which draws simulated values from the distribution of `newdata` conditional on observed data.
+* Added support for a spatial decorrelation transformation, a preprocessing and postprocessing approach that lets machine learning algorithms (via `ranger`, `randomForest`, or `xgboost`) account for spatial covariance. `ssn_decorrelate()` estimates decorrelation parameters via a grid search evaluated on training/test splits or cross-validation and fits a machine learning model to the decorrelated data; `ssn_decorrelate_data()`, `ssn_decorrelate_grid()`, `ssn_decorrelate_newdata()`, and `ssn_recorrelate_newdata()` support the underlying transformation and grid search steps; and `predict()`, `print()`, and `tidy()` methods are provided for `ssn_decorrelate()` model objects.
+* Added Satterthwaite denominator degrees of freedom (ddf) support for `ssn_lm()` model objects, for `t`-based (rather than asymptotic `z`-based) inference in small samples.
+    * Added `satterthwaite()`, which computes Satterthwaite ddfs for the fixed effect coefficients of an `ssn_lm()` model object.
+    * Added a `ddf` argument to `ssn_lm()` and `anova()` that controls whether Satterthwaite or asymptotic degrees of freedom are used for hypothesis tests. In `ssn_lm()`, if `n` (the sample size) is less than or equal to 500, Satterthwaite ddf are computed and used, which implies a breaking change in `summary()` and `tidy()` output.
+    * Added Satterthwaite support to `confint()` for confidence intervals.
+    * Added support for `emmeans::joint_tests()` with Satterthwaite ddf.
+    * Added `"cov"`, `"spcov"`, and `"randcov"` values to the `type` argument in `vcov()` for `ssn_lm()` model objects when using Satterthwaite ddf.
+* Added a `"weight"` value to the `type` argument in `predict()`, which returns the prediction (i.e., Kriging) weights.
+* Added support for k-fold cross validation via `kcv()` for `ssn_lm()` and `ssn_glm()` model objects. `kcv()` generalizes `loocv()` (leave-one-out cross validation) by holding out `k` (approximately equally-sized) folds instead of single observations. 
+* Changed the default relative stopping tolerance (i.e., `reltol`) passed to `stats::optim(method = "Nelder-Mead", ...)` from `1e-4` to `1e-6`, affecting `ssn_lm()` and `ssn_glm()` model objects. The intent of this change is to help prevent convergence to a local maximum that is not a global maximum. This change may affect default backwards compatibility of fitted models, depending on the shape of their objective function. If the fitted model has changed due to the change in `reltol`, adding `control = list(reltol = 1e-4)` as an argument to `ssn_lm()` and `ssn_glm()` will reproduce the original fitted model.
+* Added an `eacf` argument to `Torgegram()` to compute the empirical autocovariance function.
+* Added the `range_constrain` argument to `ssn_lm()` and `ssn_glm()` to constrain the range parameter to enhance numerical stability. The default for `range_constrain` is `FALSE`, implying the range is not constrained.
+* Added the `ssn_lmRF()` functions to fit random forest spatial residual models.
+    * The resulting object has class `ssn_lmRF()`.
+    * These objects are built for use with `predict()` to perform prediction.
+* Added support for Euclidean Matérn, Cauchy, and powered-exponential covariance families in `ssn_lm()` and `ssn_glm()`.
+
+## Minor Updates
+
+* Various minor updates to enhance alignment with `spmodel`.
+* Various documentation updates to enhance alignment with `spmodel`.
+* Various internal consistency updates to enhance alignment with `spmodel`.
+
+## Bug Fixes
+
+* Various bug fixes to enhance alignment with `spmodel`.
+
 # SSN2 0.4.0
 
 ## Major Updates

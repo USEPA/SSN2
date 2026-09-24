@@ -1,11 +1,75 @@
-#' Get prediction distance object
-#'
-#' @param object Data object.
-#' @param newdata_name Name of the prediction data set.
-#' @param initial_object Initial value object.
-#'
+#' @param prefer Which backend to prefer when both \code{.RData} and
+#'   \code{.bmat} distance matrices exist: \code{"dense"} (the default) reads
+#'   \code{.RData}, \code{"bigdata"} reads \code{.bmat}. Either backend
+#'   returns numerically identical distances; the two differ only in whether
+#'   an entire network's matrix is deserialized into memory and then
+#'   subsetted (\code{"dense"}) or the requested submatrix is read directly
+#'   off disk via a memory-mapped \code{filematrix} (\code{"bigdata"}). Local
+#'   big-data machinery (model-fitting \code{local}, block prediction, and
+#'   the local/Vecchia/low-rank decorrelation, simulation, and conditional
+#'   simulation neighbor-pool code) typically only ever needs small
+#'   submatrices at a time and passes \code{"bigdata"}, so it is not left
+#'   unreachable whenever \code{.RData} also happens to exist. Exact/default
+#'   paths, which always need an entire network's matrix anyway, keep the
+#'   \code{"dense"} default.
 #' @noRd
-get_dist_pred_object <- function(object, newdata_name, initial_object) {
+select_pred_dist_backend <- function(ssn.object, newdata_name, tailup_none, taildown_none, prefer = "dense") {
+  ext <- if (identical(newdata_name, ".missing")) "obs" else newdata_name
+  rdata_pattern <- if (identical(newdata_name, ".missing")) "^dist\\.net[0-9]+\\.RData$" else "^dist\\.net[0-9]+\\.a\\.RData$"
+  bmat_pattern <- if (identical(newdata_name, ".missing")) "^dist\\.net[0-9]+\\.bmat$" else "^dist\\.net[0-9]+\\.a\\.bmat$"
+  select_dist_backend_from_patterns(
+    ssn.object, ext, rdata_pattern, bmat_pattern, tailup_none, taildown_none,
+    label = newdata_name, prefer = prefer
+  )
+}
+
+select_square_dist_backend <- function(ssn.object, ext, tailup_none, taildown_none, prefer = "dense") {
+  select_dist_backend_from_patterns(
+    ssn.object, ext, "^dist\\.net[0-9]+\\.RData$", "^dist\\.net[0-9]+\\.bmat$", tailup_none, taildown_none,
+    label = ext, prefer = prefer
+  )
+}
+
+select_dist_backend_from_patterns <- function(ssn.object, ext, rdata_pattern, bmat_pattern,
+                                              tailup_none, taildown_none, label, prefer = "dense") {
+  if (tailup_none && taildown_none) {
+    return("none")
+  }
+
+  dist_dir <- file.path(ssn.object$path, "distance", ext)
+  rdata_exists <- length(list.files(dist_dir, pattern = rdata_pattern)) > 0
+  bmat_exists <- length(list.files(dist_dir, pattern = bmat_pattern)) > 0
+
+  if (identical(prefer, "bigdata")) {
+    if (bmat_exists) return("bigdata")
+    if (rdata_exists) return("dense")
+  } else {
+    if (rdata_exists) return("dense")
+    if (bmat_exists) return("bigdata")
+  }
+  stop(
+    "Unable to locate distance matrices for \"", label, "\". Checked for dense ",
+    "(.RData) and filematrix (.bmat) distance files in \"", dist_dir, "\" and ",
+    "found neither. Run ssn_create_distmat() or ssn_create_bigdist() for this ",
+    "dataset first.",
+    call. = FALSE
+  )
+}
+
+get_initial_object_from_coef <- function(object) {
+  get_initial_object(
+    tailup_type = remove_covtype(class(coef(object, type = "tailup"))),
+    taildown_type = remove_covtype(class(coef(object, type = "taildown"))),
+    euclid_type = remove_covtype(class(coef(object, type = "euclid"))),
+    nugget_type = remove_covtype(class(coef(object, type = "nugget"))),
+    tailup_initial = NULL,
+    taildown_initial = NULL,
+    euclid_initial = NULL,
+    nugget_initial = NULL
+  )
+}
+
+get_dist_pred_object <- function(object, newdata_name, initial_object, backend = NULL) {
   # get netgeom
   netgeom <- ssn_get_netgeom(object$ssn.object$obs, reformat = TRUE)
 
@@ -46,12 +110,17 @@ get_dist_pred_object <- function(object, newdata_name, initial_object) {
     inv_dist_order_pred = inv_dist_order_pred
   )
 
-
+  if (is.null(backend)) {
+    tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
+    taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
+    backend <- select_pred_dist_backend(object$ssn.object, newdata_name, tailup_none, taildown_none)
+  }
 
   # get list of prediction distance matrices in order of the original data
   dist_pred_matlist <- get_dist_pred_matlist(
     object$ssn.object, newdata_name, initial_object, object$additive,
-    order_list_pred
+    order_list_pred,
+    backend = backend
   )
 
   # see whether euclid is none to avoid unnecessary computations
@@ -92,14 +161,14 @@ get_dist_pred_object <- function(object, newdata_name, initial_object) {
 
 # vectorized version of get_dist_pred_object
 get_dist_pred_matlist <- function(ssn.object, newdata_name, initial_object, additive,
-                                  order_list_pred) {
+                                  order_list_pred, backend = "dense") {
   # store network indices and orders
   network_index <- order_list_pred$network_index
   dist_order <- order_list_pred$dist_order
   inv_dist_order <- order_list_pred$inv_dist_order
   inv_dist_order_pred <- order_list_pred$inv_dist_order_pred
 
-  # see whether tailup and taildown are none to avoid unnecssary computations
+  # see whether tailup and taildown are none to avoid unnecessary computations
   tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
   taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
 
@@ -116,9 +185,11 @@ get_dist_pred_matlist <- function(ssn.object, newdata_name, initial_object, addi
   } else {
     # otherwise
 
-    # get dist junction matrices as a list (for efficiency, do things
-    # network by network and then combine so zeroes populate accordingly)
-    distjunc_pred_matlist <- get_distjunc_pred_matlist(ssn.object, newdata_name, order_list_pred)
+    distjunc_pred_matlist <- if (identical(backend, "bigdata")) {
+      get_distjunc_pred_matlist_bigdata(ssn.object, newdata_name, order_list_pred)
+    } else {
+      get_distjunc_pred_matlist(ssn.object, newdata_name, order_list_pred)
+    }
 
     # get other matrices as a list
     dist_pred_matlist <- list(
@@ -142,14 +213,11 @@ get_dist_pred_matlist <- function(ssn.object, newdata_name, initial_object, addi
         hydro_pred_mat = Matrix::bdiag(dist_pred_matlist$hydro_pred_matlist)
       )
 
-      # get distance matrices in pid (data) order (rows by data order and
-      # columns by prediction data order)
-      dist_pred_matlist <- lapply(dist_pred_matlist, function(x) {
-        preds_val <- tryCatch(x[inv_dist_order, inv_dist_order_pred, drop = FALSE],
-          error = function(e) x[inv_dist_order_pred, inv_dist_order, drop = FALSE]
-        )
-        preds_val
-      })
+      dist_pred_matlist <- mapply(
+        reorder_dist_pred_field, names(dist_pred_matlist), dist_pred_matlist,
+        MoreArgs = list(inv_dist_order = inv_dist_order, inv_dist_order_pred = inv_dist_order_pred),
+        SIMPLIFY = FALSE
+      )
 
       # store additive matrix as NULL
       dist_pred_matlist <- c(dist_pred_matlist, list(w_pred_mat = NULL))
@@ -176,33 +244,33 @@ get_dist_pred_matlist <- function(ssn.object, newdata_name, initial_object, addi
         w_pred_mat = Matrix::bdiag(dist_pred_matlist$w_pred_matlist)
       )
 
-      # get distance matrices in pid (data) order (rows by data order and
-      # columns by prediction data order)
-      dist_pred_matlist <- lapply(dist_pred_matlist, function(x) {
-        preds_val <- tryCatch(x[inv_dist_order, inv_dist_order_pred, drop = FALSE],
-          error = function(e) x[inv_dist_order_pred, inv_dist_order, drop = FALSE]
-        )
-        preds_val
-      })
+      dist_pred_matlist <- mapply(
+        reorder_dist_pred_field, names(dist_pred_matlist), dist_pred_matlist,
+        MoreArgs = list(inv_dist_order = inv_dist_order, inv_dist_order_pred = inv_dist_order_pred),
+        SIMPLIFY = FALSE
+      )
     }
   }
   # return distance prediction object
   dist_pred_matlist
 }
 
-#' Get list of prediction distance junction matrices
-#'
-#' @param ssn.object SSN object.
-#' @param newdata_name Name of the prediction data set.
-#' @param order_list_pred The order for observations in the prediction data set.
-#'
-#' @noRd
+reorder_dist_pred_field <- function(name, x, inv_dist_order, inv_dist_order_pred) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  if (identical(name, "distjuncb_pred_mat")) {
+    x[inv_dist_order_pred, inv_dist_order, drop = FALSE]
+  } else {
+    x[inv_dist_order, inv_dist_order_pred, drop = FALSE]
+  }
+}
+
 get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred) {
   # check and make sure there is missing data to predict
   if (newdata_name %in% names(ssn.object$preds) && NROW(ssn.object$preds[[newdata_name]]) == 0) {
     stop("No missing data to predict", call. = FALSE)
   }
-
 
   # get network index values and their unique entries
   network_index_obs <- as.numeric(as.character(order_list_pred$network_index))
@@ -212,6 +280,14 @@ get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred)
 
   # get network pid
   network_pid_obs <- as.character(order_list_pred$pid)
+  network_pid_pred <- as.character(order_list_pred$pid_pred)
+
+  read_matrix <- function(path) {
+    con <- file(path, open = "rb")
+    on.exit(close(con), add = TRUE)
+    # Full distance matrix loaded before chunk subsetting; consider per-call caching for block kriging.
+    unserialize(con)
+  }
 
   # find distance junction prediction matrices (as a list) separately for each
   # network index
@@ -238,19 +314,14 @@ get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred)
         if (!file.exists(path)) {
           stop("Unable to locate required distance matrix", call. = FALSE)
         }
-        # some code to read from disk (binary representation)
-        file_handle <- file(path, open = "rb")
-        # get the distance-to-nearest junction matrix
-        distmat <- unserialize(file_handle)
-        # close the file on disk
-        close(file_handle)
-
-        # find observations that are used to build model
-        which_obs <- rownames(distmat) %in% network_pid_obs[network_index_obs == x]
-        # find prediction observations
-        which_pred <- !which_obs
-        distmata <- distmat[which_obs, which_pred, drop = FALSE]
-        distmatb <- distmat[which_pred, which_obs, drop = FALSE]
+        distmat <- read_matrix(path)
+        obs_match <- match(network_pid_obs[network_index_obs == x], rownames(distmat))
+        pred_match <- match(network_pid_pred[network_index_pred == x], colnames(distmat))
+        if (anyNA(obs_match) || anyNA(pred_match)) {
+          stop("Unable to locate stored distance information for requested observation or prediction pid.", call. = FALSE)
+        }
+        distmata <- distmat[obs_match, pred_match, drop = FALSE]
+        distmatb <- distmat[pred_match, obs_match, drop = FALSE]
       } else {
         # on the disk, distance matrices are stored by network
         workspace.name.a <- paste("dist.net", x,
@@ -278,19 +349,15 @@ get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred)
         if (!file.exists(path.b)) {
           stop("Unable to locate required distance matrix", call. = FALSE)
         }
-        # distance matrix a
-        file_handle <- file(path.a, open = "rb")
-        distmata <- unserialize(file_handle)
-        close(file_handle)
-        # distance matrix b
-        file_handle <- file(path.b, open = "rb")
-        distmatb <- unserialize(file_handle)
-        close(file_handle)
-
-        # only keep observed from ssn object
-        which_obs <- rownames(distmata) %in% network_pid_obs[network_index_obs == x]
-        distmata <- distmata[which_obs, , drop = FALSE]
-        distmatb <- distmatb[, which_obs, drop = FALSE]
+        distmata_all <- read_matrix(path.a)
+        distmatb_all <- read_matrix(path.b)
+        obs_match <- match(network_pid_obs[network_index_obs == x], rownames(distmata_all))
+        pred_match <- match(network_pid_pred[network_index_pred == x], colnames(distmata_all))
+        if (anyNA(obs_match) || anyNA(pred_match)) {
+          stop("Unable to locate stored distance information for requested observation or prediction pid.", call. = FALSE)
+        }
+        distmata <- distmata_all[obs_match, pred_match, drop = FALSE]
+        distmatb <- distmatb_all[pred_match, obs_match, drop = FALSE]
       }
 
       # find pid order
@@ -314,23 +381,12 @@ get_distjunc_pred_matlist <- function(ssn.object, newdata_name, order_list_pred)
   distjunc_pred_matlist <- list(distjunca = distjunca, distjuncb = distjuncb)
 }
 
-
-#' Get mask prediction distance matrices
-#'
-#' @param distjunc_pred_matlist
-#'
-#' @noRd
 get_mask_pred_matlist <- function(distjunc_pred_matlist) {
   mask_pred_list <- lapply(distjunc_pred_matlist$distjunca, function(x) {
     Matrix::Matrix(1, nrow = dim(x)[1], ncol = dim(x)[2], sparse = TRUE)
   })
 }
 
-#' Get a prediction distance matrices
-#'
-#' @param distjunc_pred_matlist
-#'
-#' @noRd
 get_a_pred_matlist <- function(distjunc_pred_matlist) {
   a_matrix_list <- mapply(
     a = distjunc_pred_matlist$distjunca,
@@ -342,11 +398,6 @@ get_a_pred_matlist <- function(distjunc_pred_matlist) {
   )
 }
 
-#' Get b prediction distance matrices
-#'
-#' @param distjunc_pred_matlist
-#'
-#' @noRd
 get_b_pred_matlist <- function(distjunc_pred_matlist) {
   a_matrix_list <- mapply(
     a = distjunc_pred_matlist$distjunca,
@@ -358,11 +409,6 @@ get_b_pred_matlist <- function(distjunc_pred_matlist) {
   )
 }
 
-#' Get hydrologic prediction distance matrices
-#'
-#' @param distjunc_pred_matlist
-#'
-#' @noRd
 get_hydro_pred_matlist <- function(distjunc_pred_matlist) {
   a_matrix_list <- mapply(
     a = distjunc_pred_matlist$distjunca,
@@ -374,11 +420,6 @@ get_hydro_pred_matlist <- function(distjunc_pred_matlist) {
   )
 }
 
-#' Get w prediction distance matrices
-#'
-#' @param distjunc_pred_matlist
-#'
-#' @noRd
 get_w_pred_matlist <- function(ssn.object, newdata_name, order_list_pred, additive, b_pred_matlist, mask_pred_matlist) {
   # make list
   network_index_obs <- as.numeric(as.character(order_list_pred$network_index))

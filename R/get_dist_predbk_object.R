@@ -1,11 +1,4 @@
-#' Get prediction by prediction distance matrix for block Kriging
-#'
-#' @param object Model object.
-#' @param newdata_name Name of prediction data set.
-#' @param initial_object Initial value object.
-#'
-#' @noRd
-get_dist_predbk_object <- function(object, newdata_name, initial_object) {
+get_dist_predbk_object <- function(object, newdata_name, initial_object, backend = "dense") {
   # get netgeom
   netgeom <- ssn_get_netgeom(object$ssn.object$preds[[newdata_name]], reformat = TRUE)
 
@@ -30,15 +23,12 @@ get_dist_predbk_object <- function(object, newdata_name, initial_object) {
     inv_dist_order = inv_dist_order
   )
 
-
-
   # get list of distance matrices in order of the original data
   dist_matlist <- get_dist_predbk_matlist(
     object$ssn.object, newdata_name, initial_object, object$additive,
-    order_list
+    order_list,
+    backend = backend
   )
-
-
 
   # see whether euclid is none to avoid unnecessary computations
   euclid_none <- inherits(initial_object$euclid_initial, "euclid_none")
@@ -70,12 +60,12 @@ get_dist_predbk_object <- function(object, newdata_name, initial_object) {
 
 # vectorized version of get_dist_predbk_object
 get_dist_predbk_matlist <- function(ssn.object, newdata_name, initial_object, additive,
-                                    order_list) {
+                                    order_list, backend = "dense") {
   network_index <- order_list$network_index
   dist_order <- order_list$dist_order
   inv_dist_order <- order_list$inv_dist_order
 
-  # see whether tailup and taildown are none to avoid unnecssary computations
+  # see whether tailup and taildown are none to avoid unnecessary computations
   tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
   taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
 
@@ -92,9 +82,11 @@ get_dist_predbk_matlist <- function(ssn.object, newdata_name, initial_object, ad
   } else {
     # otherwise
 
-    # get dist junction matrices as a list (for efficiency, do things
-    # network by network and then combine so zeroes populate accordingly)
-    distjunc_matlist <- get_distjunc_matlist(order_list$network_index, ssn.object, newdata_name)
+    distjunc_matlist <- if (identical(backend, "bigdata")) {
+      get_distjunc_matlist_bigdata(order_list$network_index, order_list$pid, ssn.object, newdata_name)
+    } else {
+      get_distjunc_matlist(order_list$network_index, ssn.object, newdata_name)
+    }
 
     # get other matrices as a list
     dist_matlist <- list(
@@ -105,7 +97,7 @@ get_dist_predbk_matlist <- function(ssn.object, newdata_name, initial_object, ad
       hydro_matlist = get_hydro_matlist(distjunc_matlist)
     )
 
-    # if only taildown covariacne, do not need additive matrix
+    # if only taildown covariance, do not need additive matrix
     if (tailup_none) {
       # store as single sparse Matrix
       dist_matlist <- list(

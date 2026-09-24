@@ -8,6 +8,9 @@ ssn_rnbinom <- function(ssn.object, network = "obs",
     stop("network must be \"obs\".", call. = FALSE)
   }
 
+  # re-dispatch this call to ssn_rnorm() (dropping the "dispersion" argument,
+  # which ssn_rnorm() does not accept) to simulate the shared latent
+  # Gaussian process, then transform it below into the target distribution
   call_val <- match.call()
   call_val[[1]] <- as.symbol("ssn_rnorm")
   call_list <- as.list(call_val)
@@ -21,6 +24,9 @@ ssn_rnbinom <- function(ssn.object, network = "obs",
 
   n <- NROW(ssn.object$obs)
   if (is.matrix(mu)) {
+    # multiple samples: split the matrix into one mean vector per column
+    # (transpose first so split() walks columns instead of rows), simulating
+    # each sample's negative binomial draws independently
     mu_list <- split(t(mu), seq_len(NCOL(mu)))
     ssn_rnbinom_val <- vapply(mu_list, function(x) rnbinom(n, mu = x, size = dispersion), numeric(n))
   } else {

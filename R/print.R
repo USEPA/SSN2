@@ -2,8 +2,9 @@
 #'
 #' @description Print fitted model objects and summaries.
 #'
-#' @param x A fitted model object from [ssn_lm()], a fitted model object from [ssn_glm()],
-#'   or output from \code{summary(x)} or or \code{anova(x)}.
+#' @param x A fitted model object from [ssn_lm()], [ssn_glm()],
+#'   [ssn_decorrelate()], or [ssn_lmRF()], or output from \code{summary(x)}
+#'   or \code{anova(x)}.
 #' @param digits The number of significant digits to use when printing.
 #' @param signif.stars Logical. If \code{TRUE}, significance stars are printed for each coefficient
 #' @param ... Other arguments passed to or from other methods.
@@ -13,6 +14,20 @@
 #' @name print.SSN2
 #' @method print ssn_lm
 #' @export
+#' @examples
+#' \donttest{
+#' # Copy the mf04p .ssn data to a local directory and read it into R
+#' # When modeling with your .ssn object, you will load it using the relevant
+#' # path to the .ssn data on your machine
+#' copy_lsn_to_temp()
+#' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
+#' mf04p <- ssn_import(temp_path, overwrite = TRUE)
+#' fit <- ssn_lm(
+#'   Summer_mn ~ ELEV_DEM, mf04p, tailup_type = "exponential",
+#'   additive = "afvArea"
+#' )
+#' print(fit)
+#' }
 print.ssn_lm <- function(x, digits = max(3L, getOption("digits") - 3L),
                          ...) {
   cat("\nCall:\n", paste(deparse(x$call),
@@ -67,7 +82,6 @@ print.ssn_lm <- function(x, digits = max(3L, getOption("digits") - 3L),
   x_cov <- x_cov[!(logi1 & logi2), , drop = FALSE]
   x_cov <- x_cov[, -which(names(x_cov) == "is_known"), drop = FALSE]
 
-
   if (!is.null(x$random)) {
     x_rand <- coef(x, type = "randcov")
     x_rand <- data.frame(
@@ -89,50 +103,6 @@ print.ssn_lm <- function(x, digits = max(3L, getOption("digits") - 3L),
   )
 
   cat("\n")
-
-  #
-  # tailup_coef <- coef(x, type = "tailup")
-  # cat(paste("\nCoefficients (", gsub("tailup_", "", class(tailup_coef)), " tailup covariance):\n", sep = ""))
-  # print.default(format(tailup_coef, digits = digits),
-  #               print.gap = 2L,
-  #               quote = FALSE
-  # )
-  #
-  # taildown_coef <- coef(x, type = "taildown")
-  # cat(paste("\nCoefficients (", gsub("taildown_", "", class(taildown_coef)), " taildown covariance):\n", sep = ""))
-  # print.default(format(taildown_coef, digits = digits),
-  #               print.gap = 2L,
-  #               quote = FALSE
-  # )
-  #
-  # euclid_coef <- coef(x, type = "euclid")
-  # if (!x$anisotropy) {
-  #   euclid_coef <- euclid_coef[-which(names(euclid_coef) %in% c("rotate", "scale"))]
-  # } # class gets dropped here
-  # cat(paste("\nCoefficients (", gsub("euclid_", "", class(coef(x, type = "euclid"))), " Euclidean covariance):\n", sep = ""))
-  # print.default(format(euclid_coef, digits = digits),
-  #               print.gap = 2L,
-  #               quote = FALSE
-  # )
-  #
-  # nugget_coef <- coef(x, type = "nugget")
-  # cat(paste("\nCoefficients (", "nugget covariance):\n", sep = ""))
-  # print.default(format(nugget_coef, digits = digits),
-  #               print.gap = 2L,
-  #               quote = FALSE
-  # )
-  #
-  # # cat("\n")
-  #
-  # if (length(coef(x, type = "randcov"))) {
-  #   cat("Coefficients (random effects):\n")
-  #   print.default(format(coef(x, type = "randcov"), digits = digits),
-  #                 print.gap = 2L,
-  #                 quote = FALSE
-  #   )
-  #
-  #   cat("\n")
-  # }
 
   invisible(x)
 }
@@ -201,7 +171,6 @@ print.ssn_glm <- function(x, digits = max(3L, getOption("digits") - 3L),
   x_cov <- x_cov[!(logi1 & logi2), , drop = FALSE]
   x_cov <- x_cov[, -which(names(x_cov) == "is_known"), drop = FALSE]
 
-
   if (!is.null(x$random)) {
     x_rand <- coef(x, type = "randcov")
     x_rand <- data.frame(
@@ -227,6 +196,27 @@ print.ssn_glm <- function(x, digits = max(3L, getOption("digits") - 3L),
   invisible(x)
 }
 
+#' Print a five-number residual summary (Min/1Q/Median/3Q/Max)
+#'
+#' Shared by the Gaussian (response residuals) and GLM (deviance residuals)
+#' summary print methods.
+#'
+#' @param residuals_val A numeric vector of residuals.
+#' @param digits Passed to \code{print()}.
+#' @param label The header line preceding the summary (e.g. \code{"Residuals"}
+#'   or \code{"Deviance Residuals"}).
+#'
+#' @noRd
+print_residual_summary <- function(residuals_val, digits, label = "Residuals") {
+  cat("\n", label, ":\n", sep = "")
+  resQ <- c(
+    min(residuals_val), quantile(residuals_val, p = c(0.25, 0.5, 0.75), na.rm = TRUE),
+    max(residuals_val)
+  )
+  names(resQ) <- c("Min", "1Q", "Median", "3Q", "Max")
+  print(resQ, digits = digits)
+}
+
 #' @rdname print.SSN2
 #' @method print summary.ssn_lm
 #' @export
@@ -238,19 +228,16 @@ print.summary.ssn_lm <- function(x,
   cat("\nCall:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"), "\n", sep = "")
 
   # pasting the residual summary
-  cat("\nResiduals:\n")
-  resQ <- c(
-    min(x$residuals$response), quantile(x$residuals$response, p = c(0.25, 0.5, 0.75), na.rm = TRUE),
-    max(x$residuals$response)
-  )
-  names(resQ) <- c("Min", "1Q", "Median", "3Q", "Max")
-  print(resQ, digits = digits)
+  print_residual_summary(x$residuals$response, digits)
 
   # pasting the fixed coefficient summary
   cat("\nCoefficients (fixed):\n")
   coefs_fixed <- x$coefficients$fixed
-  # colnames(coefs_fixed) <- c("Estimate", "Std. Error", "t value", "Pr(>|t|)")
-  colnames(coefs_fixed) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
+  if ("df" %in% colnames(coefs_fixed)) {
+    colnames(coefs_fixed) <- c("Estimate", "Std. Error", "df", "t value", "Pr(>|t|)")
+  } else {
+    colnames(coefs_fixed) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
+  }
   printCoefmat(coefs_fixed, digits = digits, signif.stars = signif.stars, na.print = "NA", ...)
 
   # pasting the generalized r squared
@@ -297,7 +284,6 @@ print.summary.ssn_lm <- function(x,
   x_cov <- x_cov[!(logi1 & logi2), , drop = FALSE]
   x_cov <- x_cov[, -which(names(x_cov) == "is_known"), drop = FALSE]
 
-
   if (!is.null(x$coefficients$params_object$randcov)) {
     x_rand <- x$coefficients$params_object$randcov
     x_rand <- data.frame(
@@ -334,18 +320,11 @@ print.summary.ssn_glm <- function(x,
   cat("\nCall:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"), "\n", sep = "")
 
   # pasting the residual summary
-  cat("\nDeviance Residuals:\n")
-  resQ <- c(
-    min(x$residuals$deviance), quantile(x$residuals$deviance, p = c(0.25, 0.5, 0.75), na.rm = TRUE),
-    max(x$residuals$deviance)
-  )
-  names(resQ) <- c("Min", "1Q", "Median", "3Q", "Max")
-  print(resQ, digits = digits)
+  print_residual_summary(x$residuals$deviance, digits, label = "Deviance Residuals")
 
   # pasting the fixed coefficient summary
   cat("\nCoefficients (fixed):\n")
   coefs_fixed <- x$coefficients$fixed
-  # colnames(coefs_fixed) <- c("Estimate", "Std. Error", "t value", "Pr(>|t|)")
   colnames(coefs_fixed) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
   printCoefmat(coefs_fixed, digits = digits, signif.stars = signif.stars, na.print = "NA", ...)
 
@@ -400,7 +379,6 @@ print.summary.ssn_glm <- function(x,
   x_cov <- x_cov[!(logi1 & logi2), , drop = FALSE]
   x_cov <- x_cov[, -which(names(x_cov) == "is_known"), drop = FALSE]
 
-
   if (!is.null(x$coefficients$params_object$randcov)) {
     x_rand <- x$coefficients$params_object$randcov
     x_rand <- data.frame(
@@ -434,14 +412,27 @@ print.anova.ssn_lm <- function(x, digits = max(getOption("digits") - 2L, 3L),
   cat("\n")
   cat(attr(x, "heading")[2])
   cat("\n")
-  if ("Pr(>Chi2)" %in% colnames(x)) {
+  # a Pr(>Chi2)/Pr(>F) column is only present when test = TRUE (Pr(>F)
+  # specifically when ddf = "satterthwaite" was used -- see anova.SSN2())
+  if ("Pr(>Chi2)" %in% colnames(x) || "Pr(>F)" %in% colnames(x)) {
     P.values <- TRUE
     has.Pvalue <- TRUE
   } else {
     P.values <- FALSE
     has.Pvalue <- FALSE
   }
-  printCoefmat(x, digits = digits, signif.stars = signif.stars, P.values = P.values, has.Pvalue = has.Pvalue, ...)
+  if ("NumDF" %in% colnames(x)) {
+    # NumDF (always a whole number) is otherwise grouped with DenDF under
+    # printCoefmat()'s default cs.ind, which rounds both to a shared decimal
+    # precision and puts spurious trailing zeros (e.g. "1.000") on NumDF;
+    # pointing cs.ind/tst.ind at DenDF/F value alone leaves NumDF to fall
+    # through to plain format(), printing as an integer
+    cs.ind <- which(colnames(x) == "DenDF")
+    tst.ind <- which(colnames(x) == "F value")
+    printCoefmat(x, digits = digits, signif.stars = signif.stars, P.values = P.values, has.Pvalue = has.Pvalue, cs.ind = cs.ind, tst.ind = tst.ind, ...)
+  } else {
+    printCoefmat(x, digits = digits, signif.stars = signif.stars, P.values = P.values, has.Pvalue = has.Pvalue, ...)
+  }
 }
 
 #' @rdname print.SSN2

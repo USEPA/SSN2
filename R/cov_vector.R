@@ -2,14 +2,6 @@
 # GENERIC SETUP COVARIANCES
 ###############################################################################
 
-#' Create a covariance vector
-#'
-#' @param params Parameter object.
-#' @param dist_pred_object Prediction distance matrix object.
-#' @param ... Additional arguments
-#'
-#' @return A covariance vector
-#' @noRd
 cov_vector <- function(params, dist_pred_object, ...) {
   UseMethod("cov_vector", params)
 }
@@ -141,7 +133,6 @@ cov_vector.taildown_mariah <- function(params, dist_pred_object, ...) {
   dist_ratio_b <- 90 * b / params[["range"]]
   a_eq_b <- which(a == b)
 
-
   h_cor_part <- log(dist_ratio_h + 1) / dist_ratio_h * flow_con
   h_cor_part[h == 0] <- 1
   ab_cor_part <- (log(dist_ratio_a + 1) - log(dist_ratio_b + 1)) / (dist_ratio_a - dist_ratio_b)
@@ -217,7 +208,32 @@ cov_vector.euclid_gaussian <- function(params, dist_pred_object, anisotropy, ...
 }
 
 #' @export
-cov_vector.euclid_cosine <- function(params, dist_pred_object, anisotropy, ...) {
+cov_vector.euclid_matern <- function(params, dist_pred_object, anisotropy, ...) {
+  h <- get_euclid_pred(params, dist_pred_object, anisotropy)
+  h_matrix <- as.matrix(h)
+  extra <- params[["extra"]]
+  eta <- sqrt(2 * extra) * h_matrix / params[["range"]]
+  cor_part <- 2^(1 - extra) / gamma(extra) * eta^extra * besselK(eta, nu = extra)
+  cor_part[h_matrix == 0] <- 1
+  params[["de"]] * cor_part
+}
+
+#' @export
+cov_vector.euclid_cauchy <- function(params, dist_pred_object, anisotropy, ...) {
+  h <- get_euclid_pred(params, dist_pred_object, anisotropy)
+  dist_ratio <- h / params[["range"]]
+  # Original: de * (1 + (h / range)^2)^(-extra); log1p preserves small squared ratios.
+  params[["de"]] * exp(-params[["extra"]] * log1p(dist_ratio^2))
+}
+
+#' @export
+cov_vector.euclid_pexponential <- function(params, dist_pred_object, anisotropy, ...) {
+  h <- get_euclid_pred(params, dist_pred_object, anisotropy)
+  params[["de"]] * exp(-(h^params[["extra"]]) / params[["range"]])
+}
+
+#' @export
+cov_vector.euclid_circular <- function(params, dist_pred_object, anisotropy, ...) {
   h <- get_euclid_pred(params, dist_pred_object, anisotropy)
   dist_ratio <- h / params[["range"]]
   min_val <- pmin(dist_ratio, 1)

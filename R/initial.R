@@ -11,30 +11,34 @@
 #' @param taildown_type The taildown covariance function type. Available options
 #'   include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
 #'   \code{"mariah"}, \code{"epa"}, and \code{"none"}.
-#' @param euclid_type The euclidean covariance function type. Available options
+#' @param euclid_type The Euclidean covariance function type. Available options
 #'   include \code{"spherical"}, \code{"exponential"}, \code{"gaussian"},
-#'   \code{"cosine"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
-#'    \code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"}, and
-#'    \code{"none"}.
+#'   \code{"circular"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},
+#'    \code{"jbessel"}, \code{"gravity"}, \code{"rquad"}, \code{"magnetic"},
+#'    \code{"matern"}, \code{"cauchy"}, \code{"pexponential"}, and \code{"none"}.
 #' @param nugget_type The nugget covariance function type. Available options
 #'   include \code{"nugget"} or \code{"none"}.
 #' @param de The spatially dependent (correlated) random error variance. Commonly referred to as
 #'   a partial sill.
 #' @param range The correlation parameter.
+#' @param extra An optional initial or known Matérn smoothness, Cauchy shape,
+#'   or powered-exponential exponent. Omit it to initialize the parameter by
+#'   the covariance search.
 #' @param rotate Anisotropy rotation parameter (from 0 to \eqn{\pi} radians) for
-#'   the euclidean portion of the covariance. A value of 0 (the default) implies no rotation.
+#'   the Euclidean portion of the covariance. A value of 0 (the default) implies no rotation.
 #' @param scale Anisotropy scale parameter (from 0 to 1) for
-#'   the euclidean portion of the covariance. A value of 1 (the default) implies no scaling.
-#' @param nugget The spatially independent (not correlated) random error variance. Commonly referred to as
+#'   the Euclidean portion of the covariance. A value of 1 (the default) implies no scaling.
+#' @param nugget The spatially independent (uncorrelated) random error variance. Commonly referred to as
 #'   a nugget.
 #' @param known A character vector indicating which covariance parameters are to be
 #'   assumed known. The value \code{"given"} is shorthand for assuming all
 #'   covariance parameters given to \code{*_initial()} are assumed known.
 #'
 #' @details Create an initial object for use with [ssn_lm()] or [ssn_glm()].
-#'   \code{NA} values can be given for \code{ie}, \code{rotate}, and \code{scale}, which lets
-#'   these functions find initial values for parameters that are sometimes
-#'   otherwise assumed known (e.g., \code{rotate} and \code{scale} with [ssn_lm()] and [ssn_glm()].
+#'   \code{NA} values can be given for \code{rotate} and \code{scale}, which lets
+#'   these functions find initial values for parameters that are otherwise
+#'   assumed known by default (\code{rotate = 0} and \code{scale = 1} when
+#'   anisotropy is not modeled with [ssn_lm()] or [ssn_glm()]).
 #'   Parametric forms for each spatial covariance type are presented below.
 #'
 #'   \code{tailup_type} Details: Let \eqn{D} be a matrix of hydrologic distances,
@@ -98,14 +102,18 @@
 #'     \item gaussian: \eqn{exp(- r^2 )}
 #'     \item cubic: \eqn{(1 - 7r^2 + 8.75r^3 - 3.5r^5 + 0.75r^7) * (r <= 1)}
 #'     \item pentaspherical: \eqn{(1 - 1.875r + 1.25r^3 - 0.375r^5) * (r <= 1)}
-#'     \item cosine: \eqn{cos(r)}
+#'     \item circular: \eqn{1 - (2 / \pi) * (r * sqrt(1 - r^2) + \arcsin(r))} for \eqn{0 \le r \le 1}, and zero for \eqn{r > 1}
 #'     \item wave: \eqn{sin(r) * (h > 0) / r + (h = 0)}
 #'     \item jbessel: \eqn{Bj(h * range)}, Bj is Bessel-J function
 #'     \item gravity: \eqn{(1 + r^2)^{-0.5}}
 #'     \item rquad: \eqn{(1 + r^2)^{-1}}
 #'     \item magnetic: \eqn{(1 + r^2)^{-1.5}}
+#'     \item matern: \eqn{2^{1-extra} eta^{extra} K_{extra}(eta) / Gamma(extra)}, where \eqn{eta = \sqrt{2 extra} D / range}
+#'     \item cauchy: \eqn{(1 + r^2)^{-extra}}
+#'     \item pexponential: \eqn{exp(-D^{extra} / range)}
 #'     \item none: \eqn{I}
 #'   }
+#'   The powered-exponential range has units of distance raised to \code{extra}.
 #'
 #'   \code{nugget_type} Details: Let \eqn{I} be an identity matrix and \eqn{0}
 #'    be the zero matrix. Then parametric
@@ -125,7 +133,7 @@
 #'   with specified initial and/or known values. \code{is_known} is a named
 #'   numeric vector indicating whether the spatial covariance parameters in
 #'   \code{initial} are known or not. The class of the list
-#'   matches the the relevant spatial covariance type.
+#'   matches the relevant spatial covariance type.
 #'
 #' @name ssn_initial
 #'
@@ -136,6 +144,7 @@
 #' tailup_initial("exponential", de = 1, range = 20, known = "range")
 #' tailup_initial("exponential", de = 1, range = 20, known = "given")
 #' euclid_initial("spherical", de = 2, range = 4, scale = 0.8, known = c("range", "scale"))
+#' euclid_initial("matern", de = 2, range = 4, extra = 1, known = "extra")
 #' dispersion_initial("nbinomial", dispersion = 5)
 #'
 #' @references
@@ -153,6 +162,8 @@ tailup_initial <- function(tailup_type, de, range, known) {
   # set defaults
   if (missing(de)) de <- NULL
   if (missing(range)) range <- NULL
+
+  check_tailup_taildown_parameters(de, range, allow_na = TRUE)
 
   tailup_params_given <- c(de = unname(de), range = unname(range))
 
@@ -173,6 +184,8 @@ taildown_initial <- function(taildown_type, de, range, known) {
   if (missing(de)) de <- NULL
   if (missing(range)) range <- NULL
 
+  check_tailup_taildown_parameters(de, range, allow_na = TRUE)
+
   taildown_params_given <- c(de = unname(de), range = unname(range))
 
   is_known <- get_is_known(taildown_params_given, known)
@@ -185,7 +198,7 @@ taildown_initial <- function(taildown_type, de, range, known) {
 
 #' @rdname ssn_initial
 #' @export
-euclid_initial <- function(euclid_type, de, range, rotate, scale, known) {
+euclid_initial <- function(euclid_type, de, range, rotate, scale, known, extra) {
   check_euclid_type(euclid_type)
 
   # set defaults
@@ -193,11 +206,26 @@ euclid_initial <- function(euclid_type, de, range, rotate, scale, known) {
   if (missing(range)) range <- NULL
   if (missing(rotate)) rotate <- NULL
   if (missing(scale)) scale <- NULL
+  if (missing(extra)) extra <- NULL
 
-  euclid_params_given <- c(
-    de = unname(de), range = unname(range),
-    rotate = unname(rotate), scale = unname(scale)
+  if (!euclid_has_extra(euclid_type) && !is.null(extra)) {
+    stop("extra is only used by euclid_type = \"matern\", \"cauchy\", or \"pexponential\".", call. = FALSE)
+  }
+  check_euclid_extra_parameters(
+    euclid_type, de, range, extra, rotate, scale, allow_na = TRUE
   )
+
+  if (euclid_has_extra(euclid_type)) {
+    euclid_params_given <- c(
+      de = unname(de), range = unname(range), extra = unname(extra),
+      rotate = unname(rotate), scale = unname(scale)
+    )
+  } else {
+    euclid_params_given <- c(
+      de = unname(de), range = unname(range),
+      rotate = unname(rotate), scale = unname(scale)
+    )
+  }
 
   is_known <- get_is_known(euclid_params_given, known)
 
@@ -213,6 +241,7 @@ nugget_initial <- function(nugget_type, nugget, known) {
   check_nugget_type(nugget_type)
 
   if (missing(nugget)) nugget <- NULL
+  check_nugget_parameter(nugget, allow_na = TRUE)
   nugget_params_given <- c(nugget = unname(nugget))
 
   is_known <- get_is_known(nugget_params_given, known)

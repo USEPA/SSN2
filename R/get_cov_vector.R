@@ -1,14 +1,4 @@
-#' A helper to get the overall covariance matrix.
-#'
-#' @param params_object Parameter object.
-#' @param dist_pred_object The distance matrices between observed and prediction data.
-#' @param data The data.
-#' @param newdata The prediction data.
-#' @param partition_factor The name of the partition factor.
-#' @param anisotropy Whether there is anisotropy.
-#'
-#' @noRd
-get_cov_vector <- function(params_object, dist_pred_object, data, newdata, partition_factor = NULL, anisotropy) {
+get_cov_vector <- function(params_object, dist_pred_object, data, newdata, partition_factor = NULL, anisotropy, randcov_context = NULL, partition_context = NULL) {
   tailup_none <- inherits(params_object$tailup, "tailup_none")
   taildown_none <- inherits(params_object$taildown, "taildown_none")
   euclid_none <- inherits(params_object$euclid, "euclid_none")
@@ -19,24 +9,20 @@ get_cov_vector <- function(params_object, dist_pred_object, data, newdata, parti
     cov_vector <- cov_vector(params_object$tailup, dist_pred_object) +
       cov_vector(params_object$taildown, dist_pred_object) +
       cov_vector(params_object$euclid, dist_pred_object, anisotropy)
-    if (!is.null(params_object$randcov)) {
-      cov_vector <- cov_vector + randcov_vector(params_object$randcov, data, newdata)
-    }
-    if (!is.null(partition_factor)) {
-      cov_vector <- cov_vector * partition_vector(partition_factor, data, newdata)
-    }
   }
-  # Matrix::Matrix(cov_vector, sparse = TRUE)
+  if (!is.null(params_object$randcov)) {
+    cov_vector <- cov_vector + randcov_vector(params_object$randcov, data, newdata, context = randcov_context)
+  }
+  if (!is.null(partition_factor)) {
+    cov_vector <- cov_vector * partition_vector(
+      partition_factor, data, newdata,
+      reform_bar2 = partition_context$reform_bar2,
+      partition_index_data = partition_context$partition_index_data
+    )
+  }
   cov_vector
 }
 
-#' Compute Euclidean covariance for prediction and a possible adjustment to Euclidean covariance for anisotropy
-#'
-#' @param params The Euclidean covariance parameters
-#' @param dist_pred_object The distance matrices between observed and prediction data.
-#' @param anisotropy Whether there is anisotropy.
-#'
-#' @noRd
 get_euclid_pred <- function(params, dist_pred_object, anisotropy) {
   if (anisotropy) {
     new_coords_observed <- transform_anis(

@@ -5,12 +5,10 @@
 #' @param object A fitted model object (e.g., [ssn_lm()] or [ssn_glm()]).
 #' @param newdata If omitted, the covariance matrix of
 #'   the observed data is returned. If provided, \code{newdata} is
-#'   a data frame or \code{sf} object that contains coordinate information
-#'   required to construct the covariance between \code{newdata} and
-#'   the observed data. If a data frame, \code{newdata}
-#'   must contain variables that represent coordinates having the same name as
-#'   the coordinates from the observed data used to fit \code{object}. If an
-#'   \code{sf} object, coordinates are obtained from the geometry of \code{newdata}.
+#'   a character string naming the prediction data set (accessible via
+#'   \code{object$ssn.object$preds}) for which the covariance is desired.
+#'   Note that the prediction data must be in the original SSN object used
+#'   to fit \code{object}.
 #' @param cov_type The type of covariance matrix returned. If \code{newdata}
 #'   is omitted, the \eqn{n \times n} covariance matrix of the observed
 #'   data is returned, where \eqn{n} is the sample size used to fit \code{object}.
@@ -23,7 +21,11 @@
 #'   the \eqn{m \times m} covariance matrix of the prediction data is returned.
 #' @param ... Other arguments. Not used (needed for generic consistency).
 #'
-#' @return A covariance matrix (see \code{cov_type}).
+#' @return If \code{newdata} is omitted, the covariance matrix of the observed
+#'   data, which has dimension n x n, where n is the sample size used to fit \code{object}.
+#'   If \code{newdata} is provided, the covariance matrix between the unobserved (new)
+#'   data and the observed data, which has dimension m x n, where m is the number of
+#'   new observations and n is the sample size used to fit \code{object}.
 #'
 #' @name covmatrix.SSN2
 #' @method covmatrix ssn_lm
@@ -49,27 +51,16 @@
 covmatrix.ssn_lm <- function(object, newdata, cov_type, ...) {
   params_object <- object$coefficients$params_object
 
-
-  tailup_type <- remove_covtype(class(coef(object, type = "tailup")))
-  taildown_type <- remove_covtype(class(coef(object, type = "taildown")))
-  euclid_type <- remove_covtype(class(coef(object, type = "euclid")))
-  nugget_type <- remove_covtype(class(coef(object, type = "nugget")))
-
-  initial_object <- get_initial_object(
-    tailup_type = tailup_type,
-    taildown_type = taildown_type,
-    euclid_type = euclid_type,
-    nugget_type = nugget_type,
-    tailup_initial = NULL,
-    taildown_initial = NULL,
-    euclid_initial = NULL,
-    nugget_initial = NULL
-  )
+  initial_object <- get_initial_object_from_coef(object)
 
   if (missing(newdata)) {
     cov_type <- "obs.obs"
   } else if (missing(cov_type)) {
     cov_type <- "pred.obs"
+  }
+
+  if (cov_type != "obs.obs" && is.null(newdata)) {
+    stop("No prediction data for which to create a covariance matrix.", call. = FALSE)
   }
 
   if (cov_type == "obs.obs") {
@@ -82,7 +73,10 @@ covmatrix.ssn_lm <- function(object, newdata, cov_type, ...) {
       reorder_val <- order(c(object$observed_index, object$missing_index))
       object$ssn.object$obs <- object$ssn.object$obs[reorder_val, , drop = FALSE]
     }
-    dist_object <- get_dist_object(object$ssn.object, initial_object, object$additive, object$anisotropy)
+    tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
+    taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
+    backend <- select_square_dist_backend(object$ssn.object, "obs", tailup_none, taildown_none)
+    dist_object <- get_dist_object(object$ssn.object, initial_object, object$additive, object$anisotropy, backend = backend)
     # this is to subset the data by observed index
     dist_object <- get_dist_object_oblist(dist_object, object$observed_index, local_index = rep(1, object$n))
     dist_object <- dist_object[[1]] # unlist
@@ -101,17 +95,25 @@ covmatrix.ssn_lm <- function(object, newdata, cov_type, ...) {
   } else if (cov_type == "pred.pred") {
     newdata_name <- newdata
     newdata <- object$ssn.object$preds[[newdata_name]]
+    if (identical(newdata_name, ".missing")) {
+      rows <- seq_len(NROW(newdata))
+      return(get_block_pred_covariance(object, newdata_name, rows, rows))
+    }
     de_scale <- sum(params_object$tailup[["de"]], params_object$taildown[["de"]], params_object$euclid[["de"]])
     randcov_names <- get_randcov_names(object$random)
-    randcov_Zs <- get_randcov_Zs(newdata, randcov_names)
+    extended_random_xlev <- extend_randcov_xlev(object$random_xlev, newdata, randcov_names)
+    randcov_Zs <- get_randcov_Zs(newdata, randcov_names, xlev_list = extended_random_xlev)
     partition_matrix_val <- partition_matrix(object$partition_factor, newdata)
-    dist_predbk_object <- get_dist_predbk_object(object, newdata_name, initial_object)
+    tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
+    taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
+    backend <- select_square_dist_backend(object$ssn.object, newdata_name, tailup_none, taildown_none)
+    dist_predbk_object <- get_dist_predbk_object(object, newdata_name, initial_object, backend = backend)
     cov_val <- get_cov_matrix(params_object, dist_predbk_object, randcov_Zs, partition_matrix_val,
       object$anisotropy,
       de_scale = de_scale, diagtol = object$diagtol
     )
   } else {
-    stop("Invalid \"cov_type\" argument.", call. = FALSE)
+    stop('cov_type must be "obs.obs", "obs.pred", "pred.obs", "pred.pred"', call. = FALSE)
   }
 
   # return covariance value as a base R matrix (not a Matrix matrix)

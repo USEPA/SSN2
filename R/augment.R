@@ -8,9 +8,9 @@
 #'   Augment behaves differently depending on whether the original data or new data
 #'   requires augmenting. Typically, when augmenting the original data, only the fitted
 #'   model object is specified, and when augmenting new data, the fitted model object
-#'   and \code{newdata} are specified. When augmenting the original data, diagnostic
+#'   and \code{newdata} is specified. When augmenting the original data, diagnostic
 #'   statistics are augmented to each row in the data set. When augmenting new data,
-#'   predictions and optional intervals (confidence or prediction) or standard errors are augmented to each
+#'   predictions and optional intervals or standard errors are augmented to each
 #'   row in the new data set.
 #'
 #' @param x A fitted model object from [ssn_lm()] or [ssn_glm()].
@@ -23,13 +23,16 @@
 #'   must be present in each prediction \code{sf} object represented by \code{newdata}.
 #'   Defaults to \code{NULL}, which indicates
 #'   that nothing has been passed to \code{newdata} and augmenting occurs
-#'   for the original data. The value \code{"ssn"} is shorthand for specifying
+#'   for the original data. The value \code{"all"} is shorthand for specifying
 #'   all prediction \code{sf} objects.
 #' @param se_fit Logical indicating whether or not a \code{.se.fit} column should
-#'   be added to augmented output. Passed to \code{predict()} and
-#'   defaults to \code{FALSE}.
-#' @param interval Character indicating the type of confidence interval columns to
-#'   add to the augmented \code{newdata} output. Passed to \code{predict()} and defaults
+#'   be added to augmented output. Defaults to \code{FALSE}. When \code{newdata}
+#'   is not supplied, \code{.se.fit}
+#'   is the standard error of the fitted mean at the observed locations (on the
+#'   link scale for \code{ssn_glm()} model objects), matching
+#'   \code{predict(interval = "confidence")}.
+#' @param interval Character indicating the type of interval columns
+#'   (\code{.lower} and \code{.upper}) to add to the augmented output. Defaults
 #'   to \code{"none"}.
 #' @param level Tolerance/confidence level. The default is \code{0.95}.
 #' @param local A list or logical. If a list, specific list elements described
@@ -47,20 +50,20 @@
 #'
 #' @return When augmenting the original data set, a tibble with additional columns
 #'   \itemize{
-#'     \item \code{.fitted}: Fitted value
-#'     \item \code{.resid}: Response residual (the difference between observed and fitted values)
-#'     \item \code{.hat}: Leverage (diagonal of the hat matrix)
-#'     \item \code{.cooksd}: Cook's distance
-#'     \item \code{.std.resid}: Standardized residuals
-#'     \item \code{.se.fit}: Standard error of the fitted value.
+#'     \item \code{.fitted} Fitted value
+#'     \item \code{.resid} Response residual (the difference between observed and fitted values)
+#'     \item \code{.hat} Leverage (diagonal of the hat matrix)
+#'     \item \code{.cooksd} Cook's distance
+#'     \item \code{.std.resid} Standardized residuals
+#'     \item \code{.se.fit} Standard error of the fitted value.
 #'   }
 #'
 #'   When augmenting a new data set, a tibble with additional columns
 #'   \itemize{
-#'     \item \code{.fitted}: Predicted (or fitted) value
-#'     \item \code{.lower}: Lower bound on interval
-#'     \item \code{.upper}: Upper bound on interval
-#'     \item \code{.se.fit}: Standard error of the predicted (or fitted) value
+#'     \item \code{.fitted} Predicted (or fitted) value
+#'     \item \code{.lower} Lower bound on interval
+#'     \item \code{.upper} Upper bound on interval
+#'     \item \code{.se.fit} Standard error of the predicted (or fitted) value
 #'   }
 #'
 #'   When predictions for all prediction objects are desired, the output is a list
@@ -72,7 +75,7 @@
 #' @order 1
 #' @export
 #'
-#' @seealso [tidy.SSN2()] [glance.SSN2()]
+#' @seealso [tidy.SSN2()] [glance.SSN2()] [predict.SSN2()]
 #'
 #' @examples
 #' # Copy the mf04p .ssn data to a local directory and read it into R
@@ -94,9 +97,8 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
                            interval = c("none", "confidence", "prediction"),
                            level = 0.95, local, ...) {
 
-
-
   interval <- match.arg(interval)
+  interval <- check_interval_augment(interval, !is.null(newdata))
 
   # set data and newdata
   if (is.null(newdata)) {
@@ -111,9 +113,14 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
 
   if (is.null(newdata)) {
     augment_data <- tibble::tibble(.fitted = fitted(x))
-    if (se_fit) {
-      preds_data <- predict(x, newdata = data, se.fit = se_fit, interval = "confidence", ...)
-      augment_data$.se.fit <- preds_data$se.fit
+    if (se_fit || interval == "confidence") {
+      se <- get_se_fitted_mean(x)
+      if (interval == "confidence") {
+        tstar <- qnorm(1 - (1 - level) / 2)
+        augment_data$.lower <- augment_data$.fitted - tstar * se
+        augment_data$.upper <- augment_data$.fitted + tstar * se
+      }
+      if (se_fit) augment_data$.se.fit <- se
     }
     tibble_out <- tibble::tibble(cbind(data, augment_data, influence(x)))
     tibble_out$pid <- ssn_get_netgeom(x$ssn.object$obs, netvars = "pid")$pid
@@ -194,11 +201,12 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
 augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("link", "response"),
                             type.residuals = c("deviance", "pearson", "response"), se_fit = FALSE,
                             interval = c("none", "confidence", "prediction"),
-                            newdata_size, level = 0.95, local = local, var_correct = TRUE, ...) {
+                            newdata_size, level = 0.95, local, var_correct = TRUE, ...) {
 
   type.predict <- match.arg(type.predict)
   type.residuals <- match.arg(type.residuals)
   interval <- match.arg(interval)
+  interval <- check_interval_augment(interval, !is.null(newdata))
 
   # set data and newdata
   if (is.null(newdata)) {
@@ -213,9 +221,21 @@ augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("li
 
   if (is.null(newdata)) {
     augment_data <- tibble::tibble(.fitted = fitted(x, type = type.predict))
-    if (se_fit) {
-      preds_data <- predict(x, newdata = data, type = type.predict, se.fit = se_fit, interval = "confidence", ...)
-      augment_data$.se.fit <- preds_data$se.fit
+    if (se_fit || interval == "confidence") {
+      se <- get_se_fitted_mean(x)
+      if (interval == "confidence") {
+        fitted_link <- fitted(x, type = "link")
+        tstar <- qnorm(1 - (1 - level) / 2)
+        lwr <- fitted_link - tstar * se
+        upr <- fitted_link + tstar * se
+        if (type.predict == "response") {
+          lwr <- invlink(lwr, x$family, x$size)
+          upr <- invlink(upr, x$family, x$size)
+        }
+        augment_data$.lower <- lwr
+        augment_data$.upper <- upr
+      }
+      if (se_fit) augment_data$.se.fit <- se
     }
     tibble_out <- tibble::tibble(cbind(data, augment_data, influence(x, type = type.residuals)))
     coords <- sf::st_coordinates(x$ssn.object$obs)
@@ -239,7 +259,7 @@ augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("li
       preds_newdata <- predict(x,
         newdata = y, type = type.predict, se.fit = se_fit, interval = interval,
         newdata_size = newdata_size, level = level,
-        var_correct = FALSE, local = local, ...
+        var_correct = var_correct, local = local, ...
       )
       if (se_fit) {
         if (interval %in% c("confidence", "prediction")) {
@@ -280,4 +300,28 @@ augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("li
     }
   }
   tibble_out
+}
+
+#' Compute diag(X V X') without forming the full n x n product
+#'
+#' The i-th diagonal entry is the scalar x_i' V x_i; since (X V) has x_i' V
+#' as its i-th row, multiplying it elementwise by X and summing along each
+#' row recovers that scalar. Identical to \code{diag(X \%*\% V \%*\% t(X))},
+#' but costs O(np^2) operations and O(np) memory rather than O(n^2p) and
+#' O(n^2). Matches spmodel's helper of the same name.
+#'
+#' @param X An n x p matrix.
+#' @param V A p x p matrix (base or a \code{Matrix} package S4 class).
+#'
+#' @return A numeric vector of length \code{NROW(X)}.
+#'
+#' @noRd
+get_diag_XVXt <- function(X, V) {
+  # Matrix::rowSums (not base::rowSums) so this also works when V is an S4
+  # Matrix (e.g. a Cholesky-derived covariance), not just a base matrix
+  as.numeric(Matrix::rowSums((X %*% V) * X))
+}
+
+get_se_fitted_mean <- function(object) {
+  sqrt(get_diag_XVXt(model.matrix(object), vcov(object)))
 }

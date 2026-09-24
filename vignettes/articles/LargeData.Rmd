@@ -1,6 +1,6 @@
 ---
 title: "Fitting Spatial Stream Network Models to Large Data Sets and Making Predictions (i.e., Kriging)"
-author: "Michael Dumelle"
+author: "Michael Dumelle, Erin Peterson, Jay M. Ver Hoef, Alan Pearse, and Dan Isaak"
 bibliography: '`r system.file("references.bib", package="SSN2")`'
 output:
   pdf_document: default

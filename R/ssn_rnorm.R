@@ -3,10 +3,12 @@
 ssn_rnorm <- function(ssn.object, network = "obs",
                       tailup_params, taildown_params, euclid_params, nugget_params,
                       mean = 0, samples = 1, additive,
-                      randcov_params, partition_factor, ...) {
+                      randcov_params, partition_factor, local, ...) {
   if (any(!(network %in% "obs"))) {
     stop("network must be \"obs\".", call. = FALSE)
   }
+
+  if (missing(local)) local <- NULL
 
   # fix additive depending on format
   if (missing(additive)) additive <- NULL
@@ -58,6 +60,35 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   if (missing(partition_factor)) {
     partition_factor <- NULL
   }
+
+  n <- NROW(ssn.object$obs)
+  if (is.null(local)) {
+    if (n > 5000) {
+      local <- TRUE
+      message(
+        "Because the sample size exceeds 5,000, we are using a low-rank big-data approximation. ",
+        "Set local = FALSE to use the exact simulation, or local = list(approximation = \"vecchia\") ",
+        "for neighbor-truncated sequential conditioning instead."
+      )
+    } else {
+      local <- FALSE
+    }
+  }
+  conditioning <- get_ssn_simulate_local(local, n, ssn.object$obs)
+
+  if (!identical(conditioning$method, "exact")) {
+    covariance_fit <- get_ssn_simulate_covariance_fit(ssn.object, params_object, additive, anisotropy, partition_factor)
+    ssn_rnorm_val <- if (identical(conditioning$approximation, "vecchia")) {
+      get_ssn_simulate_vecchia(covariance_fit, samples, conditioning) + mean
+    } else {
+      get_ssn_simulate_lowrank(covariance_fit, samples, conditioning) + mean
+    }
+    if (samples == 1) {
+      ssn_rnorm_val <- as.vector(ssn_rnorm_val)
+    }
+    return(ssn_rnorm_val)
+  }
+
   partition_matrix_val <- partition_matrix(partition_factor, ssn.object$obs)
 
   # create the distance object required
@@ -71,31 +102,15 @@ ssn_rnorm <- function(ssn.object, network = "obs",
     euclid_initial = NULL,
     nugget_initial = NULL
   )
-  dist_object <- get_dist_object(ssn.object, initial_object, additive, anisotropy)
+  # matches covmatrix()'s obs.obs backend resolution: prefer the standard
+  # dense (.RData) distance matrices when they exist, falling back to the
+  # big-data (.bmat) filematrix reader only when they do not
+  tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
+  taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
+  backend <- select_square_dist_backend(ssn.object, "obs", tailup_none, taildown_none)
+  dist_object <- get_dist_object(ssn.object, initial_object, additive, anisotropy, backend = backend)
 
-  # two ccw rotations/scales so that one ccw rotation in cov_matrix yields a process
-  # needing one cw rotation to be isotropic. this is a consequence of doing the
-  # anisotropy correction within cov_matrix as opposed to outside it
-  if (anisotropy) {
-    new_coords_v1 <- transform_anis_inv(
-      dist_object$.xcoord,
-      dist_object$.ycoord,
-      rotate = params_object$euclid[["rotate"]],
-      scale = params_object$euclid[["scale"]]
-    )
-
-    new_coords_v2 <- transform_anis_inv(
-      new_coords_v1$xcoord_val,
-      new_coords_v1$ycoord_val,
-      rotate = params_object$euclid[["rotate"]],
-      scale = params_object$euclid[["scale"]]
-    )
-
-    dist_object$.xcoord <- new_coords_v2$xcoord_val
-    dist_object$.ycoord <- new_coords_v2$ycoord_val
-  }
-
-  # create the covariance matrix
+  # The covariance builder applies the same anisotropy transformation as fitting.
   de_scale <- sum(params_object$tailup[["de"]], params_object$taildown[["de"]], params_object$euclid[["de"]])
   cov_matrix_val <- get_cov_matrix(params_object, dist_object, randcov_Zs, partition_matrix_val,
     anisotropy, de_scale,
@@ -106,7 +121,6 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   cov_matrix_lowchol <- t(chol(cov_matrix_val))
 
   # simulate n random normal vectors
-  n <- NROW(ssn.object$obs)
   ssn_rnorm_val <- vapply(seq_len(samples), function(x) mean + as.numeric(cov_matrix_lowchol %*% rnorm(n)), numeric(n))
 
   # store as a vector if only one sample required

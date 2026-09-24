@@ -20,13 +20,13 @@ An SSN object with a new path list element.
 }
 \description{
 Update the local path in an existing SSN object based
-on an user defined file.
+on a user-defined file.
 }
 \details{
 At times, it may be necessary to move a .ssn directory,
 which is linked to an SSN object in an R workspace. If the .ssn
 directory is moved, the path must be updated before using the
-\code{ssn_glmssn} function and other functions that read/write
+\code{ssn_lm()}/\code{ssn_glm()} functions and other functions that read/write
 to the .ssn directory. The \command{ssn_update_path} is a helper
 function that serves this purpose.
 }

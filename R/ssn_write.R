@@ -12,7 +12,7 @@
 #' @param import If \code{TRUE}, import and return the \code{SSN} object
 #'   after writing to file. Defaults to \code{FALSE}.
 #'
-#' @return{ssn_write} creates an .ssn directory that contains the
+#' @return \code{ssn_write} creates an .ssn directory that contains the
 #'   spatial, topological, and attribute information stored in the
 #'   original \code{SSN} object. Spatial datasets found in the
 #'   \code{SSN} object (e.g. edges, obs, and prediction sites) are
@@ -21,11 +21,13 @@
 #'
 #' @export
 #' @examples
-#' ## For examples only, copy MiddleFork04.ssn directory to R's
-#' # temporary directory
+#' # Copy the mf04p .ssn data to a local directory and read it into R
+#' # When modeling with your .ssn object, you will load it using the relevant
+#' # path to the .ssn data on your machine
 #' copy_lsn_to_temp()
+#' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
 #' ## Import SSN object with prediction sites
-#' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+#' mf04p <- ssn_import(temp_path,
 #'   predpts = "pred1km",
 #'   overwrite = TRUE
 #' )
