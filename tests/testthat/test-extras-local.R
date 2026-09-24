@@ -363,8 +363,9 @@ test_that("local CV preserves fitting groups and theoretical fold covariance wit
     folds <- rep(c("a", "b"), length.out = fit$n)
     held <- which(folds == "a")
     local <- list(method = "covariance", size = 8)
-    refit <- if (family == "Gaussian") get_kcv_local_lm_refit(fit, held, local) else
-      get_kcv_local_glm_refit(fit, held, local)
+    resolved_local <- resolve_kcv_local(local)
+    refit <- if (family == "Gaussian") get_kcv_local_lm_refit(fit, held, resolved_local) else
+      get_kcv_local_glm_refit(fit, held, resolved_local)
     expect_equal(unname(refit$local_index), unname(groups[fit$observed_index[-held]]))
     expect_true(all(unlist(refit$is_known)))
     if (family == "Gaussian") {

@@ -366,7 +366,7 @@ get_pred_glm <- function(newdata_list, se.fit, interval,
 #' @param c0 Covariance between observed and newdata
 #'
 #' @noRd
-get_wts_varw <- function(family, Xmat, y, w, size, dispersion, cov_lowchol, x0, c0, cov_index, cov_betahat) {
+get_wts_varw <- function(family, Xmat, y, w, size, dispersion, cov_lowchol, x0, c0) {
 
 
   SigInv <- chol2inv(t(cov_lowchol)) # works on upchol

@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 
 It can be challenging to fit SSN models to large data sets because the computation burden associated with estimating spatial covariance parameters increases exponentially with $n$, the sample size. Typically, it is only feasible to fit SSN2 models using the standard (i.e., traditional) approach for data sets having no more than a few thousand observations. @ver2023indexing proposed an approach called spatial indexing that can be used to fit SSN models having tens to hundreds of thousands of observations relatively quickly. @ver2023indexing and @dumelle2024modeling show that spatial indexing tends to approximate the standard solution very accurately at a fraction of the computational cost via several simulation studies and data analyses. Spatial indexing works by splitting the data up into smaller subsets ($n_{subset} << n$) and pooling spatial covariance parameters estimates across these subsets. This vignette aims to compare the standard approach and large data (i.e., spatial indexing) approach directly on a moderately sized data set, whereby the standard approach can be fit relatively quickly. In `SSN2`, spatial indexing is available via the `local` argument to `ssn_lm()` and `ssn_glm()`.
 
-Interestingly, the main computational burden associated with prediction at new locations is actually related to the size of the observed data ($n$), not the number of locations requiring prediction ($n_{pred})$. @ver2023indexing describe an approach to prediction at new locations using models fit to large (observed) data sets called local neighborhood prediction. Local neighborhood prediction subsets the observed data to include only the `size` observations most correlated with the location requiring prediction (where `size` is an integer). Typically, this subsetting is done separately for each prediction location. However, due to computational constraints associated with the hydrologic distance matrices required by SSN models, local neighborhood prediction in `SSN2` subsets the observed data to the `size` observations most correlated (on average) with all locations requiring prediction.  In `SSN2`, local neighborhood prediction is available via the `local` argument to `predict()` and `augment()`.
+Interestingly, the main computational burden associated with prediction at new locations is actually related to the size of the observed data ($n$), not the number of locations requiring prediction ($n_{pred})$. @ver2023indexing describe an approach to prediction at new locations using models fit to large (observed) data sets called local neighborhood prediction. For point prediction, `SSN2` selects the `size` observations with the largest absolute covariance with each prediction location (where `size` is an integer). Each prediction location has its own neighborhood, seprate from the other locations being predicted. In `SSN2`, local neighborhood prediction is available via the `local` argument to `predict()` and `augment()`.
 
 Before proceeding, we load the `SSN2` and `ggplot2` **R** packages (which can all be installed directly from CRAN) by running:
 ```{r}
@@ -124,38 +124,38 @@ ggplot() +
 
 The `kmeans()` algorithm that determines subsets uses a random start, so setting a seed is required to reproduce results exactly. Model results should not change substantially between random starts, however. A fixed subset list can be provided to `local` so that subset assignment does not change across model fits. For more on the `local` argument, see the `ssn_lm()` documentation by running `?ssn_lm()` or by visiting [this link](https://usepa.github.io/SSN2/reference/ssn_lm.html).
 
-Now we use the model fit via spatial indexing to make local neighborhood predictions. In `predict()` (and `augment()`), the default value for the local neighborhood `size` is 4,000, which is larger than $n = 549$. However, if we set `size` to be 250 (instead of 4,000), we can illustrate some concepts behind local neighborhood prediction in `SSN2` that will be useful when observed data sets are larger and `size` $<< n$. 
+Now we use the model fit via spatial indexing to make local neighborhood predictions. For point prediction in `predict()` (and `augment()`), the default local neighborhood `size` is 200. Here we use `size = 250` to illustrate local neighborhood prediction with a subset of the $n = 549$ observations. Block prediction has separate controls and defaults; see `?predict.SSN2`.
 
-When setting `size` to 250, the 250 observations sharing the highest average covariance with the prediction locations are used as the local neighborhood subset. 
+When setting `size` to 250, each prediction location uses the 250 observations with the largest absolute covariance with that location.
 We compute the covariance matrix between the prediction and observed locations by running:
 ```{r}
 cov_pred_by_obs <- covmatrix(ssn_mod_bd, newdata = "pred")
 dim(cov_pred_by_obs)
 ```
 
-We then find the average covariance between the prediction and observed locations by running:
+To illustrate the neighborhood for the first prediction location, we extract its covariance with the observed locations:
 ```{r}
-avg_cov_with_obs <- colMeans(cov_pred_by_obs)
+cov_with_obs <- as.numeric(cov_pred_by_obs[1, ])
 ```
 
-We then order these (largest covariance first), find indices corresponding to the 250 observations with the highest average covariance, and create a vector called `Include`, that has the value `"Yes"` if the observation is used in the local neighborhood subset and the value `"No"` if it is not:
+We order these by decreasing absolute covariance and select the first 250. The vector `Include` has the value `"Yes"` for observations in this prediction location's neighborhood and `"No"` otherwise:
 ```{r}
-cov_order <- order(avg_cov_with_obs, decreasing = TRUE)
-largest_300 <- cov_order[1:250]
+cov_order <- order(-abs(cov_with_obs), -seq_along(cov_with_obs))
+largest_250 <- cov_order[1:250]
 row_number <- seq(from = 1, to = NROW(bugs$obs))
-bugs$obs$Include <- ifelse(row_number %in% largest_300, "Yes", "No")
+bugs$obs$Include <- ifelse(row_number %in% largest_250, "Yes", "No")
 ```
 
-We can visualize these designations by running:
+We can visualize this neighborhood and its prediction location (black) by running:
 ```{r}
 ggplot() +
   geom_sf(data = bugs$edges, linewidth = 0.1, alpha = 0.8, color = "darkgrey") +
-  geom_sf(data = bugs$preds$pred, color = "black", size = 0.9) +
+  geom_sf(data = bugs$preds$pred[1, ], color = "black", size = 0.9) +
   geom_sf(data = bugs$obs, aes(color = Include)) +
   theme_bw()
 ```
 
-The 250 observations with the highest average covariance (`Include = "Yes"`) tend to be nearby several prediction points, while the remaining observations (`Include = "No"`) are often on the basin's boundaries.
+The observations marked `Include = "Yes"` form the neighborhood for the first prediction location only. Other prediction locations can use different subsets of the observed data.
 
 Using a local neighborhood `size` of 250, we then augment the prediction data with predictions by running:
 ```{r}
@@ -167,7 +167,7 @@ aug_ssn_mod_bd <- augment(
 )
 ```
 
-Unsurprisingly, the local neighborhood approach may not perform well when prediction locations are far away from any observed locations in the local neighborhood, which can happen when `size` $<< n$. In this case, one can separate prediction locations into smaller geographically based subsets and stored as separate prediction data sets in `ssn.object$preds`. The local neighborhood is recomputed for each subset separately based on the `size` observations most correlated (on average) with the prediction locations from that subset.
+The neighborhood size controls a trade-off between computational cost and approximation accuracy. Increasing `size` includes more observations in each prediction location's neighborhood. Splitting the prediction locations into separate data sets does not change their neighborhoods because selection is performed separately for each location.
 
 # Comparing the Approaches
 
