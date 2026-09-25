@@ -35,7 +35,7 @@ library(ggplot2)
 
 The `bugs` data is an SSN object that contains macroinvertebrate data in the Lower Snake Basin. It can be downloaded via GitHub at [this link](https://github.com/USEPA/SSN2/tree/develop/vignettes/articles). We read in `bugs` by running:
 ```{r}
-bugs <- ssn_import("bugs.ssn", predpts = "pred")
+# bugs <- ssn_import("bugs.ssn", predpts = "pred")
 ```
 
 ```{r local-read, include=FALSE, echo=FALSE}
@@ -140,7 +140,7 @@ cov_with_obs <- as.numeric(cov_pred_by_obs[1, ])
 
 We order these by decreasing absolute covariance and select the first 250. The vector `Include` has the value `"Yes"` for observations in this prediction location's neighborhood and `"No"` otherwise:
 ```{r}
-cov_order <- order(-abs(cov_with_obs), -seq_along(cov_with_obs))
+cov_order <- order(abs(cov_with_obs), decreasing = TRUE)
 largest_250 <- cov_order[1:250]
 row_number <- seq(from = 1, to = NROW(bugs$obs))
 bugs$obs$Include <- ifelse(row_number %in% largest_250, "Yes", "No")
