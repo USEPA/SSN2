@@ -35,7 +35,7 @@ library(ggplot2)
 
 The `bugs` data is an SSN object that contains macroinvertebrate data in the Lower Snake Basin. It can be downloaded via GitHub at [this link](https://github.com/USEPA/SSN2/tree/develop/vignettes/articles). We read in `bugs` by running:
 ```{r}
-# bugs <- ssn_import("bugs.ssn", predpts = "pred")
+bugs <- ssn_import("bugs.ssn", predpts = "pred")
 ```
 
 ```{r local-read, include=FALSE, echo=FALSE}
