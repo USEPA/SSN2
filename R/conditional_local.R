@@ -173,17 +173,13 @@ get_conditional_local_lowrank <- function(local, object, newdata, n, n_pred) {
 #' @param base_lowchol The lower triangular Cholesky factor of the base
 #'   sample's covariance matrix.
 #' @param samples The number of simulations (columns of \code{base_residual}).
-#' @param var_adj_pieces GLM latent-process uncertainty pieces from
-#'   \code{\link{get_conditional_local_var_adj_pieces}()}, or \code{NULL} for
-#'   Gaussian models.
 #'
 #' @return An \code{length(block_index) x samples} matrix of simulated
 #'   residuals for this block.
 #'
 #' @noRd
 get_conditional_new_from_base_ssn <- function(block_index, object, newdata_name, base_index,
-                                               base_residual, base_lowchol, samples,
-                                               var_adj_pieces = NULL) {
+                                               base_residual, base_lowchol, samples) {
   n_block <- length(block_index)
   n_base <- length(base_index)
 
@@ -191,10 +187,6 @@ get_conditional_new_from_base_ssn <- function(block_index, object, newdata_name,
   cross_covariance <- t(cross_full[, base_index, drop = FALSE])
 
   block_covariance <- get_block_pred_covariance(object, newdata_name, block_index, block_index)
-  if (!is.null(var_adj_pieces)) {
-    sqrt_pred <- var_adj_pieces$sqrt_mhinv_wts[, block_index, drop = FALSE]
-    block_covariance <- block_covariance + crossprod(sqrt_pred, sqrt_pred)
-  }
 
   sqrt_siginv_cross <- forwardsolve(base_lowchol, cross_covariance)
   sqrt_siginv_base <- forwardsolve(base_lowchol, base_residual)
@@ -222,9 +214,8 @@ get_conditional_new_from_base_ssn <- function(block_index, object, newdata_name,
 #' \code{newdata} is treated as one block when
 #' \code{local$method_new == "all"}, matching spmodel's own convention).
 #' Unlike \code{\link{get_conditional_vecchia_ssn}()}, blocks do not depend
-#' on each other or on the base's own simulated values (only on the fixed
-#' \code{base_residual}), so \code{local$parallel} genuinely parallelizes
-#' this engine.
+#' on each other given the shared \code{base_residual}, so
+#' \code{local$parallel} parallelizes this.
 #'
 #' @param object A fitted \code{ssn_lm}/\code{ssn_glm} model object.
 #' @param newdata_name The name of the prediction set being simulated.
@@ -234,16 +225,12 @@ get_conditional_new_from_base_ssn <- function(block_index, object, newdata_name,
 #' @param local A resolved \code{local} list (from
 #'   \code{\link{get_conditional_local_lowrank}()}).
 #' @param samples The number of simulated columns to draw.
-#' @param var_adj_pieces GLM latent-process uncertainty pieces from
-#'   \code{\link{get_conditional_local_var_adj_pieces}()}, or \code{NULL} for
-#'   Gaussian models.
 #'
 #' @return An \code{n_new x samples} matrix of simulated values, in
 #'   \code{newdata}'s original row order.
 #'
 #' @noRd
-get_conditional_lowrank_ssn <- function(object, newdata_name, newdata, base_val, local, samples,
-                                         var_adj_pieces = NULL) {
+get_conditional_lowrank_ssn <- function(object, newdata_name, newdata, base_val, local, samples) {
   n_obs <- object$n
   n_new <- NROW(newdata)
 
@@ -261,15 +248,15 @@ get_conditional_lowrank_ssn <- function(object, newdata_name, newdata, base_val,
 
   if (local$parallel) {
     cl <- parallel::makeCluster(local$ncores)
+    on.exit(parallel::stopCluster(cl), add = TRUE)
     new_val <- parallel::parLapply(
       cl, blocks, get_conditional_new_from_base_ssn,
-      object, newdata_name, base_index, base_residual, base_lowchol, samples, var_adj_pieces
+      object, newdata_name, base_index, base_residual, base_lowchol, samples
     )
-    parallel::stopCluster(cl)
   } else {
     new_val <- lapply(
       blocks, get_conditional_new_from_base_ssn,
-      object, newdata_name, base_index, base_residual, base_lowchol, samples, var_adj_pieces
+      object, newdata_name, base_index, base_residual, base_lowchol, samples
     )
   }
 
@@ -288,10 +275,8 @@ get_conditional_lowrank_ssn <- function(object, newdata_name, newdata, base_val,
 #' of the most-correlated points from a growing pool that starts with every
 #' observed residual (\code{base_val}) and gains one simulated \code{newdata}
 #' row per step. \code{conditioning$method = "all"} conditions on the entire
-#' pool, recovering the exact conditional distribution. When
-#' \code{var_adj_pieces} is supplied (GLM latent-process uncertainty), its
-#' contribution is folded into the target/pool covariance blocks for the
-#' \code{newdata}-vs-\code{newdata} portion only.
+#' pool, recovering the exact conditional distribution. GLM latent uncertainty
+#' is represented by the sampled observed residuals, not a covariance adjustment.
 #'
 #' @param object A fitted \code{ssn_lm}/\code{ssn_glm} model object.
 #' @param newdata_name The name of the prediction set being simulated.
@@ -302,16 +287,12 @@ get_conditional_lowrank_ssn <- function(object, newdata_name, newdata, base_val,
 #'   \code{\link{get_conditional_local}()}/\code{\link{get_local_vecchia_settings}()})
 #'   with \code{method}, \code{size}, and \code{ordering}.
 #' @param samples The number of simulated columns to draw.
-#' @param var_adj_pieces GLM latent-process uncertainty pieces from
-#'   \code{\link{get_conditional_local_var_adj_pieces}()}, or \code{NULL} for
-#'   Gaussian models.
 #'
 #' @return An \code{n_new x samples} matrix of simulated values, in
 #'   \code{newdata}'s original row order.
 #'
 #' @noRd
-get_conditional_vecchia_ssn <- function(object, newdata_name, newdata, base_val, conditioning, samples,
-                                         var_adj_pieces = NULL) {
+get_conditional_vecchia_ssn <- function(object, newdata_name, newdata, base_val, conditioning, samples) {
   n_obs <- object$n
   n_new <- NROW(newdata)
   observed <- object$ssn.object$obs
@@ -342,9 +323,6 @@ get_conditional_vecchia_ssn <- function(object, newdata_name, newdata, base_val,
     cov_target_pool_full <- c(obs_cross, pred_cross)
 
     variance <- get_decorrelate_marginal_variance(object, newdata[current, , drop = FALSE])
-    if (!is.null(var_adj_pieces)) {
-      variance <- variance + var_adj_pieces$var_adj_diag[[current]]
-    }
 
     keep <- get_decorrelate_covariance_neighbors(cov_target_pool_full, size)
 
@@ -375,13 +353,6 @@ get_conditional_vecchia_ssn <- function(object, newdata_name, newdata, base_val,
       cov_pool_pool[(a + 1):(a + b), seq_len(a)] <- t(op)
     }
 
-    if (!is.null(var_adj_pieces) && b > 0) {
-      sqrt_target <- var_adj_pieces$sqrt_mhinv_wts[, current, drop = FALSE]
-      sqrt_pred <- var_adj_pieces$sqrt_mhinv_wts[, pred_abs, drop = FALSE]
-      cov_target_pool[(a + 1):(a + b)] <- cov_target_pool[(a + 1):(a + b)] + as.numeric(crossprod(sqrt_target, sqrt_pred))
-      cov_pool_pool[(a + 1):(a + b), (a + 1):(a + b)] <- cov_pool_pool[(a + 1):(a + b), (a + 1):(a + b)] + crossprod(sqrt_pred, sqrt_pred)
-    }
-
     cov_pool_pool <- as.matrix(Matrix::forceSymmetric(cov_pool_pool))
     chol_pool <- chol_lower_with_pivot_fallback(
       cov_pool_pool,
@@ -404,58 +375,6 @@ get_conditional_vecchia_ssn <- function(object, newdata_name, newdata, base_val,
   Y <- matrix(NA_real_, n_new, samples)
   Y[ord, ] <- Y_ordered
   Y
-}
-
-#' Compute the diagonal GLM latent-process uncertainty adjustment for local conditional simulation
-#'
-#' Ports spmodel's \code{get_conditional_vecchia_glm()} design: the GLM
-#' latent-process ("var_adj") uncertainty term is a single joint,
-#' non-truncatable distribution over all observed data, so it is computed
-#' once, densely, over the observed data here (never subject to
-#' \code{conditioning$size} truncation), and its per-\code{newdata}-row
-#' contribution is folded into \code{\link{get_conditional_vecchia_ssn}()}'s
-#' target/pool covariance blocks only for the \code{newdata}-vs-\code{newdata}
-#' portion.
-#'
-#' @param context A GLM conditional-simulation context from
-#'   \code{\link{get_conditional_context_glm}()}, with \code{object},
-#'   \code{Xmat}, \code{cov_betahat_uncorrected}, \code{family}, \code{w},
-#'   \code{y}, \code{size}, \code{dispersion}, \code{newdata_name},
-#'   \code{x0}.
-#'
-#' @return A list with \code{sqrt_mhinv_wts} (an \code{n_obs x n_new} matrix)
-#'   and \code{var_adj_diag} (a length-\code{n_new} vector), the per-row
-#'   diagonal latent-process variance contribution.
-#'
-#' @noRd
-get_conditional_local_var_adj_pieces <- function(context) {
-  object <- context$object
-
-  cov_matrix_val <- covmatrix(object)
-  cov_lowchol_base <- t(chol(cov_matrix_val))
-  SigInv <- chol2inv(t(cov_lowchol_base))
-  SigInv_X <- SigInv %*% context$Xmat
-  wts_beta <- tcrossprod(context$cov_betahat_uncorrected, SigInv_X)
-  Ptheta <- SigInv - SigInv_X %*% wts_beta # n_obs x n_obs
-
-  D <- get_D(context$family, context$w, context$y, context$size, context$dispersion)
-  H <- as.matrix(D - Ptheta)
-  cov_lowchol_mH <- chol_lower_with_pivot_fallback(
-    -H,
-    paste0(
-      "The negative Hessian of the latent process for \"", context$newdata_name,
-      "\" is not numerically positive semidefinite; local conditional simulation cannot proceed for this prediction set."
-    )
-  )
-
-  C0_all <- covmatrix(object, context$newdata_name, cov_type = "obs.pred") # n_obs x n_new
-  c0_mat <- t(C0_all) # n_new x n_obs
-  wts_pred_all <- context$x0 %*% wts_beta + c0_mat %*% SigInv - (c0_mat %*% SigInv_X) %*% wts_beta # n_new x n_obs
-  wts_pred_all <- t(wts_pred_all) # n_obs x n_new
-  sqrt_mhinv_wts <- forwardsolve(cov_lowchol_mH, wts_pred_all) # n_obs x n_new
-  var_adj_diag <- colSums(sqrt_mhinv_wts^2)
-
-  list(sqrt_mhinv_wts = sqrt_mhinv_wts, var_adj_diag = var_adj_diag)
 }
 
 #' Draw local (big-data) conditional Gaussian samples
@@ -528,10 +447,8 @@ draw_conditional_gaussian_local <- function(context, conditioning, samples, outp
 #' Draw local (big-data) conditional GLM samples
 #'
 #' Local-conditioning analogue of \code{\link{draw_conditional_glm}()}:
-#' composition-samples \code{beta} the same way, folds in the GLM
-#' latent-process uncertainty adjustment via
-#' \code{\link{get_conditional_local_var_adj_pieces}()}, and replaces the
-#' exact dense kriging correction with either
+#' shares coupled latent-process and coefficient draws across locations, and
+#' replaces the exact dense kriging correction with either
 #' \code{\link{get_conditional_lowrank_ssn}()}'s base+block approximation or
 #' \code{\link{get_conditional_vecchia_ssn}()}'s sequential,
 #' covariance-neighbor-truncated simulation (per
@@ -555,8 +472,6 @@ draw_conditional_gaussian_local <- function(context, conditioning, samples, outp
 #'
 #' @noRd
 draw_conditional_glm_local <- function(context, conditioning, samples, type, output, newdata_size) {
-  p <- NCOL(context$Xmat)
-
   val <- list()
   if ("object" %in% output) {
     val$object <- matrix(rep(context$w, times = samples), ncol = samples)
@@ -567,27 +482,23 @@ draw_conditional_glm_local <- function(context, conditioning, samples, type, out
     return(val)
   }
 
-  cov_betahat_lowchol <- t(chol(context$cov_betahat))
-  beta_draws <- as.vector(context$betahat) + cov_betahat_lowchol %*% matrix(rnorm(p * samples), p, samples)
-  rownames(beta_draws) <- names(context$betahat)
+  joint <- draw_conditional_glm_joint(context, samples)
+  beta_draws <- joint$beta
 
   if ("beta" %in% output) {
     val$beta <- beta_draws
   }
 
   if ("newdata" %in% output) {
-    base_val <- as.vector(context$w_free) - context$Xmat %*% beta_draws
-    var_adj_pieces <- get_conditional_local_var_adj_pieces(context)
+    base_val <- joint$w - context$Xmat %*% beta_draws
 
     kriging_correction <- if (identical(conditioning$approximation, "low-rank")) {
       get_conditional_lowrank_ssn(
-        context$object, context$newdata_name, context$newdata, base_val, conditioning, samples,
-        var_adj_pieces = var_adj_pieces
+        context$object, context$newdata_name, context$newdata, base_val, conditioning, samples
       )
     } else {
       get_conditional_vecchia_ssn(
-        context$object, context$newdata_name, context$newdata, base_val, conditioning, samples,
-        var_adj_pieces = var_adj_pieces
+        context$object, context$newdata_name, context$newdata, base_val, conditioning, samples
       )
     }
     link_draws <- context$x0 %*% beta_draws + kriging_correction

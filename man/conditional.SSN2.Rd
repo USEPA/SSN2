@@ -183,7 +183,8 @@ If \code{output = "beta"}, an p x b matrix of conditional simulations for each
 element in \code{coef(object)}, where p is the
 number of fixed effects and b is the number of samples.
 If \code{output = "object"}, an n x b matrix of observed data values, where n is the
-number of rows in \code{data} and b is the number of samples. If
+number of rows in \code{data} and b is the number of samples; \code{ssn_glm()} objects
+return fitted link-scale values instead of observed responses. If
 \code{output} is \code{"cov"}, \code{"ssn"}, \code{"tailup"},
 \code{"taildown"}, \code{"euclid"}, \code{"nugget"}, or
 \code{"randcov"}, a (covariance parameter) x \code{samples} matrix of
@@ -209,7 +210,9 @@ simulations are returned for each row of the named prediction set. If
 returned for each fixed effect (i.e., element of \code{coef(object)}).
 If \code{"object"} is in \code{output}, the observed data from
 \code{object}
-is returned once for each row of \code{newdata}. For example, \code{c("newdata",
+is repeated in each simulation column. For \code{ssn_glm()} fits, this
+output repeats the fitted link-scale values (including offsets), not the
+latent-process draws used for each conditional simulation. For example, \code{c("newdata",
   "beta")} returns the conditional simulations both for the prediction
 locations and for the fixed effects. If a covariance-parameter name
 (\code{"cov"}, \code{"ssn"}, \code{"tailup"}, \code{"taildown"},
@@ -227,13 +230,7 @@ observations from distinct blocks are assumed conditionally independent
 (given the base sample). Parallelization generally further speeds up
 computations. When \code{local$approximation} is \code{"vecchia"}, no such
 independence assumption is made -- see the \code{local} argument above
-for details. For \code{ssn_lm()} model objects, both \code{local$approximation}s
-propagate the latent process's own estimation uncertainty
-(\code{var_adj}) analytically rather than by simulation; for
-\code{"vecchia"} this requires factorizing a dense matrix over all
-observed data one time, since this particular source of uncertainty is
-not spatially local and so cannot be shrunk by neighbor truncation the
-way the rest of the simulation is -- see the \code{local} argument above.
+for details.
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

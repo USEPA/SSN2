@@ -137,7 +137,9 @@
 #'   returned for each fixed effect (i.e., element of \code{coef(object)}).
 #'   If \code{"object"} is in \code{output}, the observed data from
 #'   \code{object}
-#'   is returned once for each row of \code{newdata}. For example, \code{c("newdata",
+#'   is repeated in each simulation column. For \code{ssn_glm()} fits, this
+#'   output repeats the fitted link-scale values (including offsets), not the
+#'   latent-process draws used for each conditional simulation. For example, \code{c("newdata",
 #'   "beta")} returns the conditional simulations both for the prediction
 #'   locations and for the fixed effects. If a covariance-parameter name
 #'   (\code{"cov"}, \code{"ssn"}, \code{"tailup"}, \code{"taildown"},
@@ -155,13 +157,7 @@
 #'   (given the base sample). Parallelization generally further speeds up
 #'   computations. When \code{local$approximation} is \code{"vecchia"}, no such
 #'   independence assumption is made -- see the \code{local} argument above
-#'   for details. For \code{ssn_lm()} model objects, both \code{local$approximation}s
-#'   propagate the latent process's own estimation uncertainty
-#'   (\code{var_adj}) analytically rather than by simulation; for
-#'   \code{"vecchia"} this requires factorizing a dense matrix over all
-#'   observed data one time, since this particular source of uncertainty is
-#'   not spatially local and so cannot be shrunk by neighbor truncation the
-#'   way the rest of the simulation is -- see the \code{local} argument above.
+#'   for details.
 #'
 #' @return If \code{output = "newdata"}, an a x b matrix of conditional simulations
 #'   for each row in \code{newdata}, where a is the
@@ -170,7 +166,8 @@
 #'   element in \code{coef(object)}, where p is the
 #'   number of fixed effects and b is the number of samples.
 #'   If \code{output = "object"}, an n x b matrix of observed data values, where n is the
-#'   number of rows in \code{data} and b is the number of samples. If
+#'   number of rows in \code{data} and b is the number of samples; \code{ssn_glm()} objects
+#'   return fitted link-scale values instead of observed responses. If
 #'   \code{output} is \code{"cov"}, \code{"ssn"}, \code{"tailup"},
 #'   \code{"taildown"}, \code{"euclid"}, \code{"nugget"}, or
 #'   \code{"randcov"}, a (covariance parameter) x \code{samples} matrix of
@@ -299,8 +296,7 @@ conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("l
     return(if (length(output) == 1) val[[output]] else val[output])
   }
 
-  var_adj <- if ("newdata" %in% output) get_var_adj_matrix(context) else NULL
-  cond <- if ("newdata" %in% output) get_conditional_cov(context, var_adj = var_adj) else NULL
+  cond <- if ("newdata" %in% output) get_conditional_cov(context) else NULL
   val <- draw_conditional_glm(context, cond, samples, type, output, newdata_size)
   if (length(output) == 1) val[[output]] else val[output]
 }
@@ -482,34 +478,72 @@ get_conditional_context_glm <- function(object, newdata_name, local = FALSE) {
   context
 }
 
-#' Compute the dense GLM latent-process ("var_adj") uncertainty matrix
+#' Factor the joint GLM latent and coefficient approximation
 #'
-#' The exact-path analogue of
-#' \code{\link{get_conditional_local_var_adj_pieces}()}: builds the full
-#' \code{m x m} (prediction-location) adjustment matrix capturing the
-#' Laplace-posterior uncertainty of the latent process, added to the
-#' conditional covariance in \code{\link{get_conditional_cov}()}.
+#' Local fits retain their fitting-block precision and fixed-effect variance
+#' adjustment; prediction neighborhoods do not redefine latent values.
 #'
-#' @param context A GLM conditional-simulation context from
-#'   \code{\link{get_conditional_context_glm}()}.
-#'
-#' @return An \code{m x m} matrix (\code{m} = number of prediction rows).
-#'
+#' @param context A GLM conditional-simulation context.
+#' @return Coefficient weights, the upper Cholesky factor of the negative
+#'   latent Hessian, and the coefficient conditional covariance factor.
 #' @noRd
-get_var_adj_matrix <- function(context) {
-  SigInv <- chol2inv(t(context$cov_lowchol_base)) # cov_lowchol_base is lower chol; chol2inv expects upper
-  SigInv_X <- SigInv %*% context$Xmat
-  wts_beta <- tcrossprod(context$cov_betahat_uncorrected, SigInv_X)
-  Ptheta <- SigInv - SigInv_X %*% wts_beta
-
+get_conditional_glm_joint <- function(context) {
+  object <- context$object
+  X <- context$Xmat
+  n <- NROW(X)
+  if (is.null(object$local_index)) {
+    lowchol <- context$cov_lowchol_base
+    if (is.null(lowchol)) lowchol <- t(chol(covmatrix(object)))
+    SigInv <- chol2inv(t(lowchol))
+  } else {
+    SigInv <- matrix(0, n, n)
+    groups <- split(seq_len(n), object$local_index)
+    for (index in groups) {
+      covariance <- get_decorrelate_observed_covariance(
+        object, object$ssn.object$obs[index, , drop = FALSE]
+      )
+      SigInv[index, index] <- chol2inv(chol(covariance))
+    }
+  }
+  SigInv_X <- SigInv %*% X
+  information <- crossprod(X, SigInv_X)
+  if (!is.null(object$local_index) && length(groups) > 1L) {
+    diag(information) <- diag(information) + object$diagtol
+  }
+  covariance_gls <- chol2inv(chol(as.matrix(Matrix::forceSymmetric(information))))
+  Ptheta <- SigInv - SigInv_X %*% tcrossprod(covariance_gls, SigInv_X)
   D <- get_D(context$family, context$w, context$y, context$size, context$dispersion)
   H <- D - Ptheta
-  mHInv <- solve(-H)
+  mH_upchol <- tryCatch(
+    chol(as.matrix(Matrix::forceSymmetric(-H))),
+    error = function(e) stop(
+      "The latent-process precision is not positive definite; joint GLM conditional simulation cannot proceed.",
+      call. = FALSE
+    )
+  )
+  list(
+    weights_beta = tcrossprod(context$cov_betahat_uncorrected, SigInv_X),
+    mH_upchol = mH_upchol,
+    beta_lowchol = t(chol(context$cov_betahat_uncorrected))
+  )
+}
 
-  c0_mat <- t(context$C0) # m x n cross-covariance (context$C0 is n x m, obs x pred)
-  wts_pred <- context$x0 %*% wts_beta + c0_mat %*% SigInv - (c0_mat %*% SigInv_X) %*% wts_beta
-
-  as.matrix(wts_pred %*% tcrossprod(mHInv, wts_pred))
+#' Draw coupled latent values and coefficients for GLM conditional simulation
+#'
+#' @param context A GLM conditional-simulation context.
+#' @param samples Number of draws.
+#' @return A list with offset-free latent draws \code{w} and coefficient draws
+#'   \code{beta}, with simulations in columns.
+#' @noRd
+draw_conditional_glm_joint <- function(context, samples) {
+  joint <- get_conditional_glm_joint(context)
+  n <- NROW(context$Xmat)
+  p <- NCOL(context$Xmat)
+  latent_value <- backsolve(joint$mH_upchol, matrix(rnorm(n * samples), n, samples))
+  beta <- as.vector(context$betahat) + joint$weights_beta %*% latent_value +
+    joint$beta_lowchol %*% matrix(rnorm(p * samples), p, samples)
+  rownames(beta) <- names(context$betahat)
+  list(w = as.vector(context$w_free) + latent_value, beta = beta)
 }
 
 #' Lower Cholesky factor with a pivoted fallback for near-singular matrices
@@ -548,19 +582,12 @@ chol_lower_with_pivot_fallback <- function(Sigma, message) {
 #' @param context A conditional-simulation context from
 #'   \code{\link{get_conditional_context}()}/
 #'   \code{\link{get_conditional_context_glm}()}.
-#' @param var_adj An optional GLM latent-process uncertainty matrix from
-#'   \code{\link{get_var_adj_matrix}()}, added to the conditional covariance;
-#'   \code{NULL} for Gaussian models.
-#'
 #' @return A list with \code{Sigma_cond} (the \code{m x m} conditional
 #'   covariance matrix) and \code{chol_cond_cov} (its lower Cholesky factor).
 #'
 #' @noRd
-get_conditional_cov <- function(context, var_adj = NULL) {
+get_conditional_cov <- function(context) {
   Sigma_cond <- context$Sigma22 - crossprod(context$SqrtSigInv_C0)
-  if (!is.null(var_adj)) {
-    Sigma_cond <- Sigma_cond + var_adj
-  }
   Sigma_cond <- as.matrix(Matrix::forceSymmetric(Sigma_cond))
   chol_cond_cov <- chol_lower_with_pivot_fallback(
     Sigma_cond,
@@ -982,11 +1009,8 @@ draw_glm_response <- function(family, mu, dispersion, size) {
 
 #' Draw exact conditional GLM samples
 #'
-#' Composition-samples fixed-effect uncertainty (\code{beta ~ N(betahat,
-#' cov_betahat)}) and, when \code{"newdata"} is requested, draws the exact
-#' conditional link-scale distribution given each \code{beta} draw (including
-#' \code{cond}'s GLM latent-process adjustment), then applies the requested
-#' \code{type} transform.
+#' Samples the latent process, coefficients conditional on that process, and
+#' new-site values conditional on both, then applies the requested scale.
 #'
 #' @param context A GLM conditional-simulation context from
 #'   \code{\link{get_conditional_context_glm}()}.
@@ -1006,7 +1030,6 @@ draw_glm_response <- function(family, mu, dispersion, size) {
 #'
 #' @noRd
 draw_conditional_glm <- function(context, cond, samples, type, output, newdata_size) {
-  p <- NCOL(context$Xmat)
   m <- NROW(context$Sigma22)
 
   val <- list()
@@ -1019,16 +1042,15 @@ draw_conditional_glm <- function(context, cond, samples, type, output, newdata_s
     return(val)
   }
 
-  cov_betahat_lowchol <- t(chol(context$cov_betahat))
-  beta_draws <- as.vector(context$betahat) + cov_betahat_lowchol %*% matrix(rnorm(p * samples), p, samples)
-  rownames(beta_draws) <- names(context$betahat)
+  joint <- draw_conditional_glm_joint(context, samples)
+  beta_draws <- joint$beta
 
   if ("beta" %in% output) {
     val$beta <- beta_draws
   }
 
   if ("newdata" %in% output) {
-    resid_all <- as.vector(context$w_free) - context$Xmat %*% beta_draws
+    resid_all <- joint$w - context$Xmat %*% beta_draws
     SqrtSigInv_resid_all <- forwardsolve(context$cov_lowchol_base, resid_all)
     cond_mu <- context$x0 %*% beta_draws + crossprod(context$SqrtSigInv_C0, SqrtSigInv_resid_all)
 
@@ -1049,9 +1071,6 @@ draw_conditional_glm <- function(context, cond, samples, type, output, newdata_s
       if (identical(type, "response")) {
         if (identical(context$family, "binomial")) mu * newdata_size else mu
       } else {
-        # type == "new": w is fixed (no added latent noise here), but the
-        # family's own sampling variability is layered on top of mu -- exactly
-        # the second half of ssn_rpois()/ssn_rbinom()/etc.'s existing pattern
         draw_glm_response(context$family, mu, context$dispersion, newdata_size)
       }
     }

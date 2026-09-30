@@ -197,13 +197,17 @@ test_that("conditional() GLM exact conditional simulation works", {
 
   pr <- predict(fit, "CapeHorn", type = "link", se.fit = TRUE, var_correct = TRUE)
   context <- SSN2:::get_conditional_context_glm(fit, "CapeHorn")
-  var_adj <- SSN2:::get_var_adj_matrix(context)
-  cond <- SSN2:::get_conditional_cov(context, var_adj = var_adj)
+  cond <- SSN2:::get_conditional_cov(context)
   H <- context$x0 - crossprod(context$SqrtSigInv_C0, context$SqrtSigInv_X)
-  beta_unc <- diag(H %*% tcrossprod(context$cov_betahat, H))
-  total_analytic <- diag(cond$Sigma_cond) + beta_unc
-  extra_beta <- diag(H %*% tcrossprod(vcov(fit) - vcov(fit, var_correct = FALSE), H))
-  expect_equal(unname(total_analytic), unname(pr$se.fit^2 + extra_beta), tolerance = 1e-8)
+  precision <- solve(covmatrix(fit))
+  B <- context$cov_betahat_uncorrected %*% t(context$Xmat) %*% precision
+  Q <- precision - precision %*% context$Xmat %*% B
+  D <- -diag(exp(context$w))
+  W <- H %*% B + t(context$C0) %*% precision
+  var_adj <- W %*% solve(Q - D, t(W))
+  beta_unc <- diag(H %*% tcrossprod(context$cov_betahat_uncorrected, H))
+  total_analytic <- diag(cond$Sigma_cond + var_adj) + beta_unc
+  expect_equal(unname(total_analytic), unname(pr$se.fit^2), tolerance = 1e-8)
 
   # mean recovery vs predict() (link scale)
   pr_link <- predict(fit, "CapeHorn", type = "link")
@@ -212,8 +216,8 @@ test_that("conditional() GLM exact conditional simulation works", {
   # joint (not just marginal) link-scale covariance matches the analytic
   # total (Sigma_cond + var_adj + beta uncertainty) within Monte Carlo error
   idx <- 1:6
-  beta_unc_cov <- H %*% tcrossprod(context$cov_betahat, H)
-  analytic_total_cov <- (cond$Sigma_cond + beta_unc_cov)[idx, idx]
+  beta_unc_cov <- H %*% tcrossprod(context$cov_betahat_uncorrected, H)
+  analytic_total_cov <- (cond$Sigma_cond + var_adj + beta_unc_cov)[idx, idx]
   set.seed(2)
   d_small <- conditional(fit, "CapeHorn", type = "link", samples = 15000)
   emp_cov <- cov(t(d_small[idx, ]))
@@ -641,8 +645,7 @@ test_that("conditional() local = TRUE/list(...) works for ssn_glm()", {
     additive = "afvArea"
   )
 
-  # local = list(approximation = "vecchia", method ="all") reproduces the exact GLM path (including
-  # the var_adj latent-w posterior-uncertainty term) to machine precision
+  # All-neighbor conditioning recovers the exact joint draws.
   for (type in c("link", "response", "new")) {
     set.seed(2)
     g_exact <- conditional(fit, "CapeHornSmall", type = type, samples = 3000)
@@ -652,12 +655,9 @@ test_that("conditional() local = TRUE/list(...) works for ssn_glm()", {
   }
 
   context_exact <- SSN2:::get_conditional_context_glm(fit, "CapeHornSmall")
-  var_adj_exact <- SSN2:::get_var_adj_matrix(context_exact)
   context_local <- SSN2:::get_conditional_context_glm(fit, "CapeHornSmall", local = TRUE)
-  pieces <- SSN2:::get_conditional_local_var_adj_pieces(context_local)
-  expect_equal(unname(diag(var_adj_exact)), unname(pieces$var_adj_diag), tolerance = 1e-8)
-  off_diag_local <- sum(pieces$sqrt_mhinv_wts[, 1] * pieces$sqrt_mhinv_wts[, 3])
-  expect_equal(unname(var_adj_exact[1, 3]), off_diag_local, tolerance = 1e-8)
+  expect_equal(SSN2:::get_conditional_glm_joint(context_exact),
+    SSN2:::get_conditional_glm_joint(context_local), tolerance = 1e-8)
 
   # bounded/truncated approximation: finite, correctly-typed draws across
   # every response family output, varying newdata_size, at a small size
@@ -693,7 +693,7 @@ test_that("conditional() local = TRUE/list(...) works for ssn_glm()", {
   expect_true(all(d_binom >= 0 & d_binom <= 20))
 })
 
-test_that("local low-rank conditional simulation works for ssn_glm() (including the GLM latent-process adjustment)", {
+test_that("local low-rank GLM simulation shares latent and coefficient draws", {
   copy_lsn_to_temp()
   temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
   mf04p <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
@@ -837,8 +837,9 @@ test_that("local GLM fits support exact and Vecchia draws with fixed-effect unce
     expect_true(all(is.finite(draws)))
     if (type == "new") expect_true(all(draws == round(draws) & draws >= 0))
   }
+  context <- SSN2:::get_conditional_context_glm(fit, "small")
   set.seed(2)
-  beta <- as.vector(coef(fit)) + t(chol(vcov(fit))) %*% matrix(rnorm(fit$p * 40), fit$p)
+  beta <- SSN2:::draw_conditional_glm_joint(context, 40)$beta
   for (simulation_local in list(FALSE, TRUE)) {
     set.seed(2)
     expect_equal(conditional(fit, "small", output = "beta", samples = 40,
