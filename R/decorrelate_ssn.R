@@ -125,12 +125,10 @@
 #'   \code{list(size = 30, method = "covariance", parallel = FALSE)}.
 #' @param grid An explicit grid of parameter values by which to evaluate fit. The
 #'   names of \code{grid} must contain all the names returned by \code{ssn_decorrelate_grid(formula, data, ...)}.
-#' @param dense_grid If \code{grid} is not provided, \code{dense_grid} is a logical
+#' @param dense_grid A logical
 #'   which controls the density of the constructed grid to be evaluated. If
 #'   \code{dense_grid} is \code{TRUE}, a denser grid is used. If \code{dense_grid}
-#'   is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid}
-#'   is \code{FALSE} when the sample size is greater than 5,000 and \code{TRUE}
-#'   otherwise.
+#'   is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid} is \code{FALSE}.
 #' @param x A fitted model from [ssn_decorrelate()].
 #' @param ... Other arguments to the functions called by \code{algorithm}.
 #'
@@ -336,7 +334,7 @@ ssn_decorrelate <- function(formula, ssn.object,
   if (missing(training)) training <- NULL
   if (missing(local)) local <- NULL
   if (missing(grid)) grid <- NULL
-  if (missing(dense_grid)) dense_grid <- NULL
+  if (missing(dense_grid)) dense_grid <- FALSE
   if (missing(ordering)) ordering <- NULL
   check_decorrelate_dots(list(...))
   algorithm <- match.arg(algorithm, c("ranger", "randomForest", "xgboost"))
@@ -772,13 +770,6 @@ ssn_recorrelate_newdata <- function(object, ty_newdata) {
 #'
 #' @inheritParams ssn_decorrelate
 #'
-#' @param dense_grid A logical
-#'   which controls the density of the constructed grid to be evaluated. If
-#'   \code{dense_grid} is \code{TRUE}, a denser grid is used. If \code{dense_grid}
-#'   is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid}
-#'   is \code{FALSE} when the sample size is greater than 5,000 and \code{TRUE}
-#'   otherwise.
-#'
 #' @return A grid of spatial decorrelation parameters stored as a \code{data.frame}.
 #' @export
 #' @examples
@@ -821,6 +812,7 @@ ssn_decorrelate_grid <- function(formula, ssn.object,
   } else if (is.symbol(substitute(additive))) {
     additive <- deparse1(substitute(additive))
   }
+  if (missing(dense_grid)) dense_grid <- FALSE
   ssn_decorrelate_grid_internal(
     formula, ssn.object, tailup_type, taildown_type, euclid_type, nugget_type,
     tailup_params, taildown_params, euclid_params, nugget_params,
@@ -856,7 +848,7 @@ ssn_decorrelate_grid_internal <- function(formula, ssn.object,
                                            tailup_params, taildown_params,
                                            euclid_params, nugget_params,
                                            additive, anisotropy = FALSE, random,
-                                           randcov_params, dense_grid,
+                                           randcov_params, dense_grid = FALSE,
                                            add_iid, candidates) {
   # a supplied *_params() object's own class is authoritative for type
   # (matching spmodel's decorrelate()) unless the caller names *_type
@@ -872,7 +864,6 @@ ssn_decorrelate_grid_internal <- function(formula, ssn.object,
   if (missing(additive)) additive <- NULL
   if (missing(random)) random <- NULL
   if (missing(randcov_params)) randcov_params <- NULL
-  if (missing(dense_grid)) dense_grid <- NULL
   if (missing(candidates)) candidates <- NULL
   if (!missing(formula) && is.list(formula) && missing(ssn.object)) candidates <- formula
   if (is.null(candidates)) {

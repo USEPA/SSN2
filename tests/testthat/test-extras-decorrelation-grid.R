@@ -9,8 +9,11 @@ test_that("decorrelation exposes local and resolves conditional defaults interna
     expect_false("conditioning" %in% names(formals(fun)))
     expect_identical(formals(fun)["local"], as.list(formals(function(local) NULL)))
   }
-  expect_identical(formals(ssn_decorrelate)[c("training", "grid", "dense_grid")],
-                   as.list(formals(function(training, grid, dense_grid) NULL)))
+  expect_identical(formals(ssn_decorrelate)[c("training", "grid")],
+                   as.list(formals(function(training, grid) NULL)))
+  for (fun in list(ssn_decorrelate, ssn_decorrelate_grid)) {
+    expect_identical(formals(fun)$dense_grid, FALSE)
+  }
   expect_identical(formals(ssn_decorrelate)$algorithm, "ranger")
   for (fun in list(ssn_decorrelate, ssn_decorrelate_data)) {
     expect_identical(formals(fun)["ordering"], as.list(formals(function(ordering) NULL)))
@@ -118,6 +121,14 @@ test_that("large decorrelation grids use observed geometry for stream ranges", {
   testthat::local_mocked_bindings(
     get_dist_object = function(...) stop("Large grids must not load full distances")
   )
+  defaults <- ssn_decorrelate_grid(Summer_mn ~ 1, large,
+    tailup_type = "exponential", taildown_type = "exponential",
+    euclid_type = "exponential", additive = "afvArea")
+  sparse <- ssn_decorrelate_grid(Summer_mn ~ 1, large,
+    tailup_type = "exponential", taildown_type = "exponential",
+    euclid_type = "exponential", additive = "afvArea", dense_grid = FALSE)
+  expect_equal(defaults, sparse)
+  expect_equal(nrow(defaults), 19L)
   for (dense in c(FALSE, TRUE)) {
     grid <- SSN2:::ssn_decorrelate_grid_internal(
       Summer_mn ~ 1, large, tailup_type = "exponential",
@@ -133,7 +144,7 @@ test_that("large decorrelation grids use observed geometry for stream ranges", {
 
 test_that("both grid densities expand over all active SSN components", {
   for (dense in c(FALSE, TRUE)) {
-    expected <- if (dense) c(11L, 65L, 137L) else c(5L, 29L, 73L)
+    expected <- if (dense) c(11L, 65L, 137L) else c(5L, 15L, 19L)
     for (nspatial in 1:3) {
       grid <- ssn_decorrelate_grid(
         Summer_mn ~ ELEV_DEM, mf04p, tailup_type = "exponential",
@@ -147,7 +158,7 @@ test_that("both grid densities expand over all active SSN components", {
       spatial <- values[values$tailup_type != "no transformation", ]
       active <- c("tailup", "taildown", "euclid")[seq_len(nspatial)]
       range_columns <- paste0(active, "_range")
-      expect_equal(NROW(unique(spatial[range_columns])), 2^nspatial)
+      expect_equal(NROW(unique(spatial[range_columns])), if (dense) 2^nspatial else 2L)
       for (column in range_columns) expect_length(unique(spatial[[column]]), 2L)
       variance_columns <- c(paste0(active, "_de"), "nugget_nugget")
       totals <- rowSums(spatial[variance_columns])
@@ -174,7 +185,101 @@ test_that("dense joint grids retain the non-dense candidates", {
   expect_equal(NROW(merge(dense[parameters], sparse[parameters])), NROW(sparse))
   expect_gt(NROW(dense), NROW(sparse))
   defaults <- tidy(do.call(ssn_decorrelate_grid, args))
-  expect_equal(NROW(defaults), NROW(dense))
+  expect_equal(defaults, tidy(do.call(ssn_decorrelate_grid, c(args, list(dense_grid = FALSE)))))
+})
+
+test_that("omitted and explicit sparse defaults evaluate the same candidates", {
+  testthat::local_mocked_bindings(
+    fit_decorrelate_algorithm = function(X, y, algorithm, dots) mean(y),
+    predict_decorrelate_algorithm = function(fit, X, algorithm) rep(fit, NROW(X))
+  )
+  args <- list(formula = Summer_mn ~ ELEV_DEM, ssn.object = mf04p,
+    tailup_type = "exponential", additive = "afvArea",
+    training = list(training_index = 1:30, test_index = 31:45))
+  defaults <- do.call(ssn_decorrelate, args)
+  sparse <- do.call(ssn_decorrelate, c(args, list(dense_grid = FALSE)))
+  expect_equal(defaults$grid, sparse$grid)
+  expect_equal(defaults$test, sparse$test)
+  expect_equal(nrow(defaults$grid), 5L)
+})
+
+test_that("random-effect grid allocations retain total variance and short random-dominant ranges", {
+  ssn <- mf04p
+  ssn$obs$group1 <- rep(1:3, length.out = nrow(ssn$obs))
+  ssn$obs$group2 <- rep(1:5, length.out = nrow(ssn$obs))
+  args <- list(formula = Summer_mn ~ ELEV_DEM, ssn.object = ssn,
+    tailup_type = "exponential", taildown_type = "exponential", euclid_type = "exponential",
+    additive = "afvArea", dense_grid = FALSE)
+  dense <- do.call(ssn_decorrelate_grid,
+    utils::modifyList(args, list(random = ~ group1, dense_grid = TRUE)))
+  expect_equal(nrow(dense), 146L)
+  ns2 <- 1.2 * sum(lm.fit(model.matrix(Summer_mn ~ ELEV_DEM, ssn$obs), ssn$obs$Summer_mn)$residuals^2) /
+    (nrow(ssn$obs) - 2L)
+  for (k in 1:2) {
+    random <- if (k == 1L) ~ group1 else ~ group1 + group2
+    g <- as.data.frame(do.call(ssn_decorrelate_grid, c(args, list(random = random))))
+    expect_equal(nrow(g), if (k == 1L) 22L else 24L)
+    core <- g$tailup_type != "none"
+    spatial_names <- c("tailup_de", "taildown_de", "euclid_de", "nugget_nugget")
+    random_names <- names(g)[startsWith(names(g), "randcov_")]
+    expect_length(random_names, k)
+    expect_equal(unname(rowSums(g[core, c(spatial_names, random_names)])), rep(ns2, sum(core)))
+    random_share <- rowSums(g[core, random_names, drop = FALSE]) / ns2
+    expect_equal(sort(unique(round(random_share, 10))), round(sort(c(.1, k / (4 + k), .9)), 10))
+    random_rows <- which(core)[abs(random_share - .9) < 1e-10]
+    expect_length(random_rows, if (k == 1L) 1L else 3L)
+    for (name in c("tailup_range", "taildown_range", "euclid_range")) {
+      expect_true(all(g[random_rows, name] == min(g[core, name])))
+    }
+    expect_true(all(g[!core, random_names, drop = FALSE] == 0))
+  }
+  for (setting in list(list(anisotropy = TRUE), list(euclid_type = "matern"),
+      list(anisotropy = TRUE, random = ~ group1))) {
+    a <- utils::modifyList(args, setting)
+    g <- as.data.frame(do.call(ssn_decorrelate_grid, a))
+    expected <- if (!is.null(setting$random)) 64L else if (!is.null(setting$euclid_type)) 37L else 55L
+    expect_equal(nrow(g), expected)
+    expect_equal(nrow(unique(g)), nrow(g))
+    expect_true(all(g$euclid_rotate[g$euclid_scale == 1] == 0))
+    dense <- as.data.frame(do.call(ssn_decorrelate_grid, utils::modifyList(a, list(dense_grid = TRUE))))
+    expect_equal(nrow(merge(g, dense)), nrow(g))
+  }
+})
+
+test_that("expanded compact grids preserve supplied random and spatial parameters", {
+  ssn <- mf04p
+  ssn$obs$group <- rep(1:3, length.out = nrow(ssn$obs))
+  args <- list(formula = Summer_mn ~ ELEV_DEM, ssn.object = ssn,
+    tailup_type = "exponential", tailup_params = c(range = 7000),
+    euclid_type = "matern", euclid_params = c(extra = 1, rotate = .2, scale = .7),
+    additive = "afvArea", anisotropy = TRUE, random = ~ group,
+    randcov_params = randcov_params(group = 2))
+  set.seed(2)
+  before <- .Random.seed
+  g <- as.data.frame(do.call(ssn_decorrelate_grid, args))
+  expect_identical(.Random.seed, before)
+  g <- g[g$tailup_type != "none", ]
+  expect_true(all(g$tailup_range == 7000))
+  expect_true(all(g$euclid_extra == 1 & g$euclid_rotate == .2 & g$euclid_scale == .7))
+  expect_true(all(g[["randcov_1 | group"]] == 2))
+  expect_equal(nrow(unique(g)), nrow(g))
+})
+
+test_that("compact extension counts have fewer active components", {
+  ssn <- mf04p
+  ssn$obs$group <- factor(rep(1:3, length.out = nrow(ssn$obs)))
+  for (nspatial in 1:3) {
+    g <- ssn_decorrelate_grid(Summer_mn ~ ELEV_DEM, ssn,
+      tailup_type = "exponential", taildown_type = if (nspatial > 1) "exponential" else "none",
+      euclid_type = if (nspatial > 2) "exponential" else "none",
+      additive = "afvArea", random = ~ group)
+    expect_equal(nrow(g), c(8L, 18L, 22L)[nspatial])
+  }
+  g <- ssn_decorrelate_grid(Summer_mn ~ ELEV_DEM, ssn, random = ~ group)
+  expect_equal(nrow(g), 4L)
+  g <- ssn_decorrelate_grid(Summer_mn ~ ELEV_DEM, ssn,
+    tailup_type = "exponential", additive = "afvArea", nugget_type = "none", random = ~ group)
+  expect_equal(nrow(g), 6L)
 })
 
 # decorrelate output

@@ -172,12 +172,10 @@ that \code{local} is transformed into
 \item{grid}{An explicit grid of parameter values by which to evaluate fit. The
 names of \code{grid} must contain all the names returned by \code{ssn_decorrelate_grid(formula, data, ...)}.}
 
-\item{dense_grid}{If \code{grid} is not provided, \code{dense_grid} is a logical
+\item{dense_grid}{A logical
 which controls the density of the constructed grid to be evaluated. If
 \code{dense_grid} is \code{TRUE}, a denser grid is used. If \code{dense_grid}
-is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid}
-is \code{FALSE} when the sample size is greater than 5,000 and \code{TRUE}
-otherwise.}
+is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid} is \code{FALSE}.}
 
 \item{...}{Other arguments to the functions called by \code{algorithm}.}
 

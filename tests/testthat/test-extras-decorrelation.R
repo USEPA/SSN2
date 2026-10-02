@@ -48,10 +48,10 @@ test_that("default decorrelation evaluates a parameter grid and an untransformed
     training = list(training_index = 1:30, test_index = 31:45)
   )
   grid <- tidy(fit)
-  expect_equal(NROW(grid), 11L)
+  expect_equal(NROW(grid), 5L)
   expect_equal(sum(grid$tailup_type == "no transformation"), 1L)
   expect_length(unique(grid$tailup_range[grid$tailup_type == "exponential"]), 2L)
-  expect_length(unique(grid$tailup_de[grid$tailup_type == "exponential"]), 5L)
+  expect_length(unique(grid$tailup_de[grid$tailup_type == "exponential"]), 2L)
   expect_true(all(is.finite(grid$RMSPE)))
   expected <- sqrt(mean((mean(mf04p$obs$Summer_mn[1:30]) - mf04p$obs$Summer_mn[31:45])^2))
   expect_equal(grid$RMSPE[grid$tailup_type == "no transformation"], expected)
@@ -72,7 +72,7 @@ test_that("generated grids preserve supplied parameters and include a true IID t
     tailup_type = "exponential", tailup_params = c(range = 7000),
     additive = "afvArea"
   )
-  expect_equal(NROW(tidy(grid)), 6L)
+  expect_equal(NROW(tidy(grid)), 3L)
   expect_true(all(tidy(grid)$tailup_range[tidy(grid)$tailup_type == "exponential"] == 7000))
   iid <- do.call(ssn_decorrelate_data, c(list(Summer_mn ~ ELEV_DEM, mf04p),
     candidate_to_params_args(get_decorrelate_grid_candidates(grid)[[nrow(grid)]])))

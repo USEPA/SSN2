@@ -85,10 +85,11 @@ check_decorrelate_grid_flag <- function(value, name) {
 #'
 #' Builds a heuristic candidate grid of decorrelation/estimation covariance
 #' parameters: an OLS residual variance anchors overall scale, active
-#' components (tailup/taildown/euclid/nugget/random effects) split that
-#' variance across targeted allocation regimes, and each active spatial
-#' component is crossed with two stream- or Euclidean-distance-based range
-#' choices (and, if \code{anisotropy}, rotate/scale choices). Fixed
+#' components split that variance across allocations. The compact grid
+#' pairs short ranges and long ranges across spatial components; the dense grid
+#' crosses their range choices independently. Random effects use spatial-dominant,
+#' equal, and random-dominant allocations, with short ranges in the last allocation.
+#' Shape and anisotropy settings expand either grid. Fixed
 #' (\code{is_known}) fields in \code{initial_object}/\code{randcov_initial}
 #' are pinned rather than varied. Called by
 #' \code{\link{ssn_decorrelate_grid_internal}()} (with \code{add_iid = TRUE})
@@ -106,7 +107,7 @@ check_decorrelate_grid_flag <- function(value, name) {
 #' @param randcov_initial A random-effect variance initial-value object, or
 #'   \code{NULL}.
 #' @param dense_grid Whether to use the denser grid density, or \code{NULL}
-#'   to resolve it from the observed sample size.
+#'   for the compact (sparse) default.
 #' @param add_iid Whether to append an untransformed baseline candidate.
 #'
 #' @return A named list of candidates, each a list of \code{*_initial}
@@ -118,7 +119,7 @@ get_decorrelate_grid <- function(formula, ssn.object, initial_object, additive,
                                   dense_grid, add_iid) {
   observed_index <- get_decorrelate_response_index(formula, ssn.object)
   observed <- ssn.object$obs[observed_index, , drop = FALSE]
-  if (is.null(dense_grid)) dense_grid <- NROW(observed) <= 5000L
+  if (is.null(dense_grid)) dense_grid <- FALSE
   check_decorrelate_grid_flag(dense_grid, "dense_grid")
   check_decorrelate_grid_flag(add_iid, "add_iid")
   matrix_object <- get_model_matrix_object(formula, observed, attr(observed, "sf_column"))
@@ -155,7 +156,7 @@ get_decorrelate_grid <- function(formula, ssn.object, initial_object, additive,
   }, character(1))
   names(types) <- components
   active <- components[types != "none"]
-  variance_names <- c(ifelse(active == "nugget", "nugget", paste0(active, "_de")), randcov_names)
+  variance_names <- ifelse(active == "nugget", "nugget", paste0(active, "_de"))
   proportions <- get_decorrelate_variance_grid(length(variance_names), dense_grid)
   variances <- as.data.frame(ns2 * proportions)
   names(variances) <- variance_names
@@ -199,7 +200,8 @@ get_decorrelate_grid <- function(formula, ssn.object, initial_object, additive,
     taildown_range = tail_range("taildown", taildown_params),
     euclid_range = euclid_range
   )
-  shape_grid <- do.call(expand.grid, ranges)
+  shape_grid <- if (dense_grid) do.call(expand.grid, ranges) else as.data.frame(ranges)
+  shape_grid$.short_range <- Reduce(`&`, lapply(shape_grid, function(x) x == min(x)))
   if (euclid_has_extra(types[["euclid"]])) {
     extra <- switch(types[["euclid"]], matern = c(1, 4), cauchy = c(0.5, 2), pexponential = c(0.4, 1.6))
     supplied_extra <- initial_object$euclid_initial$initial[["extra"]]
@@ -221,7 +223,11 @@ get_decorrelate_grid <- function(formula, ssn.object, initial_object, additive,
     scale <- 1
   }
   shape_grid <- merge(shape_grid, expand.grid(rotate = rotate, scale = scale), by = NULL)
-  cov_grid <- merge(variances, shape_grid, by = NULL)
+  short_shapes <- shape_grid[shape_grid$.short_range, , drop = FALSE]
+  shape_grid$.short_range <- short_shapes$.short_range <- NULL
+  cov_grid <- get_decorrelate_random_grid(
+    variances, shape_grid, short_shapes, variance_names, randcov_names, ns2
+  )
   cov_grid <- cov_grid_replace_shared(cov_grid, initial_object, list(randcov_names = randcov_names))
   cov_grid$rotate[cov_grid$scale == 1] <- 0
   cov_grid <- unique(cov_grid)
@@ -255,8 +261,7 @@ get_decorrelate_grid <- function(formula, ssn.object, initial_object, additive,
 #' one dominant component at a time (the rest split its complement evenly),
 #' plus an evenly-split row.
 #'
-#' @param n The number of active variance components (spatial plus random
-#'   effects).
+#' @param n The number of active spatial and nugget variance components.
 #' @param dense_grid Whether to use the denser candidate-proportion set.
 #'
 #' @return A matrix with \code{n} columns of variance proportions (rows
@@ -274,6 +279,51 @@ get_decorrelate_variance_grid <- function(n, dense_grid) {
     values
   })
   unique(rbind(rep(1 / n, n), do.call(rbind, rows)))
+}
+
+#' Extend a covariance grid with random-effect variance allocations
+#'
+#' Combine core-dominant, equally shared, and random-dominant allocations;
+#' random-dominant rows use only short ranges.
+#'
+#' @param variances A data frame of core variance allocations.
+#' @param shapes A data frame of range, shape, and anisotropy settings.
+#' @param short_shapes The subset of \code{shapes} with short ranges.
+#' @param variance_names Names of active spatial and nugget variance columns.
+#' @param randcov_names Names of random-effect variance columns.
+#' @param ns2 The total variance anchor.
+#'
+#' @return A combined candidate data frame, or the core grid without random effects.
+#' @noRd
+get_decorrelate_random_grid <- function(variances, shapes, short_shapes,
+                                        variance_names, randcov_names, ns2) {
+  grid <- merge(variances, shapes, by = NULL)
+  k <- length(randcov_names)
+  if (!k) return(grid)
+  m <- length(variance_names)
+
+  spatial <- grid
+  spatial[variance_names] <- 0.9 * spatial[variance_names]
+  for (name in randcov_names) spatial[[name]] <- 0.1 * ns2 / k
+
+  equal_variances <- variances[1L, , drop = FALSE]
+  equal_variances[variance_names] <- ns2 / (m + k)
+  equal <- merge(equal_variances, shapes, by = NULL)
+  for (name in randcov_names) equal[[name]] <- ns2 / (m + k)
+
+  random_variances <- variances[1L, , drop = FALSE]
+  random_variances[variance_names] <- 0.1 * ns2 / m
+  random <- merge(random_variances, short_shapes, by = NULL)
+  shares <- matrix(1 / k, nrow = 1L, ncol = k)
+  if (k > 1L) {
+    dominant <- matrix(0.1 / (k - 1L), nrow = k, ncol = k)
+    diag(dominant) <- 0.9
+    shares <- rbind(shares, dominant)
+  }
+  shares <- as.data.frame(0.9 * ns2 * shares)
+  names(shares) <- randcov_names
+  random <- merge(random, shares, by = NULL)
+  rbind(spatial, equal, random)
 }
 
 #' Append an untransformed IID baseline candidate to a candidates list

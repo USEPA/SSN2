@@ -72,9 +72,7 @@ to be used in the spatial decorrelation transformation. See \code{\link[spmodel:
 \item{dense_grid}{A logical
 which controls the density of the constructed grid to be evaluated. If
 \code{dense_grid} is \code{TRUE}, a denser grid is used. If \code{dense_grid}
-is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid}
-is \code{FALSE} when the sample size is greater than 5,000 and \code{TRUE}
-otherwise.}
+is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid} is \code{FALSE}.}
 
 \item{x}{An object from \code{object$grid}.}
 
