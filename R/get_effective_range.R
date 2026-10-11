@@ -112,7 +112,7 @@ get_effective_range_monotone <- function(params, target) {
   range <- params[["range"]]
   params[["range"]] <- params[["de"]] <- 1
   f <- function(distance) {
-    distances <- list(hydro_mat = distance, a_mat = distance, b_mat = 0,
+    distances <- list(hydro_mat = distance, a_mat = 0, b_mat = distance,
                       mask_mat = 1, w_mat = 1, euclid_mat = distance)
     as.numeric(cov_matrix(params, distances, anisotropy = FALSE)) - target
   }

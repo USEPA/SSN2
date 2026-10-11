@@ -150,7 +150,7 @@ get_dist_matlist <- function(ssn.object, initial_object, additive,
         additive,
         order_list$network_index,
         order_list$dist_order,
-        dist_matlist$b_matlist,
+        dist_matlist$a_matlist,
         dist_matlist$mask_matlist
       )
 
@@ -259,27 +259,27 @@ get_mask_matlist <- function(distjunc_list) {
 
 #' Find the a matrix list for each network
 #'
-#' @param distjunc_list Create list of a matrices (largest stream distance) for each network.
+#' @param distjunc_list List of directed distances to the common downstream junction.
 #'
 #' @noRd
 get_a_matlist <- function(distjunc_list) {
-  # find a matrix list
+  # JASA notation uses a for the shorter distance to the common junction.
   a_matlist <- lapply(distjunc_list, function(x) {
     x_matrix <- as.matrix(x)
-    Matrix::Matrix(pmax(x_matrix, t(x_matrix)), sparse = TRUE)
+    Matrix::Matrix(pmin(x_matrix, t(x_matrix)), sparse = TRUE)
   })
 }
 
 #' Find the b matrix list for each network
 #'
-#' @param distjunc_list Create list of a matrices (smallest stream distance) for each network.
+#' @param distjunc_list List of directed distances to the common downstream junction.
 #'
 #' @noRd
 get_b_matlist <- function(distjunc_list) {
-  # find a matrix list
+  # JASA notation uses b for the longer distance to the common junction.
   b_matlist <- lapply(distjunc_list, function(x) {
     x_matrix <- as.matrix(x)
-    Matrix::Matrix(pmin(x_matrix, t(x_matrix)), sparse = TRUE)
+    Matrix::Matrix(pmax(x_matrix, t(x_matrix)), sparse = TRUE)
   })
 }
 
@@ -298,7 +298,7 @@ get_hydro_matlist <- function(distjunc_list) {
 #' @param distjunc_list Create list of w matrices (additive function weight) for each network.
 #'
 #' @noRd
-get_w_matlist <- function(ssn.object, additive, network_index, dist_order, b_matlist, mask_matlist, newdata_name = NULL) {
+get_w_matlist <- function(ssn.object, additive, network_index, dist_order, a_matlist, mask_matlist, newdata_name = NULL) {
   if (is.null(newdata_name)) {
     additive_val <- as.numeric(ssn.object$obs[[additive]]) # remember a character here
   } else {
@@ -321,9 +321,9 @@ get_w_matlist <- function(ssn.object, additive, network_index, dist_order, b_mat
 
   # apply flow connected and masking requirements
   w_matlist <- mapply(
-    FUN = function(additive, b, m) additive * (b == 0) * m, # b == 0 is flow connected
+    FUN = function(additive, a, m) additive * (a == 0) * m, # a == 0 is flow connected
     additive = additive_matlist,
-    b = b_matlist,
+    a = a_matlist,
     m = mask_matlist,
     SIMPLIFY = FALSE
   )

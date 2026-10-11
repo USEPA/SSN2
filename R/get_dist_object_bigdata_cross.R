@@ -105,7 +105,7 @@ get_dist_matlist_bigdata_cross <- function(d1, d2, params_object, data_object,
       # store additive matrix as NULL
       dist_matlist <- c(dist_matlist, list(w_mat = NULL))
     } else {
-      dist_matlist$w_mat <- get_w_matlist_bigdata_cross(d1_additive_val, d2_additive_val, dist_matlist$b_mat, dist_matlist$mask_mat)
+      dist_matlist$w_mat <- get_w_matlist_bigdata_cross(d1_additive_val, d2_additive_val, dist_matlist$a_mat, dist_matlist$mask_mat)
     }
   }
   dist_matlist
@@ -231,21 +231,21 @@ get_mask_matlist_bigdata_cross <- function(d1_network_index, d2_network_index, d
 }
 
 get_a_matlist_bigdata_cross <- function(distjunc_matlist1, distjunc_matlist2) {
-  pmax(distjunc_matlist1, t(distjunc_matlist2))
+  pmin(distjunc_matlist1, t(distjunc_matlist2))
 }
 
 get_b_matlist_bigdata_cross <- function(distjunc_matlist1, distjunc_matlist2) {
-  pmin(distjunc_matlist1, t(distjunc_matlist2))
+  pmax(distjunc_matlist1, t(distjunc_matlist2))
 }
 
 get_hydro_matlist_bigdata_cross <- function(distjunc_matlist1, distjunc_matlist2) {
   distjunc_matlist1 + t(distjunc_matlist2)
 }
 
-get_w_matlist_bigdata_cross <- function(d1_additive_val, d2_additive_val, b_matlist_bigdata_cross, mask_matlist_bigdata_cross) {
+get_w_matlist_bigdata_cross <- function(d1_additive_val, d2_additive_val, a_matlist_bigdata_cross, mask_matlist_bigdata_cross) {
   d1_additive_matrix_val <- replicate(length(d2_additive_val), d1_additive_val, simplify = "array")
   d2_additive_matrix_val <- replicate(length(d1_additive_val), d2_additive_val, simplify = "array")
   w_matrix_val <- pmin(d1_additive_matrix_val, t(d2_additive_matrix_val)) / pmax(d1_additive_matrix_val, t(d2_additive_matrix_val))
   # sqrt(w_matrix_val) # bug obviously
-  sqrt(w_matrix_val) * (b_matlist_bigdata_cross == 0) * mask_matlist_bigdata_cross
+  sqrt(w_matrix_val) * (a_matlist_bigdata_cross == 0) * mask_matlist_bigdata_cross
 }

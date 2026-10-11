@@ -132,8 +132,8 @@ Torgegram <- function(formula, ssn.object,
   if ("flowcon" %in% type || "flowuncon" %in% type) {
     hydro_mat_mask <- dist_object$hydro_mat * dist_object$mask_mat
     hydro_vector <- as.matrix(hydro_mat_mask)[upper.tri(hydro_mat_mask)] # mat "maybe inefficient" warning
-    b_vector <- as.matrix(dist_object$b_mat)[upper.tri(dist_object$b_mat)]
-    flowcon_index <- b_vector == 0
+    a_vector <- as.matrix(dist_object$a_mat)[upper.tri(dist_object$a_mat)]
+    flowcon_index <- a_vector == 0
     flowcon_vector <- hydro_vector * flowcon_index
     flowuncon_vector <- hydro_vector * !flowcon_index
   }

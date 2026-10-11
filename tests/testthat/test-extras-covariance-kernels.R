@@ -2,6 +2,52 @@ skip_on_cran()
 skip_if_not(identical(Sys.getenv("SSN2_RUN_EXTRAS"), "true"),
             "set SSN2_RUN_EXTRAS = 'true' to run the extras suite")
 
+test_that("tail-down kernels use a <= b and agree with moving-average integrals", {
+  a <- matrix(c(0, 0, 2, 3, 4, 1, 0, 2), 2)
+  b <- matrix(c(0, 2, 5, 3, 10, 12, 10, 5), 2)
+  mask <- matrix(c(rep(1, 7), 0), 2)
+  observed <- list(a_mat = Matrix::Matrix(a), b_mat = Matrix::Matrix(b),
+    hydro_mat = Matrix::Matrix(a + b), mask_mat = Matrix::Matrix(mask))
+  predicted <- observed
+  names(predicted) <- sub("_mat$", "_pred_mat", names(predicted))
+  range <- 10
+  for (type in c("linear", "spherical", "exponential", "mariah", "epa", "gaussian")) {
+    kernel <- switch(type,
+      linear = function(x) rep(1 / sqrt(range), length(x)),
+      spherical = function(x) sqrt(3 / range) * (1 - x / range),
+      exponential = function(x) sqrt(2 / range) * exp(-x / range),
+      mariah = function(x) sqrt(90 / range) / (1 + 90 * x / range),
+      epa = function(x) sqrt(15 / (8 * range)) * (1 - (x / range)^2),
+      gaussian = function(x) sqrt(4 / (range * sqrt(pi))) * exp(-2 * (x / range)^2))
+    expected <- vapply(seq_along(a), function(i) {
+      upper <- if (type %in% c("linear", "spherical", "epa")) max(0, range - b[i]) else Inf
+      if (upper == 0) return(0)
+      2 * mask[i] * integrate(function(u) kernel(u + a[i]) * kernel(u + b[i]),
+        0, upper, rel.tol = 1e-10)$value
+    }, numeric(1))
+    expected <- matrix(expected, nrow(a))
+    params <- taildown_params(type, de = 2, range = range)
+    expect_equal(as.matrix(cov_matrix(params, observed)), expected, tolerance = 1e-8)
+    expect_equal(as.matrix(cov_vector(params, predicted)), expected, tolerance = 1e-8)
+  }
+})
+
+test_that("rectangular and one-site distance helpers use the shorter a and longer b", {
+  forward <- matrix(c(0, 2, 5, 3, 9, 0), 2)
+  reverse <- t(matrix(c(4, 7, 1, 3, 0, 0), 2))
+  for (rows in list(1:2, 1L)) {
+    for (cols in list(1:3, 1L)) {
+      x <- forward[rows, cols, drop = FALSE]
+      y <- reverse[cols, rows, drop = FALSE]
+      distances <- list(distjunca = list(x), distjuncb = list(y))
+      expect_equal(as.matrix(get_a_pred_matlist(distances)[[1]]), pmin(x, t(y)))
+      expect_equal(as.matrix(get_b_pred_matlist(distances)[[1]]), pmax(x, t(y)))
+      expect_equal(get_a_matlist_bigdata_cross(x, y), pmin(x, t(y)))
+      expect_equal(get_b_matlist_bigdata_cross(x, y), pmax(x, t(y)))
+    }
+  }
+})
+
 # euclid circular
 test_that("circular covariance has the expected two-dimensional support", {
   coordinates <- rbind(c(0, 0), c(0, 5), c(10, 0))

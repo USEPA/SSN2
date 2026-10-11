@@ -122,7 +122,7 @@ get_dist_predbk_matlist <- function(ssn.object, newdata_name, initial_object, ad
         additive,
         order_list$network_index,
         order_list$dist_order,
-        dist_matlist$b_matlist,
+        dist_matlist$a_matlist,
         dist_matlist$mask_matlist,
         newdata_name = newdata_name
       )

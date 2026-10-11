@@ -124,13 +124,13 @@ strdist_2[5:10, 5:10]
 
 ## Get maximum downstream only distance between
 ## observations on netID == 2
-a.mat <- pmax(dist_obs$dist.net2, t(dist_obs$dist.net2))
-a.mat[5:10, 5:10]
+b.mat <- pmax(dist_obs$dist.net2, t(dist_obs$dist.net2))
+b.mat[5:10, 5:10]
 
 ## Get minimum downstream only distance between observations. If
 ## minimum distance == 0, sites are flow-connected
-b.mat <- pmin(dist_obs$dist.net2, t(dist_obs$dist.net2))
-b.mat[5:10, 5:10]
+a.mat <- pmin(dist_obs$dist.net2, t(dist_obs$dist.net2))
+a.mat[5:10, 5:10]
 
 ## Get distance matrices for pred1km
 dist_pred1km <- ssn_get_stream_distmat(mf04p, name = "pred1km")

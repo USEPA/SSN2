@@ -316,7 +316,7 @@ get_w_matlist_bigdata <- function(ssn.object, order_list, dist_matlist) {
 
   # apply flow connected and masking requirements
   w_matlist <- mapply(
-    FUN = function(additive, d) additive * (d$b_mat == 0) * d$mask_mat, # b == 0 is flow connected
+    FUN = function(additive, d) additive * (d$a_mat == 0) * d$mask_mat, # a == 0 is flow connected
     additive = additive_matlist,
     d = dist_matlist,
     SIMPLIFY = FALSE

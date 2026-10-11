@@ -85,15 +85,15 @@ cov_matrix.taildown_linear <- function(params, dist_object, ...) {
   a <- dist_object$a_mat
   b <- dist_object$b_mat
   m <- dist_object$mask_mat
-  flow_con <- b == 0
+  flow_con <- a == 0
   dist_ratio_h <- h / params[["range"]]
-  dist_ratio_a <- a / params[["range"]]
+  dist_ratio_b <- b / params[["range"]]
   dist_ratio_h_less1 <- dist_ratio_h <= 1
-  dist_ratio_a_less1 <- dist_ratio_a <= 1
+  dist_ratio_b_less1 <- dist_ratio_b <= 1
 
   h_cor_part <- (1 - dist_ratio_h) * dist_ratio_h_less1 * flow_con
-  a_cor_part <- (1 - dist_ratio_a) * dist_ratio_a_less1 * (!flow_con)
-  m * params[["de"]] * (h_cor_part + a_cor_part)
+  b_cor_part <- (1 - dist_ratio_b) * dist_ratio_b_less1 * (!flow_con)
+  m * params[["de"]] * (h_cor_part + b_cor_part)
 }
 
 #' @export
@@ -102,16 +102,16 @@ cov_matrix.taildown_spherical <- function(params, dist_object, ...) {
   a <- dist_object$a_mat
   b <- dist_object$b_mat
   m <- dist_object$mask_mat
-  flow_con <- b == 0
+  flow_con <- a == 0
   dist_ratio_h <- h / params[["range"]]
   dist_ratio_a <- a / params[["range"]]
   dist_ratio_b <- b / params[["range"]]
   dist_ratio_h_less1 <- dist_ratio_h <= 1
-  dist_ratio_a_less1 <- dist_ratio_a <= 1
+  dist_ratio_b_less1 <- dist_ratio_b <= 1
 
   h_cor_part <- (1 - 1.5 * dist_ratio_h + 0.5 * dist_ratio_h^3) * dist_ratio_h_less1 * flow_con
-  a_cor_part <- (1 - 1.5 * dist_ratio_b + 0.5 * dist_ratio_a) * (1 - dist_ratio_a)^2 * dist_ratio_a_less1 * (!flow_con)
-  m * params[["de"]] * (h_cor_part + a_cor_part)
+  b_cor_part <- (1 - 1.5 * dist_ratio_a + 0.5 * dist_ratio_b) * (1 - dist_ratio_b)^2 * dist_ratio_b_less1 * (!flow_con)
+  m * params[["de"]] * (h_cor_part + b_cor_part)
 }
 
 #' @export
@@ -128,7 +128,7 @@ cov_matrix.taildown_mariah <- function(params, dist_object, ...) {
   a <- dist_object$a_mat
   b <- dist_object$b_mat
   m <- dist_object$mask_mat
-  flow_con <- b == 0
+  flow_con <- a == 0
   dist_ratio_h <- 90 * h / params[["range"]]
   dist_ratio_a <- 90 * a / params[["range"]]
   dist_ratio_b <- 90 * b / params[["range"]]
@@ -136,8 +136,8 @@ cov_matrix.taildown_mariah <- function(params, dist_object, ...) {
 
   h_cor_part <- log(dist_ratio_h + 1) / dist_ratio_h * flow_con
   h_cor_part[h == 0] <- 1
-  ab_cor_part <- (log(dist_ratio_a + 1) - log(dist_ratio_b + 1)) / (dist_ratio_a - dist_ratio_b)
-  ab_cor_part[a_eq_b] <- 1 / (dist_ratio_a[a_eq_b] + 1) # without which a_eq_b to right of <- gets converted to dense format in Matrix?
+  ab_cor_part <- (log(dist_ratio_b + 1) - log(dist_ratio_a + 1)) / (dist_ratio_b - dist_ratio_a)
+  ab_cor_part[a_eq_b] <- 1 / (dist_ratio_b[a_eq_b] + 1) # without which a_eq_b to right of <- gets converted to dense format in Matrix?
   ab_cor_part <- ab_cor_part * (!flow_con)
 
   m * params[["de"]] * (h_cor_part + ab_cor_part)
@@ -149,27 +149,27 @@ cov_matrix.taildown_epa <- function(params, dist_object, ...) {
   a <- dist_object$a_mat
   b <- dist_object$b_mat
   m <- dist_object$mask_mat
-  flow_con <- b == 0
+  flow_con <- a == 0
   range <- params[["range"]]
   dist_ratio_h <- h / range
-  dist_ratio_a <- a / range
+  dist_ratio_b <- b / range
   dist_ratio_h_less1 <- dist_ratio_h <= 1
-  dist_ratio_a_less1 <- dist_ratio_a <= 1
+  dist_ratio_b_less1 <- dist_ratio_b <= 1
 
   f_eu <- 16 * range^3 + 17 * range^2 * h - 2 * range * h^2 - h^3
-  f_ed <- 16 * range^3 + 17 * range^2 * a - 15 * range^2 * b - 20 * range * b^2 - 2 * range * a^2 + 10 * range * a * b + 5 * a^2 * b - a^3 - 10 * a * b^2
+  f_ed <- 16 * range^3 + 17 * range^2 * b - 15 * range^2 * a - 20 * range * a^2 - 2 * range * b^2 + 10 * range * b * a + 5 * b^2 * a - b^3 - 10 * b * a^2
   h_cor_part <- (h - range)^2 * f_eu * dist_ratio_h_less1 / (16 * range^5) * flow_con
-  a_cor_part <- (a - range)^2 * f_ed * dist_ratio_a_less1 / (16 * range^5) * (!flow_con)
-  m * params[["de"]] * (h_cor_part + a_cor_part)
+  b_cor_part <- (b - range)^2 * f_ed * dist_ratio_b_less1 / (16 * range^5) * (!flow_con)
+  m * params[["de"]] * (h_cor_part + b_cor_part)
 }
 
 #' @export
 cov_matrix.taildown_gaussian <- function(params, dist_object, ...) {
   h <- dist_object$hydro_mat
-  a <- dist_object$a_mat # longer
-  b <- dist_object$b_mat # shorter
+  a <- dist_object$a_mat # shorter
+  b <- dist_object$b_mat # longer
   m <- dist_object$mask_mat
-  dist_ratio_minus <- as.matrix((a - b) / params[["range"]])
+  dist_ratio_minus <- as.matrix((b - a) / params[["range"]])
   dist_ratio_plus <- as.matrix(h / params[["range"]]) # same as (a + b) / params[["range"]]
   m * 2 * params[["de"]] * exp(-dist_ratio_minus^2) * (1 - pnorm(dist_ratio_plus * sqrt(2)))
 }

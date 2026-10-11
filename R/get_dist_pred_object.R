@@ -228,7 +228,7 @@ get_dist_pred_matlist <- function(ssn.object, newdata_name, initial_object, addi
         newdata_name,
         order_list_pred,
         additive,
-        dist_pred_matlist$b_pred_matlist,
+        dist_pred_matlist$a_pred_matlist,
         dist_pred_matlist$mask_pred_matlist
       )
 
@@ -392,18 +392,18 @@ get_a_pred_matlist <- function(distjunc_pred_matlist) {
     a = distjunc_pred_matlist$distjunca,
     b = distjunc_pred_matlist$distjuncb,
     function(a, b) {
-      Matrix::Matrix(pmax(as.matrix(a), as.matrix(t(b))), sparse = TRUE)
+      Matrix::Matrix(pmin(as.matrix(a), as.matrix(t(b))), sparse = TRUE)
     },
     SIMPLIFY = FALSE
   )
 }
 
 get_b_pred_matlist <- function(distjunc_pred_matlist) {
-  a_matrix_list <- mapply(
+  b_matrix_list <- mapply(
     a = distjunc_pred_matlist$distjunca,
     b = distjunc_pred_matlist$distjuncb,
     function(a, b) {
-      Matrix::Matrix(pmin(as.matrix(a), as.matrix(t(b))), sparse = TRUE)
+      Matrix::Matrix(pmax(as.matrix(a), as.matrix(t(b))), sparse = TRUE)
     },
     SIMPLIFY = FALSE
   )
@@ -420,7 +420,7 @@ get_hydro_pred_matlist <- function(distjunc_pred_matlist) {
   )
 }
 
-get_w_pred_matlist <- function(ssn.object, newdata_name, order_list_pred, additive, b_pred_matlist, mask_pred_matlist) {
+get_w_pred_matlist <- function(ssn.object, newdata_name, order_list_pred, additive, a_pred_matlist, mask_pred_matlist) {
   # make list
   network_index_obs <- as.numeric(as.character(order_list_pred$network_index))
   network_index_pred <- as.numeric(as.character(order_list_pred$network_index_pred))
@@ -458,15 +458,15 @@ get_w_pred_matlist <- function(ssn.object, newdata_name, order_list_pred, additi
 
   # make w
   w_pred_matlist_val <- mapply(
-    FUN = function(additive, b, m) {
+    FUN = function(additive, a, m) {
       if (NROW(additive) > 0) {
-        return(additive * (b == 0) * m) # b == 0 is flow connected)
+        return(additive * (a == 0) * m) # a == 0 is flow connected
       } else {
         return(additive) # return zero matrix if it is there
       }
     },
     additive = additive_pred_matlist,
-    b = b_pred_matlist,
+    a = a_pred_matlist,
     m = mask_pred_matlist,
     SIMPLIFY = FALSE
   )

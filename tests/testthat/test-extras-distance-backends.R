@@ -44,6 +44,27 @@ test_that("binary-ID matching rejects malformed helper inputs", {
 # distance blocks
 ssn_create_bigdist(mf04p, predpts = "CapeHorn", overwrite = TRUE, no_cores = 1, verbose = FALSE)
 
+test_that("both distance backends use a <= b for square and cross-block distances", {
+  initial <- get_initial_object("exponential", "spherical", "none", "nugget", NULL, NULL, NULL, NULL)
+  params <- list(tailup = tailup_params("exponential", 1, 10000),
+    taildown = taildown_params("spherical", 1, 10000), euclid = euclid_params("none"))
+  data <- list(ssn.object = mf04p, additive = "afvArea", anisotropy = FALSE)
+  reference <- get_dist_object(mf04p, initial, "afvArea", FALSE)
+  rows <- c(9, 1, 15, 3)
+  cols <- c(20, 8, 2)
+  for (backend in c("dense", "bigdata")) {
+    square <- get_dist_object(mf04p, initial, "afvArea", FALSE, backend = backend)
+    expect_equal(square$a_mat, reference$a_mat)
+    expect_equal(square$b_mat, reference$b_mat)
+    expect_equal(square$w_mat, reference$w_mat)
+    cross <- get_dist_object_bigdata_cross(mf04p$obs[rows, ], mf04p$obs[cols, ],
+      params, data, backend = backend)
+    expect_equal(as.matrix(cross$a_mat), as.matrix(reference$a_mat[rows, cols]), ignore_attr = TRUE)
+    expect_equal(as.matrix(cross$b_mat), as.matrix(reference$b_mat[rows, cols]), ignore_attr = TRUE)
+    expect_equal(as.matrix(cross$w_mat), as.matrix(reference$w_mat[rows, cols]), ignore_attr = TRUE)
+  }
+})
+
 test_that("cross-block distance reader honors arbitrary requested pid order", {
   initial <- get_initial_object("exponential", "exponential", "exponential", "nugget", NULL, NULL, NULL, NULL)
   dist0 <- get_dist_object(mf04p, initial, "afvArea", FALSE)

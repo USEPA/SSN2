@@ -12,7 +12,7 @@ test_that("EACF changes only the statistic for each Torgegram pair type", {
     products <- products[upper.tri(products)]
     distances <- get_dist_object(ssn, get_Torgegram_initial_object(types), NULL, FALSE)
     hydro <- as.matrix(distances$hydro_mat * distances$mask_mat)
-    connected <- as.matrix(distances$b_mat) == 0
+    connected <- as.matrix(distances$a_mat) == 0
     euclid <- as.matrix(distances$euclid_mat)
     pair_distances <- list(
       flowcon = (hydro * connected)[upper.tri(hydro)],
