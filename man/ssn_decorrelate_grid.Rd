@@ -32,7 +32,9 @@ ssn_decorrelate_grid(
 \item{formula}{A two-sided linear formula describing the fixed effect structure
 of the model, with the response to the left of the \code{~} operator and
 the terms on the right, separated by \code{+} operators. \code{.} on the
-right-hand side represents every variable in \code{data} except the geometry column.}
+right-hand side represents every variable in \code{ssn.object$obs} except the
+response and SSN geometry/topology metadata, which are never
+included via \code{.} (though they may still be given explicitly).}
 
 \item{ssn.object}{A spatial stream network object with class \code{SSN}.}
 
@@ -66,8 +68,8 @@ as \code{1 | g1/.../gm}. Note that \code{g1/.../gm} is shorthand for \code{(1 | 
 If only random intercepts are desired and the shorthand notation is used,
 parentheses can be omitted.}
 
-\item{randcov_params}{An optional random effect covariance object
-to be used in the spatial decorrelation transformation. See \code{\link[spmodel:randcov_params]{spmodel::randcov_params()}}.}
+\item{randcov_params}{An object from \code{\link[spmodel:randcov_params]{spmodel::randcov_params()}} that contains the
+random effect variances used by the spatial decorrelation transformation.}
 
 \item{dense_grid}{A logical
 which controls the density of the constructed grid to be evaluated. If
@@ -82,9 +84,8 @@ is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid} is \code{
 \code{"bias"}, \code{"MSPE"}, \code{"RMSPE"}, and \code{"cor2"}.
 The default is \code{"MSPE"}.}
 
-\item{decreasing}{Whether \code{sort_by} should sort in decreasing order?
-If \code{sort_by = "cor2"}, the default is \code{TRUE}; otherwise it is
-\code{FALSE}.}
+\item{decreasing}{Whether \code{sort_by} should sort by decreasing order? If
+\code{sort_by = "cor2"}, the default is \code{TRUE}; otherwise it is \code{FALSE}.}
 }
 \value{
 A grid of spatial decorrelation parameters stored as a \code{data.frame}.

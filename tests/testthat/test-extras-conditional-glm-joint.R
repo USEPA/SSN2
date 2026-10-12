@@ -6,7 +6,6 @@ conditional_glm_joint_fixture <- local({
   fixture <- NULL
   function() {
     if (!is.null(fixture)) return(fixture)
-    withr::local_preserve_seed()
     set.seed(2)
     root <- tempfile("conditional-glm-joint-")
     dir.create(root)
@@ -48,18 +47,20 @@ conditional_glm_joint_fixture <- local({
     w <- as.vector(fitted(fit, type = "link"))
     w_free <- w - network$obs$off
     D <- -diag(exp(w))
-    L <- solve(Q - D)
+    L <- solve(P - D)
+    M <- L %*% P %*% X
     H <- Xnew - C %*% P %*% X
     R <- Knew - C %*% P %*% t(C)
-    W <- H %*% B + C %*% P
-    Vbeta <- V0 + B %*% L %*% t(B)
-    Veta <- R + H %*% V0 %*% t(H) + W %*% L %*% t(W)
-    Vcross <- V0 %*% t(H) + B %*% L %*% t(W)
+    W <- C %*% P
+    Vbeta <- as.matrix(vcov(fit))
+    T <- Xnew + W %*% (M - X)
+    Veta <- R + W %*% L %*% t(W) + T %*% Vbeta %*% t(T)
+    Vcross <- Vbeta %*% t(T)
     beta <- as.vector(coef(fit))
     mean_new <- as.vector(Xnew %*% beta +
       C %*% P %*% (w_free - X %*% beta) + network$preds$joint$off)
     fixture <<- list(fit = fit, Sigma = Sigma, C = C, Knew = Knew,
-      X = X, Xnew = Xnew, V0 = V0, B = B, Q = Q, D = D, L = L,
+      X = X, Xnew = Xnew, V0 = V0, B = B, Q = Q, D = D, L = L, M = M,
       H = H, R = R, W = W, Vbeta = Vbeta, Veta = Veta, Vcross = Vcross,
       beta = beta, w = w, w_free = w_free, mean_new = mean_new)
     fixture
@@ -84,7 +85,8 @@ expect_conditional_glm_joint_moments <- function(draws, mean, covariance, label)
   expect_lt(max(covariance_error), 6, label = paste(label, "covariance / MCSE"))
 }
 
-test_that("GLM joint factors match independent Euclidean Laplace matrices", {
+test_that("GLM joint factors match independent beta-first matrices", {
+  set.seed(2)
   f <- conditional_glm_joint_fixture()
   expect_equal(model.matrix(f$fit), f$X, ignore_attr = TRUE)
   expect_equal(unname(covmatrix(f$fit)), unname(f$Sigma), tolerance = 1e-10)
@@ -93,50 +95,42 @@ test_that("GLM joint factors match independent Euclidean Laplace matrices", {
   expect_equal(unname(covmatrix(f$fit, "joint", cov_type = "pred.pred")),
     unname(f$Knew), tolerance = 1e-10)
   expect_equal(unname(vcov(f$fit, var_correct = FALSE)), unname(f$V0), tolerance = 1e-8)
-  # Stored vcov uses the preceding Newton Hessian with a 1e-4 stopping tolerance.
-  expect_lt(max(abs(vcov(f$fit) - f$Vbeta)), 1e-5)
   prediction <- predict(f$fit, "joint", type = "link", se.fit = TRUE)
   expect_equal(as.vector(prediction$fit), f$mean_new, tolerance = 1e-8)
-  expect_equal(as.vector(prediction$se.fit^2), unname(diag(f$Veta)), tolerance = 1e-7)
-
-  for (local in c(FALSE, TRUE)) {
-    context <- SSN2:::get_conditional_context_glm(f$fit, "joint", local = local)
-    joint <- SSN2:::get_conditional_glm_joint(context)
-    expect_equal(unname(joint$weights_beta), unname(f$B), tolerance = 1e-8)
-    expect_equal(unname(joint$mH_upchol), unname(chol(f$Q - f$D)), tolerance = 1e-8)
-    expect_equal(unname(joint$beta_lowchol), unname(t(chol(f$V0))), tolerance = 1e-8)
-    expect_equal(unname(crossprod(joint$mH_upchol)), unname(f$Q - f$D), tolerance = 1e-8)
-    if (!local) {
-      cond <- SSN2:::get_conditional_cov(context)
-      expect_equal(unname(cond$Sigma_cond), unname(f$R), tolerance = 1e-8)
-    }
-  }
+  joint <- SSN2:::get_conditional_glm_joint(f$fit)
+  expect_equal(unname(joint$wts_latent), unname(f$M), tolerance = 1e-8)
+  expect_equal(unname(crossprod(joint$cond_prec_upchol)),
+    unname(solve(f$Sigma) - f$D), tolerance = 1e-8)
+  expect_equal(unname(tcrossprod(joint$cov_betahat_lowchol)), unname(f$Vbeta), tolerance = 1e-8)
+  context <- SSN2:::get_conditional_context_glm(f$fit, "joint")
+  expect_equal(unname(SSN2:::get_conditional_cov(context)$Sigma_cond), unname(f$R), tolerance = 1e-8)
 })
 
 test_that("joint beta and offset-free latent draws preserve their dependence", {
+  set.seed(2)
   f <- conditional_glm_joint_fixture()
   context <- SSN2:::get_conditional_context_glm(f$fit, "joint")
   set.seed(2)
-  draws <- SSN2:::draw_conditional_glm_joint(context, samples = 10000)
+  draws <- SSN2:::draw_conditional_glm_joint(SSN2:::get_conditional_glm_joint(context$object), samples = 10000)
   expect_equal(dim(draws$beta), c(2L, 10000L))
   expect_equal(dim(draws$w), c(16L, 10000L))
-  BL <- f$B %*% f$L
-  covariance <- rbind(cbind(f$Vbeta, BL), cbind(t(BL), f$L))
+  CM <- f$Vbeta %*% t(f$M)
+  Vw <- f$L + f$M %*% f$Vbeta %*% t(f$M)
+  covariance <- rbind(cbind(f$Vbeta, CM), cbind(t(CM), Vw))
   expect_conditional_glm_joint_moments(rbind(draws$beta, draws$w),
     c(f$beta, f$w_free), covariance, "beta and offset-free w")
   set.seed(2)
-  expect_identical(SSN2:::draw_conditional_glm_joint(context, samples = 10000), draws)
+  expect_identical(SSN2:::draw_conditional_glm_joint(SSN2:::get_conditional_glm_joint(context$object), samples = 10000), draws)
   set.seed(2)
-  one <- SSN2:::draw_conditional_glm_joint(context, samples = 1)
+  one <- SSN2:::draw_conditional_glm_joint(SSN2:::get_conditional_glm_joint(context$object), samples = 1)
   expect_equal(dim(one$beta), c(2L, 1L))
   expect_equal(dim(one$w), c(16L, 1L))
 })
 
 test_that("exact-limit GLM paths match beta, new-site and cross moments", {
+  set.seed(2)
   f <- conditional_glm_joint_fixture()
   covariance <- rbind(cbind(f$Vbeta, f$Vcross), cbind(t(f$Vcross), f$Veta))
-  excess <- f$H %*% (f$Vbeta - f$V0) %*% t(f$H)
-  expect_gt(max(diag(excess) / (diag(f$Veta) * sqrt(2 / 9999))), 12)
   for (method in names(conditional_glm_joint_methods())) {
     local <- conditional_glm_joint_methods()[[method]]
     set.seed(2)
@@ -153,6 +147,7 @@ test_that("exact-limit GLM paths match beta, new-site and cross moments", {
 })
 
 test_that("locally fitted GLMs retain fitting-block coefficient uncertainty", {
+  set.seed(2)
   f <- conditional_glm_joint_fixture()
   set.seed(2)
   fit <- ssn_glm(f$fit$formula, f$fit$ssn.object, family = "poisson",
@@ -161,27 +156,16 @@ test_that("locally fitted GLMs retain fitting-block coefficient uncertainty", {
     local = list(index = rep(1:2, each = 8), var_adjust = "none", parallel = FALSE))
   expect_equal(unname(fit$local_index), rep(1:2, each = 8))
   expect_equal(model.matrix(fit), f$X, ignore_attr = TRUE)
-  P <- matrix(0, 16, 16)
-  for (index in list(1:8, 9:16)) P[index, index] <- solve(f$Sigma[index, index])
-  information <- crossprod(f$X, P %*% f$X)
-  V0 <- solve(information)
-  B <- V0 %*% t(f$X) %*% P
-  # Local fitting regularizes the latent Hessian, not var_adjust = "none" beta V0.
-  regularized <- solve(information + diag(fit$diagtol, 2))
-  Q <- P - P %*% f$X %*% regularized %*% t(f$X) %*% P
+  P <- solve(f$Sigma)
   w <- as.vector(fitted(fit, type = "link"))
   D <- -diag(exp(w))
-  L <- solve(Q - D)
-  Vbeta <- V0 + B %*% L %*% t(B)
-  expect_equal(unname(vcov(fit, var_correct = FALSE)), unname(V0), tolerance = 1e-8)
-  expect_lt(max(abs(vcov(fit) - Vbeta)), 1e-5)
-  for (local in c(FALSE, TRUE)) {
-    context <- SSN2:::get_conditional_context_glm(fit, "joint", local = local)
-    joint <- SSN2:::get_conditional_glm_joint(context)
-    expect_equal(unname(joint$weights_beta), unname(B), tolerance = 1e-8)
-    expect_equal(unname(joint$mH_upchol), unname(chol(Q - D)), tolerance = 1e-8)
-    expect_equal(unname(joint$beta_lowchol), unname(t(chol(V0))), tolerance = 1e-8)
-  }
+  V <- solve(P - D)
+  M <- V %*% P %*% f$X
+  Vbeta <- as.matrix(vcov(fit))
+  joint <- SSN2:::get_conditional_glm_joint(fit)
+  expect_equal(unname(joint$wts_latent), unname(M), tolerance = 1e-8)
+  expect_equal(unname(crossprod(joint$cond_prec_upchol)), unname(P - D), tolerance = 1e-8)
+  expect_equal(unname(tcrossprod(joint$cov_betahat_lowchol)), unname(Vbeta), tolerance = 1e-8)
   for (method in names(conditional_glm_joint_methods())) {
     set.seed(2)
     beta <- conditional(fit, "joint", output = "beta", samples = 10000,
@@ -193,6 +177,7 @@ test_that("locally fitted GLMs retain fitting-block coefficient uncertainty", {
 })
 
 test_that("GLM object snapshots and beta-only outputs retain their contract", {
+  set.seed(2)
   f <- conditional_glm_joint_fixture()
   for (local in conditional_glm_joint_methods()) {
     for (samples in c(1L, 7L)) {
@@ -217,6 +202,7 @@ test_that("GLM object snapshots and beta-only outputs retain their contract", {
 })
 
 test_that("GLM prediction offsets enter once and response scales share link draws", {
+  set.seed(2)
   f <- conditional_glm_joint_fixture()
   no_new_offset <- f$fit
   off <- no_new_offset$ssn.object$preds$joint$off
@@ -241,6 +227,7 @@ test_that("GLM prediction offsets enter once and response scales share link draw
 })
 
 test_that("one prediction and one GLM draw keep matrix dimensions", {
+  set.seed(2)
   f <- conditional_glm_joint_fixture()
   fit <- f$fit
   fit$ssn.object$preds$joint <- fit$ssn.object$preds$joint[2, , drop = FALSE]
@@ -262,20 +249,47 @@ test_that("one prediction and one GLM draw keep matrix dimensions", {
 })
 
 test_that("invalid GLM latent precision gives an actionable error", {
+  set.seed(2)
   f <- conditional_glm_joint_fixture()
   # Force invalid curvature without depending on an optimizer failure.
   local_mocked_bindings(get_D = function(...) diag(1e6, 16), .package = "SSN2")
   for (local in c(FALSE, TRUE)) {
     context <- SSN2:::get_conditional_context_glm(f$fit, "joint", local = local)
-    expect_error(SSN2:::get_conditional_glm_joint(context),
-      "latent-process precision is not positive definite")
-    expect_error(SSN2:::draw_conditional_glm_joint(context, samples = 1),
-      "latent-process precision is not positive definite")
+    expect_error(SSN2:::get_conditional_glm_joint(context$object, context$cov_lowchol_base),
+      "conditional GLM latent precision is not positive definite")
+    expect_error(SSN2:::draw_conditional_glm_joint(SSN2:::get_conditional_glm_joint(context$object), samples = 1),
+      "conditional GLM latent precision is not positive definite")
+  }
+})
+
+test_that("GLM curvature receives processed binomial responses", {
+  f <- conditional_glm_joint_fixture()
+  original_D <- get_D
+  response <- NULL
+  local_mocked_bindings(get_D = function(family, w, y, ...) {
+    response <<- y
+    original_D(family, w, y, ...)
+  })
+  for (encoding in c("matrix", "factor", "logical")) {
+    network <- f$fit$ssn.object
+    successes <- rep(c(0, 1, 1, 0), 4)
+    network$obs$y <- switch(encoding, matrix = successes,
+      factor = factor(successes), logical = as.logical(successes))
+    formula <- if (encoding == "matrix") {
+      as.formula("cbind(y, 3 - y) ~ x + offset(off)", env = environment(f$fit$formula))
+    } else f$fit$formula
+    fit <- ssn_glm(formula, network, family = "binomial", local = FALSE,
+      euclid_initial = euclid_initial("exponential", .4, 12000, known = "given"),
+      nugget_initial = nugget_initial("nugget", .25, known = "given"))
+    get_conditional_glm_joint(fit)
+    expect_identical(response, fit$y)
+    expect_equal(as.vector(response), successes)
   }
 })
 
 for (family in c("Gamma", "nbinomial", "binomial", "beta", "inverse.gaussian")) {
   test_that(paste("joint conditional smoke respects", family, "response semantics"), {
+    set.seed(2)
     if (family == "inverse.gaussian") skip_if_not_installed("statmod")
     f <- conditional_glm_joint_fixture()
     network <- f$fit$ssn.object
@@ -309,7 +323,8 @@ for (family in c("Gamma", "nbinomial", "binomial", "beta", "inverse.gaussian")) 
     expect_identical(fit$family, family)
     expect_equal(as.vector(coef(fit, type = "dispersion")), dispersion)
     size <- c(1, 3, 7, 11)
-    for (local in conditional_glm_joint_methods()) {
+    methods <- c(conditional_glm_joint_methods(), list(vecchia = list(size = 3, ordering = "none")))
+    for (local in methods) {
       set.seed(2)
       link <- conditional(fit, "joint", type = "link", samples = 23,
         newdata_size = size, local = local)

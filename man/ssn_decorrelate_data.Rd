@@ -23,7 +23,9 @@ ssn_decorrelate_data(
 \item{formula}{A two-sided linear formula describing the fixed effect structure
 of the model, with the response to the left of the \code{~} operator and
 the terms on the right, separated by \code{+} operators. \code{.} on the
-right-hand side represents every variable in \code{data} except the geometry column.}
+right-hand side represents every variable in \code{ssn.object$obs} except the
+response and SSN geometry/topology metadata, which are never
+included via \code{.} (though they may still be given explicitly).}
 
 \item{ssn.object}{A spatial stream network object with class \code{SSN}.}
 
@@ -57,49 +59,49 @@ names; there is no separate \code{random} argument.}
 specifying the partition factor. The partition factor assumes observations
 from different levels of the partition factor are uncorrelated.}
 
-\item{ordering}{The data ordering applied: Available options
+\item{ordering}{The data ordering applied. Available options
 include \code{"pid"}, \code{"grts"}, \code{"maxmin"}, \code{"middleout"},
 \code{"outsidein"}, \code{"coordinate"}, \code{"random"}, and \code{"none"}.
-\code{"pid"} applies ordering by point ID from the network geometry.
+\code{"pid"} applies ordering by point ID from the network geometry,
+with network ID used to break ties.
 \code{"grts"} applies ordering using a spatially balanced GRTS sample via \code{spsurvey::grts()}.
 \code{"maxmin"} applies maximum minimum distance ordering via \code{GPvecchia::order_maxmin_exact()}.
 \code{"middleout"} applies middle out ordering via \code{GPvecchia::order_middleout()}.
-\code{"outsidein"} applies middle out ordering via \code{GPvecchia::order_outsidein()}.
-\code{"coordinate"} applies middle out ordering via \code{GPvecchia::order_coordinate(..., coordinate = c(1, 2))},
+\code{"outsidein"} applies outside in ordering via \code{GPvecchia::order_outsidein()}.
+\code{"coordinate"} applies coordinate ordering via \code{GPvecchia::order_coordinate(..., coordinate = c(1, 2))},
 which orders from bottom-left to top-right of the spatial domain.
 \code{"random"} applies a completely random ordering.
 \code{"none"} applies no random ordering.
-The default is \code{"pid"}.}
+The default is \code{"pid"}.
+\code{"maxmin"} cannot be used with coincident locations;
+use \code{"pid"}, \code{"grts"}, \code{"random"}, or another ordering instead.
+\code{"maxmin"}, \code{"middleout"}, \code{"outsidein"}, and
+\code{"coordinate"} require \pkg{GPvecchia}; \code{"grts"} requires \pkg{spsurvey}.}
 
 \item{local}{An optional logical or list controlling the big data approximation.
 If omitted, \code{local} is set
 to \code{TRUE} or \code{FALSE} based on the sample size (the number of
-non-missing observations in \code{data}) -- if the sample size exceeds 5,000,
+non-missing observations in \code{ssn.object$obs}) -- if the sample size exceeds 5,000,
 \code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
 If \code{local} is \code{FALSE}, no big data approximation
 is implemented. If a list is provided, the following arguments detail the big
 data approximation:
 \itemize{
 \item \code{method}: The big data approximation method. If \code{method = "all"},
-all observations are used and \code{size} is ignored.
+all earlier observations in the ordering are used and \code{size} is ignored.
 If \code{method = "covariance"}, the \code{size} data observations
-with the highest covariance with the observation requiring prediction are used.
+with the highest absolute covariance among earlier observations are used.
 The default is \code{"covariance"}.
 \item \code{size}: The number of data observations to use when \code{method}
 is \code{"covariance"}. The default is 30.
-\item \code{parallel}: If \code{TRUE}, parallel processing via the
-parallel package is automatically used. This can significantly speed
-up computations even when \code{method = "all"} (i.e., no big data
-approximation is used), as predictions
-are spread out over multiple cores. The default is \code{FALSE}.
-\item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
-parallelize over. The default is the number of available cores on your machine.
 }
 When \code{local} is a list, at least one list element must be provided to
 initialize default arguments for the other list elements.
 If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 that \code{local} is transformed into
-\code{list(size = 30, method = "covariance", parallel = FALSE)}.}
+\code{list(size = 30, method = "covariance")}.
+Only \code{method} and \code{size} are accepted in \code{local};
+parallel processing is not supported by the decorrelation transformation.}
 
 \item{...}{Other arguments to the functions called by \code{algorithm}.}
 }
@@ -120,10 +122,9 @@ which can be used to fit a machine learning model. This object also contains
 information needed to decorrelate prediction data.
 }
 \details{
-The spatial decorrelation transformation is a preprocessing
-transformation that reduces the impacts of spatial dependence (i.e.,
-covariance, correlation) on machine learning models. See
-\code{\link[=ssn_decorrelate]{ssn_decorrelate()}} and Heaton et al., 2025 for more details.
+The spatial decorrelation transformation is a preprocessing transformation
+that reduces the impacts of spatial dependence (i.e., covariance, correlation)
+on machine learning models. See \code{\link[=ssn_decorrelate]{ssn_decorrelate()}} and Heaton et al., 2025 for more details.
 }
 \examples{
 \donttest{

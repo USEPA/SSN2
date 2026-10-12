@@ -12,7 +12,8 @@ test_that("decorrelation exposes local and resolves conditional defaults interna
   expect_identical(formals(ssn_decorrelate)[c("training", "grid")],
                    as.list(formals(function(training, grid) NULL)))
   for (fun in list(ssn_decorrelate, ssn_decorrelate_grid)) {
-    expect_identical(formals(fun)$dense_grid, FALSE)
+    expect_identical(formals(fun)["dense_grid"],
+                     as.list(formals(function(dense_grid) NULL)))
   }
   expect_identical(formals(ssn_decorrelate)$algorithm, "ranger")
   for (fun in list(ssn_decorrelate, ssn_decorrelate_data)) {

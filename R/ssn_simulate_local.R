@@ -1,11 +1,7 @@
-#' Validate and normalize the shared \code{"vecchia"} sub-settings of \code{local}
+#' Validate \code{"vecchia"} settings
 #'
-#' Shared by \code{\link{get_ssn_simulate_local}()} and \code{conditional()}'s
-#' own local resolver: fills/validates \code{method}, \code{size}, and
-#' \code{ordering} -- the sequential, neighbor-truncated big-data
-#' approximation, reached via \code{local$approximation = "vecchia"} (or, for
-#' \code{local = TRUE}, no longer the default -- see
-#' \code{\link{get_ssn_simulate_local}()}).
+#' Fills \code{method}, \code{size}, and \code{ordering} for sequential
+#' covariance-neighbor simulation.
 #'
 #' @param local A list already known to have \code{approximation == "vecchia"}
 #'   (or about to be given it).
@@ -16,60 +12,29 @@
 #'
 #' @noRd
 get_local_vecchia_settings <- function(local, default_ordering = "pid") {
+  lowrank_options <- c("method_base", "size_base", "reorder_base", "size_new", "kmeans_new")
+  if (any(names(local) %in% lowrank_options)) {
+    stop('Base and block settings require local$approximation = "low-rank".', call. = FALSE)
+  }
   if (is.null(local$method)) {
     local$method <- "covariance"
-  } else if (length(local$method) != 1L || !local$method %in% c("all", "covariance")) {
+  } else if (length(local$method) != 1L || is.na(local$method) || !local$method %in% c("all", "covariance")) {
     stop("local$method must be \"all\" or \"covariance\".", call. = FALSE)
   }
-  if (identical(local$method, "covariance")) {
-    if (is.null(local$size)) {
-      local$size <- 30L
-    } else if (length(local$size) != 1L || !is.numeric(local$size) ||
-        !is.finite(local$size) || local$size < 1) {
-      stop("local$size must be one positive number for covariance conditioning.", call. = FALSE)
-    }
-    local$size <- as.integer(local$size)
+  if (is.null(local$size)) local$size <- 30L
+  if (identical(local$method, "covariance") &&
+      (length(local$size) != 1L || !is.numeric(local$size) ||
+       !is.finite(local$size) || local$size < 1 || local$size != floor(local$size))) {
+    stop("local$size must be a positive integer.", call. = FALSE)
   }
-  if (is.null(local$ordering)) {
-    local$ordering <- default_ordering
-  } else if (length(local$ordering) != 1L || is.na(local$ordering) ||
-      !local$ordering %in% c(
-        "pid", "none", "random", "maxmin", "middleout", "outsidein",
-        "coordinate", "grts"
-      )) {
-    stop(
-      "local$ordering must be \"pid\", \"none\", \"random\", \"maxmin\", \"middleout\", ",
-      "\"outsidein\", \"coordinate\", or \"grts\".",
-      call. = FALSE
-    )
+  if (is.null(local$ordering)) local$ordering <- default_ordering
+  local$ordering <- get_decorrelate_ordering(local$ordering)
+  if (isTRUE(local$parallel)) {
+    warning('local$parallel is not used when local$approximation = "vecchia" -- the simulation is inherently sequential (each location can depend on earlier-simulated ones), so there is no block-level work to parallelize. Ignoring.', call. = FALSE)
   }
+  local$parallel <- FALSE
   local$approximation <- "vecchia"
   local
-}
-
-#' Reject a pre-\code{approximation} \code{local} list
-#'
-#' The \code{method}/\code{size} controls belong to \code{"vecchia"}.
-#' Require an explicit approximation when either is supplied so the default
-#' \code{"low-rank"} path cannot silently ignore them.
-#'
-#' @param local A list \code{local} argument.
-#'
-#' @return \code{NULL}, invisibly, if \code{local} is unambiguous; otherwise
-#'   an error.
-#'
-#' @noRd
-check_local_approximation_ambiguity <- function(local) {
-  names_local <- names(local)
-  if (!"approximation" %in% names_local && (("method" %in% names_local) || ("size" %in% names_local))) {
-    stop(
-      "local now defaults to a low-rank approximation and no longer accepts method/size directly. ",
-      "Set local$approximation = \"vecchia\" to keep using neighbor-truncated sequential conditioning, ",
-      "or remove method/size to use the new low-rank defaults.",
-      call. = FALSE
-    )
-  }
-  invisible(NULL)
 }
 
 #' Split a big-data approximation's remaining locations into blocks
@@ -111,10 +76,7 @@ get_local_lowrank_blocks <- function(index_new, data, groups, kmeans_new) {
 #' Validate and normalize the \code{local} argument for unconditional simulation
 #'
 #' Dispatches on \code{local$approximation} to one of two big-data
-#' approximations, matching spmodel's \code{sprnorm()}: \code{"low-rank"}
-#' (the new default; see \code{\link{get_ssn_simulate_local_lowrank}()}) or
-#' \code{"vecchia"} (SSN2's original sole engine; see
-#' \code{\link{get_local_vecchia_settings}()}).
+#' approximations: \code{"vecchia"} (the default) or \code{"low-rank"}.
 #'
 #' @param local A logical or list; see the \code{local} argument to
 #'   \code{\link{ssn_rnorm}()}/\code{\link{ssn_simulate}()}.
@@ -127,20 +89,29 @@ get_local_lowrank_blocks <- function(index_new, data, groups, kmeans_new) {
 #'
 #' @noRd
 get_ssn_simulate_local <- function(local, n, data) {
-  if (is.null(local) || identical(local, FALSE)) {
+  if (is.null(local)) {
+    local <- n > 5000
+    if (local) {
+      message("Because the desired simulation size exceeds 5,000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
+    }
+  }
+  if (identical(local, FALSE)) {
     return(list(method = "exact"))
   }
   if (identical(local, TRUE)) local <- list()
   if (!is.list(local)) {
     stop("local must be FALSE, TRUE, or a list.", call. = FALSE)
   }
-  check_local_approximation_ambiguity(local)
-  if (is.null(local$approximation)) local$approximation <- "low-rank"
-  if (length(local$approximation) != 1L || !local$approximation %in% c("low-rank", "vecchia")) {
+  if (is.null(local$approximation)) local$approximation <- "vecchia"
+  if (length(local$approximation) != 1L || is.na(local$approximation) || !local$approximation %in% c("low-rank", "vecchia")) {
     stop("local$approximation must be \"low-rank\" or \"vecchia\".", call. = FALSE)
   }
   if (identical(local$approximation, "vecchia")) {
-    return(get_local_vecchia_settings(local))
+    local <- get_local_vecchia_settings(local)
+    if (local$method == "all" && n > 2000) {
+      warning('local$method = "all" can be slow for more than a few thousand locations.', call. = FALSE)
+    }
+    return(local)
   }
   get_ssn_simulate_local_lowrank(local, n, data)
 }
@@ -365,11 +336,7 @@ get_ssn_simulate_new_from_base <- function(block_index, covariance_fit, observed
   sqrt_siginv_base <- forwardsolve(base_lowchol, base_val)
 
   cond_cov <- block_covariance - crossprod(sqrt_siginv_cross, sqrt_siginv_cross)
-  cond_cov <- as.matrix(Matrix::forceSymmetric(cond_cov))
-  cond_lowchol <- chol_lower_with_pivot_fallback(
-    cond_cov,
-    "The block conditional covariance matrix for local low-rank simulation is not numerically positive semidefinite; check covariance parameters and duplicate locations."
-  )
+  cond_lowchol <- t(chol(cond_cov))
 
   z <- matrix(rnorm(n_block * samples), n_block, samples)
   cond_mu <- crossprod(sqrt_siginv_cross, sqrt_siginv_base)
@@ -412,10 +379,7 @@ get_ssn_simulate_lowrank <- function(covariance_fit, samples, local) {
   n_base <- NROW(base_data)
 
   base_covariance <- get_decorrelate_observed_covariance(covariance_fit, base_data)
-  base_lowchol <- chol_lower_with_pivot_fallback(
-    base_covariance,
-    "The base sample covariance matrix for local low-rank simulation is not numerically positive semidefinite; check covariance parameters and duplicate locations."
-  )
+  base_lowchol <- t(chol(base_covariance))
   base_val <- base_lowchol %*% matrix(rnorm(n_base * samples), n_base, samples)
 
   Y <- matrix(NA_real_, n, samples)

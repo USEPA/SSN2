@@ -31,13 +31,19 @@
 \item{object}{A fitted model object.}
 
 \item{newdata}{A character string naming a single prediction data set
-(accessible via \code{object$ssn.object$preds}). Must be supplied
-explicitly; \code{"all"}/multiple prediction sets are not supported
+(accessible via \code{object$ssn.object$preds}). May be omitted when
+\code{"newdata"} is not requested; otherwise, omission uses the
+\code{.missing} prediction set, if present.
+\code{"all"}/multiple prediction sets are not supported
 (a joint draw is only meaningful over one coherent set of locations).}
 
 \item{output}{The output type, which can be any subset of
-\code{c("newdata", "beta", "object")}. \code{"all"} is shorthand for
-\code{c("newdata", "beta", "object")}. For \code{\link[=ssn_lm]{ssn_lm()}} fits only, when
+\code{c("newdata", "beta", "object")} (\code{"all"} is shorthand for this full vector).
+For generalized linear models, \code{"latent"} returns simulated observed-site
+link values, including offsets. It is not available for the \code{"low-rank"} approximation
+unless \code{method_base = "all"}.
+\code{"random"} returns realized random effects for models with random effects.
+It is unavailable on approximate low-rank paths. For \code{\link[=ssn_lm]{ssn_lm()}} fits only, when
 \code{simulate_covparams = TRUE}, \code{output} can also include
 \code{"cov"}, \code{"ssn"}, \code{"tailup"}, \code{"taildown"},
 \code{"euclid"}, \code{"nugget"}, or \code{"randcov"}, matching
@@ -47,22 +53,22 @@ below. The default is \code{"newdata"}. See Details for more.}
 \item{samples}{The number of conditional simulations. The default is
 \code{1,000}.}
 
-\item{local}{An optional logical or list controlling the big data approximation.
-If omitted, \code{local} is set
-to \code{TRUE} or \code{FALSE} based on the whether the observed
-or prediction sample size (the number of
-non-missing observations in \code{data} or \code{newdata}) exceeds 5,000,
-\code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
+\item{local}{For \code{ssn_lm()} and \code{ssn_glm()} model objects, an optional logical or list
+controlling the big data approximation.
+If omitted, \code{local} is set to \code{TRUE} when the observed or
+requested prediction sample size exceeds 5,000, and \code{FALSE} otherwise.
 If \code{FALSE}, no big data approximation is implemented.
+Before using local approximations, it is useful to create \code{.bmat}
+distance matrices using \code{ssn_create_bigdist()}.
 If a list is provided, \code{local$approximation} selects which big data
 approximation is used and can take on the values
-\code{"low-rank"} or \code{"vecchia"}:
+\code{"low-rank"} or \code{"vecchia"} (the default):
 \itemize{
 \item \code{"low-rank"}: a base sample is drawn from the observed
 data, \code{newdata} is split into blocks, and each block is
-simulated conditional on the base sample alone  (blocks are
+simulated conditional on the base sample (blocks are
 assumed conditionally independent of one another given the base
-sample). The base-sample settings (\code{method_base}/\code{size_base}/
+sample, coefficients and realized random effects). The base-sample settings (\code{method_base}/\code{size_base}/
 \code{reorder_base}) and the \code{newdata}-blocking settings
 (\code{method_new}/\code{size_new}/\code{reorder_new}/\code{kmeans_new})
 are separate from one another.
@@ -74,11 +80,11 @@ conditioned on). If \code{method_base = "base"}, the observed data
 is subset to \code{size_base} observations (ordered via
 \code{reorder_base}) to form the base sample. The default is
 \code{"base"}.
-\item \code{reorder_base}: The data reordering approached to reorder
+\item \code{reorder_base}: The data reordering approach used to reorder
 the observed data prior to subsetting to obtain a base sample.
-If \code{reorder = "none"}, no reordering
-is applied to the observed data. If \code{reorder = "random"}, the observed data order is
-randomly reshuffled. If \code{reorder = "grts"}, the observed data order is
+If \code{reorder_base = "none"}, no reordering
+is applied to the observed data. If \code{reorder_base = "random"}, the observed data order is
+randomly reshuffled. If \code{reorder_base = "grts"}, the observed data order is
 randomly generated using the GRTS algorithm for spatially balanced
 sampling via \code{spsurvey::grts()}. The default is \code{"grts"}.
 \item \code{size_base}: The number of observed data observations used for the base sample.
@@ -89,11 +95,11 @@ approximation is applied to \code{newdata} (it is simulated all at
 once). If \code{method_new = "base"}, \code{newdata} is split into
 blocks of (approximately) \code{size_new} observations each (ordered
 via \code{reorder_new}, and optionally grouped via \code{kmeans_new}),
-with each block simulated conditional on the base sample
+with each block simulated conditional on the base sample, coefficients and realized random effects
 independently of every other block. The default is \code{"base"}.
 \item \code{reorder_new}: The data reordering approach used to reorder
-\code{newdata} before splitting it into blocks. If \code{reorder = "none"}, no reordering
-is applied to \code{newdata}. If \code{reorder = "random"}, \code{newdata} is
+\code{newdata} before splitting it into blocks. If \code{reorder_new = "none"}, no reordering
+is applied to \code{newdata}. If \code{reorder_new = "random"}, \code{newdata} is
 randomly reshuffled. The default is \code{"random"}.
 \item \code{kmeans_new}: Whether \code{newdata} observations
 should be assigned to blocks based on k-means clustering
@@ -102,56 +108,97 @@ on the coordinates, with clusters of size approximately equal to
 and \code{TRUE} otherwise.
 \item \code{size_new}: The (approximate) number of observations used
 for each block. The default is 1,000. See Details for more.
+\item \code{chunk_size}: For big data \code{ssn_lm()} and \code{ssn_glm()}
+simulation, the maximum number of \code{samples} columns processed simultaneously.
+The default is 1,000. \code{chunk_size} is purely computational
+and does not affect correctness.
 \item \code{parallel}: If \code{TRUE}, parallel processing via the
 parallel package is automatically used. The default is \code{FALSE}.
+Workers prepare prediction-block factors; covariance construction
+and simulation draws remain in the main R process.
 \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
 parallelize over. The default is the number of available cores on your machine.
+The number used is capped by the number of prediction blocks.
 }
-If \code{local$approximation} is \code{"low-rank"} (either explicitly or via
-\code{local = TRUE}), defaults for the remaining \code{"low-rank"}
+If \code{local$approximation} is \code{"low-rank"}, defaults for the remaining \code{"low-rank"}
 settings are chosen such that \code{local} is transformed into
 \code{list(approximation = "low-rank", method_base = "base", size_base = 5000,
       reorder_base = "grts", method_new = "base", size_new = 1000,
       reorder_new = "random", kmeans_new = TRUE, parallel = FALSE)}.
 \item \code{"vecchia"}: every \code{newdata} location is simulated one
 at a time (in some order over \code{newdata}), each conditional on
-\strong{all} observed data plus every already-simulated
+neighbors selected from all observed data plus each already-simulated
 \code{newdata} location (not a single shared base sample).
-\code{newdata} locations are never assumed conditionally independent
-of one another. This is exact (matches \code{local = FALSE}) when
-\code{method = "all"}; \code{method = "distance"}/\code{"covariance"}
-truncate the conditioning set to a fixed number of neighbors
-sorted by distance or covariance with the new observation. No parallelization
-exists because the algorithm is inherently sequential, as each new observation
-depends on previous ones.
+Unlike low-rank simulation, prediction blocks are not assumed conditionally
+independent given a shared base. This matches \code{local = FALSE} when
+\code{method = "all"}; \code{method = "covariance"} truncates the
+conditioning set to a fixed number of neighbors sorted by absolute covariance.
+No parallelization exists because the algorithm is inherently sequential,
+as each new observation can depend on previous ones.
+For GLMs, the observed latent field is drawn first using local Gaussian conditionals.
 \itemize{
 \item \code{method}: The neighbor-selection rule used to build each
 location's conditioning set once it exceeds \code{size} candidates
 (all observed data plus every already-simulated \code{newdata}
-location). Values are \code{"all"}, \code{"distance"}
-(the \code{size} nearest candidates), or \code{"covariance"} (the
-\code{size} candidates with the highest covariance, in absolute
-value, with the location being simulated). Same convention as
-\code{predict()}'s own \code{local$method}. The default is
-\code{"covariance"}. \code{method = "all"} is very computationally
-intensive and \code{local = FALSE} should almost always be used instead.
-(\code{method = "all"} primarily exists for numerical verification).
+location). Values are \code{"all"} or \code{"covariance"}
+(the \code{size} candidates with the highest absolute spatial covariance).
+True partitions restrict eligible candidates. The default is
+\code{"covariance"}. For both linear and generalized linear models,
+\code{method = "all"} uses the exact path, as with \code{local = FALSE},
+and cannot be combined with random-effect block controls.
 \item \code{size}: The number of neighbors used when \code{method}
-is \code{"distance"} or \code{"covariance"}. The default is 30.
+is \code{"covariance"}. The default is 30 for
+\code{ssn_lm()} and 60 for \code{ssn_glm()}. It must be a positive integer.
+For each observed GLM site, up to
+\code{size} earlier latent sites and the target plus up to
+\code{size - 1} response neighbors define one local Gaussian;
+overlaps are not replaced. The same size controls prediction neighborhoods.
 \item \code{ordering}: The order \code{newdata} locations are
 simulated in -- \code{"pid"}, \code{"maxmin"}, \code{"middleout"},
 \code{"outsidein"}, \code{"coordinate"}, \code{"grts"},
 \code{"random"}, or \code{"none"} (same options as
-\code{decorrelate()}'s \code{ordering} argument). The default is
-\code{"pid"}.
+\code{ssn_decorrelate()}'s \code{ordering} argument). The default is
+\code{"pid"}, which orders by \code{pid} and then by network ID.
+The same rule is applied separately to observed GLM sites.
+\code{"maxmin"} cannot be used with coincident locations;
+use \code{"pid"}, \code{"grts"}, \code{"random"}, or another ordering instead.
+\code{"maxmin"}, \code{"middleout"}, \code{"outsidein"}, and
+\code{"coordinate"} require \pkg{GPvecchia}; \code{"grts"} requires \pkg{spsurvey}.
+\item \code{method_random}: The method used to assign observations to
+spatial covariance blocks when conditioning shared random effects.
+If \code{method_random = "random"}, observations are randomly assigned
+to blocks. If \code{method_random = "kmeans"}, observations are assigned
+based on k-means clustering on the coordinates with \code{groups_random}
+clusters. The default is \code{"kmeans"}.
+Both grouping methods have a random component; use \code{set.seed()}
+for reproducible assignments. These blocks are separate from model-fitting groups.
+Random-effect block controls require an active Vecchia approximation
+and a model with random effects.
+\item \code{size_random}: The target number of observations in each
+random-effect block. The default is 1,000 when neither \code{size_random}
+nor \code{groups_random} is supplied. K-means block sizes need not be equal.
+\item \code{groups_random}: The number of random-effect blocks. An explicit
+\code{size_random} takes precedence and sets \code{groups_random} to
+\code{ceiling(n / size_random)}, where \code{n} is the observed sample size.
+If only \code{groups_random} is supplied, \code{size_random} is
+\code{ceiling(n / groups_random)}.
+\item \code{chunk_size}: For local \code{ssn_lm()} and \code{ssn_glm()}
+simulation, with or without random effects, the
+maximum number of \code{samples} columns processed simultaneously.
+The default is 1,000. \code{chunk_size} is purely computational and does
+not affect correctness.
+\item \code{parallel}: Not used for Vecchia; \code{TRUE} warns and is ignored.
 }
 }
-When \code{local = TRUE}, \code{local} is transformed into
-\code{list(approximation = "low-rank", method_base = "base", size_base = 5000,
-      reorder_base = "grts", method_new = "base", size_new = 1000,
-      reorder_new = "random", kmeans_new = TRUE, parallel = FALSE)}.
-When \code{local} is a list, at least one list element must be provided to
-initialize default arguments for the other list elements. See Details for more.}
+With \code{local = TRUE} or \code{local = list()}, the default is
+\code{list(approximation = "vecchia", method = "covariance")},
+with \code{size = 30} for \code{ssn_lm()} and \code{size = 60} for \code{ssn_glm()}.
+Other lists without \code{approximation} also use Vecchia.
+For both approximations, \code{chunk_size} must be a positive integer
+and is separate from neighborhood and prediction-block sizes.
+Low-rank base and block settings require \code{approximation = "low-rank"};
+Vecchia settings (\code{method}, \code{size}, and \code{ordering}) are ignored
+when \code{approximation = "low-rank"}.}
 
 \item{simulate_covparams}{For \code{\link[=ssn_lm]{ssn_lm()}} model objects, whether to also
 simulate new covariance parameters for each sample. \code{simulate_covparams}
@@ -159,7 +206,8 @@ requires \code{object$vcov$cov} to be specified during model fitting by
 selecting \code{ddf = "satterthwaite"}. \code{simulate_covparams = TRUE}
 should generally not be used for sample sizes greater than 500
 given its computational inefficiencies. The default is
-\code{FALSE}.}
+\code{FALSE}. It is not supported for locally fitted models. An active
+simulation approximation sets it to \code{FALSE} with a message.}
 
 \item{...}{Other arguments. Not used (needed for generic consistency).}
 
@@ -182,9 +230,9 @@ number of rows in \code{newdata} and b is the number of samples.
 If \code{output = "beta"}, an p x b matrix of conditional simulations for each
 element in \code{coef(object)}, where p is the
 number of fixed effects and b is the number of samples.
-If \code{output = "object"}, an n x b matrix of observed data values, where n is the
-number of rows in \code{data} and b is the number of samples; \code{ssn_glm()} objects
-return fitted link-scale values instead of observed responses. If
+If \code{output = "object"}, an n x b matrix of observed responses
+(\code{ssn_lm()}) or fitted link values (including offsets)
+(\code{ssn_glm()}), where n is the number of observed rows and b is the number of samples. If
 \code{output} is \code{"cov"}, \code{"ssn"}, \code{"tailup"},
 \code{"taildown"}, \code{"euclid"}, \code{"nugget"}, or
 \code{"randcov"}, a (covariance parameter) x \code{samples} matrix of
@@ -193,44 +241,105 @@ the simulated covariance parameters is returned instead --
 tailup, taildown, Euclidean, and nugget subset,
 \code{"tailup"}/\code{"taildown"}/\code{"euclid"}/\code{"nugget"} each
 their own individual subset, and \code{"randcov"} the random-effect
-subset.
+subset. \code{output = "latent"} returns an n x b matrix of simulated observed
+link values (including offsets), regardless of \code{type}.
+\code{output = "random"} returns a q x b matrix of realized random-effect coefficients,
+separated by partition factor (when relevant), with an \code{effect_info} attribute identifying terms,
+levels, true partitions, and conditioning membership. Random-effect output
+is available for exact and Vecchia simulation. Latent output is also available for
+low-rank simulation when the base contains all observed rows.
+When both the observed base and prediction block contain all their respective
+rows, low-rank settings dispatch to exact simulation and its output capabilities.
 
-If \code{output} has more than one element, a list is returned with
-elements named according to the requested \code{output}. For example,
+If \code{output} has more than one element, a list is returned with the
+respective elements named according to the relevant \code{output}. For example,
 \code{output = c("newdata", "beta")} returns a list with elements
-\code{"newdata"} and \code{"beta"}, respectively.
+\code{"newdata"} and \code{"beta"}, each containing the relevant output
+for \code{output = "newdata"} and \code{output = "beta"}, respectively.
 }
 \description{
 Conditionally simulate prediction data from a model object.
 }
 \details{
-If \code{"newdata"} is in \code{output}, conditional
-simulations are returned for each row of the named prediction set. If
-\code{"beta"} is in \code{output}, conditional simulations are
-returned for each fixed effect (i.e., element of \code{coef(object)}).
-If \code{"object"} is in \code{output}, the observed data from
-\code{object}
-is repeated in each simulation column. For \code{ssn_glm()} fits, this
-output repeats the fitted link-scale values (including offsets), not the
-latent-process draws used for each conditional simulation. For example, \code{c("newdata",
-  "beta")} returns the conditional simulations both for the prediction
-locations and for the fixed effects. If a covariance-parameter name
+If \code{"newdata"} is in \code{output},
+conditional simulations are returned for each row of the named prediction set.
+If \code{"beta"} is in \code{output},
+conditional simulations are returned for each fixed effect
+(i.e., element of \code{coef(object)}). If \code{"object"} is in \code{output},
+observed responses (\code{ssn_lm()}) or fitted link values (including offsets)
+(\code{ssn_glm()}) are returned in observed-row order,
+repeated across simulation columns. If \code{"latent"} is requested, the
+actual observed link-scale draws are returned, with offsets included.
+\code{type} affects only \code{newdata}. Prediction rows retain their original
+order, regardless of simulation ordering.
+Prediction offsets are included before transforming to the response scale
+or drawing new responses.
+For example, \code{c("newdata", "beta")} returns
+the conditional simulations both for \code{newdata} and for the
+fixed effects. If a covariance-parameter name
 (\code{"cov"}, \code{"ssn"}, \code{"tailup"}, \code{"taildown"},
 \code{"euclid"}, \code{"nugget"}, or \code{"randcov"}) is in
 \code{output} (only available when \code{simulate_covparams = TRUE}),
 the simulated covariance-parameter draws themselves are returned.
 
 \code{local} Details: When \code{local$approximation} is \code{"low-rank"}, the big
-data approximation works by assigning \code{size_base}
-observations to a base sample and then simulating data for the base sample.
-The remaining observations are assigned to blocks. For each block, data
+data approximation selects \code{size_base} observed rows as a shared base.
+Coefficients use the full fitted model's \code{vcov(object)}; GLM latent
+values and any random effects are conditioned only on the base.
+Prediction rows are assigned to blocks. For each block, data
 are simulated from the conditional distribution given the base sample.
 Observations from the same block share conditional covariance while
 observations from distinct blocks are assumed conditionally independent
-(given the base sample). Parallelization generally further speeds up
-computations. When \code{local$approximation} is \code{"vecchia"}, no such
+(given the base sample, coefficients and realized random effects).
+Parallelization can speed up prediction-block factorization; distance reads,
+covariance construction and simulation draws remain in the main R process.
+When \code{local$approximation} is \code{"vecchia"}, no such
 independence assumption is made -- see the \code{local} argument above
 for details.
+
+With covariance parameters held fixed, all methods first draw coefficients
+from a Gaussian distribution with mean \code{coef(object)} and covariance
+\code{vcov(object)}. This same coefficient covariance is used for exact and
+local simulation, including models fitted using \code{local}. GLM simulation
+then draws observed latent values conditional on those coefficients.
+Exact GLM simulation still uses a Gaussian uncertainty approximation about
+the fitted latent values; \code{local = FALSE} removes the big data
+approximation, not this Gaussian approximation.
+With random effects, one shared effect vector per simulation is drawn
+conditional on the observed residuals and reused at prediction locations.
+Residual prediction uses the tail-up, tail-down, Euclidean, and nugget
+covariance after removing the realized random effects. The coefficient and
+latent uncertainty is propagated through these draws, without adding a
+separate analytical variance adjustment to the prediction residuals.
+
+Vecchia GLM simulation has two sequential stages. First, each observed
+latent value is drawn using a local Gaussian based on the fitted latent
+center and response curvature at the union of its earlier latent neighbors
+and its response neighborhood. This union has at most \code{2 * size} sites.
+The Gaussian uses response curvature at every site in the union and is then
+conditioned on earlier realized latent values; other sites in the union are
+marginalized over. Second, prediction residuals are drawn conditional on
+observed residuals and earlier prediction residuals. Shared random effects
+are drawn between these stages, using a block approximation to the spatial
+covariance, not separate effect draws for each block. This effect approximation
+does not replace either sequential stage. True partitions restrict eligible neighbors.
+
+For Vecchia GLMs, observed covariance ranking scans all eligible observed
+sites once per target. Without partition reductions, the observed stage scans
+\eqn{O(n^2)} covariance entries and the prediction stage scans
+\eqn{O(m(n + m))}, where \eqn{n} and \eqn{m} are the observed and prediction
+sample sizes. Fixed neighborhood sizes reduce local matrix sizes, not these
+scans. For Vecchia LMs only the prediction scan is needed. Local simulation is
+therefore not necessarily faster than exact simulation for moderate sample sizes.
+
+With fixed covariance parameters, factors and conditional operators are
+prepared once and reused across simulation chunks. Chunking limits temporary
+draw arrays, not total storage: returned matrices require storage proportional
+to their number of rows times \code{samples}, and low-rank simulation retains
+shared base residuals and effect draws across all columns. Random-effect
+conditioning also requires a dense covariance over the active effects;
+smaller observation blocks do not reduce its dimension. Local approximations
+do not guarantee bounded memory across distance backends.
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

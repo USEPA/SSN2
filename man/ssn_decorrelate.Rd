@@ -38,7 +38,9 @@ ssn_decorrelate(
 \item{formula}{A two-sided linear formula describing the fixed effect structure
 of the model, with the response to the left of the \code{~} operator and
 the terms on the right, separated by \code{+} operators. \code{.} on the
-right-hand side represents every variable in \code{data} except the geometry column.}
+right-hand side represents every variable in \code{ssn.object$obs} except the
+response and SSN geometry/topology metadata, which are never
+included via \code{.} (though they may still be given explicitly).}
 
 \item{ssn.object}{A spatial stream network object with class \code{SSN}.}
 
@@ -69,23 +71,23 @@ when evaluating test data performance.
 The following arguments detail this process:
 \itemize{
 \item \code{method}: The method used to evaluate test data performance.
-\code{"split"} will split \code{data} up into distinct training and test sets
-proportionally based on \code{p}. \code{"cv"} will split \code{data} up
+\code{"split"} will split \code{ssn.object$obs} up into distinct training and test sets
+proportionally based on \code{p}. \code{"cv"} will split \code{ssn.object$obs} up
 via k-fold cross validation based on \code{folds}, the number of folds.
-\item \code{p}: The proportion (a numeric vector between zero and one) of observations in \code{data} that should
+\item \code{p}: The proportion (a number between zero and one) of observations in \code{ssn.object$obs} that should
 be assigned to the training data. The default is 0.8, which means that
 80\% of the observations are assigned to the training data and 20\% to the
 test data. Ignored if \code{training_index} or \code{test_index} are provided.
 \item \code{replicate}: The number of times to replicate \code{"split"} with different random training and test assignments.
 \item \code{folds}: The number of folds to use in cross-validation. Requires \code{method = "cv"}. Ignored if \code{folds_index} is specified. The default is 5, matching the 80/20 default split above.
 \item \code{training_index}: A numeric vector that specifies which rows (i.e., indices)
-of \code{data} should be assigned to the training data. If omitted, defaults
+of \code{ssn.object$obs} should be assigned to the training data. If omitted, defaults
 to the rows which are not already included in \code{test_index}.
 \item \code{test_index}: A numeric vector that specifies which rows (i.e., indices)
-of \code{data} should be assigned to the test data. If omitted, defaults
+of \code{ssn.object$obs} should be assigned to the test data. If omitted, defaults
 to the rows which are not already included in \code{training_index}.
 \item \code{folds_index}: A numeric vector that specifies which rows
-of \code{data} are associated with each cross-validation fold. Requires
+of \code{ssn.object$obs} are associated with each cross-validation fold. Requires
 \code{method = "cv"}.
 }
 If omitted, \code{training} is transformed into
@@ -118,61 +120,61 @@ as \code{1 | g1/.../gm}. Note that \code{g1/.../gm} is shorthand for \code{(1 | 
 If only random intercepts are desired and the shorthand notation is used,
 parentheses can be omitted.}
 
-\item{randcov_params}{An optional random effect covariance object
-to be used in the spatial decorrelation transformation. See \code{\link[spmodel:randcov_params]{spmodel::randcov_params()}}.}
+\item{randcov_params}{An object from \code{\link[spmodel:randcov_params]{spmodel::randcov_params()}} that contains the
+random effect variances used by the spatial decorrelation transformation.}
 
 \item{partition_factor}{A one-sided linear formula with a single term
 specifying the partition factor. The partition factor assumes observations
 from different levels of the partition factor are uncorrelated.}
 
-\item{ordering}{The data ordering applied: Available options
+\item{ordering}{The data ordering applied. Available options
 include \code{"pid"}, \code{"grts"}, \code{"maxmin"}, \code{"middleout"},
 \code{"outsidein"}, \code{"coordinate"}, \code{"random"}, and \code{"none"}.
-\code{"pid"} applies ordering by point ID from the network geometry.
+\code{"pid"} applies ordering by point ID from the network geometry,
+with network ID used to break ties.
 \code{"grts"} applies ordering using a spatially balanced GRTS sample via \code{spsurvey::grts()}.
 \code{"maxmin"} applies maximum minimum distance ordering via \code{GPvecchia::order_maxmin_exact()}.
 \code{"middleout"} applies middle out ordering via \code{GPvecchia::order_middleout()}.
-\code{"outsidein"} applies middle out ordering via \code{GPvecchia::order_outsidein()}.
-\code{"coordinate"} applies middle out ordering via \code{GPvecchia::order_coordinate(..., coordinate = c(1, 2))},
+\code{"outsidein"} applies outside in ordering via \code{GPvecchia::order_outsidein()}.
+\code{"coordinate"} applies coordinate ordering via \code{GPvecchia::order_coordinate(..., coordinate = c(1, 2))},
 which orders from bottom-left to top-right of the spatial domain.
 \code{"random"} applies a completely random ordering.
 \code{"none"} applies no random ordering.
-The default is \code{"pid"}.}
+The default is \code{"pid"}.
+\code{"maxmin"} cannot be used with coincident locations;
+use \code{"pid"}, \code{"grts"}, \code{"random"}, or another ordering instead.
+\code{"maxmin"}, \code{"middleout"}, \code{"outsidein"}, and
+\code{"coordinate"} require \pkg{GPvecchia}; \code{"grts"} requires \pkg{spsurvey}.}
 
 \item{local}{An optional logical or list controlling the big data approximation.
 If omitted, \code{local} is set
 to \code{TRUE} or \code{FALSE} based on the sample size (the number of
-non-missing observations in \code{data}) -- if the sample size exceeds 5,000,
+non-missing observations in \code{ssn.object$obs}) -- if the sample size exceeds 5,000,
 \code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
 If \code{local} is \code{FALSE}, no big data approximation
 is implemented. If a list is provided, the following arguments detail the big
 data approximation:
 \itemize{
 \item \code{method}: The big data approximation method. If \code{method = "all"},
-all observations are used and \code{size} is ignored.
+all earlier observations in the ordering are used and \code{size} is ignored.
 If \code{method = "covariance"}, the \code{size} data observations
-with the highest covariance with the observation requiring prediction are used.
+with the highest absolute covariance among earlier observations are used.
 The default is \code{"covariance"}.
 \item \code{size}: The number of data observations to use when \code{method}
 is \code{"covariance"}. The default is 30.
-\item \code{parallel}: If \code{TRUE}, parallel processing via the
-parallel package is automatically used. This can significantly speed
-up computations even when \code{method = "all"} (i.e., no big data
-approximation is used), as predictions
-are spread out over multiple cores. The default is \code{FALSE}.
-\item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
-parallelize over. The default is the number of available cores on your machine.
 }
 When \code{local} is a list, at least one list element must be provided to
 initialize default arguments for the other list elements.
 If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 that \code{local} is transformed into
-\code{list(size = 30, method = "covariance", parallel = FALSE)}.}
+\code{list(size = 30, method = "covariance")}.
+Only \code{method} and \code{size} are accepted in \code{local};
+parallel processing is not supported by the decorrelation transformation.}
 
 \item{grid}{An explicit grid of parameter values by which to evaluate fit. The
-names of \code{grid} must contain all the names returned by \code{ssn_decorrelate_grid(formula, data, ...)}.}
+names of \code{grid} must contain all the names returned by \code{ssn_decorrelate_grid(formula, ssn.object, ...)}.}
 
-\item{dense_grid}{A logical
+\item{dense_grid}{If \code{grid} is not provided, \code{dense_grid} is a logical
 which controls the density of the constructed grid to be evaluated. If
 \code{dense_grid} is \code{TRUE}, a denser grid is used. If \code{dense_grid}
 is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid} is \code{FALSE}.}
@@ -185,19 +187,22 @@ is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid} is \code{
 A list with many elements that store information about the fitted model object:
 \itemize{
 \item \code{algorithm}: The machine learning algorithm used.
-\item \code{decorrelate_data}: The output of \code{\link[=ssn_decorrelate_data]{ssn_decorrelate_data()}} applied to \code{data}.
+\item \code{decorrelate_data}: The output of \code{\link[=ssn_decorrelate_data]{ssn_decorrelate_data()}} applied to \code{ssn.object}.
 \item \code{fit}: The fitted machine learning model object applied to the decorrelated data.
 \item \code{grid}: If used, the grid of spatial decorrelation parameters evaluated and their corresponding
 metrics when applied to the test data.
-\item \code{newdata}: The rows of \code{data} that have \code{NA} response values and are stored as prediction data.
+\item \code{newdata}: The name \code{".missing"} when observations with
+\code{NA} response values are stored as prediction data, or \code{NULL} otherwise.
 \item \code{training}: If used, the observations assigned to each training and test data set.
-\item \code{test}: If used, a list with the lowest (absolute) mean bias (bias), mean-squared-prediction error (MSPE),
-root-mean-squared-prediction error (RMSPE), and predictive R-squared (cor2).
+\item \code{test}: If used, a list with mean bias (bias), mean-squared-prediction error (MSPE),
+root-mean-squared-prediction error (RMSPE), and predictive R-squared (cor2)
+for the candidate selected by \code{statistic}.
 }
 }
 \description{
-Apply the spatial decorrelation transformation for SSN data,
-allowing for random effects, anisotropy, partition factors, and big data methods.
+Apply the spatial decorrelation transformation for
+spatial stream network data, allowing for random effects,
+anisotropy, partition factors, and big data methods.
 }
 \details{
 The spatial decorrelation transformation is a preprocessing transformation
@@ -299,8 +304,8 @@ and omitted when \code{nugget_type} is \code{"none"}.
 \code{anisotropy} Details: By default, all Euclidean covariance parameters except \code{rotate}
 and \code{scale} as well as all random effect variance parameters
 are assumed unknown, requiring estimation. If either \code{rotate} or \code{scale}
-are given initial values other than 0 and 1 (respectively) or are assumed unknown
-in \code{\link[=euclid_initial]{euclid_initial()}}, \code{anisotropy} is implicitly set to \code{TRUE}.
+are given values other than 0 and 1 (respectively)
+in \code{\link[=euclid_params]{euclid_params()}}, \code{anisotropy} is implicitly set to \code{TRUE}.
 (Geometric) Anisotropy is modeled by transforming a Euclidean covariance function that
 decays differently in different directions to one that decays equally in all
 directions via rotation and scaling of the original Euclidean coordinates. The rotation is

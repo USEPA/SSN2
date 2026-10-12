@@ -1,13 +1,15 @@
 
 #' Apply the Spatial Decorrelation Transformation for Machine Learning Models
 #'
-#' @description Apply the spatial decorrelation transformation for SSN data,
-#'   allowing for random effects, anisotropy, partition factors, and big data methods.
+#' @description Apply the spatial decorrelation transformation for
+#'   spatial stream network data, allowing for random effects,
+#'   anisotropy, partition factors, and big data methods.
 #'
 #' @param formula A two-sided linear formula describing the fixed effect structure
 #'   of the model, with the response to the left of the \code{~} operator and
 #'   the terms on the right, separated by \code{+} operators. \code{.} on the
-#'   right-hand side represents every variable in \code{data} except the geometry column.
+#'   right-hand side represents every variable in \code{ssn.object$obs} except the
+#'   response and geometry column.
 #' @param ssn.object A spatial stream network object with class `SSN`.
 #' @param tailup_type,taildown_type,euclid_type,nugget_type Covariance types
 #'   specified as in [ssn_lm()].
@@ -34,8 +36,8 @@
 #'   as \code{1 | g1/.../gm}. Note that \code{g1/.../gm} is shorthand for \code{(1 | g1/.../gm)}.
 #'   If only random intercepts are desired and the shorthand notation is used,
 #'   parentheses can be omitted.
-#' @param randcov_params An optional random effect covariance object
-#'   to be used in the spatial decorrelation transformation. See [spmodel::randcov_params()].
+#' @param randcov_params An object from [spmodel::randcov_params()] that contains the
+#'   random effect variances used by the spatial decorrelation transformation.
 #' @param partition_factor A one-sided linear formula with a single term
 #'   specifying the partition factor. The partition factor assumes observations
 #'   from different levels of the partition factor are uncorrelated.
@@ -54,23 +56,23 @@
 #'   The following arguments detail this process:
 #'   \itemize{
 #'    \item \code{method}: The method used to evaluate test data performance.
-#'      \code{"split"} will split \code{data} up into distinct training and test sets
-#'      proportionally based on \code{p}. \code{"cv"} will split \code{data} up
+#'      \code{"split"} will split \code{ssn.object$obs} up into distinct training and test sets
+#'      proportionally based on \code{p}. \code{"cv"} will split \code{ssn.object$obs} up
 #'      via k-fold cross validation based on \code{folds}, the number of folds.
-#'    \item \code{p}: The proportion (a numeric vector between zero and one) of observations in \code{data} that should
+#'    \item \code{p}: The proportion (a number between zero and one) of observations in \code{ssn.object$obs} that should
 #'      be assigned to the training data. The default is 0.8, which means that
 #'      80% of the observations are assigned to the training data and 20% to the
 #'      test data. Ignored if \code{training_index} or \code{test_index} are provided.
 #'    \item \code{replicate}: The number of times to replicate \code{"split"} with different random training and test assignments.
 #'    \item \code{folds}: The number of folds to use in cross-validation. Requires \code{method = "cv"}. Ignored if \code{folds_index} is specified. The default is 5, matching the 80/20 default split above.
 #'    \item \code{training_index}: A numeric vector that specifies which rows (i.e., indices)
-#'      of \code{data} should be assigned to the training data. If omitted, defaults
+#'      of \code{ssn.object$obs} should be assigned to the training data. If omitted, defaults
 #'      to the rows which are not already included in \code{test_index}.
 #'    \item \code{test_index}: A numeric vector that specifies which rows (i.e., indices)
-#'      of \code{data} should be assigned to the test data. If omitted, defaults
+#'      of \code{ssn.object$obs} should be assigned to the test data. If omitted, defaults
 #'      to the rows which are not already included in \code{training_index}.
 #'    \item \code{folds_index}: A numeric vector that specifies which rows
-#'      of \code{data} are associated with each cross-validation fold. Requires
+#'      of \code{ssn.object$obs} are associated with each cross-validation fold. Requires
 #'      \code{method = "cv"}.
 #'   }
 #'   If omitted, \code{training} is transformed into
@@ -81,59 +83,56 @@
 #'   If \code{TRUE}, constructs and evaluates the grid after assigning observations to
 #'   test and training data sets. If any parameters (spatial or random effects) are estimated via a grid search,
 #'   \code{evaluate_test} is set to \code{TRUE}.
-#' @param ordering The data ordering applied: Available options
-#'    include \code{"pid"}, \code{"grts"}, \code{"maxmin"}, \code{"middleout"},
+#' @param ordering The data ordering applied. Available options
+#'   include \code{"pid"}, \code{"grts"}, \code{"maxmin"}, \code{"middleout"},
 #'   \code{"outsidein"}, \code{"coordinate"}, \code{"random"}, and \code{"none"}.
-#'   \code{"pid"} applies ordering by point ID from the network geometry.
+#'   \code{"pid"} applies ordering by point ID from the network geometry,
+#'   with network ID used to break ties.
 #'   \code{"grts"} applies ordering using a spatially balanced GRTS sample via \code{spsurvey::grts()}.
 #'   \code{"maxmin"} applies maximum minimum distance ordering via \code{GPvecchia::order_maxmin_exact()}.
 #'   \code{"middleout"} applies middle out ordering via \code{GPvecchia::order_middleout()}.
-#'   \code{"outsidein"} applies middle out ordering via \code{GPvecchia::order_outsidein()}.
-#'   \code{"coordinate"} applies middle out ordering via \code{GPvecchia::order_coordinate(..., coordinate = c(1, 2))},
+#'   \code{"outsidein"} applies outside in ordering via \code{GPvecchia::order_outsidein()}.
+#'   \code{"coordinate"} applies coordinate ordering via \code{GPvecchia::order_coordinate(..., coordinate = c(1, 2))},
 #'   which orders from bottom-left to top-right of the spatial domain.
 #'   \code{"random"} applies a completely random ordering.
 #'   \code{"none"} applies no random ordering.
 #'   The default is \code{"pid"}.
+#'   \code{"maxmin"}, \code{"middleout"}, \code{"outsidein"}, and
+#'   \code{"coordinate"} require \pkg{GPvecchia}; \code{"grts"} requires \pkg{spsurvey}.
 #' @param local An optional logical or list controlling the big data approximation.
 #'   If omitted, \code{local} is set
 #'   to \code{TRUE} or \code{FALSE} based on the sample size (the number of
-#'   non-missing observations in \code{data}) -- if the sample size exceeds 5,000,
+#'   non-missing observations in \code{ssn.object$obs}) -- if the sample size exceeds 5,000,
 #'   \code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
 #'   If \code{local} is \code{FALSE}, no big data approximation
 #'   is implemented. If a list is provided, the following arguments detail the big
 #'   data approximation:
 #'   \itemize{
 #'     \item \code{method}: The big data approximation method. If \code{method = "all"},
-#'       all observations are used and \code{size} is ignored. 
+#'       all earlier observations in the ordering are used and \code{size} is ignored.
 #'       If \code{method = "covariance"}, the \code{size} data observations
-#'       with the highest covariance with the observation requiring prediction are used.
+#'       with the highest absolute covariance among earlier observations are used.
 #'       The default is \code{"covariance"}.
 #'     \item \code{size}: The number of data observations to use when \code{method}
 #'       is \code{"covariance"}. The default is 30.
-#'     \item \code{parallel}: If \code{TRUE}, parallel processing via the
-#'       parallel package is automatically used. This can significantly speed
-#'       up computations even when \code{method = "all"} (i.e., no big data
-#'       approximation is used), as predictions
-#'       are spread out over multiple cores. The default is \code{FALSE}.
-#'     \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
-#'       parallelize over. The default is the number of available cores on your machine.
 #'   }
 #'   When \code{local} is a list, at least one list element must be provided to
 #'   initialize default arguments for the other list elements.
 #'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 #'   that \code{local} is transformed into
-#'   \code{list(size = 30, method = "covariance", parallel = FALSE)}.
+#'   \code{list(size = 30, method = "covariance")}.
+#'   Only \code{method} and \code{size} are accepted in \code{local};
+#'   parallel processing is not supported by the decorrelation transformation.
 #' @param grid An explicit grid of parameter values by which to evaluate fit. The
-#'   names of \code{grid} must contain all the names returned by \code{ssn_decorrelate_grid(formula, data, ...)}.
-#' @param dense_grid A logical
+#'   names of \code{grid} must contain all the names returned by \code{ssn_decorrelate_grid(formula, ssn.object, ...)}.
+#' @param dense_grid If \code{grid} is not provided, \code{dense_grid} is a logical
 #'   which controls the density of the constructed grid to be evaluated. If
 #'   \code{dense_grid} is \code{TRUE}, a denser grid is used. If \code{dense_grid}
 #'   is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid} is \code{FALSE}.
 #' @param x A fitted model from [ssn_decorrelate()].
 #' @param ... Other arguments to the functions called by \code{algorithm}.
 #'
-#' @details
-#'   The spatial decorrelation transformation is a preprocessing transformation
+#' @details The spatial decorrelation transformation is a preprocessing transformation
 #'   that reduces the impacts of spatial dependence (i.e., covariance, correlation)
 #'   on machine learning models. Predictions are made on the
 #'   decorrelated scale and then recorrelated to account for spatial dependence.
@@ -232,8 +231,8 @@
 #' \code{anisotropy} Details: By default, all Euclidean covariance parameters except \code{rotate}
 #'   and \code{scale} as well as all random effect variance parameters
 #'   are assumed unknown, requiring estimation. If either \code{rotate} or \code{scale}
-#'   are given initial values other than 0 and 1 (respectively) or are assumed unknown
-#'   in [euclid_initial()], \code{anisotropy} is implicitly set to \code{TRUE}.
+#'   are given values other than 0 and 1 (respectively)
+#'   in [euclid_params()], \code{anisotropy} is implicitly set to \code{TRUE}.
 #'   (Geometric) Anisotropy is modeled by transforming a Euclidean covariance function that
 #'   decays differently in different directions to one that decays equally in all
 #'   directions via rotation and scaling of the original Euclidean coordinates. The rotation is
@@ -270,14 +269,16 @@
 #' @return A list with many elements that store information about the fitted model object:
 #'   \itemize{
 #'     \item \code{algorithm}: The machine learning algorithm used.
-#'     \item \code{decorrelate_data}: The output of [ssn_decorrelate_data()] applied to \code{data}.
+#'     \item \code{decorrelate_data}: The output of [ssn_decorrelate_data()] applied to \code{ssn.object}.
 #'     \item \code{fit}: The fitted machine learning model object applied to the decorrelated data.
 #'     \item \code{grid}: If used, the grid of spatial decorrelation parameters evaluated and their corresponding
 #'       metrics when applied to the test data.
-#'     \item \code{newdata}: The rows of \code{data} that have \code{NA} response values and are stored as prediction data.
+#'     \item \code{newdata}: The name \code{".missing"} when observations with
+#'       \code{NA} response values are stored as prediction data, or \code{NULL} otherwise.
 #'     \item \code{training}: If used, the observations assigned to each training and test data set.
-#'     \item \code{test}: If used, a list with the lowest (absolute) mean bias (bias), mean-squared-prediction error (MSPE),
-#'       root-mean-squared-prediction error (RMSPE), and predictive R-squared (cor2).
+#'     \item \code{test}: If used, a list with mean bias (bias), mean-squared-prediction error (MSPE),
+#'       root-mean-squared-prediction error (RMSPE), and predictive R-squared (cor2)
+#'       for the candidate selected by \code{statistic}.
 #'   }
 #'
 #' @references Matthew J. Heaton, Andrew Millane, and Jake S. Rhodes. 2025. A Scalable
@@ -468,10 +469,9 @@ ssn_decorrelate <- function(formula, ssn.object,
 #'   known random-effect variances, or omitted/`NULL` for no random effects.
 #'   The random effect grouping structure is derived automatically from its
 #'   names; there is no separate \code{random} argument.
-#' @details The spatial decorrelation transformation is a preprocessing
-#'   transformation that reduces the impacts of spatial dependence (i.e.,
-#'   covariance, correlation) on machine learning models. See
-#'   [ssn_decorrelate()] and Heaton et al., 2025 for more details.
+#' @details The spatial decorrelation transformation is a preprocessing transformation
+#'   that reduces the impacts of spatial dependence (i.e., covariance, correlation)
+#'   on machine learning models. See [ssn_decorrelate()] and Heaton et al., 2025 for more details.
 #' @return A list with many elements that store information about
 #'   the fitted model object. Importantly, the list contains the following elements:
 #'   \itemize{
@@ -516,14 +516,24 @@ ssn_decorrelate_data <- function(formula, ssn.object,
   if (missing(partition_factor)) partition_factor <- NULL
   if (is.symbol(substitute(additive))) additive <- deparse1(substitute(additive))
 
-  # random is derived from randcov_params's own names rather than accepted
-  # as a separate argument, matching spmodel's decorrelate_data()
-  random <- if (is.null(randcov_params)) NULL else reformulate(names(randcov_params))
-
   if (missing(local)) local <- NULL
   if (missing(ordering)) ordering <- NULL
   check_decorrelate_dots(list(...))
   ordering <- get_decorrelate_ordering(ordering)
+
+  ssn_decorrelate_data_internal(
+    formula, ssn.object, tailup_params, taildown_params, euclid_params,
+    nugget_params, additive, randcov_params, partition_factor, ordering, local,
+    dots = list(...)
+  )
+}
+
+ssn_decorrelate_data_internal <- function(formula, ssn.object,
+                                         tailup_params, taildown_params,
+                                         euclid_params, nugget_params, additive,
+                                         randcov_params, partition_factor,
+                                         ordering, local, preparation = NULL, dots = list()) {
+  random <- if (is.null(randcov_params)) NULL else reformulate(names(randcov_params))
 
   # decorrelation requires every parameter to be known, so type is read
   # directly from each supplied *_params() object's own class
@@ -552,10 +562,11 @@ ssn_decorrelate_data <- function(formula, ssn.object,
   initial_object$nugget_initial <- nugget_initial_NA(initial_object$nugget_initial)
   check_decorrelate_known(initial_object, randcov_initial_obj)
 
-  context <- get_decorrelate_context(
-    formula, ssn.object, initial_object, additive, anisotropy, random,
-    randcov_initial_obj, partition_factor, ...
-  )
+  context <- do.call(get_decorrelate_context, c(list(
+    formula = formula, ssn.object = ssn.object, initial_object = initial_object,
+    additive = additive, anisotropy = anisotropy, random = random,
+    randcov_initial = randcov_initial_obj, partition_factor = partition_factor
+  ), dots))
   covariance_fit <- context$covariance_fit
   total_var <- get_decorrelate_total_var(covariance_fit)
   X <- context$X
@@ -571,7 +582,15 @@ ssn_decorrelate_data <- function(formula, ssn.object,
   if (NROW(rows) != covariance_fit$n || NROW(X) != covariance_fit$n) {
     stop("The fitted SSN row map is not aligned with the covariance matrix.", call. = FALSE)
   }
-  permutation <- get_decorrelate_order(rows, ordering, observed_rows_data)
+  if (is.null(preparation)) {
+    preparation <- get_decorrelate_preparation(formula, ssn.object, ordering)
+  }
+  if (!identical(preparation$rows, rows) ||
+      !identical(preparation$observed_index, covariance_fit$observed_index) ||
+      !identical(preparation$ordering, ordering)) {
+    stop("Prepared ordering is not aligned with the decorrelation training rows.", call. = FALSE)
+  }
+  permutation <- preparation$permutation
   inverse_permutation <- order(permutation)
 
   transformed <- get_decorrelate_covariance_graph(
@@ -605,46 +624,34 @@ ssn_decorrelate_data <- function(formula, ssn.object,
 #'   This object contains explanatory variables that are transformed for prediction
 #'   according to some spatial decorrelation transformation.
 #' @param object An [ssn_decorrelate_data()] object.
-#' @param newdata A character vector that indicates the name of the prediction data set
-#'   for which predictions are desired (accessible via \code{object$ssn.object$preds}).
+#' @param newdata A character string naming a single prediction data set
+#'   (accessible via \code{object$covariance_fit$ssn.object$preds}).
 #'   Note that the prediction data must be in the original SSN object used to fit the model.
-#'   If \code{newdata} is omitted, predictions
-#'   for all prediction data sets are returned. Note that the name \code{".missing"}
-#'   indicates the prediction data set that contains the missing observations in the data used
-#'   to fit the model.
+#'   If omitted, missing data from the fitted model object are used via the
+#'   \code{.missing} prediction set, if present. Otherwise, \code{newdata} must be supplied.
 #' @param local An optional logical or list controlling the big data approximation.
-#'   If omitted, \code{local} is set
-#'   to \code{TRUE} or \code{FALSE} based on the sample size (the number of
-#'   non-missing observations in \code{data}) -- if the sample size exceeds 5,000,
-#'   \code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
+#'   If omitted, the settings in \code{object$local} are used.
 #'   If \code{local} is \code{FALSE}, no big data approximation
 #'   is implemented. If a list is provided, the following arguments detail the big
 #'   data approximation:
 #'   \itemize{
 #'     \item \code{method}: The big data approximation method. If \code{method = "all"},
-#'       all observations are used and \code{size} is ignored. 
+#'       all observations are used and \code{size} is ignored.
 #'       If \code{method = "covariance"}, the \code{size} data observations
-#'       with the highest covariance with the observation requiring prediction are used.
+#'       with the highest absolute covariance with the observation requiring prediction are used.
 #'       The default is \code{"covariance"}.
 #'     \item \code{size}: The number of data observations to use when \code{method}
-#'       is \code{"distance"} or \code{"covariance"}. The default is 30.
-#'     \item \code{parallel}: If \code{TRUE}, parallel processing via the
-#'       parallel package is automatically used. This can significantly speed
-#'       up computations even when \code{method = "all"} (i.e., no big data
-#'       approximation is used), as predictions
-#'       are spread out over multiple cores. The default is \code{FALSE}.
-#'     \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
-#'       parallelize over. The default is the number of available cores on your machine.
+#'       is \code{"covariance"}. The default is 30.
 #'   }
 #'   When \code{local} is a list, at least one list element must be provided to
 #'   initialize default arguments for the other list elements.
 #'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 #'   that \code{local} is transformed into
-#'   \code{list(size = 30, method = "covariance", parallel = FALSE)}.
+#'   \code{list(size = 30, method = "covariance")}.
 #' @param ... Other arguments.
 #'
 #' @return A list with many elements that store information about
-#'   the fitted model object. Importantly, the list contains the following element:
+#'   the fitted model object. Importantly, the list contains the following elements:
 #'   \itemize{
 #'     \item \code{X_newdata}: The original fixed effects design matrix (of explanatory variables) for the prediction data.
 #'     \item \code{tX_newdata}: The spatially decorrelated fixed effects design matrix for the prediction data.
@@ -769,6 +776,11 @@ ssn_recorrelate_newdata <- function(object, ty_newdata) {
 #'   evaluated via a grid search.
 #'
 #' @inheritParams ssn_decorrelate
+#'
+#' @param dense_grid A logical
+#'   which controls the density of the constructed grid to be evaluated. If
+#'   \code{dense_grid} is \code{TRUE}, a denser grid is used. If \code{dense_grid}
+#'   is \code{FALSE}, a sparser grid is used. By default, \code{dense_grid} is \code{FALSE}.
 #'
 #' @return A grid of spatial decorrelation parameters stored as a \code{data.frame}.
 #' @export
@@ -995,9 +1007,8 @@ tidy.ssn_decorrelate <- function(x, ...) {
 #' @param sort_by Sort by a specific row in \code{x}. Fit statistics are
 #'   \code{"bias"}, \code{"MSPE"}, \code{"RMSPE"}, and \code{"cor2"}.
 #'   The default is \code{"MSPE"}.
-#' @param decreasing Whether \code{sort_by} should sort in decreasing order?
-#'   If \code{sort_by = "cor2"}, the default is \code{TRUE}; otherwise it is
-#'   \code{FALSE}.
+#' @param decreasing Whether \code{sort_by} should sort by decreasing order? If
+#'   \code{sort_by = "cor2"}, the default is \code{TRUE}; otherwise it is \code{FALSE}.
 #' @export
 #' @method tidy ssn_decorrelate_grid
 tidy.ssn_decorrelate_grid <- function(x, sort_by, decreasing, ...) {
@@ -1223,51 +1234,66 @@ get_decorrelate_rows <- function(data, index = NULL) {
 #' @return An integer permutation of \code{seq_len(NROW(rows))}.
 #'
 #' @noRd
-get_decorrelate_order <- function(rows, ordering, data = NULL) {
-  if (identical(ordering, "none")) return(seq_len(NROW(rows)))
-  if (identical(ordering, "random")) return(sample.int(NROW(rows)))
-  if (identical(ordering, "pid")) return(order(rows$pid, rows$NetworkID, rows$row))
-
+get_decorrelate_order <- function(rows, ordering = NULL, data = NULL) {
+  ordering <- get_decorrelate_ordering(ordering)
   n <- NROW(rows)
-  coords <- sf::st_coordinates(data)
-  x <- coords[, 1]
-  y <- coords[, 2]
+  if (n <= 1L) return(seq_len(n))
 
-  if (identical(ordering, "maxmin")) {
-    if (!requireNamespace("GPvecchia", quietly = TRUE)) {
-      stop("Install the GPvecchia package before using \"maxmin\" ordering.", call. = FALSE)
+  if (identical(ordering, "none")) {
+    ord <- seq_len(n)
+  } else if (identical(ordering, "random")) {
+    ord <- sample.int(n)
+  } else if (identical(ordering, "pid")) {
+    ord <- order(rows$pid, rows$NetworkID, rows$row)
+  } else {
+    coords <- sf::st_coordinates(data)
+    x <- coords[, 1]
+    y <- coords[, 2]
+    if (identical(ordering, "maxmin") && anyDuplicated(cbind(x, y))) {
+      stop('ordering = "maxmin" cannot be used with coincident locations (multiple rows share coordinates). Use "grts", "random", or another ordering.', call. = FALSE)
     }
-    return(GPvecchia::order_maxmin_exact(cbind(x, y)))
-  }
-  if (identical(ordering, "middleout")) {
-    if (!requireNamespace("GPvecchia", quietly = TRUE)) {
-      stop("Install the GPvecchia package before using \"middleout\" ordering.", call. = FALSE)
+
+    if (identical(ordering, "maxmin")) {
+      if (!requireNamespace("GPvecchia", quietly = TRUE)) {
+        stop("Install the GPvecchia package before using \"maxmin\" ordering", call. = FALSE)
+      }
+      ord <- GPvecchia::order_maxmin_exact(cbind(x, y))
     }
-    return(GPvecchia::order_middleout(cbind(x, y)))
-  }
-  if (identical(ordering, "outsidein")) {
-    if (!requireNamespace("GPvecchia", quietly = TRUE)) {
-      stop("Install the GPvecchia package before using \"outsidein\" ordering.", call. = FALSE)
+    if (identical(ordering, "middleout")) {
+      if (!requireNamespace("GPvecchia", quietly = TRUE)) {
+        stop("Install the GPvecchia package before using \"middleout\" ordering", call. = FALSE)
+      }
+      ord <- GPvecchia::order_middleout(cbind(x, y))
     }
-    return(GPvecchia::order_outsidein(cbind(x, y)))
-  }
-  if (identical(ordering, "coordinate")) {
-    if (!requireNamespace("GPvecchia", quietly = TRUE)) {
-      stop("Install the GPvecchia package before using \"coordinate\" ordering.", call. = FALSE)
+    if (identical(ordering, "outsidein")) {
+      if (!requireNamespace("GPvecchia", quietly = TRUE)) {
+        stop("Install the GPvecchia package before using \"outsidein\" ordering", call. = FALSE)
+      }
+      ord <- GPvecchia::order_outsidein(cbind(x, y))
     }
-    return(GPvecchia::order_coordinate(cbind(x, y), coordinate = c(1, 2)))
+    if (identical(ordering, "coordinate")) {
+      if (!requireNamespace("GPvecchia", quietly = TRUE)) {
+        stop("Install the GPvecchia package before using \"coordinate\" ordering", call. = FALSE)
+      }
+      ord <- GPvecchia::order_coordinate(cbind(x, y), coordinate = c(1, 2))
+    }
+    if (identical(ordering, "grts")) {
+      if (!requireNamespace("spsurvey", quietly = TRUE)) {
+        stop("Install the spsurvey package before using \"grts\" ordering", call. = FALSE)
+      }
+      frame <- sf::st_as_sf(
+        data.frame(x = x, y = y, .index. = seq_len(n)),
+        coords = c("x", "y"), crs = NA
+      )
+      samp <- spsurvey::grts(frame, n_base = n, projcrs_check = FALSE)
+      ord <- samp$sites_base$.index.
+    }
   }
 
-  # ordering == "grts"
-  if (!requireNamespace("spsurvey", quietly = TRUE)) {
-    stop("Install the spsurvey package before using \"grts\" ordering.", call. = FALSE)
+  if (!is.numeric(ord) || length(ord) != n || anyNA(ord) || !all(sort(ord) == seq_len(n))) {
+    stop("Ordering did not properly rearrange the row indices.", call. = FALSE)
   }
-  frame <- sf::st_as_sf(
-    data.frame(x = x, y = y, .index. = seq_len(n)),
-    coords = c("x", "y"), crs = NA
-  )
-  samp <- spsurvey::grts(frame, n_base = n, projcrs_check = FALSE)
-  samp$sites_base$.index.
+  ord
 }
 
 #' Build the observed-data covariance context shared by decorrelation and simulation
@@ -2052,21 +2078,29 @@ get_decorrelate_grid_evaluation <- function(candidates, training, formula, ssn.o
                                              tailup_type, taildown_type, euclid_type, nugget_type,
                                              additive, anisotropy, random, partition_factor, ordering,
                                              algorithm, statistic, local, dots) {
+  preparations <- lapply(training$splits, function(split) {
+    tryCatch(get_decorrelate_split_preparation(
+      ssn.object, formula, training$response_index, split, ordering
+    ), error = identity)
+  })
   result <- lapply(names(candidates), function(candidate_name) {
     candidate <- candidates[[candidate_name]]
-    args <- get_decorrelate_data_args(
+    args <- tryCatch(get_decorrelate_data_args(
       formula, ssn.object,
       candidate$tailup_initial, candidate$taildown_initial,
       candidate$euclid_initial, candidate$nugget_initial,
       additive, candidate$randcov_initial, partition_factor
-    )
+    ), error = identity)
     do.call(rbind, lapply(names(training$splits), function(split_name) {
       split <- training$splits[[split_name]]
-      statistics <- tryCatch(
+      statistics <- tryCatch({
+        if (inherits(args, "error")) stop(args)
+        if (inherits(preparations[[split_name]], "error")) stop(preparations[[split_name]])
         get_decorrelate_candidate_statistics(
           args, ssn.object, formula, training$response_index, split,
-          ordering, local, algorithm, dots
-        ),
+          ordering, local, algorithm, dots, preparation = preparations[[split_name]]
+        )
+      },
         error = function(error) data.frame(
           bias = NA_real_, MSPE = NA_real_, RMSPE = NA_real_, cor2 = NA_real_,
           failure = conditionMessage(error)
@@ -2076,6 +2110,24 @@ get_decorrelate_grid_evaluation <- function(candidates, training, formula, ssn.o
     }))
   })
   do.call(rbind, result)
+}
+
+get_decorrelate_preparation <- function(formula, ssn.object, ordering) {
+  observed_index <- which(!is.na(ssn.object$obs[[all.vars(formula)[[1]]]]))
+  observed <- ssn.object$obs[observed_index, , drop = FALSE]
+  rows <- get_decorrelate_rows(observed)
+  list(observed_index = observed_index, rows = rows, ordering = ordering,
+       permutation = get_decorrelate_order(rows, ordering, observed))
+}
+
+get_decorrelate_split_preparation <- function(ssn.object, formula, response_index, split, ordering) {
+  training_original <- response_index[as.integer(split$training_index)]
+  excluded_original <- setdiff(response_index, training_original)
+  for (variable in all.vars(formula[[2]])) {
+    ssn.object$obs[[variable]][excluded_original] <- NA
+  }
+  list(ssn.object = ssn.object,
+       preparation = get_decorrelate_preparation(formula, ssn.object, ordering))
 }
 
 #' Fit one candidate on a training split and evaluate it on the held-out test rows
@@ -2098,6 +2150,7 @@ get_decorrelate_grid_evaluation <- function(candidates, training, formula, ssn.o
 #' @param algorithm One of \code{"ranger"}, \code{"randomForest"}, or
 #'   \code{"xgboost"}.
 #' @param dots Additional algorithm-specific arguments (as a list).
+#' @param preparation Optional split-specific data and ordering prepared before grid evaluation.
 #'
 #' @return A one-row data frame with \code{bias}, \code{MSPE}, \code{RMSPE},
 #'   \code{cor2}, and \code{failure} (\code{NA} unless an error occurred).
@@ -2105,19 +2158,17 @@ get_decorrelate_grid_evaluation <- function(candidates, training, formula, ssn.o
 #' @noRd
 get_decorrelate_candidate_statistics <- function(args, ssn.object, formula,
                                                   response_index, split, ordering,
-                                                  local, algorithm, dots) {
-  training_original <- response_index[as.integer(split$training_index)]
+                                                  local, algorithm, dots, preparation = NULL) {
   held_original <- response_index[as.integer(split$test_index)]
-  held_ssn <- ssn.object
-  excluded_original <- setdiff(response_index, training_original)
-  response_variables <- all.vars(formula[[2]])
-  for (variable in response_variables) {
-    held_ssn$obs[[variable]][excluded_original] <- NA
+  if (is.null(preparation)) {
+    preparation <- get_decorrelate_split_preparation(ssn.object, formula, response_index, split, ordering)
   }
+  held_ssn <- preparation$ssn.object
   args$ssn.object <- held_ssn
   args$ordering <- ordering
   args$local <- local
-  object <- do.call(ssn_decorrelate_data, args)
+  args$preparation <- preparation$preparation
+  object <- do.call(ssn_decorrelate_data_internal, args)
   learner <- fit_decorrelate_algorithm(object$tX, object$ty, algorithm, dots)
   # missing_index reproduces exactly what get_decorrelate_context() computed
   # internally (via restruct_ssn_missing()) to build .missing from held_ssn$obs,

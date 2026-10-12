@@ -223,10 +223,9 @@ test_that("local unconditional simulation: dispatch, dims, RNG, rejection sweep,
       local = list(approximation = "vecchia", size = -1)),
     "local\\$size must be"
   )
-  expect_error(
-    ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
-      nugget_params = nugget, additive = "afvArea", samples = 5, local = list(method = "covariance")),
-    "local now defaults to a low-rank approximation"
+  expect_identical(
+    SSN2:::get_ssn_simulate_local(list(method = "covariance"), n, mf04p$obs)$method,
+    "covariance"
   )
 
   # a partial vecchia list initializes defaults for the other list elements
@@ -296,11 +295,11 @@ test_that("local unconditional simulation: different orderings all produce valid
     ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
       nugget_params = nugget, additive = "afvArea", samples = 5,
       local = list(approximation = "vecchia", method = "covariance", size = 5, ordering = "bogus")),
-    "local\\$ordering must be"
+    "ordering must be"
   )
 })
 
-test_that("local low-rank simulation (approximation = 'low-rank', the new default) approximates the exact distribution", {
+test_that("explicit local low-rank simulation approximates the exact distribution", {
   copy_lsn_to_temp()
   temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
   mf04p <- ssn_import(temp_path, overwrite = TRUE)
@@ -332,10 +331,8 @@ test_that("local low-rank simulation (approximation = 'low-rank', the new defaul
   rel_block <- max(abs(cov(t(d_block)) - true_cov)) / max(abs(true_cov))
   expect_true(rel_block < 0.35)
 
-  # local = TRUE now resolves to low-rank, matching spmodel's own default
-  expect_identical(SSN2:::get_ssn_simulate_local(TRUE, 45, mf04p$obs)$approximation, "low-rank")
+  expect_identical(SSN2:::get_ssn_simulate_local(TRUE, 45, mf04p$obs)$approximation, "vecchia")
 
-  # explicit vecchia still works and is unaffected by the new default
   set.seed(2)
   d_vecchia <- ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
     nugget_params = nugget, additive = "afvArea", samples = 8000,
@@ -343,14 +340,11 @@ test_that("local low-rank simulation (approximation = 'low-rank', the new defaul
   rel_vecchia <- max(abs(cov(t(d_vecchia)) - true_cov)) / max(abs(true_cov))
   expect_true(rel_vecchia < 0.15)
 
-  # a pre-approximation local shape (method/size with no approximation) now
-  # errors clearly instead of silently being treated as low-rank
-  expect_error(
-    ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
-      nugget_params = nugget, additive = "afvArea", samples = 1,
-      local = list(method = "covariance", size = 8)),
-    "local now defaults to a low-rank approximation"
-  )
+  set.seed(2)
+  d_default <- ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
+    nugget_params = nugget, additive = "afvArea", samples = 8000,
+    local = list(method = "covariance", size = 8))
+  expect_identical(d_default, d_vecchia)
 
   # rejection sweep for low-rank's own settings
   expect_error(

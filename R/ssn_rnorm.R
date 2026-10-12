@@ -62,18 +62,6 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   }
 
   n <- NROW(ssn.object$obs)
-  if (is.null(local)) {
-    if (n > 5000) {
-      local <- TRUE
-      message(
-        "Because the sample size exceeds 5,000, we are using a low-rank big-data approximation. ",
-        "Set local = FALSE to use the exact simulation, or local = list(approximation = \"vecchia\") ",
-        "for neighbor-truncated sequential conditioning instead."
-      )
-    } else {
-      local <- FALSE
-    }
-  }
   conditioning <- get_ssn_simulate_local(local, n, ssn.object$obs)
 
   if (!identical(conditioning$method, "exact")) {

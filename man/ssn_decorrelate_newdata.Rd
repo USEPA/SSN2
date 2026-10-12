@@ -9,19 +9,14 @@ ssn_decorrelate_newdata(object, newdata, local, ...)
 \arguments{
 \item{object}{An \code{\link[=ssn_decorrelate_data]{ssn_decorrelate_data()}} object.}
 
-\item{newdata}{A character vector that indicates the name of the prediction data set
-for which predictions are desired (accessible via \code{object$ssn.object$preds}).
+\item{newdata}{A character string naming a single prediction data set
+(accessible via \code{object$covariance_fit$ssn.object$preds}).
 Note that the prediction data must be in the original SSN object used to fit the model.
-If \code{newdata} is omitted, predictions
-for all prediction data sets are returned. Note that the name \code{".missing"}
-indicates the prediction data set that contains the missing observations in the data used
-to fit the model.}
+If omitted, missing data from the fitted model object are used via the
+\code{.missing} prediction set, if present. Otherwise, \code{newdata} must be supplied.}
 
 \item{local}{An optional logical or list controlling the big data approximation.
-If omitted, \code{local} is set
-to \code{TRUE} or \code{FALSE} based on the sample size (the number of
-non-missing observations in \code{data}) -- if the sample size exceeds 5,000,
-\code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
+If omitted, the settings in \code{object$local} are used.
 If \code{local} is \code{FALSE}, no big data approximation
 is implemented. If a list is provided, the following arguments detail the big
 data approximation:
@@ -29,29 +24,24 @@ data approximation:
 \item \code{method}: The big data approximation method. If \code{method = "all"},
 all observations are used and \code{size} is ignored.
 If \code{method = "covariance"}, the \code{size} data observations
-with the highest covariance with the observation requiring prediction are used.
+with the highest absolute covariance with the observation requiring prediction are used.
 The default is \code{"covariance"}.
 \item \code{size}: The number of data observations to use when \code{method}
-is \code{"distance"} or \code{"covariance"}. The default is 30.
-\item \code{parallel}: If \code{TRUE}, parallel processing via the
-parallel package is automatically used. This can significantly speed
-up computations even when \code{method = "all"} (i.e., no big data
-approximation is used), as predictions
-are spread out over multiple cores. The default is \code{FALSE}.
-\item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
-parallelize over. The default is the number of available cores on your machine.
+is \code{"covariance"}. The default is 30.
 }
 When \code{local} is a list, at least one list element must be provided to
 initialize default arguments for the other list elements.
 If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 that \code{local} is transformed into
-\code{list(size = 30, method = "covariance", parallel = FALSE)}.}
+\code{list(size = 30, method = "covariance")}.
+Only \code{method} and \code{size} are accepted in \code{local};
+parallel processing is not supported by the decorrelation transformation.}
 
 \item{...}{Other arguments.}
 }
 \value{
 A list with many elements that store information about
-the fitted model object. Importantly, the list contains the following element:
+the fitted model object. Importantly, the list contains the following elements:
 \itemize{
 \item \code{X_newdata}: The original fixed effects design matrix (of explanatory variables) for the prediction data.
 \item \code{tX_newdata}: The spatially decorrelated fixed effects design matrix for the prediction data.

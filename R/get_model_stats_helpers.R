@@ -108,34 +108,7 @@ get_fitted <- function(betahat, params_object, data_object, eigenprods_list) {
     fitted_nugget <- as.numeric(params_object$nugget[["nugget"]] * do.call("rbind", SigInv_r_list))
   }
 
-  # find random effect fitted values (NULL if not used)
-  if (is.null(names(params_object$randcov))) {
-    fitted_randcov <- NULL
-  } else {
-    fitted_randcov <- lapply(names(params_object$randcov), function(x) {
-      fitted_val <- params_object$randcov[[x]] * do.call("rbind", mapply(
-        z = data_object$randcov_list,
-        r = SigInv_r_list,
-        function(z, r) {
-          crossprod(z[[x]][["Z"]], r)
-        }
-      ))
-      fitted_val <- tapply(fitted_val, rownames(fitted_val), function(x) {
-        val <- mean(x[x != 0])
-        if (length(val) == 0) { # replace if all zeros somehow
-          val <- rep(0, length(x))
-          names(val) <- names(x)
-        }
-        val
-      })
-      # all combinations yields values with many zeros -- don't want to include these in the mean
-      names_fitted_val <- rownames(fitted_val)
-      fitted_val <- as.numeric(fitted_val)
-      names(fitted_val) <- names_fitted_val
-      fitted_val
-    })
-    names(fitted_randcov) <- names(params_object$randcov)
-  }
+  fitted_randcov <- get_fitted_randcov(data_object, params_object$randcov, SigInv_r_list)
 
   # return all as list
   fitted_values <- list(

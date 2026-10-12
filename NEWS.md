@@ -5,6 +5,7 @@ This update was focused on enhancing `SSN2` alignment with `spmodel`.
 ## Major Updates
 
 * Added support for conditional simulation via `conditional()` for `ssn_lm()` and `ssn_glm()` model objects, which draws simulated values from the distribution of `newdata` conditional on observed data.
+* Added support for simulating large spatial data on stream networks (`ssn_simulate()` and the helper functions `ssn_rnorm()`, `ssn_rbinom()`, `ssn_rbeta()`, `ssn_rpois()`, `ssn_rnbinom()`, `ssn_rgamma()`, and `ssn_rinvgauss()`) via the `local` argument.
 * Added support for a spatial decorrelation transformation, a preprocessing and postprocessing approach that lets machine learning algorithms (via `ranger`, `randomForest`, or `xgboost`) account for spatial covariance. `ssn_decorrelate()` estimates decorrelation parameters via a grid search evaluated on training/test splits or cross-validation and fits a machine learning model to the decorrelated data; `ssn_decorrelate_data()`, `ssn_decorrelate_grid()`, `ssn_decorrelate_newdata()`, and `ssn_recorrelate_newdata()` support the underlying transformation and grid search steps; and `predict()`, `print()`, and `tidy()` methods are provided for `ssn_decorrelate()` model objects.
 * Added Satterthwaite denominator degrees of freedom (ddf) support for `ssn_lm()` model objects, for `t`-based (rather than asymptotic `z`-based) inference in small samples.
     * Added `satterthwaite()`, which computes Satterthwaite ddfs for the fixed effect coefficients of an `ssn_lm()` model object.

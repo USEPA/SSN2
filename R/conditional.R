@@ -4,12 +4,16 @@
 #'
 #' @param object A fitted model object.
 #' @param newdata A character string naming a single prediction data set
-#'   (accessible via \code{object$ssn.object$preds}). Must be supplied
-#'   explicitly; \code{"all"}/multiple prediction sets are not supported
+#'   (accessible via \code{object$ssn.object$preds}). May be omitted when
+#'   \code{"newdata"} is not requested; otherwise, omission uses the
+#'   \code{.missing} prediction set, if present.
+#'   \code{"all"}/multiple prediction sets are not supported
 #'   (a joint draw is only meaningful over one coherent set of locations).
 #' @param output The output type, which can be any subset of
-#'   \code{c("newdata", "beta", "object")}. \code{"all"} is shorthand for
-#'   \code{c("newdata", "beta", "object")}. For [ssn_lm()] fits only, when
+#'   \code{c("newdata", "beta", "object")} (\code{"all"} is shorthand for this full vector).
+#'   For generalized linear models, \code{"latent"} returns simulated observed-site
+#'   link values, including offsets..
+#'   \code{"random"} returns realized random effects for models with random effects. For [ssn_lm()] fits only, when
 #'   \code{simulate_covparams = TRUE}, \code{output} can also include
 #'   \code{"cov"}, \code{"ssn"}, \code{"tailup"}, \code{"taildown"},
 #'   \code{"euclid"}, \code{"nugget"}, or \code{"randcov"}, matching
@@ -17,22 +21,22 @@
 #'   below. The default is \code{"newdata"}. See Details for more.
 #' @param samples The number of conditional simulations. The default is
 #'   \code{1,000}.
-#' @param local An optional logical or list controlling the big data approximation.
-#'   If omitted, \code{local} is set
-#'   to \code{TRUE} or \code{FALSE} based on the whether the observed
-#'   or prediction sample size (the number of
-#'   non-missing observations in \code{data} or \code{newdata}) exceeds 5,000,
-#'   \code{local} is set to \code{TRUE}. Otherwise it is set to \code{FALSE}.
+#' @param local For \code{ssn_lm()} and \code{ssn_glm()} model objects, an optional logical or list
+#'   controlling the big data approximation.
+#'   If omitted, \code{local} is set to \code{TRUE} when the observed or
+#'   requested prediction sample size exceeds 5,000, and \code{FALSE} otherwise.
 #'   If \code{FALSE}, no big data approximation is implemented.
+#'   Before using local approximations, it is useful to create \code{.bmat}
+#'   distance matrices using \code{ssn_create_bigdist()}.
 #'   If a list is provided, \code{local$approximation} selects which big data
 #'   approximation is used and can take on the values
-#'   \code{"low-rank"} or \code{"vecchia"}:
+#'   \code{"low-rank"} or \code{"vecchia"} (the default):
 #'   \itemize{
 #'     \item \code{"low-rank"}: a base sample is drawn from the observed
 #'       data, \code{newdata} is split into blocks, and each block is
-#'       simulated conditional on the base sample alone  (blocks are
+#'       simulated conditional on the base sample (blocks are
 #'       assumed conditionally independent of one another given the base
-#'       sample). The base-sample settings (\code{method_base}/\code{size_base}/
+#'       sample, coefficients, and realized random effects). The base-sample settings (\code{method_base}/\code{size_base}/
 #'       \code{reorder_base}) and the \code{newdata}-blocking settings
 #'       (\code{method_new}/\code{size_new}/\code{reorder_new}/\code{kmeans_new})
 #'       are separate from one another.
@@ -44,11 +48,11 @@
 #'           is subset to \code{size_base} observations (ordered via
 #'           \code{reorder_base}) to form the base sample. The default is
 #'           \code{"base"}.
-#'         \item \code{reorder_base}: The data reordering approached to reorder
+#'         \item \code{reorder_base}: The data reordering approach used to reorder
 #'           the observed data prior to subsetting to obtain a base sample.
-#'           If \code{reorder = "none"}, no reordering
-#'           is applied to the observed data. If \code{reorder = "random"}, the observed data order is
-#'           randomly reshuffled. If \code{reorder = "grts"}, the observed data order is
+#'           If \code{reorder_base = "none"}, no reordering
+#'           is applied to the observed data. If \code{reorder_base = "random"}, the observed data order is
+#'           randomly reshuffled. If \code{reorder_base = "grts"}, the observed data order is
 #'           randomly generated using the GRTS algorithm for spatially balanced
 #'           sampling via \code{spsurvey::grts()}. The default is \code{"grts"}.
 #'         \item \code{size_base}: The number of observed data observations used for the base sample.
@@ -59,11 +63,11 @@
 #'           once). If \code{method_new = "base"}, \code{newdata} is split into
 #'           blocks of (approximately) \code{size_new} observations each (ordered
 #'           via \code{reorder_new}, and optionally grouped via \code{kmeans_new}),
-#'           with each block simulated conditional on the base sample
+#'           with each block simulated conditional on the base sample, coefficients, and realized random effects
 #'           independently of every other block. The default is \code{"base"}.
 #'         \item \code{reorder_new}: The data reordering approach used to reorder
-#'           \code{newdata} before splitting it into blocks. If \code{reorder = "none"}, no reordering
-#'           is applied to \code{newdata}. If \code{reorder = "random"}, \code{newdata} is
+#'           \code{newdata} before splitting it into blocks. If \code{reorder_new = "none"}, no reordering
+#'           is applied to \code{newdata}. If \code{reorder_new = "random"}, \code{newdata} is
 #'           randomly reshuffled. The default is \code{"random"}.
 #'         \item \code{kmeans_new}: Whether \code{newdata} observations
 #'           should be assigned to blocks based on k-means clustering
@@ -72,56 +76,88 @@
 #'           and \code{TRUE} otherwise.
 #'         \item \code{size_new}: The (approximate) number of observations used
 #'           for each block. The default is 1,000. See Details for more.
+#'         \item \code{chunk_size}: For big data \code{ssn_lm()} and \code{ssn_glm()}
+#'           simulation, the maximum number of \code{samples} columns processed simultaneously.
+#'           The default is 1,000. \code{chunk_size} is purely computational
+#'           and does not affect correctness.
 #'         \item \code{parallel}: If \code{TRUE}, parallel processing via the
 #'           parallel package is automatically used. The default is \code{FALSE}.
+#'           Only used when \code{local$approximation} is \code{"low-rank"}.
 #'         \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
 #'           parallelize over. The default is the number of available cores on your machine.
 #'       }
-#'       If \code{local$approximation} is \code{"low-rank"} (either explicitly or via
-#'       \code{local = TRUE}), defaults for the remaining \code{"low-rank"}
+#'       If \code{local$approximation} is \code{"low-rank"}, defaults for the remaining \code{"low-rank"}
 #'       settings are chosen such that \code{local} is transformed into
 #'       \code{list(approximation = "low-rank", method_base = "base", size_base = 5000,
 #'       reorder_base = "grts", method_new = "base", size_new = 1000,
 #'       reorder_new = "random", kmeans_new = TRUE, parallel = FALSE)}.
 #'     \item \code{"vecchia"}: every \code{newdata} location is simulated one
 #'       at a time (in some order over \code{newdata}), each conditional on
-#'       \strong{all} observed data plus every already-simulated
+#'       neighbors selected from all observed data plus each already-simulated
 #'       \code{newdata} location (not a single shared base sample).
-#'       \code{newdata} locations are never assumed conditionally independent
-#'       of one another. This is exact (matches \code{local = FALSE}) when
-#'       \code{method = "all"}; \code{method = "distance"}/\code{"covariance"}
-#'       truncate the conditioning set to a fixed number of neighbors
-#'       sorted by distance or covariance with the new observation. No parallelization
-#'       exists because the algorithm is inherently sequential, as each new observation
-#'       depends on previous ones.
+#'       Unlike low-rank simulation, prediction blocks are not assumed conditionally
+#'       independent given a shared base. This matches \code{local = FALSE} when
+#'       \code{method = "all"}; \code{method = "covariance"} truncates the
+#'       conditioning set to a fixed number of neighbors sorted by absolute covariance.
+#'       No parallelization exists because the algorithm is inherently sequential,
+#'       as each new observation can depend on previous ones.
+#'       For generalized linear models, the observed latent field is drawn first using local normal (i.e., Gaussian) conditionals.
 #'       \itemize{
 #'         \item \code{method}: The neighbor-selection rule used to build each
 #'           location's conditioning set once it exceeds \code{size} candidates
 #'           (all observed data plus every already-simulated \code{newdata}
-#'           location). Values are \code{"all"}, \code{"distance"}
-#'           (the \code{size} nearest candidates), or \code{"covariance"} (the
-#'           \code{size} candidates with the highest covariance, in absolute
-#'           value, with the location being simulated). Same convention as
-#'           \code{predict()}'s own \code{local$method}. The default is
-#'           \code{"covariance"}. \code{method = "all"} is very computationally
-#'           intensive and \code{local = FALSE} should almost always be used instead.
-#'           (\code{method = "all"} primarily exists for numerical verification).
+#'           location). Values are \code{"all"} or \code{"covariance"}
+#'           (the \code{size} candidates with the highest absolute spatial covariance).
+#'           True partitions restrict eligible candidates. The default is
+#'           \code{"covariance"}. For both linear and generalized linear models,
+#'           \code{method = "all"} uses the exact path, as with \code{local = FALSE}.
 #'         \item \code{size}: The number of neighbors used when \code{method}
-#'           is \code{"distance"} or \code{"covariance"}. The default is 30.
+#'           is \code{"covariance"}. The default is 30 for
+#'           \code{ssn_lm()} and 60 for \code{ssn_glm()}.
 #'         \item \code{ordering}: The order \code{newdata} locations are
 #'           simulated in -- \code{"pid"}, \code{"maxmin"}, \code{"middleout"},
 #'           \code{"outsidein"}, \code{"coordinate"}, \code{"grts"},
 #'           \code{"random"}, or \code{"none"} (same options as
-#'           \code{decorrelate()}'s \code{ordering} argument). The default is
-#'           \code{"pid"}.
+#'           \code{ssn_decorrelate()}'s \code{ordering} argument). The default is
+#'           \code{"pid"}, which orders by \code{pid} and then by network ID.
+#'           The same rule is applied separately to observed generalized linear model sites.
+#'           \code{"maxmin"}, \code{"middleout"}, \code{"outsidein"}, and
+#'           \code{"coordinate"} require \pkg{GPvecchia}; \code{"grts"} requires \pkg{spsurvey}.
+#'         \item \code{method_random}: The method used to assign observations to
+#'           spatial covariance blocks when conditioning shared random effects.
+#'           If \code{method_random = "random"}, observations are randomly assigned
+#'           to blocks. If \code{method_random = "kmeans"}, observations are assigned
+#'           based on k-means clustering on the coordinates with \code{groups_random}
+#'           clusters. The default is \code{"kmeans"}.
+#'           Both grouping methods have a random component; use \code{set.seed()}
+#'           for reproducible assignments. These blocks are separate from model-fitting groups.
+#'           Random-effect block options require an active Vecchia approximation
+#'           and a model with random effects.
+#'         \item \code{size_random}: The target number of observations in each
+#'           random-effect block. The default is 1,000 when neither \code{size_random}
+#'           nor \code{groups_random} is supplied.
+#'         \item \code{groups_random}: The number of random-effect blocks. An explicit
+#'           \code{size_random} takes precedence and sets \code{groups_random} to
+#'           \code{ceiling(n / size_random)}, where \code{n} is the observed sample size.
+#'           If only \code{groups_random} is supplied, \code{size_random} is
+#'           \code{ceiling(n / groups_random)}.
+#'         \item \code{chunk_size}: For local \code{ssn_lm()} and \code{ssn_glm()}
+#'           simulation, with or without random effects, the
+#'           maximum number of \code{samples} columns processed simultaneously.
+#'           The default is 1,000. \code{chunk_size} is purely computational and does
+#'           not affect correctness.
+#'         \item \code{parallel}: Not used for Vecchia; \code{TRUE} warns and is ignored.
 #'       }
 #'   }
-#'       When \code{local = TRUE}, \code{local} is transformed into
-#'       \code{list(approximation = "low-rank", method_base = "base", size_base = 5000,
-#'       reorder_base = "grts", method_new = "base", size_new = 1000,
-#'       reorder_new = "random", kmeans_new = TRUE, parallel = FALSE)}.
-#'       When \code{local} is a list, at least one list element must be provided to
-#'       initialize default arguments for the other list elements. See Details for more.
+#'       With \code{local = TRUE} or \code{local = list()}, the default is
+#'       \code{list(approximation = "vecchia", method = "covariance")},
+#'       with \code{size = 30} for \code{ssn_lm()} and \code{size = 60} for \code{ssn_glm()}.
+#'       Other lists without \code{approximation} also use Vecchia.
+#'       For both approximations, \code{chunk_size} must be a positive integer
+#'       and is separate from neighborhood and prediction-block sizes.
+#'       Low-rank base and block settings require \code{approximation = "low-rank"};
+#'       Vecchia settings (\code{method}, \code{size}, and \code{ordering}) are ignored
+#'       when \code{approximation = "low-rank"}.
 #' @param simulate_covparams For [ssn_lm()] model objects, whether to also
 #'   simulate new covariance parameters for each sample. \code{simulate_covparams}
 #'   requires \code{object$vcov$cov} to be specified during model fitting by
@@ -131,17 +167,21 @@
 #'   \code{FALSE}.
 #' @param ... Other arguments. Not used (needed for generic consistency).
 #'
-#' @details If \code{"newdata"} is in \code{output}, conditional
-#'   simulations are returned for each row of the named prediction set. If
-#'   \code{"beta"} is in \code{output}, conditional simulations are
-#'   returned for each fixed effect (i.e., element of \code{coef(object)}).
-#'   If \code{"object"} is in \code{output}, the observed data from
-#'   \code{object}
-#'   is repeated in each simulation column. For \code{ssn_glm()} fits, this
-#'   output repeats the fitted link-scale values (including offsets), not the
-#'   latent-process draws used for each conditional simulation. For example, \code{c("newdata",
-#'   "beta")} returns the conditional simulations both for the prediction
-#'   locations and for the fixed effects. If a covariance-parameter name
+#' @details
+#'
+#'   If \code{"newdata"} is in \code{output},
+#'   conditional simulations are returned for each row of the named prediction set.
+#'   If \code{"beta"} is in \code{output},
+#'   conditional simulations are returned for each fixed effect
+#'   (i.e., element of \code{coef(object)}). If \code{"object"} is in \code{output},
+#'   observed responses (\code{ssn_lm()}) or fitted link values (including offsets)
+#'   (\code{ssn_glm()}) are returned in observed-row order,
+#'   repeated across simulation columns. If \code{"latent"} is requested, the
+#'   actual observed link-scale draws are returned, with offsets included.
+#'   \code{type} affects only \code{newdata}.
+#'   For example, \code{c("newdata", "beta")} returns
+#'   the conditional simulations both for \code{newdata} and for the
+#'   fixed effects. If a covariance-parameter name
 #'   (\code{"cov"}, \code{"ssn"}, \code{"tailup"}, \code{"taildown"},
 #'   \code{"euclid"}, \code{"nugget"}, or \code{"randcov"}) is in
 #'   \code{output} (only available when \code{simulate_covparams = TRUE}),
@@ -165,9 +205,9 @@
 #'   If \code{output = "beta"}, an p x b matrix of conditional simulations for each
 #'   element in \code{coef(object)}, where p is the
 #'   number of fixed effects and b is the number of samples.
-#'   If \code{output = "object"}, an n x b matrix of observed data values, where n is the
-#'   number of rows in \code{data} and b is the number of samples; \code{ssn_glm()} objects
-#'   return fitted link-scale values instead of observed responses. If
+#'   If \code{output = "object"}, an n x b matrix of observed responses
+#'   (\code{ssn_lm()}) or fitted link values (including offsets)
+#'   (\code{ssn_glm()}), where n is the number of observed rows and b is the number of samples. If
 #'   \code{output} is \code{"cov"}, \code{"ssn"}, \code{"tailup"},
 #'   \code{"taildown"}, \code{"euclid"}, \code{"nugget"}, or
 #'   \code{"randcov"}, a (covariance parameter) x \code{samples} matrix of
@@ -176,12 +216,16 @@
 #'   tailup, taildown, Euclidean, and nugget subset,
 #'   \code{"tailup"}/\code{"taildown"}/\code{"euclid"}/\code{"nugget"} each
 #'   their own individual subset, and \code{"randcov"} the random-effect
-#'   subset.
+#'   subset. \code{output = "latent"} returns an n x b matrix of simulated observed
+#'   link values (including offsets), regardless of \code{type}.
+#'   \code{output = "random"} returns a q x b matrix of realized random-effect coefficients,
+#'   separated by partition factor (when relevant).
 #'
-#'   If \code{output} has more than one element, a list is returned with
-#'   elements named according to the requested \code{output}. For example,
+#'   If \code{output} has more than one element, a list is returned with the
+#'   respective elements named according to the relevant \code{output}. For example,
 #'   \code{output = c("newdata", "beta")} returns a list with elements
-#'   \code{"newdata"} and \code{"beta"}, respectively.
+#'   \code{"newdata"} and \code{"beta"}, each containing the relevant output
+#'   for \code{output = "newdata"} and \code{output = "beta"}, respectively.
 #'
 #' @name conditional.SSN2
 #' @method conditional ssn_lm
@@ -207,6 +251,9 @@
 #' draws <- conditional(ssn_mod, "CapeHorn")
 #' head(draws) # rows are prediction locations; columns are simulations
 conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 1000, local, simulate_covparams = FALSE, ...) {
+  if (!is.numeric(samples) || length(samples) != 1L || !is.finite(samples) || samples < 1 || samples != floor(samples)) {
+    stop("samples must be a positive integer.", call. = FALSE)
+  }
   if (missing(local)) local <- NULL
   if (!is.logical(simulate_covparams) || length(simulate_covparams) != 1 || is.na(simulate_covparams)) {
     stop("simulate_covparams must be TRUE or FALSE.", call. = FALSE)
@@ -216,15 +263,20 @@ conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 10
   }
   covparam_outputs <- c("cov", "ssn", "tailup", "taildown", "euclid", "nugget", "randcov")
   if ("all" %in% output) {
-    output <- c("newdata", "beta", "object")
+    output <- c("newdata", "beta", "object", if ("random" %in% output) "random")
   }
-  output_valid <- length(output) > 0 && all(output %in% c("newdata", "beta", "object", covparam_outputs))
+  output_valid <- is.character(output) && length(output) > 0 && !anyNA(output) &&
+    all(output %in% c("newdata", "beta", "object", "random", covparam_outputs))
   if (!output_valid) {
-    stop("output must be any subset of \"newdata\", \"beta\", \"object\" (or \"cov\", \"ssn\", \"tailup\", \"taildown\", \"euclid\", \"nugget\", or \"randcov\" when simulate_covparams = TRUE), or \"all\".", call. = FALSE)
+    stop("output must be any subset of \"newdata\", \"beta\", \"object\", \"random\" (or \"cov\", \"ssn\", \"tailup\", \"taildown\", \"euclid\", \"nugget\", or \"randcov\" when simulate_covparams = TRUE), or \"all\".", call. = FALSE)
   }
-  newdata_name <- resolve_conditional_newdata_name(object, newdata)
-  conditioning <- get_conditional_local(local, object, newdata_name)
-  if (!identical(conditioning$method, "exact") && isTRUE(simulate_covparams)) {
+  if ("random" %in% output && is.null(object$random)) {
+    stop('output = "random" requires a model with random effects.', call. = FALSE)
+  }
+  newdata_name <- if ("newdata" %in% output) resolve_conditional_newdata_name(object, newdata) else NULL
+  conditioning <- get_local_list_conditional(local, object,
+    if (!is.null(newdata_name)) object$ssn.object$preds[[newdata_name]] else NULL)
+  if (!conditioning$exact && isTRUE(simulate_covparams)) {
     simulate_covparams <- FALSE
     message("simulate_covparams = TRUE is not used when a big-data approximation (local) is specified; setting simulate_covparams = FALSE.")
   }
@@ -232,19 +284,23 @@ conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 10
     stop("output can only be \"cov\", \"ssn\", \"tailup\", \"taildown\", \"euclid\", \"nugget\", or \"randcov\" when simulate_covparams = TRUE.", call. = FALSE)
   }
 
-  if (!identical(conditioning$method, "exact")) {
-    context <- get_conditional_context(object, newdata_name, local = TRUE)
-    val <- draw_conditional_gaussian_local(context, conditioning, samples, output)
+  if (!conditioning$exact) {
+    if (identical(conditioning$approximation, "low-rank")) {
+      val <- draw_conditional_lowrank(object, newdata_name, conditioning, samples, output)
+      if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
+      return(if (length(output) == 1) val[[output]] else val[output])
+    }
+    val <- draw_conditional_vecchia_model(object, newdata_name, conditioning, samples, output)
+    if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
     return(if (length(output) == 1) val[[output]] else val[output])
   }
-
-  context <- get_conditional_context(object, newdata_name)
 
   if (!isTRUE(simulate_covparams)) {
-    cond <- if ("newdata" %in% output) get_conditional_cov(context) else NULL
-    val <- draw_conditional_gaussian(context, cond, samples, output)
+    val <- draw_conditional_exact(object, newdata_name, samples, output)
+    if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
     return(if (length(output) == 1) val[[output]] else val[output])
   }
+  context <- get_conditional_context(object, newdata_name, local = TRUE)
 
   if (object$n > 500) {
     warning("simulate_covparams = TRUE may result in exceedingly long computational times when observed data sample sizes are greater than 500.", call. = FALSE)
@@ -254,6 +310,7 @@ conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 10
     stop("simulate_covparams = TRUE requires a numerically positive definite covariance-parameter Hessian, which was not available for this fit (see vcov(object, type = \"cov\")).", call. = FALSE)
   }
   val <- draw_conditional_covparams(object, context, sw, samples, output)
+  if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
   if (length(output) == 1) val[[output]] else val[output]
 }
 
@@ -273,31 +330,36 @@ conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 10
 #' @param newdata_size The \code{size} value for each observation in \code{newdata}
 #'   used when predicting for the binomial family, with a default value of 1.
 conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("link", "response", "new"), samples = 1000, local, newdata_size, ...) {
+  if (!is.numeric(samples) || length(samples) != 1L || !is.finite(samples) || samples < 1 || samples != floor(samples)) {
+    stop("samples must be a positive integer.", call. = FALSE)
+  }
   if (missing(local)) local <- NULL
   if (missing(newdata_size)) newdata_size <- NULL
   if ("all" %in% output) {
-    output <- c("newdata", "beta", "object")
+    output <- c("newdata", "beta", "object", if ("latent" %in% output) "latent", if ("random" %in% output) "random")
   }
-  if (length(output) == 0 || any(!output %in% c("newdata", "beta", "object"))) {
-    stop("output must be any subset of \"newdata\", \"beta\", \"object\", or \"all\".", call. = FALSE)
+  if (!is.character(output) || !length(output) || anyNA(output) || any(!output %in% c("newdata", "beta", "object", "latent", "random"))) {
+    stop('output must be "newdata", "beta", "object", "latent", "random", or "all".', call. = FALSE)
+  }
+  if ("random" %in% output && is.null(object$random)) {
+    stop('output = "random" requires a model with random effects.', call. = FALSE)
   }
   type <- match.arg(type)
-  newdata_name <- resolve_conditional_newdata_name(object, newdata)
-  conditioning <- get_conditional_local(local, object, newdata_name)
-
-  context <- get_conditional_context_glm(object, newdata_name, local = !identical(conditioning$method, "exact"))
-
-  if (identical(object$family, "binomial") && is.null(newdata_size)) {
-    newdata_size <- rep(1, NROW(context$newdata))
-  }
-
-  if (!identical(conditioning$method, "exact")) {
-    val <- draw_conditional_glm_local(context, conditioning, samples, type, output, newdata_size)
+  newdata_name <- if ("newdata" %in% output) resolve_conditional_newdata_name(object, newdata) else NULL
+  conditioning <- get_local_list_conditional(local, object,
+    if (!is.null(newdata_name)) object$ssn.object$preds[[newdata_name]] else NULL)
+  if (conditioning$exact) {
+    val <- draw_conditional_exact(object, newdata_name, samples, output, type, newdata_size)
+    if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
     return(if (length(output) == 1) val[[output]] else val[output])
   }
-
-  cond <- if ("newdata" %in% output) get_conditional_cov(context) else NULL
-  val <- draw_conditional_glm(context, cond, samples, type, output, newdata_size)
+  if (identical(conditioning$approximation, "low-rank")) {
+    val <- draw_conditional_lowrank(object, newdata_name, conditioning, samples, output, type, newdata_size)
+    if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
+    return(if (length(output) == 1) val[[output]] else val[output])
+  }
+  val <- draw_conditional_vecchia_model(object, newdata_name, conditioning, samples, output, type, newdata_size)
+  if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
   if (length(output) == 1) val[[output]] else val[output]
 }
 
@@ -327,7 +389,10 @@ validate_conditional_scope <- function(object) {
 #' @noRd
 resolve_conditional_newdata_name <- function(object, newdata) {
   if (missing(newdata) || is.null(newdata)) {
-    stop("conditional() requires newdata: the name of a single prediction set in object$ssn.object$preds.", call. = FALSE)
+    if (!".missing" %in% names(object$ssn.object$preds)) {
+      stop("No missing data to predict. newdata must be specified in the newdata argument or object$ssn.object$preds$.missing must be non-NULL.", call. = FALSE)
+    }
+    newdata <- ".missing"
   }
   resolved <- resolve_newdata_name(object, newdata)
   if (length(resolved) != 1) {
@@ -346,10 +411,9 @@ resolve_conditional_newdata_name <- function(object, newdata) {
 #' When \code{local} is not \code{TRUE}, also builds the dense exact-path
 #' pieces (observed-data covariance factor, observed-to-prediction and
 #' prediction-to-prediction covariance) used by
-#' \code{\link{get_conditional_cov}()}/\code{\link{draw_conditional_gaussian}()}/
-#' \code{\link{draw_conditional_glm}()}; local (big-data) conditional
+#' \code{\link{get_conditional_cov}()}; local (big-data) conditional
 #' simulation builds these pieces itself, per-row, in
-#' \code{\link{get_conditional_vecchia_ssn}()} instead.
+#' \code{\link{prepare_conditional_vecchia}()} instead.
 #'
 #' @param object A fitted \code{ssn_lm}/\code{ssn_glm} model object.
 #' @param newdata_name The name of the prediction set to simulate.
@@ -365,6 +429,13 @@ resolve_conditional_newdata_name <- function(object, newdata) {
 get_conditional_base_context <- function(object, newdata_name, local = FALSE) {
   validate_conditional_scope(object)
 
+  Xmat <- model.matrix(object)
+  if (is.null(newdata_name)) {
+    return(list(object = object, newdata_name = NULL,
+      newdata = object$ssn.object$obs[FALSE, , drop = FALSE],
+      x0 = Xmat[FALSE, , drop = FALSE], Xmat = Xmat,
+      newdata_offset = NULL, add_newdata_rows = FALSE))
+  }
   pn <- get_prediction_newdata(object, newdata_name)
   newdata <- pn$newdata
   add_newdata_rows <- pn$add_newdata_rows
@@ -377,8 +448,6 @@ get_conditional_base_context <- function(object, newdata_name, local = FALSE) {
   newdata <- nm$newdata
   x0 <- nm$newdata_model
   newdata_offset <- nm$offset
-
-  Xmat <- model.matrix(object)
 
   base <- list(
     object = object, newdata_name = newdata_name, newdata = newdata,
@@ -478,105 +547,6 @@ get_conditional_context_glm <- function(object, newdata_name, local = FALSE) {
   context
 }
 
-#' Factor the joint GLM latent and coefficient approximation
-#'
-#' Local fits retain their fitting-block precision and fixed-effect variance
-#' adjustment; prediction neighborhoods do not redefine latent values.
-#'
-#' @param context A GLM conditional-simulation context.
-#' @return Coefficient weights, the upper Cholesky factor of the negative
-#'   latent Hessian, and the coefficient conditional covariance factor.
-#' @noRd
-get_conditional_glm_joint <- function(context) {
-  object <- context$object
-  X <- context$Xmat
-  n <- NROW(X)
-  if (is.null(object$local_index)) {
-    lowchol <- context$cov_lowchol_base
-    if (is.null(lowchol)) lowchol <- t(chol(covmatrix(object)))
-    SigInv <- chol2inv(t(lowchol))
-  } else {
-    SigInv <- matrix(0, n, n)
-    groups <- split(seq_len(n), object$local_index)
-    for (index in groups) {
-      covariance <- get_decorrelate_observed_covariance(
-        object, object$ssn.object$obs[index, , drop = FALSE]
-      )
-      SigInv[index, index] <- chol2inv(chol(covariance))
-    }
-  }
-  SigInv_X <- SigInv %*% X
-  information <- crossprod(X, SigInv_X)
-  if (!is.null(object$local_index) && length(groups) > 1L) {
-    diag(information) <- diag(information) + object$diagtol
-  }
-  covariance_gls <- chol2inv(chol(as.matrix(Matrix::forceSymmetric(information))))
-  Ptheta <- SigInv - SigInv_X %*% tcrossprod(covariance_gls, SigInv_X)
-  D <- get_D(context$family, context$w, context$y, context$size, context$dispersion)
-  H <- D - Ptheta
-  mH_upchol <- tryCatch(
-    chol(as.matrix(Matrix::forceSymmetric(-H))),
-    error = function(e) stop(
-      "The latent-process precision is not positive definite; joint GLM conditional simulation cannot proceed.",
-      call. = FALSE
-    )
-  )
-  list(
-    weights_beta = tcrossprod(context$cov_betahat_uncorrected, SigInv_X),
-    mH_upchol = mH_upchol,
-    beta_lowchol = t(chol(context$cov_betahat_uncorrected))
-  )
-}
-
-#' Draw coupled latent values and coefficients for GLM conditional simulation
-#'
-#' @param context A GLM conditional-simulation context.
-#' @param samples Number of draws.
-#' @return A list with offset-free latent draws \code{w} and coefficient draws
-#'   \code{beta}, with simulations in columns.
-#' @noRd
-draw_conditional_glm_joint <- function(context, samples) {
-  joint <- get_conditional_glm_joint(context)
-  n <- NROW(context$Xmat)
-  p <- NCOL(context$Xmat)
-  latent_value <- backsolve(joint$mH_upchol, matrix(rnorm(n * samples), n, samples))
-  beta <- as.vector(context$betahat) + joint$weights_beta %*% latent_value +
-    joint$beta_lowchol %*% matrix(rnorm(p * samples), p, samples)
-  rownames(beta) <- names(context$betahat)
-  list(w = as.vector(context$w_free) + latent_value, beta = beta)
-}
-
-#' Lower Cholesky factor with a pivoted fallback for near-singular matrices
-#'
-#' Tries an ordinary Cholesky factorization first; if that fails (the matrix
-#' is not numerically positive definite), retries with pivoting, zeroing any
-#' rank-deficient rows and un-pivoting the result. Errors with \code{message}
-#' only if the pivoted attempt also fails.
-#'
-#' @param Sigma A symmetric matrix to factor.
-#' @param message The error message to use if factorization fails entirely.
-#'
-#' @return The lower-triangular Cholesky factor of \code{Sigma}.
-#'
-#' @noRd
-chol_lower_with_pivot_fallback <- function(Sigma, message) {
-  chol_lower <- tryCatch(t(chol(Sigma)), error = function(e) NULL)
-  if (!is.null(chol_lower)) {
-    return(chol_lower)
-  }
-
-  ch <- tryCatch(suppressWarnings(chol(Sigma, pivot = TRUE)), error = function(e) NULL)
-  if (is.null(ch)) {
-    stop(message, call. = FALSE)
-  }
-  piv <- attr(ch, "pivot")
-  rank <- attr(ch, "rank")
-  if (rank < length(piv)) {
-    ch[-seq_len(rank), ] <- 0
-  }
-  t(ch[, order(piv), drop = FALSE])
-}
-
 #' Compute the exact-path conditional covariance among prediction locations
 #'
 #' @param context A conditional-simulation context from
@@ -589,77 +559,8 @@ chol_lower_with_pivot_fallback <- function(Sigma, message) {
 get_conditional_cov <- function(context) {
   Sigma_cond <- context$Sigma22 - crossprod(context$SqrtSigInv_C0)
   Sigma_cond <- as.matrix(Matrix::forceSymmetric(Sigma_cond))
-  chol_cond_cov <- chol_lower_with_pivot_fallback(
-    Sigma_cond,
-    paste0(
-      "The conditional covariance matrix among prediction locations in \"", context$newdata_name,
-      "\" is not numerically positive semidefinite; conditional simulation cannot proceed for this prediction set."
-    )
-  )
+  chol_cond_cov <- t(chol(Sigma_cond))
   list(Sigma_cond = Sigma_cond, chol_cond_cov = chol_cond_cov)
-}
-
-#' Draw exact conditional Gaussian samples
-#'
-#' Composition-samples fixed-effect uncertainty (\code{beta ~ N(betahat,
-#' cov_betahat)}) and, when \code{"newdata"} is requested, draws the exact
-#' conditional (kriging) distribution given each \code{beta} draw via
-#' \code{context}'s dense covariance factor.
-#'
-#' @param context A Gaussian conditional-simulation context from
-#'   \code{\link{get_conditional_context}()}.
-#' @param cond The conditional covariance list from
-#'   \code{\link{get_conditional_cov}()}, or \code{NULL} if \code{"newdata"}
-#'   is not in \code{output}.
-#' @param samples The number of simulated columns to draw.
-#' @param output A character vector of requested outputs; any of
-#'   \code{"object"}, \code{"beta"}, \code{"newdata"}.
-#'
-#' @return A list with elements named by \code{output}, each an
-#'   \code{n x samples} matrix.
-#'
-#' @noRd
-draw_conditional_gaussian <- function(context, cond, samples, output) {
-  p <- NCOL(context$Xmat)
-  m <- NROW(context$Sigma22)
-
-  val <- list()
-  if ("object" %in% output) {
-    val$object <- matrix(rep(context$y_object, times = samples), ncol = samples)
-  }
-
-  need_beta <- any(c("beta", "newdata") %in% output)
-  if (!need_beta) {
-    return(val)
-  }
-
-  cov_betahat_lowchol <- t(chol(context$cov_betahat))
-  beta_draws <- as.vector(context$betahat) + cov_betahat_lowchol %*% matrix(rnorm(p * samples), p, samples)
-  rownames(beta_draws) <- names(context$betahat)
-
-  if ("beta" %in% output) {
-    val$beta <- beta_draws
-  }
-
-  if ("newdata" %in% output) {
-    resid_all <- as.vector(context$y) - context$Xmat %*% beta_draws
-    SqrtSigInv_resid_all <- forwardsolve(context$cov_lowchol_base, resid_all)
-    cond_mu <- context$x0 %*% beta_draws + crossprod(context$SqrtSigInv_C0, SqrtSigInv_resid_all)
-
-    z <- matrix(rnorm(m * samples), m, samples)
-    draws <- as.matrix(cond_mu) + cond$chol_cond_cov %*% z
-
-    if (!is.null(context$newdata_offset)) {
-      draws <- draws + context$newdata_offset
-    }
-
-    if (context$add_newdata_rows) {
-      rownames(draws) <- context$object$missing_index
-    }
-    val$newdata <- draws
-  }
-
-  val
 }
 
 #' Check whether a simulated covariance-parameter value is within its valid range
@@ -849,10 +750,14 @@ draw_conditional_covparams <- function(object, context, sw, samples, output, max
   vcov_theta_lowchol <- t(chol(vcov_theta))
 
   p <- NCOL(context$Xmat)
-  m <- NROW(context$Sigma22)
+  m <- NROW(context$x0)
   betahat <- as.vector(context$betahat)
   need_newdata <- "newdata" %in% output
-  need_beta <- need_newdata || "beta" %in% output
+  need_random <- "random" %in% output
+  need_beta <- need_newdata || need_random || "beta" %in% output
+  design <- if (!is.null(object$random) && (need_newdata || need_random))
+    get_conditional_random_design(object, context$newdata) else NULL
+  new_random <- if (need_random) matrix(NA_real_, length(design$variance), samples) else NULL
 
   new_betahat <- if (need_beta) matrix(NA_real_, p, samples, dimnames = list(names(context$betahat), NULL)) else NULL
   new_val <- if (need_newdata) matrix(NA_real_, m, samples) else NULL
@@ -898,12 +803,25 @@ draw_conditional_covparams <- function(object, context, sw, samples, output, max
       beta_b <- betahat + as.numeric(t(chol(cov_betahat_b)) %*% rnorm(p))
       new_betahat[, b] <- beta_b
 
-      if (need_newdata) {
+      if (!is.null(design)) {
+        design_b <- get_conditional_random_design(object_b, context$newdata)
+        effect <- prepare_conditional_random(object_b, design_b)
+        residual <- as.vector(context$y) - context$Xmat %*% beta_b
+        a <- draw_conditional_random(effect, residual)
+        if (need_random) new_random[, b] <- a
+        if (need_newdata) {
+          prediction <- prepare_conditional_exact_prediction(effect$spatial, context$newdata_name,
+            t(effect$blocks[[1L]]$factor))
+          new_val[, b] <- context$x0 %*% beta_b +
+            draw_conditional_exact_prediction(prediction, residual - as.matrix(design_b$observed %*% a)) +
+            as.matrix(design_b$newdata %*% a)
+        }
+      } else if (need_newdata) {
         C0_b <- covmatrix(object_b, context$newdata_name, cov_type = "obs.pred")
         Sigma22_b <- covmatrix(object_b, context$newdata_name, cov_type = "pred.pred")
         SqrtSigInv_C0_b <- forwardsolve(cov_lowchol_base_b, C0_b)
         cond_cov_b <- as.matrix(Matrix::forceSymmetric(Sigma22_b - crossprod(SqrtSigInv_C0_b)))
-        chol_cond_cov_b <- chol_lower_with_pivot_fallback(cond_cov_b, context$newdata_name)
+        chol_cond_cov_b <- t(chol(cond_cov_b))
 
         resid_b <- as.vector(context$y) - context$Xmat %*% beta_b
         cond_mu_b <- context$x0 %*% beta_b + crossprod(SqrtSigInv_C0_b, forwardsolve(cov_lowchol_base_b, resid_b))
@@ -922,6 +840,7 @@ draw_conditional_covparams <- function(object, context, sw, samples, output, max
   }
 
   val <- list()
+  if (need_random) val$random <- conditional_random_output(new_random, design)
   if ("object" %in% output) {
     val$object <- matrix(rep(context$y_object, times = samples), ncol = samples)
   }
@@ -1005,81 +924,4 @@ draw_glm_response <- function(family, mu, dispersion, size) {
     }
   }
   out
-}
-
-#' Draw exact conditional GLM samples
-#'
-#' Samples the latent process, coefficients conditional on that process, and
-#' new-site values conditional on both, then applies the requested scale.
-#'
-#' @param context A GLM conditional-simulation context from
-#'   \code{\link{get_conditional_context_glm}()}.
-#' @param cond The conditional covariance list from
-#'   \code{\link{get_conditional_cov}()}, or \code{NULL} if \code{"newdata"}
-#'   is not in \code{output}.
-#' @param samples The number of simulated columns to draw.
-#' @param type One of \code{"link"}, \code{"response"}, or \code{"new"};
-#'   see \code{\link{conditional}()}.
-#' @param output A character vector of requested outputs; any of
-#'   \code{"object"}, \code{"beta"}, \code{"newdata"}.
-#' @param newdata_size The binomial trial size used when \code{type} implies
-#'   response-family draws.
-#'
-#' @return A list with elements named by \code{output}, each an
-#'   \code{n x samples} matrix.
-#'
-#' @noRd
-draw_conditional_glm <- function(context, cond, samples, type, output, newdata_size) {
-  m <- NROW(context$Sigma22)
-
-  val <- list()
-  if ("object" %in% output) {
-    val$object <- matrix(rep(context$w, times = samples), ncol = samples)
-  }
-
-  need_beta <- any(c("beta", "newdata") %in% output)
-  if (!need_beta) {
-    return(val)
-  }
-
-  joint <- draw_conditional_glm_joint(context, samples)
-  beta_draws <- joint$beta
-
-  if ("beta" %in% output) {
-    val$beta <- beta_draws
-  }
-
-  if ("newdata" %in% output) {
-    resid_all <- joint$w - context$Xmat %*% beta_draws
-    SqrtSigInv_resid_all <- forwardsolve(context$cov_lowchol_base, resid_all)
-    cond_mu <- context$x0 %*% beta_draws + crossprod(context$SqrtSigInv_C0, SqrtSigInv_resid_all)
-
-    z <- matrix(rnorm(m * samples), m, samples)
-    link_draws <- as.matrix(cond_mu) + cond$chol_cond_cov %*% z
-
-    if (!is.null(context$newdata_offset)) {
-      link_draws <- link_draws + context$newdata_offset
-    }
-
-    draws <- if (identical(type, "link")) {
-      link_draws
-    } else {
-      # invlink() with size = 1 always gives the natural-scale mean
-      # (probability for binomial/beta, rate/mean otherwise) -- the correct
-      # input for both the "response" rescale and the "new" family sampler
-      mu <- invlink(link_draws, context$family, size = 1)
-      if (identical(type, "response")) {
-        if (identical(context$family, "binomial")) mu * newdata_size else mu
-      } else {
-        draw_glm_response(context$family, mu, context$dispersion, newdata_size)
-      }
-    }
-
-    if (context$add_newdata_rows) {
-      rownames(draws) <- context$object$missing_index
-    }
-    val$newdata <- draws
-  }
-
-  val
 }

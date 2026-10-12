@@ -13,7 +13,7 @@ ssn_recorrelate_newdata(object, ty_newdata)
 spatially decorrelated data and applied to spatially decorrelated newdata.}
 }
 \value{
-A vector of predictions
+A vector of predictions on the original response scale, including offsets.
 }
 \description{
 Recorrelate machine learning predictions according to a
