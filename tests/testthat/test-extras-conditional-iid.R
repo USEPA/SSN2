@@ -101,7 +101,7 @@ test_that("independent eligibility preserves variance floors and structural excl
     }
     class(fit$coefficients$params_object$nugget) <- "nugget_nugget"
     fit$coefficients$params_object$nugget[["nugget"]] <- NaN
-    expect_error(get_conditional_iid_variance(fit), "Invalid independent-error variance")
+    expect_error(get_conditional_iid_variance(fit), "Invalid nugget variance")
   }
 })
 
@@ -190,7 +190,7 @@ test_that("independent latent draws reject invalid conditional precision", {
   local_mocked_bindings(get_D = function(...) Matrix::Diagonal(fit$n, curvature))
   expect_true(all(is.finite(get_conditional_iid_glm(fit, X0, v, 3, latent = TRUE)$latent)))
   for (curvature in c(1 / v, 2 / v, NA, Inf)) {
-    expect_error(get_conditional_iid_glm(fit, X0, v, 3, latent = TRUE), "latent precision is not positive definite")
+    expect_error(get_conditional_iid_glm(fit, X0, v, 3, latent = TRUE), "latent covariance is not positive definite")
   }
 })
 
@@ -217,8 +217,8 @@ test_that("low-rank grouping diagnoses repeated locations without changing valid
   sf::st_geometry(pred) <- sf::st_geometry(pred)[rep(1, NROW(pred))]
   settings <- list(approximation = "low-rank", size_base = 1, size_new = 1,
                    reorder_base = "none", reorder_new = "none", kmeans_new = TRUE)
-  expect_error(get_local_list_conditional(settings, fit, pred), "Too few distinct prediction locations")
-  expect_error(get_ssn_simulate_local_lowrank(settings, NROW(pred), pred), "Too few distinct prediction locations")
+  expect_error(get_local_list_conditional(settings, fit, pred), "There are not enough distinct prediction locations")
+  expect_error(get_ssn_simulate_local_lowrank(settings, NROW(pred), pred), "There are not enough distinct prediction locations")
   settings$kmeans_new <- FALSE
   expect_identical(unname(unlist(get_local_list_conditional(settings, fit, pred)$index$new)), 1:4)
   expect_identical(unname(unlist(get_ssn_simulate_local_lowrank(settings, NROW(pred), pred)$index$new)), 2:4)
