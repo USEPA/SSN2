@@ -129,7 +129,7 @@
 #'   \code{"satterthwaite"} implements Satterthwaite degrees of freedom, implying t-tests
 #'   that are generally more appropriate for small samples. The default is \code{"satterthwaite"} when the sample size is
 #'   less than or equal to 500 and \code{"asymptotic"} otherwise.
-#' @param ... Other arguments to [esv()] or \code{stats::optim()}.
+#' @param ... Other arguments to [spmodel::esv()] or \code{stats::optim()}.
 #'
 #' @details The linear model for spatial stream networks can be written as
 #'   \eqn{y = X \beta + zu + zd + ze + n}, where \eqn{X} is the fixed effects design

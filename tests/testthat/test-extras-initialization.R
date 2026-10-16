@@ -231,7 +231,7 @@ test_that("only estimated nuggets are reconciled to the covariance floor", {
   expect_equal(known$nugget[["nugget"]], 1e-12)
 })
 
-test_that("fitted estimated nuggets match the covariance matrix floor", {
+test_that("fitted nuggets respect the covariance floor without forcing an interior optimum to it", {
   euclid <- euclid_initial("exponential", de = 2, range = 10000, known = "given")
   estimated <- ssn_lm(
     Summer_mn ~ ELEV_DEM, mf04p, euclid_type = "exponential", nugget_type = "nugget",
@@ -244,8 +244,26 @@ test_that("fitted estimated nuggets match the covariance matrix floor", {
     estmethod = "reml"
   )
 
-  expect_equal(coef(estimated, type = "nugget")[["nugget"]], 2e-4, tolerance = 1e-12)
-  expect_equal(covmatrix(estimated)[1, 1], 2.0002, tolerance = 1e-12)
+  X <- model.matrix(known)
+  y <- model.response(model.frame(known))
+  spatial <- as.matrix(covmatrix(known)) - diag(2e-4, nrow(X))
+  objective <- function(log_nugget) {
+    V <- spatial + diag(exp(log_nugget), nrow(X))
+    Vinv <- solve(V)
+    information <- crossprod(X, Vinv %*% X)
+    beta <- solve(information, crossprod(X, Vinv %*% y))
+    residual <- y - X %*% beta
+    as.numeric((nrow(X) - ncol(X)) * log(2 * pi) +
+      determinant(V, logarithm = TRUE)$modulus +
+      determinant(information, logarithm = TRUE)$modulus +
+      crossprod(residual, Vinv %*% residual))
+  }
+  reference <- optimize(objective, c(log(2e-4), log(100)), tol = 1e-10)
+  nugget <- coef(estimated, type = "nugget")[["nugget"]]
+  expect_gt(nugget, 2e-4)
+  expect_equal(nugget, exp(reference$minimum), tolerance = 1e-5)
+  expect_equal(as.numeric(-2 * logLik(estimated)), reference$objective, tolerance = 1e-8)
+  expect_equal(covmatrix(estimated)[1, 1], 2 + nugget, tolerance = 1e-12)
   expect_equal(coef(known, type = "nugget")[["nugget"]], 1e-9, tolerance = 1e-15)
   expect_equal(covmatrix(known)[1, 1], 2.0002, tolerance = 1e-12)
 })

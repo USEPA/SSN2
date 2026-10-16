@@ -22,15 +22,15 @@ test_that("generics work ssn_glm point data", {
 
   # AIC
   expect_vector(AIC(ssn_mod1))
-  expect_equal(AIC(ssn_mod1), 181.112, tolerance = 0.01)
+  expect_equal(AIC(ssn_mod1), 98.979, tolerance = 0.01)
   expect_s3_class(AIC(ssn_mod1, ssn_mod2), "data.frame")
-  expect_equal(AIC(ssn_mod1, ssn_mod2)$AIC, c(181.112, 181.888), tolerance = 0.01)
+  expect_equal(AIC(ssn_mod1, ssn_mod2)$AIC, c(98.979, 99.162), tolerance = 0.01)
 
   # AICc
   expect_vector(AICc(ssn_mod1))
-  expect_equal(AICc(ssn_mod1), 185.112, tolerance = 0.01)
+  expect_equal(AICc(ssn_mod1), 102.979, tolerance = 0.01)
   expect_s3_class(AICc(ssn_mod1, ssn_mod2), "data.frame")
-  expect_equal(AICc(ssn_mod1, ssn_mod2)$AIC, c(185.112, 182.888), tolerance = 0.01)
+  expect_equal(AICc(ssn_mod1, ssn_mod2)$AIC, c(102.979, 100.162), tolerance = 0.01)
 
   # anova
   anova1 <- anova(ssn_mod1)
@@ -61,40 +61,40 @@ test_that("generics work ssn_glm point data", {
 
   # BIC
   expect_vector(BIC(ssn_mod1))
-  expect_equal(BIC(ssn_mod1), 195.57, tolerance = 0.01)
+  expect_equal(BIC(ssn_mod1), 113.432, tolerance = 0.01)
   expect_s3_class(BIC(ssn_mod1, ssn_mod2), "data.frame")
-  expect_equal(BIC(ssn_mod1, ssn_mod2)$BIC, c(195.57, 189.11), tolerance = 0.01)
+  expect_equal(BIC(ssn_mod1, ssn_mod2)$BIC, c(113.432, 106.389), tolerance = 0.01)
 
   # coef
   expect_vector(coef(ssn_mod1))
   expect_equal(coef(ssn_mod1), c("(Intercept)" = 7.379, "ELEV_DEM" = -0.002), tolerance = 0.01)
   expect_s3_class(coef(ssn_mod1, type = "tailup"), "tailup_exponential")
-  expect_equal(unclass(coef(ssn_mod1, type = "tailup")), c("de" = 1.021e-02, "range" = 1.492e09), tolerance = 0.01)
+  expect_equal(unclass(coef(ssn_mod1, type = "tailup")), c("de" = 1.024e-02, "range" = 1.294e09), tolerance = 0.01)
   expect_s3_class(coef(ssn_mod1, type = "taildown"), "taildown_exponential")
   expect_equal(unclass(coef(ssn_mod1, type = "taildown")), c("de" = 1.464e-02, "range" = 7.413e04), tolerance = 0.01)
   expect_s3_class(coef(ssn_mod1, type = "euclid"), "euclid_exponential")
-  expect_equal(unclass(coef(ssn_mod1, type = "euclid")), c("de" = 2.028e-01, "range" = 2.898e10, "rotate" = 0, "scale" = 1), tolerance = 0.01)
+  expect_equal(unclass(coef(ssn_mod1, type = "euclid")), c("de" = 1.959e-01, "range" = 2.123e10, "rotate" = 0, "scale" = 1), tolerance = 0.01)
   expect_type(coef(ssn_mod1, type = "ssn"), "list")
   expect_null(coef(ssn_mod1, type = "randcov"))
   expect_vector(coef(ssn_mod1, type = "dispersion"))
   expect_s3_class(coef(ssn_mod1, type = "dispersion"), "Gamma")
-  expect_equal(unclass(coef(ssn_mod1, type = "dispersion")), c("dispersion" = 1.267e11), tolerance = 0.01)
+  expect_equal(unclass(coef(ssn_mod1, type = "dispersion")), c("dispersion" = 1.073e11), tolerance = 0.01)
   expect_error(coef(ssn_mod1, type = "error"), 'Invalid type argument. The type argument must be "fixed", "ssn", "tailup",  "taildown",  "euclid",  "nugget", "dispersion", or "randcov".')
 
   # coefficients alias
   expect_vector(coefficients(ssn_mod1))
   expect_equal(coefficients(ssn_mod1), c("(Intercept)" = 7.379, "ELEV_DEM" = -0.002), tolerance = 0.01)
   expect_s3_class(coefficients(ssn_mod1, type = "tailup"), "tailup_exponential")
-  expect_equal(unclass(coefficients(ssn_mod1, type = "tailup")), c("de" = 1.021e-02, "range" = 1.492e09), tolerance = 0.01)
+  expect_equal(unclass(coefficients(ssn_mod1, type = "tailup")), c("de" = 1.024e-02, "range" = 1.294e09), tolerance = 0.01)
   expect_s3_class(coefficients(ssn_mod1, type = "taildown"), "taildown_exponential")
   expect_equal(unclass(coefficients(ssn_mod1, type = "taildown")), c("de" = 1.464e-02, "range" = 7.413e04), tolerance = 0.01)
   expect_s3_class(coefficients(ssn_mod1, type = "euclid"), "euclid_exponential")
-  expect_equal(unclass(coefficients(ssn_mod1, type = "euclid")), c("de" = 2.028e-01, "range" = 2.898e10, "rotate" = 0, "scale" = 1), tolerance = 0.01)
+  expect_equal(unclass(coefficients(ssn_mod1, type = "euclid")), c("de" = 1.959e-01, "range" = 2.123e10, "rotate" = 0, "scale" = 1), tolerance = 0.01)
   expect_type(coefficients(ssn_mod1, type = "ssn"), "list")
   expect_null(coefficients(ssn_mod1, type = "randcov"))
   expect_vector(coefficients(ssn_mod1, type = "dispersion"))
   expect_s3_class(coefficients(ssn_mod1, type = "dispersion"), "Gamma")
-  expect_equal(unclass(coefficients(ssn_mod1, type = "dispersion")), c("dispersion" = 1.267e11), tolerance = 0.01)
+  expect_equal(unclass(coefficients(ssn_mod1, type = "dispersion")), c("dispersion" = 1.073e11), tolerance = 0.01)
   expect_error(coefficients(ssn_mod1, type = "error"), 'Invalid type argument. The type argument must be "fixed", "ssn", "tailup",  "taildown",  "euclid",  "nugget", "dispersion", or "randcov".')
 
   # confint
@@ -179,7 +179,7 @@ test_that("generics work ssn_glm point data", {
 
   # logLik
   expect_vector(as.numeric(logLik(ssn_mod1)))
-  expect_equal(as.numeric(logLik(ssn_mod1)), -82.556, tolerance = 0.01)
+  expect_equal(as.numeric(logLik(ssn_mod1)), -41.490, tolerance = 0.01)
 
   # loocv
   loocv_ssn_mod1 <- loocv(ssn_mod1)
@@ -238,7 +238,7 @@ test_that("generics work ssn_glm point data", {
     tolerance = 0.01
   )
   expect_equal(predict(ssn_mod1, newdata = "pred1km", type = "response", interval = "confidence")[1, ],
-    c("fit" = 13.944, "lwr" = 5.670, "upr" = 34.291),
+    c("fit" = 13.944, "lwr" = 5.754, "upr" = 33.791),
     tolerance = 0.01
   )
   expect_error(predict(ssn_mod1, newdata = "pred1km", interval = "error"))
@@ -250,7 +250,7 @@ test_that("generics work ssn_glm point data", {
 
   # pseudoR2
   expect_vector(pseudoR2(ssn_mod1))
-  expect_equal(pseudoR2(ssn_mod1), 0, tolerance = 0.01)
+  expect_equal(pseudoR2(ssn_mod1), 0.0211, tolerance = 0.01)
 
   # residuals
   expect_vector(residuals(ssn_mod1))
@@ -304,7 +304,7 @@ test_that("generics work ssn_glm point data", {
   # varcomp
   expect_s3_class(varcomp(ssn_mod1), "data.frame")
   expect_equal(dim(varcomp(ssn_mod1)), c(5, 2))
-  expect_equal(varcomp(ssn_mod1)$proportion, c(0, 0.04481, 0.06426, 0.89049, 4.39e-04), tolerance = 0.01)
+  expect_equal(varcomp(ssn_mod1)$proportion, c(0.0211, 0.0453, 0.0654, 0.8678, 4.43e-04), tolerance = 0.01)
 
   # vcov
   expect_equal(dim(vcov(ssn_mod1)), c(2, 2))

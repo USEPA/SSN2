@@ -178,7 +178,7 @@ Note that if \code{range_constrain = TRUE} and the value of \code{range} in \cod
 is larger than \code{range_constrain}, then \code{range_constrain} is set to
 \code{FALSE}.}
 
-\item{...}{Other arguments to \code{\link[=esv]{esv()}} or \code{stats::optim()}.}
+\item{...}{Other arguments to \code{\link[spmodel:esv]{spmodel::esv()}} or \code{stats::optim()}.}
 }
 \value{
 A list with many elements that store information about
@@ -190,6 +190,9 @@ summarize model fit are available for \code{ssn_glm} objects, including
 \code{labels}, \code{logLik}, \code{loocv}, \code{model.frame}, \code{model.matrix},
 \code{plot}, \code{predict}, \code{print}, \code{pseudoR2}, \code{summary},
 \code{terms}, \code{tidy}, \code{update}, \code{varcomp}, and \code{vcov}.
+Likelihood-based statistics use the Laplace-approximated ML or restricted
+log-likelihood, including normalizing constants. Refit saved models from
+earlier versions to obtain corrected likelihood values.
 }
 \description{
 Fit spatial generalized linear models for stream network data

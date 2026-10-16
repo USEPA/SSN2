@@ -170,7 +170,7 @@ is larger than \code{range_constrain}, then \code{range_constrain} is set to
 that are generally more appropriate for small samples. The default is \code{"satterthwaite"} when the sample size is
 less than or equal to 500 and \code{"asymptotic"} otherwise.}
 
-\item{...}{Other arguments to \code{\link[=esv]{esv()}} or \code{stats::optim()}.}
+\item{...}{Other arguments to \code{\link[spmodel:esv]{spmodel::esv()}} or \code{stats::optim()}.}
 }
 \value{
 A list with many elements that store information about

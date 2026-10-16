@@ -48,33 +48,25 @@ test_that("ssn_lm(): a fully known fit (optim() never called) never warns", {
   )
 })
 
-test_that("warn_spcov_boundary() fires only when the total (tailup_de + taildown_de + euclid_de + nugget) is near the diagtol floor", {
-  near_zero <- list(tailup = c(de = 1e-20), taildown = c(de = 0), euclid = c(de = 0), nugget = c(nugget = 1e-6))
-  well_identified <- list(tailup = c(de = 1.4), taildown = c(de = 0), euclid = c(de = 0), nugget = c(nugget = 0.05))
-  expect_warning_msg(warn_spcov_boundary(near_zero, diagtol = 1e-4), "numerical boundary of zero")
-  expect_no_warning_msg(warn_spcov_boundary(well_identified, diagtol = 1e-4))
-  expect_no_warning_msg(warn_spcov_boundary(near_zero, diagtol = 0)) # diagtol <= 0 means no floor concept, per ssn_lm()'s dense path
-})
-
-test_that("ssn_glm(): warn_spcov_boundary() fires only for estmethod = 'ml' with near-zero total spatial + nugget variance", {
+test_that("ssn_glm() preserves small fixed variances without boundary warnings", {
+  set.seed(2)
   s <- mf04p
   s$obs$count_response <- rpois(nrow(s$obs), lambda = 5)
-
-  expect_warning_msg(
-    ssn_glm(count_response ~ ELEV_DEM, s,
-      family = "poisson", tailup_type = "none", taildown_type = "none", euclid_type = "none",
-      nugget_type = "nugget", nugget_initial = nugget_initial("nugget", nugget = 1e-10, known = "given"),
-      estmethod = "ml"
-    ),
-    "numerical boundary of zero"
-  )
-  expect_no_warning_msg(
-    ssn_glm(count_response ~ ELEV_DEM, s,
-      family = "poisson", tailup_type = "none", taildown_type = "none", euclid_type = "none",
-      nugget_type = "nugget", nugget_initial = nugget_initial("nugget", nugget = 1e-10, known = "given"),
-      estmethod = "reml"
-    )
-  )
+  for (method in c("ml", "reml")) for (path in c("none", "nugget", "network")) {
+    args <- list(formula = count_response ~ ELEV_DEM, ssn.object = s, family = "poisson",
+      tailup_type = "none", estmethod = method)
+    if (path == "none") args$nugget_type <- "none" else {
+      args$nugget_initial <- nugget_initial("nugget", 1e-10, known = "given")
+    }
+    if (path == "network") {
+      args$tailup_initial <- tailup_initial("exponential", de = 1e-10, range = 1000, known = "given")
+      args$additive <- "afvArea"
+    }
+    expect_no_warning_msg(fit <- do.call(ssn_glm, args))
+    expect_equal(coef(fit, type = "nugget")[["nugget"]], if (path == "none") 0 else 1e-10)
+    if (path == "network") expect_equal(coef(fit, type = "tailup")[["de"]], 1e-10)
+    expect_true(is.finite(as.numeric(logLik(fit))))
+  }
 })
 
 test_that("warn_fitted_saturation() fires only for binomial with >= 99% saturated fitted probabilities", {

@@ -367,13 +367,6 @@ ssn_glm <- function(formula, ssn.object, family,
 
   warn_optim_convergence(cov_est_object$optim_output$convergence)
 
-  # the total spatial + nugget variance collapsing toward zero makes the ml
-  # Laplace likelihood unreliable for model comparisons; warn so the user
-  # knows (see warn_spcov_boundary())
-  if (identical(estmethod, "ml")) {
-    warn_spcov_boundary(cov_est_object$params_object, data_object$diagtol)
-  }
-
   # compute model statistics
   if (is.null(local) || (is.logical(local) && !local)) {
     model_stats_glm <- get_model_stats_glm(cov_est_object, data_object, estmethod)

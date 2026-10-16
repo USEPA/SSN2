@@ -119,7 +119,7 @@ When \code{object} is from \code{ssn_lm()}, setting
 of the \code{level} (e.g. 95\\%) k-fold cross validation prediction interval --
 the proportion of held-out observations whose true value falls within
 \code{fit +/- qnorm(1 - (1 - level) / 2) * se.fit} (the same normal-quantile
-interval \code{\link[=predict.spmodel]{predict.spmodel()}} uses by default). This is only available for
+interval \code{\link[spmodel:predict.spmodel]{spmodel::predict.spmodel()}} uses by default). This is only available for
 \code{ssn_lm()} objects, since \code{ssn_glm()}
 have no observed-scale latent mean to compare against.
 }

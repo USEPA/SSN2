@@ -132,7 +132,8 @@ test_that("ssn_lmRF routes supported arguments and rejects unsupported contracts
     Summer_mn ~ ELEV_DEM, ssn,
     tailup_type = "exponential",
     tailup_initial = tailup_initial("exponential", de = 1, range = 10000, known = c("de", "range")),
-    additive = afvArea, num.trees = 40, seed = 2, num.threads = 1
+    additive = afvArea, num.trees = 40, seed = 2, num.threads = 1,
+    control = list(reltol = 1e-4, maxit = 500)
   )
   expect_equal(predict(unquoted, "CapeHorn"), predict(routed, "CapeHorn"), tolerance = 1e-12)
   estimated <- ssn_lmRF(

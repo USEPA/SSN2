@@ -91,14 +91,14 @@ laploglik_products <- function(params_object, data_object, estmethod) {
 #'
 #' @noRd
 get_minustwolaploglik <- function(laploglik_products, data_object, estmethod) {
+# On the -2log-likelihood scale, the Laplace constant cancels the Gaussian n log(2 pi)
   if (estmethod == "reml") {
     minustwolaploglik <- as.numeric(laploglik_products$l00 + laploglik_products$l01 + laploglik_products$l1 +
       laploglik_products$l2 + laploglik_products$l3 +
-      (data_object$n - data_object$p) * log(2 * pi))
+      -data_object$p * log(2 * pi))
   } else if (estmethod == "ml") {
     minustwolaploglik <- as.numeric(laploglik_products$l00 + laploglik_products$l01 + laploglik_products$l1 +
-      laploglik_products$l2 +
-      data_object$n * log(2 * pi))
+      laploglik_products$l2)
   }
 
   minustwolaploglik
@@ -154,7 +154,8 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
     #   w <- pmax(pmin(w, 8), -8)
     # }
 
-    mHldet <- as.numeric(determinant(-H, logarithm = TRUE)$modulus)
+    # ML holds beta fixed in the integral; Newton uses the profiled Hessian.
+    mHldet <- as.numeric(determinant(if (estmethod == "ml") SigInv - D else -H, logarithm = TRUE)$modulus)
     # mHldet <- 2 * sum(log(diag(mH_upchol)))
     w_and_H_list <- list(w = w, H = NULL, mHldet = mHldet)
     if (ret_mHInv) {
@@ -221,7 +222,13 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
       w <- wnew
     }
 
-    mHldet <- smw_mHldet(A_list = DSigInv_list, AInv = DSigInv_Inv, U = SigInv_X, C = cov_betahat, CInv = cov_betahat_Inv)
+    if (estmethod == "ml") {
+      mHldet <- sum(vapply(DSigInv_list, function(x) {
+        as.numeric(determinant(x, logarithm = TRUE)$modulus)
+      }, numeric(1)))
+    } else {
+      mHldet <- smw_mHldet(A_list = DSigInv_list, AInv = DSigInv_Inv, U = SigInv_X, C = cov_betahat, CInv = cov_betahat_Inv)
+    }
     w_and_H_list <- list(w = w, H = NULL, mHldet = mHldet)
     if (ret_mHInv) {
       w_and_H_list$mHInv <- -HInv

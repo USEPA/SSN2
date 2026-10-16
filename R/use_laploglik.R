@@ -13,7 +13,7 @@ use_laploglik <- function(initial_object, data_object, estmethod, optim_dotlist)
 
   optim_dotlist <- check_optim_method(optim_par, optim_dotlist)
 
-  optim_output <- do.call("optim", c(
+  optim_output <- optim_with_nugget_bound(
     list(
       par = optim_par,
       fn = laploglik,
@@ -21,8 +21,9 @@ use_laploglik <- function(initial_object, data_object, estmethod, optim_dotlist)
       data_object = data_object,
       estmethod = estmethod
     ),
-    optim_dotlist
-  ))
+    optim_dotlist,
+    nugget_only_lower(optim_par, initial_object, data_object$diagtol)
+  )
 
   cov_orig_val <- optim2orig_glm(orig2optim_object, optim_output$par)
 
