@@ -139,13 +139,11 @@ validate_loocv_level <- function(level) {
 }
 
 is_loocv_iid <- function(object) {
-  is.null(object$random) && inherits(coef(object, "nugget"), "nugget_nugget") &&
-    all(vapply(c("tailup", "taildown", "euclid"), function(type) {
-      inherits(coef(object, type), paste0(type, "_none"))
-    }, logical(1)))
+  is_conditional_iid(object) && inherits(coef(object, "nugget"), "nugget_nugget")
 }
 
 resolve_loocv_local <- function(local, iid = FALSE) {
+  if (iid) local <- FALSE
   if (is.logical(local) && (length(local) != 1 || is.na(local))) {
     stop("local must be TRUE, FALSE, or a local-control list.", call. = FALSE)
   }

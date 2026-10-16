@@ -255,6 +255,7 @@ conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 10
     stop("samples must be a positive integer.", call. = FALSE)
   }
   if (missing(local)) local <- NULL
+  if (is_conditional_iid(object)) local <- FALSE
   if (!is.logical(simulate_covparams) || length(simulate_covparams) != 1 || is.na(simulate_covparams)) {
     stop("simulate_covparams must be TRUE or FALSE.", call. = FALSE)
   }
@@ -296,7 +297,9 @@ conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 10
   }
 
   if (!isTRUE(simulate_covparams)) {
-    val <- draw_conditional_exact(object, newdata_name, samples, output)
+    iid_variance <- get_conditional_iid_variance(object)
+    val <- if (is.null(iid_variance)) draw_conditional_exact(object, newdata_name, samples, output) else
+      draw_conditional_iid(object, newdata_name, iid_variance, samples, output)
     if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
     return(if (length(output) == 1) val[[output]] else val[output])
   }
@@ -334,6 +337,7 @@ conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("l
     stop("samples must be a positive integer.", call. = FALSE)
   }
   if (missing(local)) local <- NULL
+  if (is_conditional_iid(object)) local <- FALSE
   if (missing(newdata_size)) newdata_size <- NULL
   if ("all" %in% output) {
     output <- c("newdata", "beta", "object", if ("latent" %in% output) "latent", if ("random" %in% output) "random")
@@ -349,7 +353,9 @@ conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("l
   conditioning <- get_local_list_conditional(local, object,
     if (!is.null(newdata_name)) object$ssn.object$preds[[newdata_name]] else NULL)
   if (conditioning$exact) {
-    val <- draw_conditional_exact(object, newdata_name, samples, output, type, newdata_size)
+    iid_variance <- get_conditional_iid_variance(object)
+    val <- if (is.null(iid_variance)) draw_conditional_exact(object, newdata_name, samples, output, type, newdata_size) else
+      draw_conditional_iid(object, newdata_name, iid_variance, samples, output, type, newdata_size)
     if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
     return(if (length(output) == 1) val[[output]] else val[output])
   }

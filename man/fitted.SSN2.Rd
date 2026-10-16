@@ -53,9 +53,8 @@ for each component of the fitted model object (e.g., check a Gaussian assumption
 Random effects with the same grouping level in different \code{partition_factor}
 partitions are reported separately. Their names include the grouping level
 and partition. Computational blocks used for \code{local} fitting do not
-create distinct random effects: nonzero block contributions to the same
-effect are averaged, with zero returned when every contribution is zero.
-These are fitted effect estimates, not realized draws from \code{conditional()}.
+create distinct random effects: block contributions to the same
+effect are averaged.
 
 If from \code{\link[=ssn_glm]{ssn_glm()}}, when \code{type} is \code{"response"}, the fitted values
 for each observation are the standard fitted values on the inverse link

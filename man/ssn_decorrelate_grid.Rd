@@ -33,8 +33,7 @@ ssn_decorrelate_grid(
 of the model, with the response to the left of the \code{~} operator and
 the terms on the right, separated by \code{+} operators. \code{.} on the
 right-hand side represents every variable in \code{ssn.object$obs} except the
-response and SSN geometry/topology metadata, which are never
-included via \code{.} (though they may still be given explicitly).}
+response and geometry column.}
 
 \item{ssn.object}{A spatial stream network object with class \code{SSN}.}
 

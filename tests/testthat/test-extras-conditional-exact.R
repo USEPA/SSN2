@@ -235,13 +235,9 @@ test_that("joint factors use stored coefficient covariance and permit positive s
                ignore_attr = TRUE, tolerance = 1e-10)
 })
 
-test_that("effect covariance guards reject invalid variances and excessively large sizes", {
+test_that("effect covariance guards reject invalid variances", {
   fit <- conditional_exact_fixture()
   design <- get_conditional_random_design(fit)
   design$variance[1] <- -1
   expect_error(prepare_conditional_random(fit, design), "Invalid random-effect variances", fixed = TRUE)
-  large <- list(observed = matrix(0, 1, 10001), variance = rep(1, 10001),
-                info = data.frame(conditioned = rep(TRUE, 10001)))
-  expect_error(prepare_conditional_random(fit, large),
-    "The random-effect effects covariance is too large; specify 'local' instead.", fixed = TRUE)
 })

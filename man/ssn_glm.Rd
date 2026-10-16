@@ -178,7 +178,7 @@ Note that if \code{range_constrain = TRUE} and the value of \code{range} in \cod
 is larger than \code{range_constrain}, then \code{range_constrain} is set to
 \code{FALSE}.}
 
-\item{...}{Other arguments to \code{\link[spmodel:esv]{spmodel::esv()}} or \code{stats::optim()}.}
+\item{...}{Other arguments to \code{\link[=esv]{esv()}} or \code{stats::optim()}.}
 }
 \value{
 A list with many elements that store information about

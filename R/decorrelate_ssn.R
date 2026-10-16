@@ -115,14 +115,16 @@
 #'       The default is \code{"covariance"}.
 #'     \item \code{size}: The number of data observations to use when \code{method}
 #'       is \code{"covariance"}. The default is 30.
+#'     \item \code{parallel}: If \code{TRUE}, parallel processing via the
+#'       \pkg{parallel} package is used. The default is \code{FALSE}.
+#'     \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
+#'       parallelize over. The default is the number of available cores on your machine.
 #'   }
 #'   When \code{local} is a list, at least one list element must be provided to
 #'   initialize default arguments for the other list elements.
 #'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 #'   that \code{local} is transformed into
-#'   \code{list(size = 30, method = "covariance")}.
-#'   Only \code{method} and \code{size} are accepted in \code{local};
-#'   parallel processing is not supported by the decorrelation transformation.
+#'   \code{list(size = 30, method = "covariance", parallel = FALSE)}.
 #' @param grid An explicit grid of parameter values by which to evaluate fit. The
 #'   names of \code{grid} must contain all the names returned by \code{ssn_decorrelate_grid(formula, ssn.object, ...)}.
 #' @param dense_grid If \code{grid} is not provided, \code{dense_grid} is a logical
@@ -642,12 +644,16 @@ ssn_decorrelate_data_internal <- function(formula, ssn.object,
 #'       The default is \code{"covariance"}.
 #'     \item \code{size}: The number of data observations to use when \code{method}
 #'       is \code{"covariance"}. The default is 30.
+#'     \item \code{parallel}: If \code{TRUE}, parallel processing via the
+#'       \pkg{parallel} package is used. The default is \code{FALSE}.
+#'     \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
+#'       parallelize over. The default is the number of available cores on your machine.
 #'   }
 #'   When \code{local} is a list, at least one list element must be provided to
 #'   initialize default arguments for the other list elements.
 #'   If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 #'   that \code{local} is transformed into
-#'   \code{list(size = 30, method = "covariance")}.
+#'   \code{list(size = 30, method = "covariance", parallel = FALSE)}.
 #' @param ... Other arguments.
 #'
 #' @return A list with many elements that store information about
@@ -1078,23 +1084,23 @@ get_decorrelate_grid_candidates <- function(grid) {
 #' @param n The observed sample size, used to resolve \code{local = NULL}.
 #'
 #' @return A resolved list with \code{method} (\code{"all"} or
-#'   \code{"covariance"}) and, when relevant, \code{size}.
+#'   \code{"covariance"}), \code{parallel}, and, when relevant, \code{size} and \code{ncores}.
 #'
 #' @noRd
 get_decorrelate_local <- function(local, n) {
   if (is.null(local)) local <- n > 5000L
-  if (identical(local, FALSE)) return(list(method = "all"))
-  if (identical(local, TRUE)) return(list(method = "covariance", size = 30L))
+  if (identical(local, FALSE)) local <- list(method = "all")
+  if (identical(local, TRUE)) local <- list(method = "covariance", size = 30L)
   if (!is.list(local) || !length(local) || is.null(names(local)) ||
-      any(!names(local) %in% c("method", "size")) || anyDuplicated(names(local))) {
-    stop("local must be FALSE, TRUE, or a named list with method and/or size.", call. = FALSE)
+      any(!names(local) %in% c("method", "size", "parallel", "ncores")) || anyDuplicated(names(local))) {
+    stop("local must be FALSE, TRUE, or a named list with method, size, parallel, and/or ncores.", call. = FALSE)
   }
   if (is.null(local$method)) local$method <- "covariance"
   if (length(local$method) != 1L || is.na(local$method) ||
       !local$method %in% c("all", "covariance")) {
     stop("local$method must be \"all\" or \"covariance\".", call. = FALSE)
   }
-  if (identical(local$method, "all")) return(list(method = "all"))
+  if (identical(local$method, "all")) local$size <- NULL
   if (identical(local$method, "covariance")) {
     if (is.null(local$size)) local$size <- 30L
     if (length(local$size) != 1L || !is.numeric(local$size) || !is.finite(local$size) ||
@@ -1103,7 +1109,23 @@ get_decorrelate_local <- function(local, n) {
     }
     local$size <- as.integer(local$size)
   }
-  local[c("method", "size")]
+  if (is.null(local$parallel)) local$parallel <- FALSE
+  if (!is.logical(local$parallel) || length(local$parallel) != 1L || is.na(local$parallel)) {
+    stop("local$parallel must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (!is.null(local$ncores) && (!is.numeric(local$ncores) || length(local$ncores) != 1L ||
+      !is.finite(local$ncores) || local$ncores < 1 || local$ncores != floor(local$ncores) ||
+      local$ncores > .Machine$integer.max)) {
+    stop("local$ncores must be a positive integer.", call. = FALSE)
+  }
+  if (local$parallel) {
+    if (is.null(local$ncores)) {
+      local$ncores <- parallel::detectCores()
+      if (is.na(local$ncores)) local$ncores <- 1L
+    }
+    local$ncores <- as.integer(local$ncores)
+  } else local$ncores <- NULL
+  local[intersect(c("method", "size", "parallel", "ncores"), names(local))]
 }
 
 #' Validate and normalize the \code{ordering} argument for decorrelation
@@ -1404,44 +1426,46 @@ get_decorrelate_covariance_graph <- function(covariance_fit, X, y, permutation,
   n <- length(permutation)
   tX <- matrix(NA_real_, nrow = n, ncol = NCOL(X), dimnames = list(NULL, colnames(X)))
   ty <- numeric(n)
-  observed <- covariance_fit$ssn.object$obs
-
+  settings <- local
+  settings$ncores <- if (isTRUE(local$parallel)) min(local$ncores, n) else NULL
+  settings$parallel <- isTRUE(local$parallel) && n > 1L && settings$ncores > 1L
+  values <- run_pred_dispatch(get_decorrelate_observed_value, seq_len(n), settings,
+                             covariance_fit, X, y, permutation, local, total_var)
   for (position in seq_len(n)) {
-    current <- permutation[[position]]
-    variance <- get_decorrelate_marginal_variance(covariance_fit, observed[current, , drop = FALSE]) / total_var
-    if (position == 1L) {
-      scale <- get_decorrelate_positive_scale(variance, "observed")
-      tX[position, ] <- X[current, ] / scale
-      ty[position] <- y[current] / scale
-      next
-    }
-
-    candidates <- permutation[seq_len(position - 1L)]
-    cross_covariance <- get_decorrelate_observed_cross_covariance(
-      covariance_fit, observed[current, , drop = FALSE], observed[candidates, , drop = FALSE]
-    ) / total_var
-    # method = "all" conditions on every earlier-ordered observation (the
-    # exact transform, sequentially applied -- see get_decorrelated_value()
-    # in spmodel's decorrelate_data.R); method = "covariance" truncates to
-    # the local$size most-correlated of them
-    keep <- if (identical(local$method, "all")) {
-      seq_along(candidates)
-    } else {
-      get_decorrelate_covariance_neighbors(cross_covariance, local$size)
-    }
-    neighbor_index <- candidates[keep]
-    covariance_neighbors <- get_decorrelate_observed_covariance(
-      covariance_fit, observed[neighbor_index, , drop = FALSE]
-    ) / total_var
-    solved <- get_decorrelate_conditional_values(
-      covariance_neighbors, cross_covariance[keep], variance,
-      X[neighbor_index, , drop = FALSE], y[neighbor_index]
-    )
-    tX[position, ] <- (X[current, ] - solved$mean_x) / solved$scale
-    ty[position] <- (y[current] - solved$mean_y) / solved$scale
+    tX[position, ] <- values[[position]]$tX
+    ty[position] <- values[[position]]$ty
   }
-
   list(tX = tX, ty = ty)
+}
+
+get_decorrelate_observed_value <- function(position, covariance_fit, X, y,
+                                           permutation, local, total_var) {
+  observed <- covariance_fit$ssn.object$obs
+  current <- permutation[[position]]
+  variance <- get_decorrelate_marginal_variance(covariance_fit, observed[current, , drop = FALSE]) / total_var
+  if (position == 1L) {
+    scale <- get_decorrelate_positive_scale(variance, "observed")
+    return(list(tX = X[current, ] / scale, ty = y[current] / scale))
+  }
+  candidates <- permutation[seq_len(position - 1L)]
+  cross_covariance <- get_decorrelate_observed_cross_covariance(
+    covariance_fit, observed[current, , drop = FALSE], observed[candidates, , drop = FALSE]
+  ) / total_var
+  keep <- if (identical(local$method, "all")) {
+    seq_along(candidates)
+  } else {
+    get_decorrelate_covariance_neighbors(cross_covariance, local$size)
+  }
+  neighbor_index <- candidates[keep]
+  covariance_neighbors <- get_decorrelate_observed_covariance(
+    covariance_fit, observed[neighbor_index, , drop = FALSE]
+  ) / total_var
+  solved <- get_decorrelate_conditional_values(
+    covariance_neighbors, cross_covariance[keep], variance,
+    X[neighbor_index, , drop = FALSE], y[neighbor_index]
+  )
+  list(tX = (X[current, ] - solved$mean_x) / solved$scale,
+       ty = (y[current] - solved$mean_y) / solved$scale)
 }
 
 #' Apply the sequential covariance-neighbor decorrelation transform to prediction data
@@ -1471,34 +1495,49 @@ get_decorrelate_covariance_prediction <- function(object, newdata_name, newdata,
   tX <- matrix(NA_real_, nrow = n, ncol = NCOL(X0), dimnames = list(NULL, colnames(X0)))
   yscale <- numeric(n)
   yoffset <- numeric(n)
-  observed <- object$covariance_fit$ssn.object$obs
-
-  chunks <- split(seq_len(n), ceiling(seq_len(n) / min(100L, n)))
-  for (chunk in chunks) {
-    cross_chunk <- get_block_obs_covariance(object$covariance_fit, newdata_name, chunk) / object$total_var
-    for (i in chunk) {
-      cross_covariance <- cross_chunk[match(i, chunk), ]
-      keep <- if (identical(local$method, "all")) {
-        seq_along(cross_covariance)
-      } else {
-        get_decorrelate_covariance_neighbors(cross_covariance, local$size)
-      }
-      covariance_neighbors <- get_decorrelate_observed_covariance(
-        object$covariance_fit, observed[keep, , drop = FALSE]
-      ) / object$total_var
-      variance <- get_decorrelate_marginal_variance(
-        object$covariance_fit, newdata[i, , drop = FALSE]
-      ) / object$total_var
-      solved <- get_decorrelate_conditional_values(
-        covariance_neighbors, cross_covariance[keep], variance,
-        object$X[keep, , drop = FALSE], object$y[keep]
-      )
-      tX[i, ] <- (X0[i, ] - solved$mean_x) / solved$scale
-      yscale[[i]] <- solved$scale
-      yoffset[[i]] <- solved$mean_y
-    }
+  workers <- if (isTRUE(local$parallel)) min(local$ncores, max(1L, n)) else 1L
+  chunk_size <- max(1L, min(100L, ceiling(n / workers)))
+  chunks <- split(seq_len(n), ceiling(seq_len(n) / chunk_size))
+  settings <- local
+  settings$ncores <- min(workers, max(1L, length(chunks)))
+  settings$parallel <- isTRUE(local$parallel) && settings$ncores > 1L
+  values <- run_pred_dispatch(get_decorrelate_prediction_chunk, chunks, settings,
+                             object, newdata_name, newdata, X0, local)
+  for (j in seq_along(chunks)) {
+    tX[chunks[[j]], ] <- values[[j]]$tX_newdata
+    yscale[chunks[[j]]] <- values[[j]]$yscale
+    yoffset[chunks[[j]]] <- values[[j]]$yoffset
   }
+  list(tX_newdata = tX, yscale = yscale, yoffset = yoffset)
+}
 
+get_decorrelate_prediction_chunk <- function(chunk, object, newdata_name, newdata, X0, local) {
+  observed <- object$covariance_fit$ssn.object$obs
+  tX <- matrix(NA_real_, nrow = length(chunk), ncol = NCOL(X0))
+  yscale <- yoffset <- numeric(length(chunk))
+  cross_chunk <- get_block_obs_covariance(object$covariance_fit, newdata_name, chunk) / object$total_var
+  for (j in seq_along(chunk)) {
+    i <- chunk[[j]]
+    cross_covariance <- cross_chunk[j, ]
+    keep <- if (identical(local$method, "all")) {
+      seq_along(cross_covariance)
+    } else {
+      get_decorrelate_covariance_neighbors(cross_covariance, local$size)
+    }
+    covariance_neighbors <- get_decorrelate_observed_covariance(
+      object$covariance_fit, observed[keep, , drop = FALSE]
+    ) / object$total_var
+    variance <- get_decorrelate_marginal_variance(
+      object$covariance_fit, newdata[i, , drop = FALSE]
+    ) / object$total_var
+    solved <- get_decorrelate_conditional_values(
+      covariance_neighbors, cross_covariance[keep], variance,
+      object$X[keep, , drop = FALSE], object$y[keep]
+    )
+    tX[j, ] <- (X0[i, ] - solved$mean_x) / solved$scale
+    yscale[[j]] <- solved$scale
+    yoffset[[j]] <- solved$mean_y
+  }
   list(tX_newdata = tX, yscale = yscale, yoffset = yoffset)
 }
 

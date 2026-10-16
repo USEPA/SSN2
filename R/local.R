@@ -170,23 +170,23 @@ get_local_list_prediction_block <- function(local) {
   }
 
   names_local <- names(local)
-  if (!is.null(local$method) && !local$method %in% c("all", "covariance")) {
+  if (!is.null(local[["method"]]) && !local[["method"]] %in% c("all", "covariance")) {
     stop("Invalid local method. Local method must be \"all\" or \"covariance\".", call. = FALSE)
   }
-  if (!is.null(local$method_new) && !local$method_new %in% c("basis", "subset")) {
+  if (!is.null(local[["method_new"]]) && !local[["method_new"]] %in% c("basis", "subset")) {
     stop("local$method_new must be \"basis\" or \"subset\".", call. = FALSE)
   }
 
   if (!"method" %in% names_local) local$method <- "covariance"
-  if (identical(local$method, "covariance") && !"size" %in% names_local) local$size <- 4000L
+  if (identical(local[["method"]], "covariance") && !"size" %in% names_local) local$size <- 4000L
   if (!"method_new" %in% names_local) local$method_new <- "basis"
   if (!"size_new" %in% names_local) local$size_new <- 4000L
-  local$ordering <- get_decorrelate_ordering(local$ordering)
+  local$ordering <- get_decorrelate_ordering(local[["ordering"]])
   if (!"chunk_size" %in% names_local) local$chunk_size <- 1000L
   if (!"parallel" %in% names_local) local$parallel <- FALSE
 
   numeric_names <- c("size_new", "chunk_size")
-  if (identical(local$method, "covariance") || "size" %in% names(local)) {
+  if (identical(local[["method"]], "covariance") || "size" %in% names(local)) {
     numeric_names <- c("size", numeric_names)
   }
   for (name in numeric_names) {

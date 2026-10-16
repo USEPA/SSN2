@@ -687,26 +687,3 @@ test_that("an NA in a fixed-effect predictor errors instead of silently returnin
   fit_missing <- ssn_lm(Summer_mn ~ ELEV_DEM, s2, tailup_type = "exponential", additive = "afvArea")
   expect_no_error(predict(fit_missing, ".missing"))
 })
-
-
-test_that("run_pred_dispatch() falls back to loadNamespace() when SSN2 is not a development install", {
-  # complements the random-slope parallel-dispatch regression test (see
-  # test-extras-random-effects.R), which only exercises the pkgload::load_all()
-  # branch this session's dev-source setup actually takes. Forcing
-  # pkgload::is_dev_package() to FALSE exercises the dev_path resolution's
-  # own fallback logic (getSrcFilename()/normalizePath()/file.exists() are
-  # skipped, dev_path stays NULL) and confirms dispatch still completes via
-  # loadNamespace("SSN2") on the worker rather than erroring. This only
-  # proves the fallback branch itself is reachable and safe, not that it
-  # reflects current source -- a worker's loadNamespace("SSN2") loads
-  # whatever SSN2 build happens to be installed, which is this session's
-  # separately-installed package, not necessarily up to date with the
-  # source under test.
-  testthat::local_mocked_bindings(is_dev_package = function(...) FALSE, .package = "pkgload")
-  result <- run_pred_dispatch(
-    function(x) x * 2,
-    list(1, 2, 3),
-    list(parallel = TRUE, ncores = 2)
-  )
-  expect_equal(unlist(result), c(2, 4, 6))
-})

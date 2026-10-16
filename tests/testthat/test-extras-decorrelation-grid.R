@@ -21,10 +21,10 @@ test_that("decorrelation exposes local and resolves conditional defaults interna
   }
   expect_identical(SSN2:::get_decorrelate_ordering(NULL), "pid")
   expect_error(SSN2:::get_decorrelate_ordering("bogus"), "ordering must be")
-  expect_identical(get_decorrelate_local(NULL, 5000), list(method = "all"))
-  expect_identical(get_decorrelate_local(NULL, 5001), list(method = "covariance", size = 30L))
-  expect_identical(get_decorrelate_local(FALSE, 5001), list(method = "all"))
-  expect_identical(get_decorrelate_local(list(size = 4), 45), list(method = "covariance", size = 4L))
+  expect_identical(get_decorrelate_local(NULL, 5000), list(method = "all", parallel = FALSE))
+  expect_identical(get_decorrelate_local(NULL, 5001), list(method = "covariance", size = 30L, parallel = FALSE))
+  expect_identical(get_decorrelate_local(FALSE, 5001), list(method = "all", parallel = FALSE))
+  expect_identical(get_decorrelate_local(list(size = 4), 45), list(method = "covariance", size = 4L, parallel = FALSE))
   expect_identical(get_decorrelate_local(list(method = "covariance"), 45),
                    get_decorrelate_local(TRUE, 45))
   expect_identical(get_decorrelate_local(list(method = "all", size = 4), 45),
@@ -83,7 +83,7 @@ test_that("an edited single-row grid is evaluated and overrides covariance types
   expect_equal(fit$grid$tailup_range, 1234)
   expect_equal(fit$grid$tailup_type, "exponential")
   expect_equal(unname(fit$decorrelate_data$params$tailup["range"]), 1234)
-  expect_identical(fit$decorrelate_data$local, list(method = "covariance", size = 4L))
+  expect_identical(fit$decorrelate_data$local, list(method = "covariance", size = 4L, parallel = FALSE))
   expect_true(is.finite(fit$test$RMSPE))
   expect_length(predict(fit, "CapeHorn", local = FALSE), nrow(mf04p$preds$CapeHorn))
 })

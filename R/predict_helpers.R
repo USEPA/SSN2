@@ -234,14 +234,14 @@ get_point_pred_context <- function(object, newdata_name, newdata, newdata_model,
   )
 }
 
-#' Dispatch point prediction or cross-validation folds, in parallel or serially
+#' Dispatch prediction, cross-validation, or decorrelation functions
 #'
 #' Uses serial or parallel evaluation with cleanup on success and error.
 #' Workers load the same development source or installation as the parent
 #' so namespace-resolved helpers remain consistent across processes.
 #'
-#' @param fn The prediction or cross-validation function.
-#' @param data_list A list or vector of prediction rows or held-out indices.
+#' @param fn The relevant function to evaluate.
+#' @param data_list A list or vector of relevant indices or row groups.
 #' @param local_list A resolved local-prediction settings list;
 #'   \code{local_list$parallel} selects \code{parallel::parLapply()} over
 #'   \code{local_list$ncores} workers, otherwise plain \code{lapply()}.
@@ -269,20 +269,24 @@ make_ssn_cluster <- function(ncores) {
   cl <- parallel::makeCluster(ncores)
   ready <- FALSE
   on.exit(if (!ready) parallel::stopCluster(cl), add = TRUE)
+  package_path <- getNamespaceInfo(asNamespace("SSN2"), "path")
   dev_path <- NULL
   if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("SSN2")) {
-    source_file <- utils::getSrcFilename(utils::getSrcref(make_ssn_cluster), full.names = TRUE)
-    candidate <- normalizePath(file.path(dirname(source_file), ".."), mustWork = TRUE)
-    if (file.exists(file.path(candidate, "DESCRIPTION"))) dev_path <- candidate
+    dev_path <- package_path
   }
-  parallel::clusterCall(cl, function(dev_path) {
+  package_lib <- if (is.null(dev_path)) dirname(package_path) else NULL
+  initialize <- function(paths, dev_path, package_lib) {
+    .libPaths(paths)
     if (is.null(dev_path)) {
-      loadNamespace("SSN2")
+      loadNamespace("SSN2", lib.loc = package_lib)
     } else {
       pkgload::load_all(dev_path, quiet = TRUE)
     }
     NULL
-  }, dev_path)
+  }
+  # Avoid loading a different SSN2 namespace while deserializing the initializer.
+  environment(initialize) <- baseenv()
+  parallel::clusterCall(cl, initialize, .libPaths(), dev_path, package_lib)
   ready <- TRUE
   cl
 }

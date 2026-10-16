@@ -172,8 +172,8 @@ in Ver Hoef and Peterson (2010).}
 \item{mean}{A numeric vector representing the mean. \code{mean} must have length 1
 (in which case it is recycled) or length equal
 to the number of rows in \code{ssn.object$obs}. The default is \code{0}.
-For non-Gaussian families, this is the mean of the latent Gaussian variable
-on the link scale, not the marginal mean of the response. See Details.}
+For non-Gaussian families, this is the mean of the latent normal random variable
+on the link scale. See Details for more.}
 
 \item{samples}{The number of independent samples to generate. The default
 is \code{1}.}
@@ -189,15 +189,14 @@ The default is \code{1}, which corresponds to a Bernoulli trial for each observa
 \item{partition_factor}{A formula indicating the partition factor.}
 
 \item{...}{Additional arguments passed to \code{\link[=ssn_rnorm]{ssn_rnorm()}}, including \code{local},
-when using \code{ssn_simulate()} or a non-Gaussian simulation function.
-Unused by \code{ssn_rnorm()}.}
+when using \code{ssn_simulate()} or another simulation function.}
 
 \item{local}{An optional logical or list controlling the big data approximation.
 If omitted, \code{local} is set to \code{TRUE} when the number of rows in
 \code{ssn.object$obs} exceeds 5,000. Otherwise it is set to \code{FALSE}.
 If \code{FALSE}, no big data approximation is implemented.
-Before using local approximations, create \code{.bmat}
-distance matrices with \code{ssn_create_bigdist()}.
+Before using local approximations, it is useful to create \code{.bmat}
+distance matrices using \code{ssn_create_bigdist()}.
 If a list is provided, \code{local$approximation} selects which big data
 approximation is used and can take on the values \code{"low-rank"} or
 \code{"vecchia"} (the default):
@@ -232,11 +231,9 @@ and \code{TRUE} otherwise.
 \item \code{size_new}: The (approximate) number of observations used
 for each block. The default is 1,000. See Details for more.
 \item \code{parallel}: If \code{TRUE}, parallel processing via the
-parallel package is automatically used to simulate the blocks outside
-the base sample. The default is \code{FALSE}.
+parallel package is automatically used. The default is \code{FALSE}.
 \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
 parallelize over. The default is the number of available cores on your machine.
-The number used is capped by the number of blocks and available cores.
 }
 If \code{local$approximation} is \code{"low-rank"}, defaults for the remaining \code{"low-rank"}
 settings are chosen such that \code{local} is transformed into
@@ -260,27 +257,22 @@ simulated). Same convention as \code{predict()}'s own
 intensive and \code{local = FALSE} should almost always be used instead.
 (\code{method = "all"} primarily exists for numerical verification).
 \item \code{size}: The number of neighbors used when \code{method}
-is \code{"covariance"}. The default is 30 for every family.
+is \code{"covariance"}. The default is 30.
 \item \code{ordering}: The order locations are simulated in --
 \code{"pid"}, \code{"maxmin"}, \code{"middleout"}, \code{"outsidein"},
 \code{"coordinate"}, \code{"grts"}, \code{"random"}, or
 \code{"none"} (same options as \code{ssn_decorrelate()}'s
 \code{ordering} argument). The default is \code{"pid"}.
-\code{"maxmin"} cannot be used with coincident locations;
-use \code{"pid"}, \code{"grts"}, \code{"random"}, or another ordering instead.
 \code{"maxmin"}, \code{"middleout"}, \code{"outsidein"}, and
 \code{"coordinate"} require \pkg{GPvecchia}; \code{"grts"} requires \pkg{spsurvey}.
 }
 \code{parallel}/\code{ncores} are not used when \code{local$approximation} is
-\code{"vecchia"}; setting \code{parallel = TRUE} produces a warning and is ignored.
+\code{"vecchia"}.
 }
 
 \code{local = TRUE} and lists without \code{approximation} use Vecchia,
 with defaults \code{list(approximation = "vecchia", method = "covariance",
-  size = 30, ordering = "pid", parallel = FALSE)}.
-Low-rank base and block settings require \code{approximation = "low-rank"};
-Vecchia settings (\code{method}, \code{size}, and \code{ordering}) are ignored
-when \code{approximation = "low-rank"}.}
+  size = 30, ordering = "pid", parallel = FALSE)}.}
 }
 \value{
 If \code{samples} is 1, a vector of random variables for each row of \code{ssn.object$obs}
@@ -298,19 +290,9 @@ response distribution also exist.
 With \code{local = FALSE}, normal (Gaussian) random variables are
 simulated via the product of the covariance matrix's
 square (Cholesky) root and independent standard normal random variables
-with mean 0 and variance 1, plus \code{mean}. The covariance factorization
-is reused across \code{samples}, though generating and storing additional
-samples requires additional computation and memory.
-
-For non-Gaussian families, the covariance parameters, \code{mean}, and
-\code{randcov_params} are assumed to be on the link scale. They are used
-to simulate a latent normal (Gaussian) response variable using \code{\link[=ssn_rnorm]{ssn_rnorm()}}.
-The inverse link transforms this latent variable to the conditional mean
-for the Poisson, negative binomial, gamma, and inverse Gaussian distributions
-(log link), or to the conditional mean for the beta distribution and success
-probability for the binomial distribution (logit link). Responses are then
-drawn from the corresponding distribution, using \code{dispersion} where
-applicable or \code{size} for binomial trials.
+with mean 0 and variance 1, with big data approximations available. It is
+nearly the sample computational cost to call \code{sprnorm()} for any value
+of \code{samples}.
 
 \code{local} Details: When \code{local$approximation} is \code{"low-rank"}, the big
 data approximation works by assigning \code{size_base}
@@ -320,11 +302,9 @@ are simulated from the conditional distribution given the base sample.
 Observations from the same block share conditional covariance while
 observations from distinct blocks are assumed conditionally independent
 (given the base sample). Parallelization generally further speeds up
-computations. Vecchia instead conditions each new observation on selected
-prior observations. Covariance ranking scans all prior observations, even
-when \code{size} is small. With \code{method = "all"}, the sequential engine
-retains every prior observation and warns for more than 2,000 locations;
-use this setting for small exactness checks rather than large simulations.
+computations. When \code{local$approximation} is \code{"vecchia"}, no such
+independence assumption is made and each new observation is simulated by
+conditioning on prior observations.
 
 If not using \code{ssn_simulate()}, individual simulation functions for
 each response distribution do exist:

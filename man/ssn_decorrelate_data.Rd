@@ -24,8 +24,7 @@ ssn_decorrelate_data(
 of the model, with the response to the left of the \code{~} operator and
 the terms on the right, separated by \code{+} operators. \code{.} on the
 right-hand side represents every variable in \code{ssn.object$obs} except the
-response and SSN geometry/topology metadata, which are never
-included via \code{.} (though they may still be given explicitly).}
+response and geometry column.}
 
 \item{ssn.object}{A spatial stream network object with class \code{SSN}.}
 
@@ -73,8 +72,6 @@ which orders from bottom-left to top-right of the spatial domain.
 \code{"random"} applies a completely random ordering.
 \code{"none"} applies no random ordering.
 The default is \code{"pid"}.
-\code{"maxmin"} cannot be used with coincident locations;
-use \code{"pid"}, \code{"grts"}, \code{"random"}, or another ordering instead.
 \code{"maxmin"}, \code{"middleout"}, \code{"outsidein"}, and
 \code{"coordinate"} require \pkg{GPvecchia}; \code{"grts"} requires \pkg{spsurvey}.}
 
@@ -94,14 +91,16 @@ with the highest absolute covariance among earlier observations are used.
 The default is \code{"covariance"}.
 \item \code{size}: The number of data observations to use when \code{method}
 is \code{"covariance"}. The default is 30.
+\item \code{parallel}: If \code{TRUE}, parallel processing via the
+\pkg{parallel} package is used. The default is \code{FALSE}.
+\item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
+parallelize over. The default is the number of available cores on your machine.
 }
 When \code{local} is a list, at least one list element must be provided to
 initialize default arguments for the other list elements.
 If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 that \code{local} is transformed into
-\code{list(size = 30, method = "covariance")}.
-Only \code{method} and \code{size} are accepted in \code{local};
-parallel processing is not supported by the decorrelation transformation.}
+\code{list(size = 30, method = "covariance", parallel = FALSE)}.}
 
 \item{...}{Other arguments to the functions called by \code{algorithm}.}
 }

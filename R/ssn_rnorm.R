@@ -30,7 +30,7 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   }
 
   # compute the random effects design matrices
-  if (missing(randcov_params)) {
+  if (missing(randcov_params) || is.null(randcov_params) || length(randcov_params) == 0L) {
     randcov_params <- NULL
     randcov_Zs <- NULL
   } else {
@@ -62,6 +62,22 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   }
 
   n <- NROW(ssn.object$obs)
+  if (is_iid_covariance(tailup_params, taildown_params, euclid_params, randcov_params) &&
+      inherits(nugget_params, "nugget_nugget") &&
+      is.finite(nugget_params[["nugget"]]) && nugget_params[["nugget"]] > 0) {
+    if (!is.null(partition_factor)) {
+      partition_formula <- reformulate(labels(terms(partition_factor)), intercept = FALSE)
+      partition_frame <- model.frame(partition_formula, ssn.object$obs)
+      if (NROW(partition_frame) != n) {
+        stop("Missing values in partition_factor are not supported.", call. = FALSE)
+      }
+    }
+    ssn_rnorm_val <- vapply(seq_len(samples), function(x) {
+      mean + rnorm(n, sd = sqrt(nugget_params[["nugget"]]))
+    }, numeric(n))
+    if (samples == 1) ssn_rnorm_val <- as.vector(ssn_rnorm_val)
+    return(ssn_rnorm_val)
+  }
   conditioning <- get_ssn_simulate_local(local, n, ssn.object$obs)
 
   if (!identical(conditioning$method, "exact")) {

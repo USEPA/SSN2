@@ -115,7 +115,7 @@ test_that("automatic and all-predecessor simulation dispatch to the sequential e
     ssn.object = list(obs = data.frame(pid = seq_len(5001L))),
     tailup_params = tailup_params("none", de = 0, range = 1),
     taildown_params = taildown_params("none", de = 0, range = 1),
-    euclid_params = euclid_params("none", de = 0, range = 1),
+    euclid_params = euclid_params("exponential", de = 1, range = 1),
     nugget_params = nugget_params("nugget", nugget = 1), mean = 2, samples = 2
   )
   expect_message(automatic <- do.call(ssn_rnorm, args), "exceeds 5,000")

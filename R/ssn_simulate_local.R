@@ -64,6 +64,9 @@ get_local_lowrank_blocks <- function(index_new, data, groups, kmeans_new) {
   n_new <- length(index_new)
   if (kmeans_new) {
     coords <- sf::st_coordinates(data[index_new, , drop = FALSE])
+    if (NROW(unique(coords)) < groups) {
+      stop('There are not enough distinct prediction locations for the requested blocks; increase local$size_new or use local$kmeans_new = FALSE.', call. = FALSE)
+    }
     cluster <- stats::kmeans(coords, centers = groups, iter.max = 30)$cluster
     return(split(index_new, cluster))
   }

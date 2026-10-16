@@ -28,14 +28,16 @@ with the highest absolute covariance with the observation requiring prediction a
 The default is \code{"covariance"}.
 \item \code{size}: The number of data observations to use when \code{method}
 is \code{"covariance"}. The default is 30.
+\item \code{parallel}: If \code{TRUE}, parallel processing via the
+\pkg{parallel} package is used. The default is \code{FALSE}.
+\item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
+parallelize over. The default is the number of available cores on your machine.
 }
 When \code{local} is a list, at least one list element must be provided to
 initialize default arguments for the other list elements.
 If \code{local} is \code{TRUE}, defaults for \code{local} are chosen such
 that \code{local} is transformed into
-\code{list(size = 30, method = "covariance")}.
-Only \code{method} and \code{size} are accepted in \code{local};
-parallel processing is not supported by the decorrelation transformation.}
+\code{list(size = 30, method = "covariance", parallel = FALSE)}.}
 
 \item{...}{Other arguments.}
 }
