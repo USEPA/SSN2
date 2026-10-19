@@ -414,9 +414,11 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
           itCol <- isplitVector(obs.pids, chunks = no_cores)
 
           ans1<- foreach(obs.pids.vec=itCol,
+                         .export = "amongSitesBigDistMat",
                          .packages = c("SSN2", "filematrix","itertools","iterators"),
                          .errorhandling = "pass") %dopar% {
 
+                           # SSN2:::amongSitesBigDistMat could alternatively be used without .export.
                            amongSitesBigDistMat(ssn = ssn,
                                                 pids = obs.pids.vec,
                                                 net.num = net.num,
@@ -460,10 +462,12 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
       # Create vector iterator
       itCol <- isplitVector(obs.pids, chunks = no_cores)
 
-      ans1<- foreach(obs.pids.vec=itCol,.packages = c("SSN2", "filematrix",
+      ans1<- foreach(obs.pids.vec=itCol, .export = "amongSitesBigDistMat",
+                     .packages = c("SSN2", "filematrix",
                                                         "itertools","iterators"),
                        .errorhandling = "pass") %dopar% {
 
+                         # SSN2:::amongSitesBigDistMat could alternatively be used without .export.
                          amongSitesBigDistMat(ssn = ssn,
                                               pids = obs.pids.vec,
                                               net.num = net.num,
@@ -515,8 +519,10 @@ ssn_create_bigdist <- function(ssn.object, predpts = NULL, overwrite = FALSE,
         itCol <- isplitVector(pred.pids, chunks = no_cores)
 
         ans3<- foreach(pred.pids.vec=itCol,
+                       .export = "amongSitesBigDistMat",
                        .packages = c("SSN2", "filematrix","itertools","iterators"),
                        .errorhandling = "pass") %dopar% {
+                         # SSN2:::amongSitesBigDistMat could alternatively be used without .export.
                          amongSitesBigDistMat(ssn = ssn,
                                               pids = pred.pids.vec,
                                               net.num = net.num,

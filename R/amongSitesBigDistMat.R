@@ -8,7 +8,7 @@
 #' @param net.num Network number (netID) in character format.
 #'
 #' @return A distance matrix
-#' @export amongSitesBigDistMat
+#' @noRd
 #'
 amongSitesBigDistMat <- function(ssn, pids, net.num, name = "obs", bin.table,
                               workspace.name) {

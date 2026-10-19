@@ -2,6 +2,45 @@ skip_on_cran()
 skip_if_not(identical(Sys.getenv("SSN2_RUN_EXTRAS"), "true"),
             "set SSN2_RUN_EXTRAS = 'true' to run the extras suite")
 
+test_that("distance matrix builders can use internal helper functions", {
+  helpers <- c("amongSitesDistMat", "amongSitesBigDistMat")
+  expect_false(any(helpers %in% getNamespaceExports("SSN2")))
+  for (helper in helpers) {
+    expect_true(is.function(getFromNamespace(helper, "SSN2")))
+  }
+
+  network <- mf04p
+  network$path <- withr::local_tempdir()
+  file.copy(file.path(mf04p$path, "binaryID.db"), network$path)
+  network$preds <- list(CapeHorn = network$preds$CapeHorn[1:8, ])
+  ssn_create_distmat(network, predpts = "CapeHorn", among_predpts = TRUE,
+    overwrite = TRUE)
+  reference <- lapply(c("obs", "CapeHorn"), function(name) {
+    matrices <- ssn_get_stream_distmat(network, name)
+    matrices[!grepl("[.][ab]$", names(matrices))]
+  })
+  names(reference) <- c("obs", "CapeHorn")
+
+  read_big <- function(path) {
+    matrix <- filematrix::fm.open(path, readonly = TRUE)
+    on.exit(filematrix::close(matrix))
+    values <- matrix[, ]
+    dimnames(values) <- list(rownames(matrix), colnames(matrix))
+    values
+  }
+  for (cores in c(1, 2)) {
+    ssn_create_bigdist(network, predpts = "CapeHorn", among_predpts = TRUE,
+      overwrite = TRUE, no_cores = cores, verbose = FALSE)
+    for (name in names(reference)) {
+      for (matrix_name in names(reference[[name]])) {
+        actual <- read_big(file.path(network$path, "distance", name, matrix_name))
+        expect_equal(actual, reference[[name]][[matrix_name]],
+          info = paste(cores, name, matrix_name))
+      }
+    }
+  }
+})
+
 test_that("binary-ID matching preserves native prefix and connectivity conventions", {
   ids <- c("1", "111", "101", "011", "11", "")
   expect_identical(get_binary_id_match(ids, "11"), c(-1L, -2L, 1L, 0L, -2L, 0L))
