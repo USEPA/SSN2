@@ -34,6 +34,7 @@ This update was focused on enhancing `SSN2` alignment with `spmodel`.
 
 ## Bug Fixes
 
+* Removed the `amongSitesBigDistMat()` function from the list of exported functions (i.e., it is now only able to be called internally).
 * Various bug fixes to enhance alignment with `spmodel`.
 
 # SSN2 0.4.0
