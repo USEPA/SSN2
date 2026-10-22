@@ -3,10 +3,12 @@
 #'   when \code{cv_predict = TRUE} and using \code{ssn_glm()} objects.
 #' @param delta A logical indicating whether to return delta method standard errors
 #' on the response scale when \code{se.fit = TRUE} and \code{type = "response"}. The default is \code{FALSE}.
+#' @param fit_correct A logical indicating whether to apply the Laplace mean
+#'   corrections to predictions. The default is \code{TRUE}.
 #' @method loocv ssn_glm
 #' @export
 loocv.ssn_glm <- function(object, cv_predict = FALSE, type = c("link", "response"),
-                          se.fit = FALSE, delta = FALSE, local, ...) {
+                          se.fit = FALSE, delta = FALSE, local, fit_correct = TRUE, ...) {
   if (missing(local)) local <- NULL
 
   # match type argument so the two display
@@ -17,7 +19,10 @@ loocv.ssn_glm <- function(object, cv_predict = FALSE, type = c("link", "response
   local <- resolve_cv_auto_local(local, object$n, "loocv")
   local <- resolve_loocv_local(local)
 
-  loocv_val <- get_loocv.ssn_glm(object, cv_predict = TRUE, se.fit = TRUE, local = local)
+  loocv_val <- get_loocv.ssn_glm(
+    object, cv_predict = TRUE, se.fit = TRUE, local = local,
+    fit_correct = fit_correct
+  )
   response_val <- object$y
   error_val <- response_val - loocv_val$cv_predict
   se_val <- loocv_val$se.fit
@@ -68,7 +73,10 @@ loocv.ssn_glm <- function(object, cv_predict = FALSE, type = c("link", "response
   }
 }
 
-get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, local = FALSE, ...) {
+get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, local = FALSE,
+                              fit_correct = TRUE, ...) {
+  center <- get_latent_center(object, fit_correct)
+  need_se <- se.fit || center$active
   local_list <- resolve_loocv_local(local)
 
   # store response
@@ -94,7 +102,7 @@ get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, local 
     model_offset <- model.offset(model_frame)
     # Kriging uses the latent predictor without the known offset. The family
     # derivatives remain evaluated at the offset-inclusive linear predictor.
-    w <- if (is.null(model_offset)) w_linpred else w_linpred - as.vector(model_offset)
+    w <- if (is.null(model_offset)) center$eta else center$eta - as.vector(model_offset)
     size <- object$size
 
     # some products
@@ -117,14 +125,14 @@ get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, local 
       get_loocv_glm, seq_len(object$n), local_list,
       Sig = cov_matrix_val,
       SigInv = SigInv, Xmat = X, w = as.matrix(w, ncol = 1), wX = wX,
-      SigInv_wX = SigInv_wX, mHinv = mHinv, se.fit = se.fit
+      SigInv_wX = SigInv_wX, mHinv = mHinv, se.fit = need_se
     )
 
     cv_predict_val <- vapply(cv_predict_val_list, function(x) x$pred, numeric(1))
     if (!is.null(model_offset)) {
       cv_predict_val <- cv_predict_val + as.vector(model_offset)
     }
-    if (se.fit) {
+    if (need_se) {
       cv_predict_se <- vapply(cv_predict_val_list, function(x) x$se.fit, numeric(1))
     }
   } else {
@@ -137,11 +145,12 @@ get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, local 
       get_loocv_local_glm, seq_len(object$n), local_list,
       Sig = cov_matrix_val, Xmat = X, y = y, offset = model_offset,
       size = object$size, family = object$family, dispersion = dispersion,
-      local_size = local_list$size, se.fit = se.fit,
-      w = fitted(object, type = "link"), betahat = coef(object),
+      local_size = local_list$size, se.fit = need_se,
+      w = center$eta, betahat = center$betahat,
+      w_mode = fitted(object, type = "link"),
       cov_betahat = vcov(object, var_correct = FALSE)
     )
-    if (se.fit) {
+    if (need_se) {
       cv_predict_val <- vapply(cv_predict_val_list, function(x) x$pred, numeric(1))
       cv_predict_se <- vapply(cv_predict_val_list, function(x) x$se.fit, numeric(1))
     } else {
@@ -152,7 +161,11 @@ get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, local 
     }
   }
 
-  cv_predict_val_invlink <- invlink(cv_predict_val, object$family, object$size)
+  cv_predict_val_invlink <- if (center$active) {
+    invlink_mean(cv_predict_val, cv_predict_se^2, object$family, object$size)
+  } else {
+    invlink(cv_predict_val, object$family, object$size)
+  }
 
   if (cv_predict) {
     if (se.fit) {
@@ -171,7 +184,8 @@ get_loocv.ssn_glm <- function(object, cv_predict = FALSE, se.fit = FALSE, local 
 }
 
 get_loocv_local_glm <- function(obs, Sig, Xmat, y, offset, size, family,
-                                dispersion, local_size, se.fit, w, betahat, cov_betahat) {
+                                dispersion, local_size, se.fit, w, betahat, cov_betahat,
+                                w_mode = w) {
   retain <- get_loocv_local_index(obs, Sig, local_size)
   new_Sig <- Sig[retain, retain, drop = FALSE]
   new_Sig_upchol <- chol(forceSymmetric(new_Sig))
@@ -192,7 +206,7 @@ get_loocv_local_glm <- function(obs, Sig, Xmat, y, offset, size, family,
     var_fit <- Sig[obs, obs] - tcrossprod(obs_c_new_SigInv, obs_c) +
       Q %*% tcrossprod(cov_betahat, Q)
     var_adj <- as.numeric(var_fit) + get_wts_varw(
-      family, new_X, new_y, new_w, new_size, dispersion,
+      family, new_X, new_y, w_mode[retain], new_size, dispersion,
       new_Sig_lowchol, Xmat[obs, , drop = FALSE], obs_c
     )
     se_fit <- sqrt(var_adj)

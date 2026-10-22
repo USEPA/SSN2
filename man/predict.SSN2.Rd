@@ -42,6 +42,7 @@
   delta = FALSE,
   newdata_size,
   na.action = na.fail,
+  fit_correct = TRUE,
   ...
 )
 
@@ -205,6 +206,14 @@ on the response scale when \code{se.fit = TRUE} and \code{type = "response"}. Th
 
 \item{newdata_size}{The \code{size} value for each observation in \code{newdata}
 used when predicting for the binomial family, with a default value of 1.}
+
+\item{fit_correct}{A logical indicating whether to apply the Laplace mean corrections to predictions.
+The default is \code{TRUE}. When the fitted object stores a correction, this
+shifts the latent prediction center and averages the inverse link for response-scale
+point predictions. With \code{FALSE}, or an object without stored correction
+information, neither correction is applied. Confidence predictions use the
+corrected coefficient center without inverse-link averaging; terms predictions
+retain the fitted coefficients. Link-scale variances are unchanged.}
 }
 \value{
 For \code{ssn_lm} and \code{ssn_glm} objects, if \code{se.fit}

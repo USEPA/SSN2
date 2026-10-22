@@ -17,9 +17,10 @@ draw_conditional_exact_prediction <- function(prediction, residual) {
 }
 
 draw_conditional_exact <- function(object, newdata_name, samples, output,
-                                   type = "link", newdata_size = NULL) {
+                                   type = "link", newdata_size = NULL,
+                                   center = if (inherits(object, "ssn_glm")) get_latent_center(object) else NULL) {
   glm <- inherits(object, "ssn_glm")
-  context <- if (glm) get_conditional_context_glm(object, newdata_name, local = TRUE) else
+  context <- if (glm) get_conditional_context_glm(object, newdata_name, local = TRUE, center = center) else
     get_conditional_context(object, newdata_name, local = TRUE)
   val <- list()
   if ("object" %in% output) {
@@ -28,7 +29,7 @@ draw_conditional_exact <- function(object, newdata_name, samples, output,
   }
   if (!any(c("newdata", "beta", "latent", "random") %in% output)) return(val)
   need_field <- any(c("newdata", "latent", "random") %in% output)
-  joint <- if (glm && need_field) get_conditional_glm_joint(object) else NULL
+  joint <- if (glm && need_field) get_conditional_glm_joint(object, center = center) else NULL
   effect <- prediction <- NULL
   if (need_field && !is.null(object$random) && any(c("newdata", "random") %in% output)) {
     design <- get_conditional_random_design(object, context$newdata)

@@ -63,7 +63,8 @@ get_conditional_lm_lowrank <- function(object, newdata, Xnew, local_list, sample
 }
 
 draw_conditional_lowrank <- function(object, newdata_name, local_list, samples, output,
-                                     type = "link", newdata_size = NULL) {
+                                     type = "link", newdata_size = NULL,
+                                     center = if (inherits(object, "ssn_glm")) get_latent_center(object) else NULL) {
   if ("random" %in% output) {
     stop("Random-effect output is unavailable on low-rank paths; effects are conditioned only on the sampled base and used internally for prediction.", call. = FALSE)
   }
@@ -72,16 +73,16 @@ draw_conditional_lowrank <- function(object, newdata_name, local_list, samples, 
   }
   get_conditional_chunk_size(local_list)
   if (!any(c("newdata", "latent") %in% output)) {
-    return(draw_conditional_exact(object, NULL, samples, output, type, newdata_size))
+    return(draw_conditional_exact(object, NULL, samples, output, type, newdata_size, center = center))
   }
   glm <- inherits(object, "ssn_glm")
-  context <- if (glm) get_conditional_context_glm(object, newdata_name, local = TRUE) else
+  context <- if (glm) get_conditional_context_glm(object, newdata_name, local = TRUE, center = center) else
     get_conditional_context(object, newdata_name, local = TRUE)
   covariance <- get_conditional_lowrank_covariance(object, local_list$index$base, newdata_name)
   design <- if (!is.null(object$random)) get_conditional_random_design(object, context$newdata, local_list$index$base) else NULL
   value <- if (glm) {
     get_conditional_glm_lowrank(object, context$newdata, context$x0, local_list, samples,
-      latent = "latent" %in% output, random_design = design, covariance = covariance)
+      latent = "latent" %in% output, random_design = design, covariance = covariance, center = center)
   } else {
     get_conditional_lm_lowrank(object, context$newdata, context$x0, local_list, samples,
       covariance, design)

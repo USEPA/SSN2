@@ -9,7 +9,7 @@ test_that("local kcv forwards parallel controls and preserves fitting groups", {
   expect_true(controls$parallel)
   expect_identical(controls$ncores, 2)
   expect_identical(controls$index, object$local_index[-c(2, 5)])
-  expect_identical(controls$var_adjust, "theoretical")
+  expect_identical(controls$var_adjust, "none")
   object$local_index <- NULL
   expect_identical(get_kcv_estimation_local(object, 1:6, local)$size, 2)
 })
@@ -330,7 +330,7 @@ test_that("GLM kcv uses offset-free latent updates and binomial trial alignment"
   ssn <- mf04p
   n_original <- nrow(ssn$obs)
   ssn$obs$kcv_offset <- seq_len(n_original) / 35
-  ssn$obs$kcv_trials <- rep(25, n_original)
+  ssn$obs$kcv_trials <- rep(c(20, 25, 30), length.out = n_original)
   ssn$obs$kcv_success <- pmin(ssn$obs$kcv_trials, pmax(0, round(ssn$obs$Summer_mn)))
   ssn$obs$kcv_failure <- ssn$obs$kcv_trials - ssn$obs$kcv_success
   missing <- c(7, 31)
@@ -358,7 +358,7 @@ test_that("GLM kcv uses offset-free latent updates and binomial trial alignment"
   cov_beta <- chol2inv(chol(crossprod(X, Sigma_inv_X)))
   offset <- model.offset(model.frame(fit))
   w_link <- fitted(fit, type = "link")
-  w <- w_link - offset
+  w <- w_link + fit$laplace$delta[names(w_link)] - offset
   Ptheta <- Sigma_inv - Sigma_inv_X %*% tcrossprod(cov_beta, Sigma_inv_X)
   H <- get_D(fit$family, w_link, y, fit$size, as.vector(coef(fit, type = "dispersion"))) - Ptheta
   mHinv <- solve(-H)
@@ -393,7 +393,7 @@ test_that("GLM kcv uses offset-free latent updates and binomial trial alignment"
   expect_true(any(beta_change))
   expect_equal(
     cv$cv_predict,
-    invlink(direct_link, fit$family, fit$size),
+    fit$size * plogis(direct_link / sqrt(1 + pi * direct_se^2 / 8)),
     tolerance = 1e-8
   )
   expect_equal(
@@ -401,6 +401,16 @@ test_that("GLM kcv uses offset-free latent updates and binomial trial alignment"
     get_delta_se(direct_link, direct_se, fit$family, fit$size),
     tolerance = 1e-8
   )
+  expect_equal(cv$stats$MSPE,
+    mean((y - fit$size * plogis(direct_link / sqrt(1 + pi * direct_se^2 / 8)))^2),
+    tolerance = 1e-8)
+  expect_equal(cv$stats$RAV, sqrt(mean(direct_se^2)), tolerance = 1e-8)
+  legacy <- fit
+  legacy$laplace <- NULL
+  expect_equal(kcv(legacy, folds_index = folds_original, cv_predict = TRUE, se.fit = TRUE,
+    type = "response", delta = TRUE),
+    kcv(fit, folds_index = folds_original, cv_predict = TRUE, se.fit = TRUE,
+      type = "response", delta = TRUE, fit_correct = FALSE), tolerance = 1e-8)
   expect_true(is.finite(kcv(fit, folds_index = folds_original)$RAV))
   expect_error(kcv(fit, delta = NA), "delta must be TRUE or FALSE")
   expect_equal(kcv(
@@ -439,6 +449,7 @@ test_that("local kcv uses fixed-parameter fold refits through big distances", {
     nugget_initial = initial$nugget, additive = "afvArea",
     local = list(method = "kmeans", size = 1000, var_adjust = "none", parallel = FALSE)
   )
+  refit_lm$vcov$fixed <- fit_lm$vcov$fixed
   direct_lm <- predict(refit_lm, ".missing", se.fit = TRUE, interval = "none", local = local)
   direct_position <- match(as.character(fit_lm$observed_index[held]), names(direct_lm$fit))
   expect_true(all(unlist(refit_lm$is_known)))
@@ -461,11 +472,28 @@ test_that("local kcv uses fixed-parameter fold refits through big distances", {
     additive = "afvArea",
     local = list(method = "kmeans", size = 1000, var_adjust = "none", parallel = FALSE)
   )
+  refit_glm$vcov$fixed <- fit_glm$vcov$fixed
   direct_glm <- predict(refit_glm, ".missing", type = "link", se.fit = TRUE, interval = "none", local = local)
   direct_position <- match(as.character(fit_glm$observed_index[held]), names(direct_glm$fit))
   expect_true(all(unlist(refit_glm$is_known)))
   expect_equal(cv_glm$cv_predict[held], unname(direct_glm$fit[direct_position]), tolerance = 1e-8)
   expect_equal(cv_glm$se.fit[held], unname(direct_glm$se.fit[direct_position]), tolerance = 1e-8)
+  response_glm <- kcv(fit_glm, folds_index = folds, cv_predict = TRUE,
+    se.fit = TRUE, type = "response", local = local)
+  expect_equal(response_glm$cv_predict,
+    exp(cv_glm$cv_predict + cv_glm$se.fit^2 / 2), tolerance = 1e-8)
+  expect_equal(response_glm$stats$RAV, sqrt(mean(cv_glm$se.fit^2)), tolerance = 1e-8)
+  direct_uncorrected <- predict(refit_glm, ".missing", type = "link", se.fit = TRUE,
+    interval = "none", local = local, fit_correct = FALSE)
+  cv_uncorrected <- kcv(fit_glm, folds_index = folds, cv_predict = TRUE,
+    se.fit = TRUE, local = local, fit_correct = FALSE)
+  expect_equal(cv_uncorrected$cv_predict[held],
+    unname(direct_uncorrected$fit[direct_position]), tolerance = 1e-8)
+  expect_equal(cv_uncorrected$se.fit, cv_glm$se.fit, tolerance = 1e-8)
+  legacy <- fit_glm
+  legacy$laplace <- NULL
+  expect_equal(kcv(legacy, folds_index = folds, cv_predict = TRUE, se.fit = TRUE,
+    local = local), cv_uncorrected, tolerance = 1e-8)
   parallel_local <- c(local, list(parallel = TRUE, ncores = 2))
   expect_equal(kcv(
     fit_lm, folds_index = folds, cv_predict = TRUE, se.fit = TRUE,
@@ -475,6 +503,149 @@ test_that("local kcv uses fixed-parameter fold refits through big distances", {
     fit_glm, folds_index = folds, cv_predict = TRUE, se.fit = TRUE,
     local = parallel_local
   ), cv_glm, tolerance = 1e-8)
+})
+
+test_that("local kcv substitutes full covariance without changing fold link predictions", {
+  set.seed(2)
+  ssn <- mf04p
+  ssn$obs$x <- as.numeric(scale(ssn$obs$ELEV_DEM))
+  ssn$obs$off <- seq(-0.2, 0.2, length.out = nrow(ssn$obs))
+  ssn$obs$count <- round(ssn$obs$Summer_mn)
+  groups <- rep(c(3, 7, 11), length.out = nrow(ssn$obs))
+  ssn_create_bigdist(ssn, overwrite = TRUE, no_cores = 1, verbose = FALSE)
+  args <- list(ssn.object = ssn,
+    tailup_initial = tailup_initial("exponential", 0.3, 10000, known = "given"),
+    euclid_initial = euclid_initial("exponential", 0.4, 12000, known = "given"),
+    nugget_initial = nugget_initial("nugget", 0.2, known = "given"), additive = "afvArea",
+    local = list(index = groups, var_adjust = "theoretical"))
+  fits <- list(
+    do.call(ssn_lm, c(list(formula = Summer_mn ~ x + offset(off), ddf = "asymptotic"), args)),
+    do.call(ssn_glm, c(list(formula = count ~ x + offset(off), family = "poisson"), args))
+  )
+  estimation_local <- get_kcv_estimation_local
+  with_theoretical <- function(code) {
+    local_mocked_bindings(get_kcv_estimation_local = function(object, fold, local) {
+      controls <- estimation_local(object, fold, local)
+      controls$var_adjust <- "theoretical"
+      controls
+    })
+    force(code)
+  }
+  predict_lm <- predict.ssn_lm
+  predict_glm <- predict.ssn_glm
+  for (fit in fits) {
+    glm <- inherits(fit, "ssn_glm")
+    folds <- rep(c("a", "b"), length.out = fit$n)
+    fold_list <- split(seq_len(fit$n), folds)
+    local <- list(method = "covariance", size = fit$n, parallel = FALSE)
+    resolved_local <- resolve_kcv_local(local)
+    refit_fun <- if (glm) get_kcv_local_glm_refit else get_kcv_local_lm_refit
+    refits <- with_theoretical(lapply(fold_list, function(held) {
+      refit_fun(fit, held, resolved_local)
+    }))
+    expect_length(unique(fit$local_index), 3L)
+    expect_length(refits, 2L)
+    checked_kcv <- function(object, correct) {
+      before <- object
+      calls <- 0L
+      check_refit <- function(object) {
+        calls <<- calls + 1L
+        expect_identical(object$vcov$fixed, fit$vcov$fixed)
+        expect_equal(object$laplace, refits[[calls]]$laplace, tolerance = 1e-12)
+      }
+      local_mocked_bindings(
+        predict.ssn_lm = function(object, ...) {
+          check_refit(object)
+          predict_lm(object, ...)
+        },
+        predict.ssn_glm = function(object, ...) {
+          check_refit(object)
+          predict_glm(object, ...)
+        }
+      )
+      result <- kcv(object, folds_index = folds, local = local,
+        cv_predict = TRUE, se.fit = TRUE, type = "link", fit_correct = correct)
+      expect_identical(object, before)
+      expect_identical(calls, 2L)
+      result
+    }
+    Sigma <- as.matrix(covmatrix(fit))
+    X <- model.matrix(fit)
+    B_full <- if (glm) vcov(fit, var_correct = FALSE) else vcov(fit)
+    for (correct in if (glm) c(TRUE, FALSE) else TRUE) {
+      cv <- checked_kcv(fit, correct)
+      control <- with_theoretical(checked_kcv(fit, correct))
+      expect_equal(cv$cv_predict, control$cv_predict, tolerance = 1e-12)
+      expect_equal(cv$se.fit, control$se.fit, tolerance = 1e-10)
+      old_variance <- variance_change <- numeric(fit$n)
+      for (i in seq_along(fold_list)) {
+        held <- fold_list[[i]]
+        train <- setdiff(seq_len(fit$n), held)
+        refit <- refits[[i]]
+        expect_equal(unname(refit$local_index), unname(fit$local_index[train]))
+        expect_length(unique(refit$local_index), 3L)
+        B_fold <- if (glm) vcov(refit, var_correct = FALSE) else vcov(refit)
+        Q <- X[held, , drop = FALSE] - Sigma[held, train, drop = FALSE] %*%
+          solve(Sigma[train, train, drop = FALSE], X[train, , drop = FALSE])
+        variance_change[held] <- diag(Q %*% (B_full - B_fold) %*% t(Q))
+        before <- predict(refit, ".missing", local = local, se.fit = TRUE,
+          interval = "none", type = if (glm) "link" else "response", fit_correct = correct)
+        substituted <- refit
+        substituted$vcov$fixed <- fit$vcov$fixed
+        after <- predict(substituted, ".missing", local = local, se.fit = TRUE,
+          interval = "none", type = if (glm) "link" else "response", fit_correct = correct)
+        position <- match(as.character(fit$observed_index[held]), names(before$fit))
+        expect_false(anyNA(position))
+        expect_equal(after$fit, before$fit, tolerance = 1e-12)
+        expect_equal(cv$cv_predict[held], unname(before$fit[position]),
+          tolerance = 1e-12)
+        expect_equal(cv$se.fit[held], unname(after$se.fit[position]),
+          tolerance = 1e-10)
+        old_variance[held] <- before$se.fit[position]^2
+      }
+      expect_gt(max(abs(variance_change)), 1e-6)
+      expect_lte(max(abs(cv$se.fit^2 - old_variance - variance_change)), 1e-10)
+      expect_lte(abs(cv$stats$RAV^2 - mean(old_variance) - mean(variance_change)), 1e-10)
+      if (glm && !correct) {
+        legacy <- fit
+        legacy$laplace <- NULL
+        expect_equal(checked_kcv(legacy, TRUE), cv, tolerance = 1e-12)
+      }
+    }
+  }
+})
+
+test_that("Gaussian local kcv refits skip Satterthwaite computation", {
+  set.seed(2)
+  ssn <- mf04p
+  ssn_create_bigdist(ssn, overwrite = TRUE, no_cores = 1, verbose = FALSE)
+  fit <- ssn_lm(Summer_mn ~ ELEV_DEM, ssn,
+    tailup_initial = tailup_initial("exponential", 0.3, 10000, known = "given"),
+    nugget_initial = nugget_initial("nugget", 0.2, known = "given"), additive = "afvArea",
+    local = list(index = rep(1:3, length.out = nrow(ssn$obs))), ddf = "asymptotic")
+  folds <- rep(1:2, length.out = fit$n)
+  held <- which(folds == 1)
+  local <- list(method = "covariance", size = fit$n, parallel = FALSE)
+  expect_lte(fit$n, 500)
+  expect_identical(determine_ddf(NULL, fit$n - length(held)), "satterthwaite")
+  calls <- 0L
+  local_mocked_bindings(compute_satterthwaite_fit_time = function(...) {
+    calls <<- calls + 1L
+    stop("Satterthwaite must not run for local kcv refits")
+  })
+  refit <- get_kcv_local_lm_refit(fit, held, resolve_kcv_local(local))
+  expect_null(refit$ddf)
+  expect_null(refit$vcov$cov)
+  expect_identical(calls, 0L)
+  cv <- kcv(fit, folds_index = folds, local = local, cv_predict = TRUE, se.fit = TRUE)
+  expect_identical(calls, 0L)
+  expect_true(all(is.finite(cv$cv_predict)))
+  expect_true(all(is.finite(cv$se.fit)))
+  refit$vcov$fixed <- vcov(fit)
+  direct <- predict(refit, ".missing", local = local, se.fit = TRUE, interval = "none")
+  position <- match(as.character(fit$observed_index[held]), names(direct$fit))
+  expect_equal(cv$cv_predict[held], unname(direct$fit[position]), tolerance = 1e-12)
+  expect_equal(cv$se.fit[held], unname(direct$se.fit[position]), tolerance = 1e-10)
 })
 
 # loocv ddf
@@ -754,18 +925,25 @@ test_that("GLM LOOCV separates the latent predictor from its offset", {
   Ptheta <- Sigma_inv - Sigma_inv_X %*% tcrossprod(cov_beta, Sigma_inv_X)
   offset <- model.offset(model.frame(fit))
   w_link <- fitted(fit, type = "link")
-  w_krige <- w_link - offset
+  w_krige <- w_link + fit$laplace$delta[names(w_link)] - offset
   dispersion <- as.vector(coef(fit, type = "dispersion"))
   H <- get_D(fit$family, w_link, y, fit$size, dispersion) - Ptheta
   mHinv <- solve(-H)
-  wX <- cbind(w_krige, X)
-  Sigma_inv_wX <- Sigma_inv %*% wX
-
-  direct <- lapply(seq_len(fit$n), get_loocv_glm,
-    Sig = Sigma, SigInv = Sigma_inv, Xmat = X,
-    w = matrix(w_krige, ncol = 1), wX = wX,
-    SigInv_wX = Sigma_inv_wX, mHinv = mHinv, se.fit = TRUE
-  )
+  direct <- lapply(seq_len(fit$n), function(i) {
+    train <- setdiff(seq_len(fit$n), i)
+    train_inv <- solve(Sigma[train, train, drop = FALSE])
+    X_train <- X[train, , drop = FALSE]
+    B <- solve(crossprod(X_train, train_inv %*% X_train))
+    c_i <- Sigma[i, train, drop = FALSE]
+    Q <- X[i, , drop = FALSE] - c_i %*% train_inv %*% X_train
+    weights <- Q %*% B %*% crossprod(X_train, train_inv) + c_i %*% train_inv
+    latent_cov <- mHinv[train, train, drop = FALSE] -
+      tcrossprod(mHinv[train, i, drop = FALSE]) / mHinv[i, i]
+    variance <- Sigma[i, i] - c_i %*% train_inv %*% t(c_i) +
+      Q %*% B %*% t(Q) + weights %*% latent_cov %*% t(weights)
+    list(pred = as.numeric(weights %*% w_krige[train]),
+      se.fit = sqrt(as.numeric(variance)))
+  })
   direct_link <- vapply(direct, `[[`, numeric(1), "pred") + offset
   direct_se <- vapply(direct, `[[`, numeric(1), "se.fit")
 
@@ -773,6 +951,7 @@ test_that("GLM LOOCV separates the latent predictor from its offset", {
   expect_equal(unname(cv$se.fit), direct_se, tolerance = 1e-8)
 
   cv_response <- loocv(fit, cv_predict = TRUE, se.fit = TRUE, type = "response", delta = TRUE)
+  expect_equal(cv_response$cv_predict, exp(direct_link + direct_se^2 / 2), tolerance = 1e-8)
   expect_equal(unname(cv_response$se.fit), get_delta_se(direct_link, direct_se, fit$family, fit$size), tolerance = 1e-8)
   expect_error(loocv(fit, delta = NA), "delta must be TRUE or FALSE")
   expect_equal(loocv(fit, cv_predict = TRUE, se.fit = TRUE, type = "response", delta = TRUE,
@@ -802,8 +981,8 @@ test_that("GLM LOOCV separates the latent predictor from its offset", {
   c_Sigma_inv <- c_obs %*% Sigma_inv
   c_Sigma_inv_X <- c_obs %*% Sigma_inv_X
   weights <- X[obs, , drop = FALSE] %*% weights_beta + c_Sigma_inv - c_Sigma_inv_X %*% weights_beta
-  direct_local_link <- as.numeric(X[obs, , drop = FALSE] %*% coef(fit) +
-    c_Sigma_inv %*% (w_krige[retain] - X_retain %*% coef(fit)) + offset[obs])
+  direct_local_link <- as.numeric(X[obs, , drop = FALSE] %*% fit$laplace$betahat +
+    c_Sigma_inv %*% (w_krige[retain] - X_retain %*% fit$laplace$betahat) + offset[obs])
   Q <- X[obs, , drop = FALSE] - c_Sigma_inv_X
   direct_local_variance <- Sigma[obs, obs] - tcrossprod(c_Sigma_inv, c_obs) +
     Q %*% tcrossprod(vcov(fit, var_correct = FALSE), Q) + weights %*% tcrossprod(local_latent_cov, weights)
@@ -813,8 +992,19 @@ test_that("GLM LOOCV separates the latent predictor from its offset", {
     fit, cv_predict = TRUE, se.fit = TRUE, type = "response", delta = TRUE,
     local = list(method = "covariance", size = local_size)
   )
-  expect_equal(cv_local_response$cv_predict, invlink(cv_local$cv_predict, fit$family, fit$size), tolerance = 1e-8)
+  expect_equal(cv_local_response$cv_predict, exp(cv_local$cv_predict + cv_local$se.fit^2 / 2), tolerance = 1e-8)
   expect_equal(cv_local_response$se.fit, get_delta_se(cv_local$cv_predict, cv_local$se.fit, fit$family, fit$size), tolerance = 1e-8)
+  legacy <- fit
+  legacy$laplace <- NULL
+  for (local in list(FALSE, list(size = local_size))) {
+    uncorrected <- loocv(fit, cv_predict = TRUE, se.fit = TRUE, type = "response",
+      fit_correct = FALSE, local = local)
+    expect_equal(loocv(legacy, cv_predict = TRUE, se.fit = TRUE, type = "response",
+      local = local), uncorrected, tolerance = 1e-8)
+    expect_equal(kcv(fit, folds_index = seq_len(fit$n), cv_predict = TRUE,
+      se.fit = TRUE, type = "response", fit_correct = FALSE, local = local),
+      uncorrected, tolerance = 1e-8)
+  }
 })
 
 test_that("Gaussian local LOOCV retains covariance structure across missing and reordered rows", {

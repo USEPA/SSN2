@@ -233,7 +233,7 @@ test_that("conditional() GLM exact conditional simulation works", {
   set.seed(2)
   betas <- conditional(fit, "CapeHorn", output = "beta", samples = 6000)
   expect_equal(dim(betas), c(fit$p, 6000))
-  expect_equal(unname(rowMeans(betas)), unname(coef(fit)), tolerance = 0.05)
+  expect_equal(unname(rowMeans(betas)), unname(fit$laplace$betahat), tolerance = 0.05)
   expect_equal(unname(diag(cov(t(betas)))), unname(diag(as.matrix(vcov(fit)))), tolerance = 0.1)
 
   # offset applied exactly once, on the link scale

@@ -555,6 +555,15 @@ get_model_stats_glm_core <- function(cov_est_object, data_object, estmethod, ord
     Reduce("+", Xt_SigInv_w_list))
   names(betahat) <- colnames(data_object$X_list[[1]])
 
+  eta <- if (is.null(data_object$offset)) w else w + data_object$offset
+  laplace <- get_laplace_correction(w_and_H$mHInv, data_object$family, eta,
+    y, data_object$size, dispersion)
+  center_list <- split(w + laplace$delta, sort(data_object$local_index))
+  center_products <- mapply(function(x, w) crossprod(x$SigInv_X, w),
+    eigenprods_list, center_list, SIMPLIFY = FALSE)
+  laplace$betahat <- as.numeric(cov_betahat_noadjust %*% Reduce("+", center_products))
+  names(laplace$betahat) <- names(betahat)
+
   # Account for dependence between local fitting groups.
   cov_betahat <- cov_betahat_adjust(
     invcov_betahat_list,
@@ -636,6 +645,8 @@ get_model_stats_glm_core <- function(cov_est_object, data_object, estmethod, ord
 
   # reorder relevant quantities to match data order
   model_stats_glm_names <- data_object$pid[data_object$observed_index]
+  laplace$delta <- laplace$delta[order(order)]
+  names(laplace$delta) <- model_stats_glm_names
   ## fitted values
   fitted$response <- fitted$response[order(order)]
   names(fitted$response) <- model_stats_glm_names
@@ -685,6 +696,7 @@ get_model_stats_glm_core <- function(cov_est_object, data_object, estmethod, ord
     vcov = vcov,
     deviance = deviance,
     pseudoR2 = pseudoR2,
+    laplace = laplace,
     npar = npar,
     w = w,
     y = y, # problems with model.response later if not here

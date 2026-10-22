@@ -55,7 +55,8 @@ conditional_vecchia_oracle <- function(fit, size, observed_order = seq_len(fit$n
   }
   glm <- inherits(fit, "ssn_glm")
   eta <- if (glm) fitted(fit, type = "link") else model.response(model.frame(fit))
-  w <- as.vector(eta - model.offset(model.frame(fit)))
+  latent_mean <- if (glm) eta + fit$laplace$delta[names(eta)] else eta
+  w <- as.vector(latent_mean - model.offset(model.frame(fit)))
   T <- matrix(0, n, NCOL(X))
   F <- matrix(0, n, n)
   operators <- list()
@@ -112,10 +113,11 @@ conditional_vecchia_moments <- function(fit, oracle, blocks = list(seq_len(fit$n
   }
   B <- oracle$Xp + W %*% (oracle$T - oracle$X)
   C <- as.matrix(vcov(fit))
-  mean <- as.vector(oracle$Xp %*% coef(fit) + W %*% (oracle$center - oracle$X %*% coef(fit)) +
+  beta <- if (inherits(fit, "ssn_glm")) fit$laplace$betahat else coef(fit)
+  mean <- as.vector(oracle$Xp %*% beta + W %*% (oracle$center - oracle$X %*% beta) +
     fit$ssn.object$preds$pred1km$off)
   covariance <- R + W %*% oracle$V %*% t(W) + B %*% C %*% t(B)
-  list(mean = c(as.vector(coef(fit)), mean), covariance = rbind(cbind(C, C %*% t(B)),
+  list(mean = c(as.vector(beta), mean), covariance = rbind(cbind(C, C %*% t(B)),
     cbind(B %*% C, covariance)))
 }
 
@@ -164,7 +166,8 @@ test_that("truncated Vecchia draws recover joint prediction and shared-effect mo
     if (glm) {
       C <- as.matrix(vcov(fit))
       V <- oracle$V + oracle$T %*% C %*% t(oracle$T)
-      expect_vecchia_moments(rbind(value$beta, value$latent), c(coef(fit), fitted(fit, type = "link")),
+      expect_vecchia_moments(rbind(value$beta, value$latent),
+        c(fit$laplace$betahat, oracle$center + model.offset(model.frame(fit))),
         rbind(cbind(C, C %*% t(oracle$T)), cbind(oracle$T %*% C, V)))
     }
     if (effects) expect_true(!is.null(attr(value$random, "effect_info")))

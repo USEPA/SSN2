@@ -37,17 +37,18 @@ get_conditional_vecchia_lm <- function(object, context, covariance, local_list, 
 }
 
 draw_conditional_vecchia_model <- function(object, newdata_name, local_list, samples, output,
-                                           type = "link", newdata_size = NULL) {
+                                           type = "link", newdata_size = NULL,
+                                           center = if (inherits(object, "ssn_glm")) get_latent_center(object) else NULL) {
   if (!any(c("newdata", "latent", "random") %in% output)) {
-    return(draw_conditional_exact(object, NULL, samples, output, type, newdata_size))
+    return(draw_conditional_exact(object, NULL, samples, output, type, newdata_size, center = center))
   }
   glm <- inherits(object, "ssn_glm")
-  context <- if (glm) get_conditional_context_glm(object, newdata_name, local = TRUE) else
+  context <- if (glm) get_conditional_context_glm(object, newdata_name, local = TRUE, center = center) else
     get_conditional_context(object, newdata_name, local = TRUE)
   covariance <- get_conditional_vecchia_covariance(object, newdata_name)
   value <- if (glm) {
     get_conditional_vecchia_glm(object, newdata_name, context$x0, local_list, samples,
-      latent = "latent" %in% output, random = "random" %in% output, covariance = covariance)
+      latent = "latent" %in% output, random = "random" %in% output, covariance = covariance, center = center)
   } else get_conditional_vecchia_lm(object, context, covariance, local_list, samples, random = "random" %in% output)
   if ("object" %in% output) value$object <- matrix(if (glm) context$w else context$y_object,
     nrow = NROW(context$Xmat), ncol = samples)

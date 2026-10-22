@@ -147,7 +147,8 @@ test_that("independent draws recover shared coefficient and latent uncertainty",
   A <- (q / v) * X
   mapping <- rbind(diag(NCOL(X)), A, X0)
   target <- mapping %*% B %*% t(mapping) + diag(c(rep(0, NCOL(X)), q, rep(v, NROW(X0))))
-  mean <- c(coef(fit), eta, X0 %*% coef(fit) + fit$ssn.object$preds$iid$off)
+  beta <- fit$laplace$betahat
+  mean <- c(beta, eta + fit$laplace$delta[names(eta)], X0 %*% beta + fit$ssn.object$preds$iid$off)
   draws <- conditional(fit, "iid", output = c("beta", "latent", "newdata"), samples = 12000)
   value <- do.call(rbind, draws)
   expect_lt(max(abs(rowMeans(value) - mean) / sqrt(diag(target) / NCOL(value))), 6)

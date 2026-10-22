@@ -44,7 +44,9 @@ conditional_chunks_oracle <- function(fit, approximation) {
   cross <- as.matrix(covmatrix(spatial, "pred1km", cov_type = "obs.pred"))[base, , drop = FALSE]
   pred <- as.matrix(covmatrix(spatial, "pred1km", cov_type = "pred.pred"))
   eta <- if (glm) fitted(fit, type = "link") else model.response(model.frame(fit))
-  center <- (eta - model.offset(model.frame(fit)))[base]
+  latent_mean <- if (glm) eta + fit$laplace$delta[names(eta)] else eta
+  center <- (latent_mean - model.offset(model.frame(fit)))[base]
+  beta <- if (glm) fit$laplace$betahat else coef(fit)
   V <- matrix(0, n, n)
   M <- matrix(0, n, NCOL(X))
   if (approximation == "low-rank") {
@@ -99,10 +101,10 @@ conditional_chunks_oracle <- function(fit, approximation) {
   }
   B <- Xp + W %*% (M - X)
   C <- as.matrix(vcov(fit))
-  mu <- as.vector(Xp %*% coef(fit) + W %*% (center - X %*% coef(fit)) +
+  mu <- as.vector(Xp %*% beta + W %*% (center - X %*% beta) +
     fit$ssn.object$preds$pred1km$off)
   covariance <- R + W %*% V %*% t(W) + B %*% C %*% t(B)
-  list(mean = c(as.vector(coef(fit)), mu), covariance = rbind(cbind(C, C %*% t(B)),
+  list(mean = c(as.vector(beta), mu), covariance = rbind(cbind(C, C %*% t(B)),
     cbind(B %*% C, covariance)))
 }
 

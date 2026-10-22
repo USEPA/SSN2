@@ -65,11 +65,12 @@ conditional_lowrank_oracle <- function(fit, base, blocks) {
   }
   C <- as.matrix(vcov(fit))
   eta <- if (glm) fitted(fit, type = "link") else model.response(model.frame(fit))
-  center <- (eta - model.offset(model.frame(fit)))[base]
+  latent_mean <- if (glm) eta + fit$laplace$delta[names(eta)] else eta
+  center <- (latent_mean - model.offset(model.frame(fit)))[base]
   V <- if (glm) solve(solve(Sigma) + diag(exp(eta[base]))) else matrix(0, length(base), length(base))
   M <- if (glm) V %*% solve(Sigma, X) else matrix(0, length(base), NCOL(X))
   B <- Xp + W %*% (M - X)
-  beta <- as.vector(coef(fit))
+  beta <- as.vector(if (glm) fit$laplace$betahat else coef(fit))
   mean <- as.vector(Xp %*% beta + W %*% (center - X %*% beta) + fit$ssn.object$preds$pred1km$off)
   covariance <- R + W %*% V %*% t(W) + B %*% C %*% t(B)
   list(mean = c(beta, mean), covariance = rbind(cbind(C, C %*% t(B)), cbind(B %*% C, covariance)),

@@ -24,6 +24,7 @@
   samples = 1000,
   local,
   newdata_size,
+  fit_correct = TRUE,
   ...
 )
 }
@@ -210,6 +211,11 @@ from \code{object}. The default is \code{"link"}.}
 
 \item{newdata_size}{The \code{size} value for each observation in \code{newdata}
 used when predicting for the binomial family, with a default value of 1.}
+
+\item{fit_correct}{Apply the latent Laplace mean correction for conditional simulations from
+\code{ssn_glm()} model objects. The default is
+\code{TRUE}. Regardless of \code{fit_correct}, the \code{"object"} output
+still returns model fitted values.}
 }
 \value{
 If \code{output = "newdata"}, an a x b matrix of conditional simulations

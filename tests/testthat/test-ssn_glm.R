@@ -49,14 +49,14 @@ test_that("generics work ssn_glm point data", {
   expect_s3_class(aug_ssn_mod1, "sf")
   expect_true(all(c(".fitted", ".resid", ".hat", ".cooksd", ".std.resid") %in% names(aug_ssn_mod1)))
   expect_equal(aug_ssn_mod1$.fitted[1], log(14.918), tolerance = 0.01)
-  aug_pred_ssn_mod1 <- augment(ssn_mod1, newdata = "pred1km")
+  aug_pred_ssn_mod1 <- augment(ssn_mod1, newdata = "pred1km", fit_correct = FALSE)
   expect_s3_class(aug_pred_ssn_mod1, "sf")
   expect_true(all(c(".fitted") %in% names(aug_ssn_mod1)))
   expect_equal(aug_pred_ssn_mod1$.fitted[1], 2.687, tolerance = 0.01)
   aug_ssn_mod1 <- augment(ssn_mod1, type.predict = "response")
   expect_s3_class(aug_ssn_mod1, "sf")
   expect_equal(aug_ssn_mod1$.fitted[1], 14.918, tolerance = 0.01)
-  aug_pred_ssn_mod1 <- augment(ssn_mod1, newdata = "pred1km", type.predict = "response")
+  aug_pred_ssn_mod1 <- augment(ssn_mod1, newdata = "pred1km", type.predict = "response", fit_correct = FALSE)
   expect_equal(aug_pred_ssn_mod1$.fitted[1], exp(2.687), tolerance = 0.01)
 
   # BIC
@@ -182,14 +182,14 @@ test_that("generics work ssn_glm point data", {
   expect_equal(as.numeric(logLik(ssn_mod1)), -41.490, tolerance = 0.01)
 
   # loocv
-  loocv_ssn_mod1 <- loocv(ssn_mod1)
+  loocv_ssn_mod1 <- loocv(ssn_mod1, fit_correct = FALSE)
   expect_s3_class(loocv_ssn_mod1, "data.frame")
   expect_identical(names(loocv_ssn_mod1), c("bias", "MSPE", "RMSPE", "RAV"))
   expect_equal(loocv_ssn_mod1$MSPE, 0.2457, tolerance = 0.01)
   expect_identical(names(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE)), c("stats", "cv_predict", "se.fit"))
-  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE)$cv_predict[1], 2.695, tolerance = 0.01)
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE, fit_correct = FALSE)$cv_predict[1], 2.695, tolerance = 0.01)
   expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE)$se.fit[1], 0.02816, tolerance = 0.01)
-  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE, type = "response")$cv_predict[1], exp(2.695), tolerance = 0.01)
+  expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE, type = "response", fit_correct = FALSE)$cv_predict[1], exp(2.695), tolerance = 0.01)
   expect_equal(loocv(ssn_mod1, cv_predict = TRUE, se.fit = TRUE, type = "response")$se.fit[1], 0.02816, tolerance = 0.01) # still on link scale
 
   # model.frame
@@ -213,11 +213,12 @@ test_that("generics work ssn_glm point data", {
   expect_invisible(plot(ssn_mod1, which = 6))
 
   # predict
-  expect_equal(predict(ssn_mod1, newdata = "pred1km")[1],
+  # Preserve mode-based numerical references.
+  expect_equal(predict(ssn_mod1, newdata = "pred1km", fit_correct = FALSE)[1],
     c("1" = 2.687),
     tolerance = 0.01
   )
-  expect_equal(predict(ssn_mod1, newdata = "pred1km", type = "response")[1],
+  expect_equal(predict(ssn_mod1, newdata = "pred1km", type = "response", fit_correct = FALSE)[1],
     c("1" = 14.688),
     tolerance = 0.01
   )
@@ -225,19 +226,19 @@ test_that("generics work ssn_glm point data", {
   expect_equal(length(predict(ssn_mod1, newdata = "pred1km", type = "response")), 175)
   expect_identical(names(predict(ssn_mod1, newdata = "pred1km", se.fit = TRUE)), c("fit", "se.fit"))
   expect_identical(names(predict(ssn_mod1, newdata = "pred1km", type = "response", se.fit = TRUE)), c("fit", "se.fit"))
-  expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "prediction", se.fit = TRUE)$fit[1, ],
+  expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "prediction", se.fit = TRUE, fit_correct = FALSE)$fit[1, ],
     c("fit" = 2.687, "lwr" = 2.670, "upr" = 2.740),
     tolerance = 0.01
   )
-  expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "prediction", type = "response", se.fit = TRUE)$fit[1, ],
+  expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "prediction", type = "response", se.fit = TRUE, fit_correct = FALSE)$fit[1, ],
     c("fit" = 14.688, "lwr" = 14.440, "upr" = 14.941),
     tolerance = 0.01
   )
-  expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "confidence")[1, ],
+  expect_equal(predict(ssn_mod1, newdata = "pred1km", interval = "confidence", fit_correct = FALSE)[1, ],
     c("fit" = 2.635, "lwr" = 1.735, "upr" = 3.535),
     tolerance = 0.01
   )
-  expect_equal(predict(ssn_mod1, newdata = "pred1km", type = "response", interval = "confidence")[1, ],
+  expect_equal(predict(ssn_mod1, newdata = "pred1km", type = "response", interval = "confidence", fit_correct = FALSE)[1, ],
     c("fit" = 13.944, "lwr" = 5.754, "upr" = 33.791),
     tolerance = 0.01
   )
@@ -271,7 +272,8 @@ test_that("generics work ssn_glm point data", {
 
   # summary
   expect_type(summary(ssn_mod1), "list")
-  expect_equal(length(ssn_mod1), 37)
+  expect_equal(length(ssn_mod1), 38)
+  expect_named(ssn_mod1$laplace, c("delta", "betahat"))
   expect_equal(length(summary(ssn_mod1)), 8)
   expect_identical(ssn_mod1$family, "Gamma")
 

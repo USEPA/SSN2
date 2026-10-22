@@ -395,6 +395,7 @@ ssn_glm <- function(formula, ssn.object, family,
   output <- list(
     coefficients = model_stats_glm$coefficients,
     fitted = model_stats_glm$fitted,
+    laplace = model_stats_glm$laplace,
     hatvalues = model_stats_glm$hatvalues,
     residuals = model_stats_glm$residuals,
     cooks_distance = model_stats_glm$cooks_distance,

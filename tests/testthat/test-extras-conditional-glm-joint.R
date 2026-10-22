@@ -45,7 +45,7 @@ conditional_glm_joint_fixture <- local({
     B <- V0 %*% t(X) %*% P
     Q <- P - P %*% X %*% B
     w <- as.vector(fitted(fit, type = "link"))
-    w_free <- w - network$obs$off
+    w_free <- w + as.vector(fit$laplace$delta[names(fitted(fit, type = "link"))]) - network$obs$off
     D <- -diag(exp(w))
     L <- solve(P - D)
     M <- L %*% P %*% X
@@ -56,7 +56,7 @@ conditional_glm_joint_fixture <- local({
     T <- Xnew + W %*% (M - X)
     Veta <- R + W %*% L %*% t(W) + T %*% Vbeta %*% t(T)
     Vcross <- Vbeta %*% t(T)
-    beta <- as.vector(coef(fit))
+    beta <- as.vector(fit$laplace$betahat)
     mean_new <- as.vector(Xnew %*% beta +
       C %*% P %*% (w_free - X %*% beta) + network$preds$joint$off)
     fixture <<- list(fit = fit, Sigma = Sigma, C = C, Knew = Knew,
@@ -171,7 +171,7 @@ test_that("locally fitted GLMs retain fitting-block coefficient uncertainty", {
     beta <- conditional(fit, "joint", output = "beta", samples = 10000,
       local = conditional_glm_joint_methods()[[method]])
     expect_equal(dim(beta), c(2L, 10000L))
-    expect_conditional_glm_joint_moments(beta, as.vector(coef(fit)), Vbeta,
+    expect_conditional_glm_joint_moments(beta, as.vector(fit$laplace$betahat), Vbeta,
       paste("local fit beta", method))
   }
 })

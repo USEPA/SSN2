@@ -83,7 +83,7 @@ test_that("generics work local big data", {
 
   # no block prediction (yet)
 
-  preds_p2_pred <- predict(ssn_mod2_bd, "CapeHorn", interval = "prediction", level = 0.9, local = list(size = 40, parallel = TRUE, ncores = 2), type = "response")
+  preds_p2_pred <- predict(ssn_mod2_bd, "CapeHorn", interval = "prediction", level = 0.9, local = list(size = 40, parallel = TRUE, ncores = 2), type = "response", fit_correct = FALSE)
   expect_equal(dim(preds_p2_pred), c(n_CH, 3))
   expect_equal(preds_p2_pred[1, ], c("fit" = 9.99, "lwr" = 9.63, "upr" = 10.35), tolerance = 0.01)
 

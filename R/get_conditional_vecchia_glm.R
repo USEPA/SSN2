@@ -1,9 +1,9 @@
-get_conditional_vecchia_glm_context <- function(object, newdata_name, local_list, covariance = NULL) {
+get_conditional_vecchia_glm_context <- function(object, newdata_name, local_list, covariance = NULL, center = get_latent_center(object)) {
   X <- model.matrix(object)
   n <- NROW(X)
   eta <- fitted(object, type = "link")
   offset <- model.offset(model.frame(object))
-  w <- as.numeric(if (is.null(offset)) eta else eta - offset)
+  w <- as.numeric(if (is.null(offset)) center$eta else center$eta - offset)
   D <- diag(get_D(object$family, eta, object$y, object$size, as.vector(coef(object, type = "dispersion"))))
   if (any(!is.finite(w)) || any(!is.finite(D))) stop("Observed latent values and response curvature must be finite.", call. = FALSE)
   if (is.null(covariance)) covariance <- get_conditional_vecchia_covariance(object, newdata_name)
@@ -38,17 +38,17 @@ get_conditional_vecchia_glm_context <- function(object, newdata_name, local_list
   spatial$randcov <- numeric()
   prediction <- if (NROW(covariance$newdata)) prepare_conditional_vecchia(spatial, local_list) else NULL
   list(operators = operators, order = ord, prediction = prediction, X = X,
-    betahat = coef(object), coefficient_factor = t(chol(vcov(object))))
+    betahat = center$betahat, coefficient_factor = t(chol(vcov(object))))
 }
 
 get_conditional_vecchia_glm <- function(object, newdata_name, Xnew, local_list, samples,
-                                       latent = FALSE, random_design = NULL, random = FALSE, covariance = NULL) {
+                                       latent = FALSE, random_design = NULL, random = FALSE, covariance = NULL, center = get_latent_center(object)) {
   chunk_size <- get_conditional_chunk_size(local_list)
   if (is.null(covariance)) covariance <- get_conditional_vecchia_covariance(object, newdata_name)
   if (!is.null(object$random) && is.null(random_design)) random_design <- conditional_vecchia_random_design(covariance)
   effect <- if (!is.null(object$random)) prepare_conditional_random(object, random_design, local_list,
     covariance_context = covariance) else NULL
-  context <- get_conditional_vecchia_glm_context(object, newdata_name, local_list, covariance)
+  context <- get_conditional_vecchia_glm_context(object, newdata_name, local_list, covariance, center)
   n <- NROW(context$X)
   m <- NROW(Xnew)
   p <- length(context$betahat)

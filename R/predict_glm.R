@@ -6,6 +6,8 @@
 #' @param var_correct A logical indicating whether to return the corrected prediction
 #'   variances when predicting via models fit using \code{ssn_glm()}. The default is
 #'   \code{TRUE}.
+#' @param fit_correct A logical indicating whether to apply the Laplace mean corrections to predictions.
+#'   The default is \code{TRUE}.
 #' @param dispersion The dispersion assumed when computing the prediction standard errors
 #'   for \code{ssn_glm()} model objects when \code{family}
 #'   is \code{"nbinomial"}, \code{"beta"}, \code{"Gamma"}, or \code{"inverse.gaussian"}.
@@ -16,7 +18,8 @@
 #' @method predict ssn_glm
 #' @export
 predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms", "weight"), se.fit = FALSE, interval = c("none", "confidence", "prediction"),
-                            level = 0.95, block = FALSE, dispersion = NULL, terms = NULL, local, var_correct = TRUE, delta = FALSE, newdata_size, na.action = na.fail, ...) {
+                            level = 0.95, block = FALSE, dispersion = NULL, terms = NULL, local, var_correct = TRUE, delta = FALSE, newdata_size, na.action = na.fail, fit_correct = TRUE, ...) {
+  center <- get_latent_center(object, fit_correct)
   # match type argument so the two display
   type <- match.arg(type)
 
@@ -34,6 +37,9 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
     se.fit <- FALSE
     interval <- "none"
   }
+
+  response_mean <- center$active && type == "response" && interval != "confidence"
+  need_var <- se.fit || response_mean
 
   if (!is.logical(delta)) {
     stop("delta must be TRUE or FALSE", call. = FALSE)
@@ -80,7 +86,8 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
     pred_list <- lapply(newdata_name, function(x) {
       predict(object, x,
         type = type, se.fit = se.fit, interval = interval, level = level,
-        terms = terms, var_correct = var_correct, delta = delta, na.action = na.action, local = local, ...
+        terms = terms, var_correct = var_correct, delta = delta, na.action = na.action, local = local,
+        fit_correct = fit_correct, ...
       )
     })
     names(pred_list) <- newdata_name
@@ -116,7 +123,7 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
   # distance/covariance data
   if (interval == "confidence") {
     # finding fitted values of the mean parameters
-    fit <- as.numeric(newdata_model %*% coef(object))
+    fit <- as.numeric(newdata_model %*% center$betahat)
     if (!is.null(newdata_offset)) {
       fit <- fit + newdata_offset
     }
@@ -168,18 +175,18 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
       predvar_adjust_all <- FALSE
     }
 
-    w <- fitted(object, type = "link")
+    w <- center$eta
     size <- object$size
 
     pred_val <- run_pred_dispatch(get_pred_glm, newdata_list, local_list = local_list,
-      se.fit = se.fit, interval = interval, formula = object$formula,
+      se.fit = need_var, interval = interval, formula = object$formula,
       obdata = obdata, cov_matrix_val = cov_matrix_val,
       spatial_nugget_var = spatial_nugget_var, randcov_params = randcov_params, cov_lowchol = cov_lowchol,
       randcov_context = randcov_context,
       Xmat = Xmat, y = y, offset = offset,
-      betahat = coefficients(object), cov_betahat = vcov(object, var_correct = FALSE),
+      betahat = center$betahat, cov_betahat = vcov(object, var_correct = FALSE),
       contrasts = object$contrasts, local = local_list,
-      family = object$family, w = w,
+      family = object$family, w = w, w_mode = fitted(object, type = "link"),
       size = size, dispersion = dispersion_params_val,
       predvar_adjust_ind = predvar_adjust_ind, xlevels = object$xlevels, type = type
     )
@@ -200,7 +207,7 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
         fit <- fit + newdata_offset
       }
       se <- NULL
-      if (se.fit) {
+      if (need_var) {
         vars <- vapply(pred_val, function(x) x$var, numeric(1))
         if (predvar_adjust_all) {
           # predvar_adjust is for the local function so FALSE there is TRUE
@@ -219,14 +226,14 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
           vars <- vars_adj + vars
         }
         se <- sqrt(vars)
-        if (type == "response" && delta) {
+        if (type == "response" && se.fit && delta) {
           se <- get_delta_se(fit, se, object$family, newdata_size)
         }
       }
       if (type == "response") {
-        fit <- invlink(fit, object$family, newdata_size)
+        fit <- if (response_mean) invlink_mean(fit, vars, object$family, newdata_size) else invlink(fit, object$family, newdata_size)
       }
-      return(finalize_interval_none(fit, se, add_newdata_rows, object$missing_index))
+      return(finalize_interval_none(fit, if (se.fit) se else NULL, add_newdata_rows, object$missing_index))
     }
 
     if (interval == "prediction") {
@@ -258,7 +265,7 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
         se <- get_delta_se(fit, se, object$family, newdata_size)
       }
       if (type == "response") {
-        fit <- invlink(fit, object$family, newdata_size)
+        fit <- if (response_mean) invlink_mean(fit, vars, object$family, newdata_size) else invlink(fit, object$family, newdata_size)
         lwr <- invlink(lwr, object$family, newdata_size)
         upr <- invlink(upr, object$family, newdata_size)
       }
@@ -289,6 +296,7 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
 #' @param local Local neighborhood options (not yet implemented)
 #' @param family glm family
 #' @param w Latent effects
+#' @param w_mode Fitted latent mode for curvature calculations
 #' @param size Number of binomial trials
 #' @param dispersion Dispersion parameter
 #' @param predvar_adjust_ind Whether prediction variance should be adjusted for uncertainty in w
@@ -300,7 +308,8 @@ predict.ssn_glm <- function(object, newdata, type = c("link", "response", "terms
 get_pred_glm <- function(newdata_list, se.fit, interval,
                          formula, obdata, cov_matrix_val, spatial_nugget_var, randcov_params, cov_lowchol,
                          Xmat, y, offset, betahat, cov_betahat, contrasts, local,
-                         family, w, size, dispersion, predvar_adjust_ind, xlevels, type = "link", randcov_context = NULL) {
+                         family, w, size, dispersion, predvar_adjust_ind, xlevels, type = "link", randcov_context = NULL, w_mode = w) {
+  force(w_mode)
   cov_vector_val <- newdata_list$c0
   n <- length(cov_vector_val)
   if (local$method == "covariance") {
@@ -310,6 +319,7 @@ get_pred_glm <- function(newdata_list, se.fit, interval,
     Xmat <- Xmat[keep, , drop = FALSE]
     y <- y[keep]
     w <- w[keep]
+    w_mode <- w_mode[keep]
     if (!is.null(offset)) offset <- offset[keep]
     if (!is.null(size)) size <- size[keep]
   }
@@ -343,7 +353,7 @@ get_pred_glm <- function(newdata_list, se.fit, interval,
     total_var <- spatial_nugget_var + randcov_newvar(randcov_params, newdata_list$row, context = randcov_context)
     var <- as.numeric(total_var - Matrix::crossprod(SqrtSigInv_c0, SqrtSigInv_c0) + H %*% Matrix::tcrossprod(cov_betahat, H))
     if (predvar_adjust_ind) {
-      var_adj <- get_wts_varw(family, Xmat, y, w, size, dispersion, cov_lowchol, x0, c0)
+      var_adj <- get_wts_varw(family, Xmat, y, w_mode, size, dispersion, cov_lowchol, x0, c0)
       var <- var_adj + var
     }
     pred_list <- list(fit = fit, var = var)

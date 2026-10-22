@@ -2,12 +2,16 @@
 #' when \code{cv_predict = TRUE} and using \code{ssn_lm()} or \code{ssn_glm} objects.
 #' @param delta A logical indicating whether to return delta method standard errors
 #' on the response scale when \code{se.fit = TRUE} and \code{type = "response"}. The default is \code{FALSE}.
+#' @param fit_correct A logical indicating whether to apply the Laplace mean corrections to predictions.
+#'   The default is \code{TRUE}.
 #' @rdname kcv.SSN2
 #' @method kcv ssn_glm
 #' @export
 kcv.ssn_glm <- function(object, k = 5, cv_predict = FALSE,
                         type = c("link", "response"), se.fit = FALSE,
-                        delta = FALSE, local, folds_index, ...) {
+                        delta = FALSE, local, folds_index, fit_correct = TRUE, ...) {
+  center <- get_latent_center(object, fit_correct)
+  fit_correct <- center$active
   if (missing(folds_index)) folds_index <- NULL
   if (missing(local)) local <- NULL
   type <- match.arg(type)
@@ -22,16 +26,22 @@ kcv.ssn_glm <- function(object, k = 5, cv_predict = FALSE,
   if (is_loocv_folds(folds$fold_list)) {
     return(loocv(
       object, cv_predict = cv_predict, type = type, se.fit = se.fit,
-      delta = delta, local = local, ...
+      delta = delta, local = local, fit_correct = fit_correct, ...
     ))
   }
 
   # RAV is part of SSN2's established GLM CV statistics, so link-scale
   # standard errors are needed even when the caller does not return them.
   if (local$method == "all") {
-    cv <- get_kcv.ssn_glm(object, folds$fold_list, se.fit = TRUE, local = local)
+    cv <- get_kcv.ssn_glm(
+      object, folds$fold_list, se.fit = TRUE, local = local,
+      fit_correct = fit_correct
+    )
   } else {
-    cv <- get_kcv_local.ssn_glm(object, folds$fold_list, se.fit = TRUE, local = local)
+    cv <- get_kcv_local.ssn_glm(
+      object, folds$fold_list, se.fit = TRUE, local = local,
+      fit_correct = fit_correct
+    )
   }
   stats <- get_kcv_glm_stats(cv$cv_predict, object$y, cv$se.fit)
 
@@ -83,12 +93,15 @@ get_kcv_glm_stats <- function(cv_predict, response, se.fit) {
 #' @param fold_list A named list of per-fold row-index vectors.
 #' @param se.fit Whether to also return prediction standard errors.
 #' @param local A resolved \code{local} list.
+#' @param fit_correct Whether to apply the Laplace mean corrections.
 #'
 #' @return A list with \code{cv_predict_link}, \code{cv_predict} (response
 #'   scale), and \code{se.fit} (link scale, \code{NULL} if not requested).
 #'
 #' @noRd
-get_kcv.ssn_glm <- function(object, fold_list, se.fit, local) {
+get_kcv.ssn_glm <- function(object, fold_list, se.fit, local, fit_correct = TRUE) {
+  center <- get_latent_center(object, fit_correct)
+  need_se <- se.fit || center$active
   y <- object$y
   Sigma <- covmatrix(object)
   X <- model.matrix(object)
@@ -101,7 +114,7 @@ get_kcv.ssn_glm <- function(object, fold_list, se.fit, local) {
   frame <- model.frame(object)
   offset <- model.offset(frame)
   w_link <- fitted(object, type = "link")
-  w <- if (is.null(offset)) w_link else w_link - as.vector(offset)
+  w <- if (is.null(offset)) center$eta else center$eta - as.vector(offset)
   wX <- cbind(w, X)
   Sigma_inv_wX <- Sigma_inv %*% wX
   weights_beta <- tcrossprod(cov_betahat, Sigma_inv_X)
@@ -112,19 +125,23 @@ get_kcv.ssn_glm <- function(object, fold_list, se.fit, local) {
   values <- run_pred_dispatch(
     get_kcv_glm, fold_list, local,
     Sig = Sigma, SigInv = Sigma_inv, Xmat = X, w = matrix(w, ncol = 1),
-    wX = wX, SigInv_wX = Sigma_inv_wX, mHinv = mHinv, se.fit = se.fit
+    wX = wX, SigInv_wX = Sigma_inv_wX, mHinv = mHinv, se.fit = need_se
   )
   pred_link <- numeric(object$n)
-  if (se.fit) se <- numeric(object$n)
+  if (need_se) se <- numeric(object$n)
   for (i in seq_along(fold_list)) {
     held <- fold_list[[i]]
     pred_link[held] <- values[[i]]$pred
-    if (se.fit) se[held] <- values[[i]]$se.fit
+    if (need_se) se[held] <- values[[i]]$se.fit
   }
   if (!is.null(offset)) pred_link <- pred_link + as.vector(offset)
   list(
     cv_predict_link = pred_link,
-    cv_predict = invlink(pred_link, object$family, object$size),
+    cv_predict = if (center$active) {
+      invlink_mean(pred_link, se^2, object$family, object$size)
+    } else {
+      invlink(pred_link, object$family, object$size)
+    },
     se.fit = if (se.fit) se else NULL
   )
 }
@@ -240,30 +257,40 @@ get_kcv_local_glm_refit <- function(object, fold, local) {
 #' @param fold_list A named list of per-fold row-index vectors.
 #' @param se.fit Whether to also return prediction standard errors.
 #' @param local A resolved \code{local} list.
+#' @param fit_correct Whether to apply the Laplace mean corrections.
 #'
 #' @return A list with \code{cv_predict_link}, \code{cv_predict} (response
 #'   scale), and \code{se.fit} (link scale, \code{NULL} if not requested).
 #'
 #' @noRd
-get_kcv_local.ssn_glm <- function(object, fold_list, se.fit, local) {
+get_kcv_local.ssn_glm <- function(object, fold_list, se.fit, local, fit_correct = TRUE) {
+  center <- get_latent_center(object, fit_correct)
+  need_se <- se.fit || center$active
+  fit_correct <- center$active
   pred_link <- numeric(object$n)
-  if (se.fit) se <- numeric(object$n)
+  if (need_se) se <- numeric(object$n)
   for (i in seq_along(fold_list)) {
     held <- fold_list[[i]]
     refit <- get_kcv_local_glm_refit(object, held, local)
+    # Preserve both covariance variants; prediction uses the uncorrected one.
+    refit$vcov$fixed <- object$vcov$fixed
     prediction <- predict(
-      refit, newdata = ".missing", type = "link", se.fit = se.fit,
-      interval = "none", local = local
+      refit, newdata = ".missing", type = "link", se.fit = need_se,
+      interval = "none", local = local, fit_correct = fit_correct
     )
     fold_prediction <- extract_kcv_fold_prediction(
-      prediction, object$observed_index[held], se.fit
+      prediction, object$observed_index[held], need_se
     )
     pred_link[held] <- fold_prediction$pred
-    if (se.fit) se[held] <- fold_prediction$se.fit
+    if (need_se) se[held] <- fold_prediction$se.fit
   }
   list(
     cv_predict_link = pred_link,
-    cv_predict = invlink(pred_link, object$family, object$size),
+    cv_predict = if (center$active) {
+      invlink_mean(pred_link, se^2, object$family, object$size)
+    } else {
+      invlink(pred_link, object$family, object$size)
+    },
     se.fit = if (se.fit) se else NULL
   )
 }

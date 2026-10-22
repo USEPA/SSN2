@@ -337,7 +337,7 @@ test_that("Gaussian local covariance ties prefer later observations", {
   expect_equal(which(as.numeric(weights) != 0), 3L)
 })
 
-test_that("local CV preserves fitting groups and theoretical fold covariance with missing rows", {
+test_that("local CV preserves fitting groups and reuses full-fit covariance with missing rows", {
   network <- mf04p
   set.seed(2)
   network$obs <- network$obs[sample(nrow(network$obs)), ]
@@ -380,11 +380,13 @@ test_that("local CV preserves fitting groups and theoretical fold covariance wit
       weights <- naive %*% t(X) %*% W
       theoretical <- weights %*% V %*% t(weights)
       expect_gt(max(abs(theoretical - naive)), 1e-5)
-      expect_equal(unname(vcov(refit)), unname(theoretical), tolerance = 1e-8)
+      expect_equal(unname(vcov(refit)), unname(naive), tolerance = 1e-8)
     }
     cv <- kcv(fit, folds_index = folds, local = local, cv_predict = TRUE, se.fit = TRUE,
       type = "link")
-    direct <- predict(refit, ".missing", local = local, se.fit = TRUE,
+    substituted <- refit
+    substituted$vcov$fixed <- if (family == "Gaussian") vcov(fit) else fit$vcov$fixed
+    direct <- predict(substituted, ".missing", local = local, se.fit = TRUE,
       type = if (family == "Gaussian") "response" else "link")
     positions <- match(as.character(fit$observed_index[held]), names(direct$fit))
     expect_equal(cv$cv_predict[held], unname(direct$fit[positions]), tolerance = 1e-8)
@@ -418,7 +420,7 @@ test_that("GLM local prediction is independent of other requested locations", {
   expect_equal(dim(predict(fit, "CapeHorn", local = local, type = "weight")), c(3L, fit$n))
 })
 
-test_that("local GLM prediction matches spmodel with offsets and intervals", {
+test_that("mode-based local GLM prediction matches spmodel with offsets and intervals", {
   fit_tolerance <- 0.1
   se_tolerance <- 2e-4
   beta_tolerance <- 0.03
@@ -440,8 +442,8 @@ test_that("local GLM prediction matches spmodel with offsets and intervals", {
     xcoord = "cx", ycoord = "cy")
   local <- list(method = "covariance", size = 12, parallel = FALSE)
   for (correct in c(FALSE, TRUE)) for (type in c("link", "response")) {
-    actual <- predict(a, "CapeHorn", local = local, type = type, interval = "prediction", se.fit = TRUE, var_correct = correct)
-    expected <- predict(b, newdata, local = local, type = type, interval = "prediction", se.fit = TRUE, var_correct = correct)
+    actual <- predict(a, "CapeHorn", local = local, type = type, interval = "prediction", se.fit = TRUE, var_correct = correct, fit_correct = FALSE)
+    expected <- predict(b, newdata, local = local, type = type, interval = "prediction", se.fit = TRUE, var_correct = correct, fit_correct = FALSE)
     expect_equal(unname(actual$fit), unname(expected$fit), tolerance = fit_tolerance)
     expect_equal(unname(actual$se.fit), unname(expected$se.fit), tolerance = se_tolerance)
   }

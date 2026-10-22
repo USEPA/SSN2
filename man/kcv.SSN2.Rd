@@ -27,6 +27,7 @@
   delta = FALSE,
   local,
   folds_index,
+  fit_correct = TRUE,
   ...
 )
 }
@@ -76,6 +77,9 @@ when \code{cv_predict = TRUE} and using \code{ssn_lm()} or \code{ssn_glm} object
 
 \item{delta}{A logical indicating whether to return delta method standard errors
 on the response scale when \code{se.fit = TRUE} and \code{type = "response"}. The default is \code{FALSE}.}
+
+\item{fit_correct}{A logical indicating whether to apply the Laplace mean
+corrections to predictions. The default is \code{TRUE}.}
 }
 \value{
 If \code{cv_predict = FALSE} and \code{se.fit = FALSE},
@@ -122,6 +126,15 @@ the proportion of held-out observations whose true value falls within
 interval \code{\link[spmodel:predict.spmodel]{spmodel::predict.spmodel()}} uses by default). This is only available for
 \code{ssn_lm()} objects, since \code{ssn_glm()}
 have no observed-scale latent mean to compare against.
+
+Local K-fold refits reuse the full fit's coefficient covariance.
+
+For \code{ssn_glm()} objects, \code{fit_correct = TRUE} applies the
+latent mean correction and averages the inverse link for response-scale
+predictions and CV statistics. Exact CV uses the full-fit correction;
+local CV recomputes it for each fold unless it delegates to \code{loocv()}.
+With \code{fit_correct = FALSE} or an object without a stored correction,
+neither correction is applied.
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

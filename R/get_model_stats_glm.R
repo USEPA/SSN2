@@ -118,6 +118,14 @@ invlink <- function(fitted_link, family, size) {
   fitted
 }
 
+invlink_mean <- function(fitted_link, var_link, family, size = NULL) {
+  if (!family %in% c("binomial", "beta")) return(exp(fitted_link + var_link / 2))
+  # Probit approximation to the logistic-normal mean; consider updating to Gauss-Hermite quadrature
+  prob <- stats::plogis(fitted_link / sqrt(1 + pi * var_link / 8))
+  if (family == "binomial" && !is.null(size)) prob <- prob * size
+  prob
+}
+
 get_delta_se <- function(fit, se.fit, family, newdata_size = 1) {
   if (family %in% c("poisson", "nbinomial", "Gamma", "inverse.gaussian")) {
     g <- exp(fit)

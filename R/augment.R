@@ -195,13 +195,17 @@ augment.ssn_lm <- function(x, drop = TRUE, newdata = NULL, se_fit = FALSE,
 #' @param var_correct A logical indicating whether to return the corrected prediction
 #'   variances when predicting via models fit using \code{ssn_glm}. The default is
 #'   \code{TRUE}.
+#' @param fit_correct A logical indicating whether to apply the Laplace mean
+#'   corrections to predictions at \code{newdata}; see [predict.ssn_glm()].
+#'   The default is \code{TRUE}.
 #' @rdname augment.SSN2
 #' @method augment ssn_glm
 #' @export
 augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("link", "response"),
                             type.residuals = c("deviance", "pearson", "response"), se_fit = FALSE,
                             interval = c("none", "confidence", "prediction"),
-                            newdata_size, level = 0.95, local, var_correct = TRUE, ...) {
+                            newdata_size, level = 0.95, local, var_correct = TRUE,
+                            fit_correct = TRUE, ...) {
 
   type.predict <- match.arg(type.predict)
   type.residuals <- match.arg(type.residuals)
@@ -259,7 +263,7 @@ augment.ssn_glm <- function(x, drop = TRUE, newdata = NULL, type.predict = c("li
       preds_newdata <- predict(x,
         newdata = y, type = type.predict, se.fit = se_fit, interval = interval,
         newdata_size = newdata_size, level = level,
-        var_correct = var_correct, local = local, ...
+        var_correct = var_correct, local = local, fit_correct = fit_correct, ...
       )
       if (se_fit) {
         if (interval %in% c("confidence", "prediction")) {

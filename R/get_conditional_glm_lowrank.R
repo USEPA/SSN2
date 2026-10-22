@@ -4,11 +4,11 @@
 #' @param covariance Optional prepared base covariance context.
 #' @return Whitened conditional factors and a base-sized covariance context.
 #' @noRd
-get_conditional_glm_base <- function(object, index, covariance = NULL) {
+get_conditional_glm_base <- function(object, index, covariance = NULL, center = get_latent_center(object)) {
   X <- model.matrix(object)[index, , drop = FALSE]
   eta <- fitted(object, type = "link")[index]
   offset <- model.offset(model.frame(object))
-  w <- if (is.null(offset)) eta else eta - offset[index]
+  w <- if (is.null(offset)) center$eta[index] else center$eta[index] - offset[index]
   if (is.null(covariance)) covariance <- get_conditional_lowrank_covariance(object, index)
   cov_lowchol_base <- t(chol(conditional_vecchia_covariance(covariance, seq_along(index))))
   SqrtSigInv_X <- forwardsolve(cov_lowchol_base, X)
@@ -24,7 +24,7 @@ get_conditional_glm_base <- function(object, index, covariance = NULL) {
   list(covariance = covariance, cov_lowchol_base = cov_lowchol_base,
     cov_lowchol_mH = cov_lowchol_mH, cov_betahat_lowchol = t(chol(cov_betahat)),
     SqrtSigInv_X = SqrtSigInv_X, SqrtSigInv_w = forwardsolve(cov_lowchol_base, w),
-    wts_latent = wts_latent, betahat = coef(object))
+    wts_latent = wts_latent, betahat = center$betahat)
 }
 
 #' Draw low-rank GLM simulations with cached factors
@@ -38,10 +38,10 @@ get_conditional_glm_base <- function(object, index, covariance = NULL) {
 #' @param covariance Optional prepared base covariance context.
 #' @return Matrices of coefficients and offset-free prediction latent values.
 #' @noRd
-get_conditional_glm_lowrank <- function(object, newdata, Xnew, local_list, samples, latent = FALSE, random_design = NULL, covariance = NULL) {
+get_conditional_glm_lowrank <- function(object, newdata, Xnew, local_list, samples, latent = FALSE, random_design = NULL, covariance = NULL, center = get_latent_center(object)) {
   if (!is.null(object$random) && is.null(random_design)) random_design <- get_conditional_random_design(object, newdata, local_list$index$base)
   chunk_size <- get_conditional_chunk_size(local_list)
-  base <- get_conditional_glm_base(object, local_list$index$base, covariance)
+  base <- get_conditional_glm_base(object, local_list$index$base, covariance, center)
   effect <- if (!is.null(object$random)) {
     get_conditional_lowrank_effect(base$covariance, random_design)
   } else NULL

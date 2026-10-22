@@ -25,6 +25,7 @@ This update was focused on enhancing `SSN2` alignment with `spmodel`.
 
 ## Minor Updates
 
+* Added a `fit_correct` argument to `predict()`, `augment()`, `loocv()`, `kcv()`, and `conditional()` for `ssn_glm()` models, which applies Laplace mean corrections to predictions and conditional simulations (on both the link and response scale).
 * Updated the Laplace log-likelihood evaluation to use the determinant of the unprojected Hessian for maximum likelihood estimation. This is a breaking change that affects backwards compatibility.
 * Restored the Laplace log-likelihood constant `n / 2 * log(2 * pi)` so likelihood-based statistics are comparable on the standard scale. This is a breaking change that affects backwards compatibility.
 * Various minor updates to enhance alignment with `spmodel`.

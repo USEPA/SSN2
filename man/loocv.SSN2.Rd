@@ -23,6 +23,7 @@
   se.fit = FALSE,
   delta = FALSE,
   local,
+  fit_correct = TRUE,
   ...
 )
 }
@@ -59,6 +60,9 @@ when \code{cv_predict = TRUE} and using \code{ssn_glm()} objects.}
 
 \item{delta}{A logical indicating whether to return delta method standard errors
 on the response scale when \code{se.fit = TRUE} and \code{type = "response"}. The default is \code{FALSE}.}
+
+\item{fit_correct}{A logical indicating whether to apply the Laplace mean
+corrections to predictions. The default is \code{TRUE}.}
 }
 \value{
 If \code{cv_predict = FALSE} and \code{se.fit = FALSE},
@@ -92,6 +96,11 @@ the better the model fit (according to the leave-out-out criterion).
 The higher the cor2, the better the model fit (according to the leave-out-out
 criterion). cor2 and cover.XX are not returned when \code{object} was fit using
 \code{ssn_glm()} because we do not observe the underlying latent mean.
+
+For \code{ssn_glm()} objects, \code{fit_correct = TRUE} uses the
+full-fit latent mean correction and averages the inverse link for
+response-scale predictions and CV statistics. With \code{fit_correct = FALSE}
+or an object without a stored correction, neither correction is applied.
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

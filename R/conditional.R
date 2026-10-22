@@ -332,7 +332,12 @@ conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 10
 #'   from \code{object}. The default is \code{"link"}.
 #' @param newdata_size The \code{size} value for each observation in \code{newdata}
 #'   used when predicting for the binomial family, with a default value of 1.
-conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("link", "response", "new"), samples = 1000, local, newdata_size, ...) {
+#' @param fit_correct Apply the latent Laplace mean correction for conditional simulations from
+#'   \code{ssn_glm()} model objects. The default is
+#'   \code{TRUE}. Regardless of \code{fit_correct}, the \code{"object"} output
+#'   still returns model fitted values.
+conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("link", "response", "new"), samples = 1000, local, newdata_size, fit_correct = TRUE, ...) {
+  center <- get_latent_center(object, fit_correct)
   if (!is.numeric(samples) || length(samples) != 1L || !is.finite(samples) || samples < 1 || samples != floor(samples)) {
     stop("samples must be a positive integer.", call. = FALSE)
   }
@@ -354,17 +359,17 @@ conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("l
     if (!is.null(newdata_name)) object$ssn.object$preds[[newdata_name]] else NULL)
   if (conditioning$exact) {
     iid_variance <- get_conditional_iid_variance(object)
-    val <- if (is.null(iid_variance)) draw_conditional_exact(object, newdata_name, samples, output, type, newdata_size) else
-      draw_conditional_iid(object, newdata_name, iid_variance, samples, output, type, newdata_size)
+    val <- if (is.null(iid_variance)) draw_conditional_exact(object, newdata_name, samples, output, type, newdata_size, center = center) else
+      draw_conditional_iid(object, newdata_name, iid_variance, samples, output, type, newdata_size, center = center)
     if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
     return(if (length(output) == 1) val[[output]] else val[output])
   }
   if (identical(conditioning$approximation, "low-rank")) {
-    val <- draw_conditional_lowrank(object, newdata_name, conditioning, samples, output, type, newdata_size)
+    val <- draw_conditional_lowrank(object, newdata_name, conditioning, samples, output, type, newdata_size, center = center)
     if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
     return(if (length(output) == 1) val[[output]] else val[output])
   }
-  val <- draw_conditional_vecchia_model(object, newdata_name, conditioning, samples, output, type, newdata_size)
+  val <- draw_conditional_vecchia_model(object, newdata_name, conditioning, samples, output, type, newdata_size, center = center)
   if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
   if (length(output) == 1) val[[output]] else val[output]
 }
@@ -532,7 +537,7 @@ get_conditional_context <- function(object, newdata_name, local = FALSE) {
 #'   \code{dispersion}, and \code{size}.
 #'
 #' @noRd
-get_conditional_context_glm <- function(object, newdata_name, local = FALSE) {
+get_conditional_context_glm <- function(object, newdata_name, local = FALSE, center = get_latent_center(object)) {
   context <- get_conditional_base_context(object, newdata_name, local = local)
 
   y <- model.response(model.frame(object))
@@ -544,7 +549,7 @@ get_conditional_context_glm <- function(object, newdata_name, local = FALSE) {
   context$w <- w
   context$w_free <- w_free
   context$offset <- offset
-  context$betahat <- coefficients(object)
+  context$betahat <- center$betahat
   context$cov_betahat <- vcov(object)
   context$cov_betahat_uncorrected <- vcov(object, var_correct = FALSE)
   context$family <- object$family

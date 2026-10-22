@@ -54,8 +54,9 @@ test_that("shared-effect exact draws recover independent total-covariance moment
     C <- as.matrix(vcov(fit))
     W <- t(cross) %*% solve(Sigma)
     R <- prior - W %*% cross
-    beta <- as.vector(coef(fit))
-    center <- if (glm) as.vector(fitted(fit, type = "link")) else model.response(model.frame(fit))
+    beta <- as.vector(if (glm) fit$laplace$betahat else coef(fit))
+    eta <- if (glm) fitted(fit, type = "link") else model.response(model.frame(fit))
+    center <- if (glm) as.vector(eta + fit$laplace$delta[names(eta)]) else eta
     center <- center - model.offset(model.frame(fit))
     V <- if (glm) solve(solve(Sigma) + diag(exp(fitted(fit, type = "link")))) else matrix(0, 12, 12)
     M <- if (glm) V %*% solve(Sigma, X) else matrix(0, 12, NCOL(X))
@@ -68,7 +69,7 @@ test_that("shared-effect exact draws recover independent total-covariance moment
     expect_exact_moments(rbind(draws$beta, draws$newdata), c(beta, mean),
       rbind(cbind(C, C %*% t(B)), cbind(B %*% C, covariance)))
     expect_exact_moments(matrix(colMeans(draws$newdata), 1), mean(mean), matrix(sum(covariance) / 16, 1))
-    expect_equal(draws$object, matrix(center + model.offset(model.frame(fit)), 12, 6000), ignore_attr = TRUE)
+    expect_equal(draws$object, matrix(eta, 12, 6000), ignore_attr = TRUE)
     if (glm) {
       expect_exact_moments(rbind(draws$beta, draws$latent),
         c(beta, center + model.offset(model.frame(fit))),

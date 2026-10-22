@@ -580,8 +580,9 @@ get_kcv_known_initials <- function(object, glm = FALSE) {
 #' Reuses the fitted model's own local fitting groups (via
 #' \code{object$local_index}, restricted to the retained rows) when present,
 #' otherwise builds fresh k-means groups sized to \code{local$size} (capped
-#' at the number of retained rows). Always uses theoretical variance
-#' adjustment and forwards parallel controls to fitting.
+#' at the number of retained rows). Uses no variance adjustment; callers
+#' substitute the full fit's coefficient covariance. Forwards parallel
+#' controls to fitting.
 #'
 #' @param object A fitted \code{ssn_lm}/\code{ssn_glm} model object.
 #' @param fold A vector of row indices (into the fitted rows) held out for
@@ -592,7 +593,7 @@ get_kcv_known_initials <- function(object, glm = FALSE) {
 #'
 #' @noRd
 get_kcv_estimation_local <- function(object, fold, local) {
-  fit_local <- list(var_adjust = "theoretical", parallel = local$parallel)
+  fit_local <- list(var_adjust = "none", parallel = local$parallel)
   if (isTRUE(local$parallel)) fit_local$ncores <- local$ncores
   if (!is.null(object$local_index)) {
     fit_local$index <- object$local_index[-fold]
@@ -657,6 +658,7 @@ get_kcv_local_lm_refit <- function(object, fold, local) {
         tailup_initial = initial$tailup_initial, taildown_initial = initial$taildown_initial,
         euclid_initial = initial$euclid_initial, nugget_initial = initial$nugget_initial,
         additive = object$additive, estmethod = object$estmethod,
+        ddf = "asymptotic",
         anisotropy = object$anisotropy, random = object$random,
         randcov_initial = initial$randcov_initial,
         partition_factor = object$partition_factor,
@@ -687,6 +689,8 @@ get_kcv_local.ssn_lm <- function(object, fold_list, se.fit, local) {
   for (i in seq_along(fold_list)) {
     held <- fold_list[[i]]
     refit <- get_kcv_local_lm_refit(object, held, local)
+    # Reuse full-data coefficient uncertainty, as in local loocv().
+    refit$vcov$fixed <- vcov(object)
     prediction <- predict(
       refit, newdata = ".missing", se.fit = se.fit, interval = "none", local = local
     )

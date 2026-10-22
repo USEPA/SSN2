@@ -43,19 +43,20 @@ test_that("prediction works", {
     dispersion_initial = dispersion_initial("Gamma", 100, known = "none")
   )
 
-  preds_CH <- predict(ssn_mod2, "CapeHorn")
+  # Preserve mode-based numerical references.
+  preds_CH <- predict(ssn_mod2, "CapeHorn", fit_correct = FALSE)
   expect_equal(length(preds_CH), n_CH)
   expect_equal(preds_CH[1:2], c("1" = 2.301, "2" = 2.301), tolerance = 0.01)
 
-  preds_CH <- predict(ssn_mod2, "CapeHorn", type = "response")
+  preds_CH <- predict(ssn_mod2, "CapeHorn", type = "response", fit_correct = FALSE)
   expect_equal(length(preds_CH), n_CH)
   expect_equal(preds_CH[1:2], c("1" = 9.992, "2" = 9.993), tolerance = 0.01)
 
-  preds_CH_conf <- predict(ssn_mod2, "CapeHorn", interval = "confidence")
+  preds_CH_conf <- predict(ssn_mod2, "CapeHorn", interval = "confidence", fit_correct = FALSE)
   expect_equal(dim(preds_CH_conf), c(n_CH, 3))
   expect_equal(preds_CH_conf[1, ], c("fit" = 2.495, "lwr" = 1.597, "upr" = 3.392), tolerance = 0.01)
 
-  preds_p1_pred <- predict(ssn_mod2, "pred1km", interval = "prediction", level = 0.9)
+  preds_p1_pred <- predict(ssn_mod2, "pred1km", interval = "prediction", level = 0.9, fit_correct = FALSE)
   expect_equal(dim(preds_p1_pred), c(n_p1, 3))
   expect_equal(preds_p1_pred[1, ], c("fit" = 2.687, "lwr" = 2.672, "upr" = 2.701), tolerance = 0.01)
 
