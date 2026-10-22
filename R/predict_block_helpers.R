@@ -49,9 +49,8 @@ get_prediction_chunks <- function(index, chunk_size) {
 #' Apply a function over prediction chunks, optionally in parallel
 #'
 #' Falls back to \code{lapply()} when \code{parallel} is \code{FALSE} or
-#' there is only one chunk. Otherwise starts a cluster and loads SSN2 on each
-#' worker (via \code{pkgload::load_all()} if running from a development
-#' install, otherwise \code{loadNamespace()}) before applying \code{fun}.
+#' there is only one chunk. Otherwise creates workers through
+#' \code{make_ssn_cluster()} before applying \code{fun}.
 #'
 #' @param chunks A list of index chunks, from
 #'   \code{\link{get_prediction_chunks}()}.
@@ -68,22 +67,8 @@ get_block_chunk_apply <- function(chunks, fun, parallel = FALSE, ncores = NULL) 
     return(lapply(chunks, fun))
   }
   nworkers <- min(as.integer(ncores), length(chunks))
-  cl <- parallel::makeCluster(nworkers)
+  cl <- make_ssn_cluster(nworkers)
   on.exit(parallel::stopCluster(cl), add = TRUE)
-  dev_path <- NULL
-  if (requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("SSN2")) {
-    source_file <- utils::getSrcFilename(utils::getSrcref(get_block_chunk_apply), full.names = TRUE)
-    candidate <- normalizePath(file.path(dirname(source_file), ".."), mustWork = TRUE)
-    if (file.exists(file.path(candidate, "DESCRIPTION"))) dev_path <- candidate
-  }
-  parallel::clusterCall(cl, function(dev_path) {
-    if (is.null(dev_path)) {
-      loadNamespace("SSN2")
-    } else {
-      pkgload::load_all(dev_path, quiet = TRUE)
-    }
-    NULL
-  }, dev_path)
   parallel::parLapply(cl, chunks, fun)
 }
 

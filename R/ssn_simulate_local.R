@@ -393,12 +393,12 @@ get_ssn_simulate_lowrank <- function(covariance_fit, samples, local) {
   }
 
   if (local$parallel) {
-    cl <- parallel::makeCluster(local$ncores)
+    cl <- make_ssn_cluster(local$ncores)
+    on.exit(parallel::stopCluster(cl), add = TRUE)
     new_val <- parallel::parLapply(
       cl, new_index, get_ssn_simulate_new_from_base,
       covariance_fit, observed, base_data, base_val, base_lowchol, samples
     )
-    parallel::stopCluster(cl)
   } else {
     new_val <- lapply(
       new_index, get_ssn_simulate_new_from_base,
