@@ -6,10 +6,10 @@
 #'
 #' @param tailup_type The tailup covariance function type. Available options
 #'   include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-#'   \code{"mariah"}, \code{"epa"}, and \code{"none"}.
+#'   \code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}.
 #' @param taildown_type The taildown covariance function type. Available options
 #'   include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-#'   \code{"mariah"}, \code{"epa"}, and \code{"none"}.
+#'   \code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}.
 #' @param euclid_type The Euclidean covariance function type. Available options
 #'   include \code{"spherical"}, \code{"exponential"}, \code{"gaussian"},
 #'   \code{"circular"}, \code{"cubic"}, \code{"pentaspherical"}, \code{"wave"},

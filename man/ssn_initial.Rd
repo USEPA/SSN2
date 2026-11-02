@@ -19,7 +19,7 @@ nugget_initial(nugget_type, nugget, known)
 \arguments{
 \item{tailup_type}{The tailup covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, and \code{"none"}.}
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}.}
 
 \item{de}{The spatially dependent (correlated) random error variance. Commonly referred to as
 a partial sill.}
@@ -32,7 +32,7 @@ covariance parameters given to \code{*_initial()} are assumed known.}
 
 \item{taildown_type}{The taildown covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, and \code{"none"}.}
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}.}
 
 \item{euclid_type}{The Euclidean covariance function type. Available options
 include \code{"spherical"}, \code{"exponential"}, \code{"gaussian"},
@@ -90,6 +90,7 @@ elements of \eqn{R(zu)} are given below:
 \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
 \item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
 \item gaussian: \eqn{2 exp(-r^2) * (1 - pnorm(r * 2^{1/2})) * W}
+\item wave: \eqn{\rho_c(D) * W}, see Stream wave covariance below.
 \item none: \eqn{I} * W
 }
 
@@ -108,6 +109,7 @@ elements of \eqn{R(zd)} are given below:
 \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
 \item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
 \item gaussian: \eqn{0}
+\item wave: \eqn{\rho_c(D)}, see Stream wave covariance below.
 \item none: \eqn{I}
 }
 
@@ -123,6 +125,7 @@ Then parametric forms for flow-unconnected elements of \eqn{R(zd)} are given bel
 \item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
 \item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
 \item gaussian: \eqn{2 exp(-(B - A) / range) * (1 - pnorm(r * 2^{1/2})) * W}
+\item wave: \eqn{\rho_u(A, B)}, see Stream wave covariance below.
 \item none: \eqn{I}
 }
 
@@ -165,6 +168,19 @@ and omitted when \code{nugget_type} is \code{"none"}.
 Dispersion and random effect initial objects are specified via
 \code{\link[spmodel:dispersion_initial]{spmodel::dispersion_initial()}} and \code{\link[spmodel:randcov_initial]{spmodel::randcov_initial()}}, respectively.
 }
+\section{Stream wave covariance}{
+
+Stream \code{"wave"} uses the one-sided moving-average kernel
+\eqn{k_\theta(x) = \sin(x/\theta)/(x/\theta)} for \eqn{x > 0}, with
+\eqn{k_\theta(0) = 1} and \code{range} equal to \eqn{\theta > 0}.
+The flow-connected correlations are
+\deqn{\rho_c(h) = \frac{2}{\pi\theta}\int_0^\infty k_\theta(u)k_\theta(u+h)\,du}
+for (hydrologic) distance \eqn{h}. The flow-unconnected correlations are
+\deqn{\rho_u(a,b) = \frac{2}{\pi\theta}\int_a^\infty k_\theta(u)k_\theta(u+b-a)\,du},
+where \eqn{0 \le a \le b} are the
+shorter and longer distances to their common downstream junction.
+}
+
 \examples{
 tailup_initial("exponential", de = 1, range = 20, known = "range")
 tailup_initial("exponential", de = 1, range = 20, known = "given")

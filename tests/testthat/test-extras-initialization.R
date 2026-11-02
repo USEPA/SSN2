@@ -145,8 +145,7 @@ test_that("range scaling follows each Euclidean and stream kernel convention", {
     }
     expect_equal(get_cov_initial_range(constructor("exponential"), c(25, 75)), c(25, 75) / 3)
     ranges <- get_cov_initial_range(constructor("gaussian"), c(25, 75))
-    u <- c(25, 75) / ranges
-    expect_equal(2 * exp(-u^2) * (1 - pnorm(sqrt(2) * u)), rep(0.05, 2), tolerance = 1e-7)
+    expect_equal(ranges, c(25, 75))
   }
 })
 

@@ -275,9 +275,9 @@ The `ssn_lm()` function is used to fit linear spatial stream network models and 
 * `formula`: a formula that describes the relationship between the response variable and explanatory variables.
     * `formula` uses the same syntax as the `formula` argument in `lm()`.
 * `ssn.object`: the `.ssn` object.
-* `tailup_type`: the tail-up covariance, can be `"linear"`, `"spherical"`, `"exponential"`, `"mariah"`, `"epa"`, or `"none"` (the default)
-* `taildown_type`: the tail-down covariance, can be `"linear"`, `"spherical"`, `"exponential"`, `"mariah"`, `"epa"`, or `"none"` (the default)
-* `euclid_type`: the Euclidean covariance, can be `"spherical"`, `"exponential"`, `"gaussian"`, `"cosine"`, `"cubic"`, `"pentaspherical"`, `"wave"`, `"jbessel"`, `"gravity"`, `"rquad"`, `"magnetic"`, or `"none"` (the default)
+* `tailup_type`: the tail-up covariance, can be `"linear"`, `"spherical"`, `"exponential"`, `"mariah"`, `"epa"`, `"gaussian"`, `"wave"`, or `"none"` (the default)
+* `taildown_type`: the tail-down covariance, can be `"linear"`, `"spherical"`, `"exponential"`, `"mariah"`, `"epa"`, `"gaussian"`, `"wave"`, or `"none"` (the default)
+* `euclid_type`: the Euclidean covariance, can be `"spherical"`, `"exponential"`, `"gaussian"`, `"circular"`, `"cubic"`, `"pentaspherical"`, `"wave"`, `"jbessel"`, `"gravity"`, `"rquad"`, `"magnetic"`, `"matern"`, `"cauchy"`, `"pexponential"`, or `"none"` (the default)
 * `nugget_type`: `"nugget"` (the default) or `"none"`.
 
 It is important to note that the default for `tailup_type`, `taildown_type`, and `euclid_type` is `"none"`, which means that they must be specified if their relevant covariances are desired. The default for `nugget_type` is `"nugget"`, which specifies a nugget effect, useful because many ecological processes have localized variability that is important to capture.  Full parameterizations of each covariance function are given in `ssn_lm()`'s documentation, which can be viewed by running `help("ssn_lm", "SSN2")`. There are different approaches to choosing between covariance functions. One approach is to fit several models and compare their fits using statistics like AIC or cross-validation error. Another approach is to visualize the `Torgegram()` and choose functions appropriately. 
@@ -676,7 +676,7 @@ Here we list a few advanced modeling features available in `SSN2`:
 * Partition factors: Via the `partition_factor` argument to `ssn_lm()` and `ssn_glm()`.
 * Fix covariance parameters at known values: Via the `tailup_initial`, `taildown_initial`, `euclid_initial`, and `nugget_initial`, and `dispersion_initial`.
 * Euclidean covariance anisotropy: Via the `anisotropy` argument to allow the strength of Euclidean covariance to vary with direction.
-* Support for many covariance functions: The `ssn_lm()` and `ssn_glm()` model objects support seven tailup covariance functions, seven taildown covariance functions, and twelve Euclidean covariance functions.
+* Support for many covariance functions: The `ssn_lm()` and `ssn_glm()` model objects support seven tailup covariance functions, seven taildown covariance functions, and fourteen Euclidean covariance functions, in addition to `"none"` for each component.
 * Support for cloud and robust Torgegrams: Via additional arguments to `Torgegram()`.
 * Various model selection tools: Via `AIC()`, `AICc()`, `BIC()`, `anova()`, `AUROC()`, `glance()`, `glances()`, and `loocv()`.
 

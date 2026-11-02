@@ -152,6 +152,7 @@
 #'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
 #'     \item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
 #'     \item gaussian: \eqn{2 exp(-r^2) * (1 - pnorm(r * 2^{1/2})) * W}
+#'     \item wave: \eqn{\rho_c(D) * W}, see [SSN2::tailup_initial()].
 #'     \item none: \eqn{I} * W
 #'   }
 #'
@@ -170,6 +171,7 @@
 #'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
 #'     \item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
 #'     \item gaussian: \eqn{0}
+#'     \item wave: \eqn{\rho_c(D)}, see [SSN2::taildown_initial()].
 #'     \item none: \eqn{I}
 #'   }
 #'
@@ -185,6 +187,7 @@
 #'     \item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
 #'     \item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
 #'     \item gaussian: \eqn{2 exp(-(B - A) / range) * (1 - pnorm(r * 2^{1/2})) * W}
+#'     \item wave: \eqn{\rho_u(A, B)}, see [SSN2::taildown_initial()].
 #'     \item none: \eqn{I}
 #'   }
 #'

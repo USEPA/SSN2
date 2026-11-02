@@ -180,19 +180,20 @@ get_decorrelate_grid <- function(formula, ssn.object, initial_object, additive,
     mask <- distances$mask_mat[observed_index, observed_index, drop = FALSE]
     tail_max <- max(hydro * mask)
   }
-  effective <- list(
+  distance_anchors <- list(
     stream = pmax(c(0.25, 0.75) * tail_max, .Machine$double.eps),
     euclid = pmax(c(0.25, 0.75) * euclid_max, .Machine$double.eps)
   )
   tail_range <- function(component, constructor) {
     type <- types[[component]]
     if (type == "none") return(Inf)
-    get_range_from_effective(constructor(type, de = 1, range = 1), effective$stream)
+    get_cov_initial_range(constructor(type, de = 1, range = 1), distance_anchors$stream)
   }
-  euclid_range <- if (types[["euclid"]] == "none") Inf else effective$euclid
-  if (types[["euclid"]] != "none" && !euclid_has_extra(types[["euclid"]])) {
-    euclid_range <- get_range_from_effective(
-      euclid_params(types[["euclid"]], de = 1, range = 1), effective$euclid
+  euclid_range <- Inf
+  if (types[["euclid"]] != "none") {
+    # Match fitting starts even though jbessel's inverse-distance scale is dimensionally inverted.
+    euclid_range <- get_cov_initial_range(
+      initial_object$euclid_initial, distance_anchors$euclid
     )
   }
   ranges <- list(
@@ -207,13 +208,6 @@ get_decorrelate_grid <- function(formula, ssn.object, initial_object, additive,
     supplied_extra <- initial_object$euclid_initial$initial[["extra"]]
     if (!is.na(supplied_extra)) extra <- supplied_extra
     shape_grid <- merge(shape_grid, data.frame(euclid_extra = extra), by = NULL)
-    for (value in extra) {
-      rows <- shape_grid$euclid_extra == value
-      parameters <- euclid_params(types[["euclid"]], de = 1, range = 1, extra = value)
-      shape_grid$euclid_range[rows] <- get_range_from_effective(
-        parameters, shape_grid$euclid_range[rows]
-      )
-    }
   }
   if (anisotropy && types[["euclid"]] != "none") {
     rotate <- if (dense_grid) c(0, 45, 90, 135) * pi / 180 else c(0, pi / 2)

@@ -14,11 +14,11 @@
 #' @param ssn.object A spatial stream network object with class \code{SSN}.
 #' @param tailup_type The tailup covariance function type. Available options
 #'   include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-#'   \code{"mariah"}, \code{"epa"}, \code{"gaussian"}, and \code{"none"}. Parameterizations are
+#'   \code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}. Parameterizations are
 #'   described in Details.
 #' @param taildown_type The taildown covariance function type. Available options
 #'   include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-#'   \code{"mariah"}, \code{"epa"}, \code{"gaussian"}, and \code{"none"}. Parameterizations are
+#'   \code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}. Parameterizations are
 #'   described in Details.
 #' @param euclid_type The euclidean covariance function type. Available options
 #'   include \code{"spherical"}, \code{"exponential"}, \code{"gaussian"},
@@ -162,6 +162,7 @@
 #'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
 #'     \item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
 #'     \item gaussian: \eqn{2 exp(-r^2) * (1 - pnorm(r * 2^{1/2})) * W}
+#'     \item wave: \eqn{\rho_c(D) * W}, see [SSN2::tailup_initial()].
 #'     \item none: \eqn{I} * W
 #'   }
 #'
@@ -180,6 +181,7 @@
 #'     \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
 #'     \item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
 #'     \item gaussian: \eqn{0}
+#'     \item wave: \eqn{\rho_c(D)}, see [SSN2::taildown_initial()].
 #'     \item none: \eqn{I}
 #'   }
 #'
@@ -195,6 +197,7 @@
 #'     \item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
 #'     \item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
 #'     \item gaussian: \eqn{2 exp(-(B - A) / range) * (1 - pnorm(r * 2^{1/2})) * W}
+#'     \item wave: \eqn{\rho_u(A, B)}, see [SSN2::taildown_initial()].
 #'     \item none: \eqn{I}
 #'   }
 #'
@@ -276,7 +279,6 @@
 #'   Other Details: Observations with \code{NA} response values are removed for model
 #'   fitting, but their values can be predicted afterwards by running
 #'   \code{predict(object)}.
-#'
 #'
 #' @return A list with many elements that store information about
 #'   the fitted model object. The list has class \code{ssn_lm}. Many generic functions that

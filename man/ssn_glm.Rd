@@ -48,12 +48,12 @@ See Details for more.}
 
 \item{tailup_type}{The tailup covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, and \code{"none"}. Parameterizations are
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}. Parameterizations are
 described in Details.}
 
 \item{taildown_type}{The taildown covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, and \code{"none"}. Parameterizations are
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}. Parameterizations are
 described in Details.}
 
 \item{euclid_type}{The euclidean covariance function type. Available options
@@ -299,6 +299,7 @@ elements of \eqn{R(zu)} are given below:
 \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0) * W}
 \item epa: \eqn{(D - range)^2 * F * (r <= 1) * W / 16range^5}
 \item gaussian: \eqn{2 exp(-r^2) * (1 - pnorm(r * 2^{1/2})) * W}
+\item wave: \eqn{\rho_c(D) * W}, see \code{\link[=tailup_initial]{tailup_initial()}}.
 \item none: \eqn{I} * W
 }
 
@@ -317,6 +318,7 @@ elements of \eqn{R(zd)} are given below:
 \item mariah: \eqn{log(90r + 1) / 90r * (D > 0) + 1 * (D = 0)}
 \item epa: \eqn{(D - range)^2 * F1 * (r <= 1) / 16range^5}
 \item gaussian: \eqn{0}
+\item wave: \eqn{\rho_c(D)}, see \code{\link[=taildown_initial]{taildown_initial()}}.
 \item none: \eqn{I}
 }
 
@@ -332,6 +334,7 @@ Then parametric forms for flow-unconnected elements of \eqn{R(zd)} are given bel
 \item mariah: \eqn{(log(90r1 + 1) - log(90r2 + 1)) / (90r1 - 90r2) * (A =/ B) + (1 / (90r1 + 1)) * (A = B)}
 \item epa: \eqn{(B - range)^2 * F2 * (r2 <= 1) / 16range^5}
 \item gaussian: \eqn{2 exp(-(B - A) / range) * (1 - pnorm(r * 2^{1/2})) * W}
+\item wave: \eqn{\rho_u(A, B)}, see \code{\link[=taildown_initial]{taildown_initial()}}.
 \item none: \eqn{I}
 }
 

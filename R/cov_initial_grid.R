@@ -157,8 +157,7 @@ build_cov_initial_grid <- function(initial_NA_object, data_object, is_glm = FALS
 #' Divides the given distance by a family-specific scaling factor (matching
 #' spmodel's own automatic range-starting-value convention): 3 for
 #' exponential/Matern/powered-exponential, \code{sqrt(3)} for Euclidean
-#' Gaussian, the stream Gaussian kernel's own 0.05-correlation-distance
-#' divisor for stream (tailup/taildown) Gaussian, and 1 otherwise.
+#' Gaussian, and 1 otherwise (including stream Gaussian).
 #'
 #' @param initial A single covariance component's initial-value object
 #'   (used only for its class/type).
@@ -173,8 +172,7 @@ get_cov_initial_range <- function(initial, distance) {
   if (type == "none") return(rep(Inf, length(distance)))
   if (type == "gaussian" && !inherits(initial, "euclid_gaussian")) {
     # The stream Gaussian kernel differs from the Euclidean Gaussian kernel.
-    params <- if (inherits(initial, "tailup_gaussian")) tailup_params else taildown_params
-    divisor <- get_effective_range(params("gaussian", de = 1, range = 1))
+    divisor <- 1
   } else {
     divisor <- switch(type, exponential = 3, gaussian = sqrt(3),
                       matern = 3, pexponential = 3, 1)

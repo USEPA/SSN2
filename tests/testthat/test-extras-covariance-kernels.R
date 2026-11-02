@@ -284,23 +284,15 @@ test_that("stream kernels use flow-connected distances and SSN Mariah scaling", 
   }
 })
 
-test_that("range inversion respects powered-exponential and Bessel parameter units", {
-  for (type in c("exponential", "gaussian", "matern", "cauchy", "pexponential")) {
-    params <- make_euclid_params(type, 0, 1, 0.5, 0.4, 0.7)
-    distances <- c(10, 7000)
-    ranges <- get_range_from_effective(params, distances)
-    result <- vapply(ranges, function(value) {
-      params[["range"]] <- value
-      get_effective_range(params)
-    }, numeric(1))
-    expect_equal(result, distances, tolerance = 1e-8)
-  }
+test_that("oscillatory effective ranges retain their values and warn on direct calls", {
   wave <- euclid_params("wave", de = 1, range = 7)
-  expect_warning(expect_equal(get_effective_range(wave), 140), "not well defined")
+  expect_warning(expect_equal(get_effective_range(wave), 140),
+    '^"wave" effective range is not well defined\\. A potential candidate value is used\\.$')
   bessel <- euclid_params("jbessel", de = 1, range = 7)
-  expect_warning(expect_equal(get_effective_range(bessel), 2 / (pi * 0.05^2 * 7)), "not well defined")
-  expect_warning(ranges <- get_range_from_effective(bessel, c(10, 100)), "not well defined")
-  expect_equal(ranges[[1]] / ranges[[2]], 10)
+  expect_warning(expect_equal(get_effective_range(bessel), 2 / (pi * 0.05^2 * 7)),
+    '^"jbessel" effective range is not well defined\\. A potential candidate value is used\\.$')
+  expect_false("get_effective_range" %in% getNamespaceExports("SSN2"))
+  expect_false(exists("get_range_from_effective", envir = asNamespace("SSN2"), inherits = FALSE))
 })
 
 test_that("effective-range validation rejects undefined input", {
@@ -320,18 +312,18 @@ test_that("effective-range validation rejects undefined input", {
   expect_equal(get_effective_range(nugget_params("nugget", nugget = 3)), 0)
 })
 
-test_that("decorrelation shares stream effective distances and separates Euclidean distances", {
+test_that("decorrelation shares stream distance anchors and separates Euclidean distances", {
   grid <- SSN2:::ssn_decorrelate_grid_internal(
     Summer_mn ~ ELEV_DEM, mf04p, tailup_type = "exponential",
     taildown_type = "spherical", euclid_type = "gaussian", additive = "afvArea",
     dense_grid = FALSE, add_iid = FALSE, candidates = NULL
   )
   values <- tidy(grid)
-  stream <- sort(unique(values$tailup_range * -log(0.05)))
+  stream <- sort(unique(values$tailup_range * 3))
   expect_equal(stream, sort(unique(values$taildown_range)))
   bbox <- sf::st_bbox(mf04p$obs)
   euclid_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
-  expect_equal(sort(unique(values$euclid_range * sqrt(-log(0.05)))), c(0.25, 0.75) * euclid_max)
+  expect_equal(sort(unique(values$euclid_range * sqrt(3))), c(0.25, 0.75) * euclid_max)
   expect_false(isTRUE(all.equal(stream, c(0.25, 0.75) * euclid_max)))
 
   given <- SSN2:::ssn_decorrelate_grid_internal(
@@ -341,6 +333,6 @@ test_that("decorrelation shares stream effective distances and separates Euclide
   )
   values <- tidy(given)
   expect_true(all(values$euclid_extra == 1.3))
-  expect_equal(sort(unique((-log(0.05) * values$euclid_range)^(1 / 1.3))), c(0.25, 0.75) * euclid_max)
+  expect_equal(sort(unique(3 * values$euclid_range)), c(0.25, 0.75) * euclid_max)
 })
 

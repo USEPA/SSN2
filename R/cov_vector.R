@@ -70,6 +70,12 @@ cov_vector.tailup_gaussian <- function(params, dist_pred_object, ...) {
 }
 
 #' @export
+cov_vector.tailup_wave <- function(params, dist_pred_object, ...) {
+  stream_wave_covariance(params, dist_pred_object$hydro_pred, dist_pred_object$mask_pred,
+                         w = dist_pred_object$w_pred)
+}
+
+#' @export
 cov_vector.tailup_none <- function(params, dist_pred_object, ...) {
   0
 }
@@ -172,6 +178,12 @@ cov_vector.taildown_gaussian <- function(params, dist_pred_object, ...) {
   dist_ratio_minus <- as.matrix((b - a) / range)
   dist_ratio_plus <- as.matrix(h / range) # same as (a + b) / range
   m * 2 * params[["de"]] * exp(-dist_ratio_minus^2) * (1 - pnorm(dist_ratio_plus * sqrt(2)))
+}
+
+#' @export
+cov_vector.taildown_wave <- function(params, dist_pred_object, ...) {
+  stream_wave_covariance(params, dist_pred_object$hydro_pred, dist_pred_object$mask_pred,
+                         a = dist_pred_object$a_pred, b = dist_pred_object$b_pred)
 }
 
 #' @export

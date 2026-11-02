@@ -6,21 +6,18 @@
 #' standard convention. Compact and monotone functions have closed forms 
 #' except for matern, which is numerically solved for. 
 #'
-#' Three families need special handling because their correlation functions
+#' Two families need special handling because their correlation functions
 #' are not monotone decaying:
 #' \itemize{
-#'   \item \code{"cosine"} never decays at all and it returns to correlation
-#'     1 every \code{2 * pi * range}. The value returned is the first
-#'     distance at which correlation drops below \code{target}
-#'     (\code{range * acos(target)}), which is \strong{not} a true
-#'     effective range (correlation is not small at distances beyond it in
-#'     general) and a warning is issued.
-#'   \item \code{"wave"} oscillates while decaying, with envelope
+#'   \item Euclidean \code{"wave"} oscillates while decaying, with envelope
 #'     \code{1 / (dist / range)}. The value returned
 #'     (\code{range / target}) is the distance beyond which the envelope
 #'     itself guarantees correlation stays under \code{target} as a
 #'     conservative bound, not the first crossing (which happens much
-#'     sooner, at \code{pi * range}). A warning is issued.
+#'     sooner, at \code{pi * range}). Stream wave also returns
+#'     \code{range / target}, but this is only a nominal candidate, not a bound:
+#'     its correlation decays at order \code{log(h / range) / (h / range)}.
+#'     A warning is issued for either component.
 #'   \item \code{"jbessel"}'s distance argument is \code{dist * range}, not
 #'     \code{dist / range} the way every other family works and so effective
 #'     range is \strong{inversely} related to \code{range} here (larger
@@ -45,7 +42,7 @@
 #' anisotropy, the result uses transformed distance (the major-axis range);
 #' the minor-axis range is `scale` times that distance.
 #'
-#' @export
+#' @noRd
 #' @examples
 #' get_effective_range(tailup_params("exponential", de = 1, range = 1000))
 #' get_effective_range(taildown_params("mariah", de = 1, range = 1000))
@@ -78,6 +75,10 @@ get_effective_range <- function(params, target = 0.05) {
   }
   if (type %in% c("linear", "spherical", "epa", "circular", "cubic", "pentaspherical")) return(range)
   if (type == "exponential") return(-log(target) * range)
+  if (type == "wave") {
+    warning("\"wave\" effective range is not well defined. A potential candidate value is used.", call. = FALSE)
+    return(range / target)
+  }
   if (component == "euclid") {
     if (type == "gaussian") return(sqrt(-log(target)) * range)
     if (type %in% c("gravity", "rquad", "magnetic", "cauchy")) {
@@ -85,9 +86,9 @@ get_effective_range <- function(params, target = 0.05) {
       return(range * sqrt(expm1(-log(target) / p)))
     }
     if (type == "pexponential") return((-log(target) * range)^(1 / extra))
-    if (type %in% c("wave", "jbessel")) {
-      warning("\"", type, "\" effective range is not well defined. An envelope-based candidate value is used.", call. = FALSE)
-      return(if (type == "wave") range / target else 2 / (pi * target^2 * range))
+    if (type == "jbessel") {
+      warning("\"", type, "\" effective range is not well defined. A potential candidate value is used.", call. = FALSE)
+      return(2 / (pi * target^2 * range))
     }
   }
   get_effective_range_monotone(params, target)
@@ -126,31 +127,4 @@ get_effective_range_monotone <- function(params, target) {
     upper <- 2 * upper
   }
   stop("Could not bracket the effective range.", call. = FALSE)
-}
-
-#' Convert a target effective-range distance into a kernel's own range parameter
-#'
-#' The inverse operation of \code{\link{get_effective_range}()}: given a
-#' desired distance at which correlation should equal \code{target}, solves
-#' for the range (or, for \code{"pexponential"}/\code{"jbessel"}, the
-#' family-specific parameter) that achieves it.
-#'
-#' @param params A single covariance component's parameter object (its
-#'   \code{range} is ignored/overwritten).
-#' @param distance The target effective-range distance (or vector of
-#'   distances).
-#' @param target The target correlation value (e.g. 0.05).
-#'
-#' @return The range (or, for \code{"pexponential"}/\code{"jbessel"}, other
-#'   family-specific parameter) value(s) achieving \code{target} correlation
-#'   at \code{distance}.
-#'
-#' @noRd
-get_range_from_effective <- function(params, distance, target = 0.05) {
-  params[["range"]] <- 1
-  unit <- get_effective_range(params, target)
-  type <- remove_covtype(class(params)[1])
-  if (type == "pexponential") return((distance / unit)^params[["extra"]])
-  if (type == "jbessel") return(unit / distance)
-  distance / unit
 }

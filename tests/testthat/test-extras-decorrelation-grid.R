@@ -138,8 +138,86 @@ test_that("large decorrelation grids use observed geometry for stream ranges", {
     )
     for (component in c("tailup", "taildown", "euclid")) {
       ranges <- sort(unique(grid[[paste0(component, "_range")]]))
-      expect_equal(-log(0.05) * ranges, c(125, 375))
+      expect_equal(3 * ranges, c(125, 375))
     }
+  }
+})
+
+test_that("decorrelation and fitting share fixed range divisors across covariance families", {
+  testthat::local_mocked_bindings(
+    get_effective_range = function(...) stop("Unexpected effective-range calculation")
+  )
+  bbox <- sf::st_bbox(mf04p$obs)
+  euclid_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 +
+                       (bbox[["ymax"]] - bbox[["ymin"]])^2)
+  initial <- list(tailup_initial = tailup_initial("exponential"),
+                  taildown_initial = taildown_initial("none"),
+                  euclid_initial = euclid_initial("none"),
+                  nugget_initial = nugget_initial("nugget"))
+  distances <- get_dist_object(mf04p, initial, "afvArea", FALSE)
+  tail_max <- max(distances$hydro_mat * distances$mask_mat)
+  stream_divisors <- c(linear = 1, spherical = 1, exponential = 3, mariah = 1, epa = 1, gaussian = 1)
+  euclid_divisors <- c(exponential = 3, gaussian = sqrt(3), spherical = 1, circular = 1,
+                      cubic = 1, pentaspherical = 1, wave = 1, jbessel = 1, gravity = 1,
+                      rquad = 1, magnetic = 1, matern = 3, cauchy = 1, pexponential = 3)
+  for (component in c("tailup", "taildown", "euclid")) {
+    divisors <- if (component == "euclid") euclid_divisors else stream_divisors
+    anchors <- c(0.25, 0.75) * if (component == "euclid") euclid_max else tail_max
+    constructor <- get(paste0(component, "_params"), envir = asNamespace("SSN2"))
+    for (type in names(divisors)) {
+      params_args <- list(type, de = 1, range = 1)
+      if (component == "euclid" && euclid_has_extra(type)) params_args$extra <- 1
+      params <- do.call(constructor, params_args)
+      expected <- anchors / unname(divisors[[type]])
+      expect_equal(get_cov_initial_range(params, anchors), expected)
+      args <- list(formula = Summer_mn ~ ELEV_DEM, ssn.object = mf04p,
+                   tailup_type = "none", taildown_type = "none", euclid_type = "none",
+                   additive = "afvArea")
+      args[[paste0(component, "_type")]] <- type
+      for (dense in c(FALSE, TRUE)) {
+        args$dense_grid <- dense
+        expect_no_warning(grid <- do.call(ssn_decorrelate_grid, args))
+        grid <- grid[grid[[paste0(component, "_type")]] == type, ]
+        expect_equal(sort(unique(grid[[paste0(component, "_range")]])), expected)
+        if (component == "euclid" && euclid_has_extra(type)) {
+          extras <- switch(type, matern = c(1, 4), cauchy = c(0.5, 2), pexponential = c(0.4, 1.6))
+          expect_equal(sort(unique(grid$euclid_extra)), extras)
+          for (extra in extras) {
+            expect_equal(sort(unique(grid$euclid_range[grid$euclid_extra == extra])), expected)
+          }
+        }
+      }
+    }
+  }
+})
+
+test_that("fitting and decorrelation do not evaluate effective ranges", {
+  testthat::local_mocked_bindings(
+    get_effective_range = function(...) stop("Unexpected effective-range calculation"),
+    fit_decorrelate_algorithm = function(X, y, algorithm, dots) mean(y),
+    predict_decorrelate_algorithm = function(fit, X, algorithm) rep(fit, NROW(X))
+  )
+  ssn <- mf04p
+  ssn$obs$count <- rep(c(1, 4, 2, 3), length.out = nrow(ssn$obs))
+  cases <- list(tailup = "gaussian", taildown = "gaussian",
+                euclid = c("exponential", "gaussian", "matern", "cauchy", "pexponential", "wave", "jbessel"))
+  for (component in names(cases)) for (type in cases[[component]]) {
+    args <- list(formula = count ~ 1, ssn.object = ssn, additive = "afvArea",
+                 tailup_type = "none", taildown_type = "none", euclid_type = "none")
+    args[[paste0(component, "_type")]] <- type
+    initial_args <- list(type, de = 0.1, known = "given")
+    if (component == "euclid" && euclid_has_extra(type)) initial_args$extra <- 1
+    constructor <- get(paste0(component, "_initial"), envir = asNamespace("SSN2"))
+    fit_args <- args
+    fit_args[[paste0(component, "_initial")]] <- do.call(constructor, initial_args)
+    fit_args$nugget_initial <- nugget_initial("nugget", nugget = 1, known = "given")
+    lm <- do.call(ssn_lm, c(fit_args, list(estmethod = "ml", ddf = "asymptotic")))
+    glm <- do.call(ssn_glm, c(fit_args, list(family = "poisson", estmethod = "ml")))
+    expect_true(all(is.finite(coef(lm))))
+    expect_true(all(is.finite(coef(glm))))
+    expect_no_warning(decorrelated <- do.call(ssn_decorrelate, c(args,
+      list(local = FALSE, training = list(training_index = 1:30, test_index = 31:45)))))
+    expect_true(is.finite(decorrelated$test$RMSPE))
   }
 })
 

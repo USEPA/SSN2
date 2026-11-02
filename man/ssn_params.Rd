@@ -19,7 +19,7 @@ nugget_params(nugget_type, nugget)
 \arguments{
 \item{tailup_type}{The tailup covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, and \code{"none"}.}
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}.}
 
 \item{de}{The spatially dependent (correlated) random error variance. Commonly referred to as
 a partial sill.}
@@ -28,7 +28,7 @@ a partial sill.}
 
 \item{taildown_type}{The taildown covariance function type. Available options
 include \code{"linear"}, \code{"spherical"}, \code{"exponential"},
-\code{"mariah"}, \code{"epa"}, and \code{"none"}.}
+\code{"mariah"}, \code{"epa"}, \code{"gaussian"}, \code{"wave"}, and \code{"none"}.}
 
 \item{euclid_type}{The Euclidean covariance function type. Available options
 include \code{"spherical"}, \code{"exponential"}, \code{"gaussian"},

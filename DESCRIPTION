@@ -54,6 +54,7 @@ Imports:
     itertools,
     iterators
 Suggests: 
+    pracma,
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
