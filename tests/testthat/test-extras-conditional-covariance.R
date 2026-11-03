@@ -21,7 +21,7 @@ test_that("nested slope effect conditionals retain shared blocks and true partit
   for (scenario in c("exact", "blocked", "reduced")) {
     index <- if (scenario == "reduced") 1:4 else 1:8
     blocks <- if (scenario == "blocked") list(1:4, 5:8) else list(seq_along(index))
-    settings <- list(approximation = "vecchia", random_blocks = blocks)
+    settings <- list(exact = FALSE, random_blocks = blocks)
     design <- get_randcov_design(observed, params, ~part, prediction, index)
     Z <- as.matrix(design$observed)
     Zp <- as.matrix(design$newdata)

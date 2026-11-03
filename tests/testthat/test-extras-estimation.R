@@ -277,7 +277,7 @@ test_that("the default Gaussian wrapper forwards local simulation controls", {
     taildown_params = taildown_params("none"),
     euclid_params = euclid_params("exponential", de = 1, range = 12000),
     nugget_params = nugget_params("nugget", nugget = 0.2), samples = 2,
-    local = list(approximation = "vecchia", method = "covariance", size = 10))
+    local = list(method = "covariance", size = 10))
   set.seed(2)
   default <- do.call(ssn_simulate, args)
   set.seed(2)

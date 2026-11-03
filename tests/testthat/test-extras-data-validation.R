@@ -179,7 +179,7 @@ test_that("new conditional and kcv methods follow upstream positional convention
                    tailup_type = "exponential", additive = "afvArea")
   fit$ssn.object$preds$CapeHorn <- fit$ssn.object$preds$CapeHorn[1:3, ]
   count$ssn.object$preds$CapeHorn <- count$ssn.object$preds$CapeHorn[1:3, ]
-  local <- list(approximation = "vecchia", method = "covariance", size = 4)
+  local <- list(method = "covariance", size = 4)
   set.seed(2)
   positional <- conditional(fit, "CapeHorn", "newdata", 2, local, FALSE)
   set.seed(2)

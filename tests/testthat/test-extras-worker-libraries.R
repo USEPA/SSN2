@@ -2,6 +2,21 @@ skip_on_cran()
 skip_if_not(identical(Sys.getenv("SSN2_RUN_EXTRAS"), "true"),
             "set SSN2_RUN_EXTRAS = 'true' to run the extras suite")
 
+test_that("worker initialization carries no source or namespace references", {
+  set.seed(2)
+  initializer <- NULL
+  cluster_call <- parallel::clusterCall
+  local_mocked_bindings(clusterCall = function(cl, fun, ...) {
+    initializer <<- fun
+    cluster_call(cl, fun, ...)
+  }, .package = "parallel")
+  cl <- SSN2:::make_ssn_cluster(2L)
+  on.exit(parallel::stopCluster(cl), add = TRUE)
+  expect_true(is.function(initializer))
+  expect_true(identical(initializer, utils::removeSource(initializer), ignore.srcref = FALSE))
+  expect_identical(environment(initializer), baseenv())
+})
+
 test_that("workers inherit runtime library paths before loading SSN2", {
   set.seed(2)
   library_path <- withr::local_tempdir()
@@ -23,7 +38,7 @@ test_that("workers inherit runtime library paths before loading SSN2", {
   expect_identical(.libPaths(), parent_paths)
 })
 
-test_that("block prediction and low-rank simulation load the parent's namespace", {
+test_that("block prediction workers load the parent's namespace", {
   set.seed(2)
   parent_package <- getNamespaceInfo(asNamespace("SSN2"), "path")
   if (!(requireNamespace("pkgload", quietly = TRUE) && pkgload::is_dev_package("SSN2"))) {
@@ -57,22 +72,6 @@ test_that("block prediction and low-rank simulation load the parent's namespace"
   block_dispatches <- length(workers)
   expect_gt(block_dispatches, 0L)
 
-  ssn <- mf04p
-  ssn$obs <- ssn$obs[1:12, , drop = FALSE]
-  args <- list(ssn.object = ssn, tailup_params = tailup_params("exponential", de = 2, range = 10000),
-    taildown_params = taildown_params("none"), euclid_params = euclid_params("none"),
-    nugget_params = nugget_params("nugget", nugget = 0.5), additive = "afvArea", samples = 3,
-    local = list(approximation = "low-rank", size_base = 4, size_new = 4,
-      reorder_base = "none", kmeans_new = FALSE, parallel = FALSE, ncores = 2))
-  set.seed(2)
-  serial <- do.call(ssn_rnorm, args)
-  args$local$parallel <- TRUE
-  set.seed(2)
-  simulated <- do.call(ssn_rnorm, args)
-  expect_identical(dim(simulated), c(12L, 3L))
-  expect_true(all(is.finite(simulated)))
-  expect_identical(simulated[1:4, ], serial[1:4, ])
-  expect_gt(length(workers), block_dispatches)
   for (dispatch in workers) {
     expect_length(dispatch, 2L)
     for (worker in dispatch) {
@@ -84,7 +83,7 @@ test_that("block prediction and low-rank simulation load the parent's namespace"
   expect_identical(.libPaths(), parent_paths)
 })
 
-test_that("block and low-rank simulation workers are stopped after errors", {
+test_that("block prediction workers are stopped after errors", {
   set.seed(2)
   stopped <- list()
   stop_cluster <- parallel::stopCluster
@@ -98,17 +97,6 @@ test_that("block and low-rank simulation workers are stopped after errors", {
     "worker failure")
   expect_length(stopped, 1L)
 
-  ssn <- mf04p
-  ssn$obs <- ssn$obs[1:12, , drop = FALSE]
-  local_mocked_bindings(get_ssn_simulate_new_from_base = fail)
-  expect_error(ssn_rnorm(ssn,
-    tailup_params = tailup_params("exponential", de = 2, range = 10000),
-    taildown_params = taildown_params("none"), euclid_params = euclid_params("none"),
-    nugget_params = nugget_params("nugget", nugget = 0.5), additive = "afvArea", samples = 3,
-    local = list(approximation = "low-rank", size_base = 4, size_new = 4,
-      reorder_base = "none", kmeans_new = FALSE, parallel = TRUE, ncores = 2)),
-    "worker failure")
-  expect_length(stopped, 2L)
   for (cl in stopped) {
     for (worker in cl) expect_error(summary(worker$con), "invalid connection")
   }

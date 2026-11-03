@@ -36,109 +36,39 @@
 #'   The default is \code{1}, which corresponds to a Bernoulli trial for each observation.
 #' @param randcov_params A [spmodel::randcov_params()] object.
 #' @param partition_factor A formula indicating the partition factor.
-#' @param local An optional logical or list controlling the big data approximation.
-#'   If omitted, \code{local} is set to \code{TRUE} when the number of rows in
-#'   \code{ssn.object$obs} exceeds 5,000. Otherwise it is set to \code{FALSE}.
-#'   If \code{FALSE}, no big data approximation is implemented.
-#'   Before using local approximations, it is useful to create \code{.bmat}
-#'   distance matrices using \code{ssn_create_bigdist()}.
-#'   If a list is provided, \code{local$approximation} selects which big data
-#'   approximation is used and can take on the values \code{"low-rank"} or
-#'   \code{"vecchia"} (the default):
+#' @param local An optional
+#'   logical or list controlling the big data approximation. If omitted, \code{local}
+#'   is \code{TRUE} when the desired sample size exceeds
+#'   5,000, and \code{FALSE} otherwise. \code{FALSE} uses exact simulation.
+#'   \code{TRUE} or a list uses a local neighborhood (Vecchia) approach,
+#'   simulating each observation
+#'   conditional on neighbors selected from previously simulated
+#'   observations. A list can contain:
 #'   \itemize{
-#'     \item \code{"low-rank"}: a base sample is drawn from the data, the
-#'       remaining locations are split into blocks, and each block is
-#'       simulated conditional on the base sample alone. Blocks are
-#'       assumed conditionally independent of one another given the base
-#'       sample.
-#'       \itemize{
-#'         \item \code{method_base}: Whether the data simulated is restricted
-#'           to a base sample at all. If \code{method_base = "all"}, no big
-#'           data approximation is applied (equivalent to \code{local = FALSE});
-#'           this happens automatically whenever \code{size_base} is at least
-#'           the desired sample size. If \code{method_base = "base"}, the data
-#'           is subset to \code{size_base} locations (ordered via
-#'           \code{reorder_base}) to form the base sample. The default is
-#'           \code{"base"}.
-#'         \item \code{reorder_base}: The data reordering approach used prior to splitting
-#'           into base and new sets. If \code{reorder_base = "none"}, no reordering
-#'           is applied to the data. If \code{reorder_base = "random"}, the data order is
-#'           randomly reshuffled. If \code{reorder_base = "grts"}, the data order is
-#'           randomly generated using the GRTS algorithm for spatially balanced
-#'           sampling via \code{spsurvey::grts()}. The default is \code{"grts"}.
-#'         \item \code{size_base}: The number of data observations used for the base sample.
-#'           The default is 5,000. See Details for more.
-#'         \item \code{kmeans_new}: For observations outside the base sample, whether
-#'           they should be assigned to blocks based on k-means clustering
-#'           on the coordinates, with clusters of size approximately equal to
-#'           \code{size_new}. The default is \code{FALSE} when \code{reorder_base = "none"}
-#'           and \code{TRUE} otherwise.
-#'         \item \code{size_new}: The (approximate) number of observations used
-#'           for each block. The default is 1,000. See Details for more.
-#'         \item \code{parallel}: If \code{TRUE}, parallel processing via the
-#'           parallel package is automatically used. The default is \code{FALSE}.
-#'         \item \code{ncores}: If \code{parallel = TRUE}, the number of cores to
-#'           parallelize over. The default is the number of available cores on your machine.
-#'       }
-#'       If \code{local$approximation} is \code{"low-rank"}, defaults for the remaining \code{"low-rank"}
-#'       settings are chosen such that \code{local} is transformed into
-#'       \code{list(approximation = "low-rank", method_base = "base", size_base = 5000,
-#'       reorder_base = "grts", size_new = 1000, kmeans_new = TRUE, parallel = FALSE)}.
-#'     \item \code{"vecchia"}: every location is simulated sequentially,
-#'       conditional on previously simulated locations rather than a shared base
-#'       sample. With \code{method = "all"}, all prior values are used and the
-#'       joint distribution matches \code{local = FALSE}. With
-#'       \code{method = "covariance"}, the conditioning set is truncated to a
-#'       fixed number of neighbors ranked by absolute covariance. This approach
-#'       is sequential and hence, not parallelized.
-#'       \itemize{
-#'         \item \code{method}: The neighbor-selection rule used to build each
-#'           location's conditioning set once it exceeds \code{size}
-#'           already-simulated candidates. Values are \code{"all"} (no truncation,
-#'           exact) or \code{"covariance"} (the \code{size} candidates with the
-#'           highest covariance, in absolute value, with the location being
-#'           simulated). Same convention as \code{predict()}'s own
-#'           \code{local$method}. The default is \code{"covariance"}. \code{method = "all"} is very computationally
-#'           intensive and \code{local = FALSE} should almost always be used instead. 
-#'           (\code{method = "all"} primarily exists for numerical verification).
-#'         \item \code{size}: The number of neighbors used when \code{method}
-#'           is \code{"covariance"}. The default is 30.
-#'         \item \code{ordering}: The order locations are simulated in --
-#'           \code{"pid"}, \code{"maxmin"}, \code{"middleout"}, \code{"outsidein"},
-#'           \code{"coordinate"}, \code{"grts"}, \code{"random"}, or
-#'           \code{"none"} (same options as \code{ssn_decorrelate()}'s
-#'           \code{ordering} argument). The default is \code{"pid"}.
-#'           \code{"maxmin"}, \code{"middleout"}, \code{"outsidein"}, and
-#'           \code{"coordinate"} require \pkg{GPvecchia}; \code{"grts"} requires \pkg{spsurvey}.
-#'       }
-#'       \code{parallel}/\code{ncores} are not used when \code{local$approximation} is
-#'       \code{"vecchia"}.
+#'     \item \code{method}: The method used to build each
+#'       location's local neighborhood set once it exceeds \code{size}
+#'       already-simulated candidates. Values are \code{"all"} (no truncation,
+#'       exact)
+#'       or \code{"covariance"} (the \code{size} candidates with the
+#'       highest covariance, in absolute value, with the location being
+#'       simulated). This is the same convention as \code{predict()}'s own
+#'       \code{local$method}. The default is \code{"covariance"}.
+#'       \code{method = "all"} is an alias for \code{local = FALSE}.
+#'     \item \code{size}: The number of neighbors used when \code{method}
+#'       is \code{"covariance"}. The default is 30.
+#'     \item \code{ordering}: The order locations are simulated in --
+#'       \code{"pid"}, \code{"maxmin"}, \code{"middleout"},
+#'       \code{"outsidein"}, \code{"coordinate"}, \code{"grts"},
+#'       \code{"random"}, or \code{"none"} (these are the same options as
+#'       \code{ssn_decorrelate()}'s \code{ordering} argument). The default is
+#'       \code{"pid"}.
 #'   }
-#' 
-#'   \code{local = TRUE} and lists without \code{approximation} use Vecchia,
-#'   with defaults \code{list(approximation = "vecchia", method = "covariance",
-#'   size = 30, ordering = "pid", parallel = FALSE)}.
 #' @param ... Additional arguments passed to [ssn_rnorm()], including \code{local},
 #'   when using \code{ssn_simulate()} or another simulation function.
 #'
-#' @details With \code{local = FALSE}, normal (Gaussian) random variables are
-#'   simulated via the product of the covariance matrix's
+#' @details Random variables are simulated via the product of the covariance matrix's
 #'   square (Cholesky) root and independent standard normal random variables
-#'   with mean 0 and variance 1, with big data approximations available. It is
-#'   nearly the sample computational cost to call \code{sprnorm()} for any value
-#'   of \code{samples}.
-#'
-#'   \code{local} Details: When \code{local$approximation} is \code{"low-rank"}, the big
-#'   data approximation works by assigning \code{size_base}
-#'   observations to a base sample and then simulating data for the base sample.
-#'   The remaining observations are assigned to blocks. For each block, data
-#'   are simulated from the conditional distribution given the base sample.
-#'   Observations from the same block share conditional covariance while
-#'   observations from distinct blocks are assumed conditionally independent
-#'   (given the base sample). Parallelization generally further speeds up
-#'   computations. When \code{local$approximation} is \code{"vecchia"}, no such
-#'   independence assumption is made and each new observation is simulated by
-#'   conditioning on prior observations.
+#'   with mean 0 and variance 1, with big data approximations available.
 #'
 #'   If not using \code{ssn_simulate()}, individual simulation functions for
 #'   each response distribution do exist:

@@ -206,25 +206,6 @@ test_that("independent covariance-parameter simulation is not cancelled by local
   expect_identical(value, matrix(7, 1, 2))
 })
 
-test_that("low-rank grouping diagnoses repeated locations without changing valid groups", {
-  set.seed(2)
-  fit <- conditional_iid_fixture()
-  pred <- fit$ssn.object$preds$iid
-  index <- c(4, 2, 1, 3)
-  set.seed(2)
-  reference <- split(index, stats::kmeans(sf::st_coordinates(pred[index, ]), centers = 2, iter.max = 30)$cluster)
-  set.seed(2)
-  expect_identical(get_local_lowrank_blocks(index, pred, 2, TRUE), reference)
-  sf::st_geometry(pred) <- sf::st_geometry(pred)[rep(1, NROW(pred))]
-  settings <- list(approximation = "low-rank", size_base = 1, size_new = 1,
-                   reorder_base = "none", reorder_new = "none", kmeans_new = TRUE)
-  expect_error(get_local_list_conditional(settings, fit, pred), "There are not enough distinct prediction locations")
-  expect_error(get_ssn_simulate_local_lowrank(settings, NROW(pred), pred), "There are not enough distinct prediction locations")
-  settings$kmeans_new <- FALSE
-  expect_identical(unname(unlist(get_local_list_conditional(settings, fit, pred)$index$new)), 1:4)
-  expect_identical(unname(unlist(get_ssn_simulate_local_lowrank(settings, NROW(pred), pred)$index$new)), 2:4)
-})
-
 test_that("local fitted independent models retain global coefficient coupling", {
   set.seed(2)
   fit <- conditional_iid_fixture("poisson", local = list(index = rep(1:2, each = 8)))
@@ -242,8 +223,7 @@ test_that("stored and named missing-site geometry agree with random effects", {
     fit <- conditional_iid_fixture(family, missing = TRUE, random = TRUE)
     fit$ssn.object$preds$alias <- fit$ssn.object$preds$.missing
     for (local in list(FALSE,
-      list(approximation = "vecchia", size = 3, ordering = "coordinate", method_random = "random"),
-      list(approximation = "low-rank", size_base = 8, reorder_base = "none", method_new = "all"))) {
+      list(size = 3, ordering = "coordinate", method_random = "random"))) {
       set.seed(2)
       stored <- conditional(fit, samples = 3, local = local)
       set.seed(2)

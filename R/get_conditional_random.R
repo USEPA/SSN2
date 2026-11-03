@@ -37,7 +37,7 @@ prepare_conditional_random <- function(object, design, local_list = NULL, covari
   spatial <- conditional_spatial_object(object)
   if (!is.null(covariance_context)) covariance_context$randcov <- numeric()
   blocks <- list(seq_len(n))
-  if (!is.null(local_list) && local_list$approximation == "vecchia") {
+  if (!is.null(local_list) && !isTRUE(local_list$exact)) {
     blocks <- local_list$random_blocks
     if (is.null(blocks)) blocks <- conditional_random_blocks(object, local_list$size_random,
       local_list$groups_random, local_list$method_random)

@@ -103,17 +103,13 @@ test_that("wave conditional local paths recover full-neighborhood moments", {
     fit <- conditional_wave_fit(network, glm)
     reference <- conditional_wave_reference(fit)
     for (local in list(
-      list(approximation = "vecchia", method = "covariance", size = 16, ordering = "none"),
-      list(approximation = "low-rank", size_base = 12, reorder_base = "none",
-           size_new = 4, reorder_new = "none", kmeans_new = FALSE))) {
+      list(method = "covariance", size = 16, ordering = "none"))) {
       set.seed(2)
       draws <- conditional(fit, "pred1km", output = c("beta", "newdata"), samples = 3000, local = local)
       expect_conditional_wave_moments(rbind(draws$beta, draws$newdata),
         reference$mean, reference$covariance)
     }
-    for (local in list(list(size = 3, ordering = "none"),
-      list(approximation = "low-rank", size_base = 6, size_new = 2,
-           reorder_base = "none", reorder_new = "none", kmeans_new = FALSE))) {
+    for (local in list(list(size = 3, ordering = "none"))) {
       set.seed(2)
       draws <- conditional(fit, "pred1km", samples = 7, local = local)
       expect_equal(dim(draws), c(4L, 7L))
@@ -127,9 +123,7 @@ test_that("Poisson wave conditionals distinguish latent means and response draws
   network <- conditional_wave_network()
   fit <- conditional_wave_fit(network, glm = TRUE)
   for (corrected in c(FALSE, TRUE)) {
-    for (local in list(FALSE, list(size = 3, ordering = "none"),
-      list(approximation = "low-rank", size_base = 6, size_new = 2,
-           reorder_base = "none", reorder_new = "none", kmeans_new = FALSE))) {
+    for (local in list(FALSE, list(size = 3, ordering = "none"))) {
       set.seed(2)
       link <- conditional(fit, "pred1km", type = "link", samples = 23,
         fit_correct = corrected, local = local)

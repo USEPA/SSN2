@@ -35,7 +35,7 @@ ssn_rnorm <- function(ssn.object, network = "obs",
     randcov_Zs <- NULL
   } else {
     names(randcov_params) <- get_randcov_names(reformulate(paste("(", names(randcov_params), ")", sep = "")))
-    randcov_Zs <- get_randcov_Zs(data = ssn.object$obs, names(randcov_params))
+    randcov_Zs <- get_randcov_Zs(data = ssn.object$obs, names(randcov_params), ZZt = FALSE)
   }
 
   # create the covariance parameter object
@@ -62,31 +62,25 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   }
 
   n <- NROW(ssn.object$obs)
-  if (is_iid_covariance(tailup_params, taildown_params, euclid_params, randcov_params) &&
+  if (is_ssn_simulate_independent(params_object) &&
       inherits(nugget_params, "nugget_nugget") &&
       is.finite(nugget_params[["nugget"]]) && nugget_params[["nugget"]] > 0) {
-    if (!is.null(partition_factor)) {
-      partition_formula <- reformulate(labels(terms(partition_factor)), intercept = FALSE)
-      partition_frame <- model.frame(partition_formula, ssn.object$obs)
-      if (NROW(partition_frame) != n) {
-        stop("Missing values in partition_factor are not supported.", call. = FALSE)
-      }
-    }
+    validate_ssn_simulate_independent(params_object, ssn.object$obs, additive)
+    get_ssn_simulate_partition(ssn.object$obs, partition_factor)
+    design <- get_randcov_design(ssn.object$obs, randcov_params, partition_factor)
     ssn_rnorm_val <- vapply(seq_len(samples), function(x) {
       mean + rnorm(n, sd = sqrt(nugget_params[["nugget"]]))
     }, numeric(n))
+    random <- draw_ssn_simulate_random(design, samples)
+    if (!is.null(random)) ssn_rnorm_val <- ssn_rnorm_val + random
     if (samples == 1) ssn_rnorm_val <- as.vector(ssn_rnorm_val)
     return(ssn_rnorm_val)
   }
   conditioning <- get_ssn_simulate_local(local, n, ssn.object$obs)
 
-  if (!identical(conditioning$method, "exact")) {
+  if (!conditioning$exact) {
     covariance_fit <- get_ssn_simulate_covariance_fit(ssn.object, params_object, additive, anisotropy, partition_factor)
-    ssn_rnorm_val <- if (identical(conditioning$approximation, "vecchia")) {
-      get_ssn_simulate_vecchia(covariance_fit, samples, conditioning) + mean
-    } else {
-      get_ssn_simulate_lowrank(covariance_fit, samples, conditioning) + mean
-    }
+    ssn_rnorm_val <- get_ssn_simulate_vecchia(covariance_fit, samples, conditioning) + mean
     if (samples == 1) {
       ssn_rnorm_val <- as.vector(ssn_rnorm_val)
     }
@@ -94,6 +88,12 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   }
 
   partition_matrix_val <- partition_matrix(partition_factor, ssn.object$obs)
+  if (!is.null(randcov_Zs)) {
+    randcov_Zs <- lapply(randcov_Zs, function(x) {
+      x$ZZt <- tcrossprod(x$Z, x$Z)
+      x
+    })
+  }
 
   # create the distance object required
   initial_object <- get_initial_object(

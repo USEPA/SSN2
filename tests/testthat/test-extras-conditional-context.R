@@ -228,7 +228,7 @@ test_that("new conditional resolver uses exact names and caller-specific default
   fit <- conditional_context_fixture()
   pred <- fit$ssn.object$preds$pred1km
   settings <- get_local_list_conditional(TRUE, fit, pred)
-  expect_identical(settings$approximation, "vecchia")
+  expect_false(settings$exact)
   expect_identical(settings$size, 30L)
   expect_identical(settings$ordering, "pid")
   expect_identical(settings$chunk_size, 1000L)
@@ -239,19 +239,18 @@ test_that("new conditional resolver uses exact names and caller-specific default
   expect_identical(get_local_list_conditional(TRUE, glm)$ordering_observed, "pid")
   expect_true(get_local_list_conditional(FALSE, fit, pred)$exact)
   expect_true(get_local_list_conditional(list(method = "all"), fit, pred)$exact)
-  expect_true(get_local_list_conditional(list(approximation = "low-rank"), fit, pred)$exact)
-  expect_true(get_local_list_conditional(list(approximation = "low-rank",
-    method = "covariance", size = 2, ordering = "none", size_response = 2), fit, pred)$exact)
-  expect_error(get_local_list_conditional(list(method_new = "subset"), fit, pred), "Base and block settings")
-  expect_error(get_local_list_conditional(list(size_response = 2), fit, pred), "size_response is not supported")
+  expect_error(get_local_list_conditional(list(approximation = "low-rank"), fit, pred), "Unknown local option")
+  expect_error(get_local_list_conditional(list(approximation = "low-rank",
+    method = "covariance", size = 2, ordering = "none", size_response = 2), fit, pred), "Unknown local option")
+  expect_error(get_local_list_conditional(list(method_new = "subset"), fit, pred), "Unknown local option")
+  expect_error(get_local_list_conditional(list(size_response = 2), fit, pred), "Unknown local option")
   expect_error(get_local_list_conditional(list(size = 1.5), fit, pred), "positive integer")
   expect_error(get_local_list_conditional(list(chunk_size = Inf), fit, pred), "positive integer")
-  expect_warning(ignored <- get_local_list_conditional(list(parallel = TRUE), fit, pred), "Ignoring", fixed = TRUE)
-  expect_false(ignored$parallel)
+  expect_error(get_local_list_conditional(list(parallel = TRUE), fit, pred), "Unknown local option")
   expect_error(get_local_list_conditional(list(size_random = 2), fit, pred), "only used for Vecchia")
   fit$n <- 5001L
   expect_message(auto <- get_local_list_conditional(NULL, fit, pred), "exceeds 5,000")
-  expect_identical(auto$approximation, "vecchia")
+  expect_false(auto$exact)
 })
 
 test_that("effect blocks precede prediction randomness and validate support", {

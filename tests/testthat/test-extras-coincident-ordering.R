@@ -108,7 +108,7 @@ test_that("simulation and decorrelation callers share pid and duplicate safeguar
 
   simulate <- function(ordering = NULL) {
     do.call(ssn_rnorm, c(list(ssn.object = network, samples = 3,
-      local = list(approximation = "vecchia", size = 3, ordering = ordering)), params))
+      local = list(size = 3, ordering = ordering)), params))
   }
   set.seed(2)
   omitted <- simulate()
@@ -126,15 +126,15 @@ test_that("simulation and decorrelation callers share pid and duplicate safeguar
     fit <- do.call(if (glm) ssn_glm else ssn_lm, args)
     set.seed(2)
     omitted <- conditional(fit, "pred1km", samples = 3,
-      local = list(approximation = "vecchia", size = 3))
+      local = list(size = 3))
     set.seed(2)
     explicit <- conditional(fit, "pred1km", samples = 3,
-      local = list(approximation = "vecchia", size = 3, ordering = "pid"))
+      local = list(size = 3, ordering = "pid"))
     expect_identical(omitted, explicit)
     expect_equal(dim(omitted), c(4, 3))
     expect_true(all(is.finite(omitted)))
     expect_error(conditional(fit, "pred1km", samples = 3,
-      local = list(approximation = "vecchia", size = 3, ordering = "maxmin")),
+      local = list(size = 3, ordering = "maxmin")),
       "coincident locations")
     if (!glm) {
       expect_error(predict(fit, "pred1km", block = TRUE,

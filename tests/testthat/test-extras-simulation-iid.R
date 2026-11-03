@@ -74,19 +74,41 @@ test_that("zero nugget and all-none unconditional simulation retain their existi
   expect_error(do.call(ssn_rnorm, args), "At least one covariance type")
 })
 
-test_that("independent simulation excludes spatial and random effects and degenerate variance", {
+test_that("independent simulation includes zero spatial variance and random effects", {
+  set.seed(2)
+  local_mocked_bindings(get_ssn_simulate_local = function(...) stop("general simulation"),
+                        .package = "SSN2")
+  args <- simulation_iid_args()
+  reference <- do.call(ssn_rnorm, args)
+  reference_seed <- .Random.seed
+  for (component in c("tailup", "taildown", "euclid")) {
+    current <- args
+    current$ssn.object$obs$area <- rep(1, 12)
+    current$additive <- "area"
+    constructor <- get(paste0(component, "_params"), asNamespace("SSN2"))
+    current[[paste0(component, "_params")]] <- constructor("exponential", de = 0, range = 1)
+    set.seed(2)
+    expect_identical(do.call(ssn_rnorm, current), reference)
+    expect_identical(.Random.seed, reference_seed)
+  }
+  for (variance in c(0, 1)) {
+    current <- args
+    current$randcov_params <- spmodel::randcov_params(group = variance)
+    set.seed(2)
+    value <- do.call(ssn_rnorm, current)
+    expect_identical(dim(value), dim(reference))
+    if (variance == 0) expect_identical(value, reference)
+  }
+})
+
+test_that("independent simulation excludes positive spatial variance and degenerate variance", {
   local_mocked_bindings(get_ssn_simulate_local = function(...) stop("general simulation"),
                         .package = "SSN2")
   for (component in c("tailup", "taildown", "euclid")) {
     args <- simulation_iid_args()
     args$additive <- "group"
     constructor <- get(paste0(component, "_params"), asNamespace("SSN2"))
-    args[[paste0(component, "_params")]] <- constructor("exponential", de = 0, range = 1)
-    expect_error(do.call(ssn_rnorm, args), "general simulation")
-  }
-  for (variance in c(0, 1)) {
-    args <- simulation_iid_args()
-    args$randcov_params <- spmodel::randcov_params(group = variance)
+    args[[paste0(component, "_params")]] <- constructor("exponential", de = 1, range = 1)
     expect_error(do.call(ssn_rnorm, args), "general simulation")
   }
   for (nugget in list(nugget_params("none"), nugget_params("nugget", nugget = 0))) {

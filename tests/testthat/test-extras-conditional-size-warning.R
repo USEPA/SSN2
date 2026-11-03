@@ -21,7 +21,7 @@ test_that("random-effect size warnings continue past the strict threshold", {
       format(q, big.mark = ",", scientific = FALSE),
       " random-effect coefficients. This may result in exceedingly long computational times."
     )
-    for (ctl in list(NULL, list(approximation = "vecchia"))) {
+    for (ctl in list(NULL, list(exact = FALSE))) {
       expect_warning(
         expect_error(SSN2:::prepare_conditional_random(list(), design, ctl), "past size warning"),
         message, fixed = TRUE
@@ -36,7 +36,7 @@ test_that("random-effect size warnings count only positive conditional variances
     conditional_spatial_object = function(...) stop("past size warning"),
     .package = "SSN2"
   )
-  for (ctl in list(NULL, list(approximation = "vecchia"))) {
+  for (ctl in list(NULL, list(exact = FALSE))) {
     design <- conditional_size_design(10001L)
     design$variance[10001L] <- 0
     expect_warning(
@@ -58,7 +58,7 @@ test_that("invalid random-effect variances fail before size warnings", {
     conditional_spatial_object = function(...) stop("past size warning"),
     .package = "SSN2"
   )
-  for (ctl in list(NULL, list(approximation = "vecchia"))) {
+  for (ctl in list(NULL, list(exact = FALSE))) {
     design <- conditional_size_design(20000L)
     for (invalid in c(-1, NA_real_, NaN, Inf, -Inf)) {
       design$variance[1L] <- invalid

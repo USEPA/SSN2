@@ -1741,7 +1741,7 @@ get_decorrelate_observed_covariance <- function(covariance_fit, data) {
 
 #' Select the appropriate distance backend for decorrelation/simulation covariance
 #'
-#' Called by the local/Vecchia/low-rank neighbor-pool machinery (never the
+#' Called by the local/Vecchia neighbor-pool machinery (never the
 #' exact/default path), which reads many small, per-pool/per-target
 #' submatrices per call -- the same repeated-small-read pattern that keeps
 #' local model fitting's own backend resolution \code{.bmat}-preferred (see

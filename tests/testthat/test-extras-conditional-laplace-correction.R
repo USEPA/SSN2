@@ -47,8 +47,7 @@ conditional_laplace_fixture <- local({
 
 test_that("conditional corrections shift draws without changing their random errors", {
   paths <- list(exact = FALSE,
-    lowrank = list(approximation = "low-rank", method_base = "all", method_new = "all"),
-    vecchia = list(approximation = "vecchia", size = 5, ordering = "none"))
+    vecchia = list(size = 5, ordering = "none"))
   for (fitting_local in c(FALSE, TRUE)) for (effects in c(FALSE, TRUE)) {
     fit <- conditional_laplace_fixture(local = fitting_local, effects = effects)
     original <- fit
@@ -105,33 +104,6 @@ test_that("independent conditional draws retain mode curvature and old-object fa
       expect_error(conditional(fit, "correction", samples = 1, fit_correct = bad), "fit_correct")
     }
   }
-})
-
-test_that("a reduced simulation base subsets the corrected latent center by pid", {
-  fit <- conditional_laplace_fixture()
-  base <- seq_len(8)
-  settings <- list(approximation = "low-rank", size_base = 8, reorder_base = "none",
-    size_new = 2, reorder_new = "none", kmeans_new = FALSE)
-  output <- c("beta", "newdata", "object")
-  set.seed(2)
-  on <- conditional(fit, "correction", samples = 8, output = output, local = settings)
-  set.seed(2)
-  off <- conditional(fit, "correction", samples = 8, output = output, local = settings, fit_correct = FALSE)
-  X <- model.matrix(fit)[base, , drop = FALSE]
-  Xnew <- get_newdata_model_matrix(fit, fit$ssn.object$preds$correction)$newdata_model
-  S <- as.matrix(covmatrix(fit))[base, base, drop = FALSE]
-  C <- t(as.matrix(covmatrix(fit, "correction", cov_type = "obs.pred"))[base, , drop = FALSE])
-  beta_shift <- fit$laplace$betahat - coef(fit)
-  expected <- as.numeric(Xnew %*% beta_shift + C %*% solve(S,
-    fit$laplace$delta[base] - X %*% beta_shift))
-  expect_equal(on$newdata - off$newdata, matrix(expected, length(expected), 8),
-    ignore_attr = TRUE, tolerance = 1e-9)
-  expect_equal(cov(t(on$newdata)), cov(t(off$newdata)), tolerance = 1e-10)
-  expect_identical(on$object, off$object)
-  old <- fit
-  old$laplace <- NULL
-  set.seed(2)
-  expect_identical(conditional(old, "correction", samples = 8, output = output, local = settings), off)
 })
 
 test_that("log-link conditional response means agree with averaged predictions", {

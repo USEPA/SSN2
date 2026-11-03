@@ -69,8 +69,7 @@ conditional_glm_joint_fixture <- local({
 
 conditional_glm_joint_methods <- function() {
   list(exact = FALSE,
-    allbase = list(approximation = "low-rank", method_base = "all", method_new = "all"),
-    allneighbor = list(approximation = "vecchia", method = "all", ordering = "none"))
+    allneighbor = list(method = "all", ordering = "none"))
 }
 
 expect_conditional_glm_joint_moments <- function(draws, mean, covariance, label) {

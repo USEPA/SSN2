@@ -378,7 +378,7 @@ test_that("conditional() local = TRUE/list(...) works for ssn_lm()", {
   expect_equal(dim(obj_local), c(fit$n, 3))
   expect_true(all(apply(obj_local, 2, function(col) identical(unname(col), unname(y_obs)))))
 
-  d_local_multi <- conditional(fit, "CapeHornSmall", output = c("newdata", "object"), samples = 4, local = list(approximation = "vecchia", method ="all"))
+  d_local_multi <- conditional(fit, "CapeHornSmall", output = c("newdata", "object"), samples = 4, local = list(method ="all"))
   expect_identical(names(d_local_multi), c("newdata", "object"))
 
   pred <- fit$ssn.object$preds$CapeHornSmall
@@ -398,7 +398,7 @@ test_that("conditional() local = TRUE/list(...) works for ssn_lm()", {
   for (sz in c(3, 10, 45, fit$n + n_pred - 1L)) {
     set.seed(2)
     d <- conditional(fit, "CapeHornSmall", output = "newdata", samples = samples,
-      local = list(approximation = "vecchia", method = "covariance", size = sz))
+      local = list(method = "covariance", size = sz))
     expect_equal(dim(d), c(n_pred, samples))
     expect_true(all(is.finite(d)))
   }
@@ -410,13 +410,13 @@ test_that("conditional() local = TRUE/list(...) works for ssn_lm()", {
   # Different factorizations need not reproduce identical individual draws.
   for (ordering in c("pid", "none", "random", "maxmin", "middleout", "outsidein", "coordinate", "grts")) {
     set.seed(2)
-    d <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 200, local = list(approximation = "vecchia", method ="covariance", size = 5, ordering = ordering))
+    d <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 200, local = list(method ="covariance", size = 5, ordering = ordering))
     expect_true(all(is.finite(d)))
     expect_equal(dim(d), c(8, 200))
   }
 
   # RNG reproducibility under the local (truncated) engine specifically
-  vecchia_local <- list(approximation = "vecchia", method = "covariance", size = 5)
+  vecchia_local <- list(method = "covariance", size = 5)
   set.seed(2)
   d1 <- conditional(fit, "CapeHornSmall", samples = 10, local = vecchia_local)
   set.seed(2)
@@ -427,39 +427,37 @@ test_that("conditional() local = TRUE/list(...) works for ssn_lm()", {
 
   settings <- SSN2:::get_local_list_conditional(list(size = 10L), fit, pred)
   expect_mapequal(
-    settings[c("approximation", "size", "method", "ordering", "parallel", "exact", "chunk_size")],
-    list(approximation = "vecchia", size = 10L, method = "covariance", ordering = "pid",
-      parallel = FALSE, exact = FALSE, chunk_size = 1000L)
+    settings[c("size", "method", "ordering", "exact", "chunk_size")],
+    list(size = 10L, method = "covariance", ordering = "pid",
+      exact = FALSE, chunk_size = 1000L)
   )
   expect_identical(settings$order[settings$inv_order], seq_len(NROW(pred)))
   expect_mapequal(
     SSN2:::get_local_list_conditional(list(method = "covariance"), fit, pred),
-    SSN2:::get_local_list_conditional(list(approximation = "vecchia"), fit, pred)
+    SSN2:::get_local_list_conditional(list(), fit, pred)
   )
   expect_identical(SSN2:::get_local_list_conditional(TRUE, fit, pred)$size, 30L)
   expect_identical(SSN2:::get_local_list_conditional(TRUE, fit)$order, integer())
   set.seed(2)
   default_draws <- conditional(fit, "CapeHornSmall", samples = 5,
-    local = list(approximation = "vecchia", method = "covariance", size = 30L, ordering = "pid"))
+    local = list(method = "covariance", size = 30L, ordering = "pid"))
   for (local in list(TRUE, list(), list(method = "covariance"), list(size = 30L))) {
     set.seed(2)
     expect_identical(conditional(fit, "CapeHornSmall", samples = 5, local = local), default_draws)
   }
 
   # rejection sweep: local argument vocabulary, and local + simulate_covparams
-  expect_error(conditional(fit, "CapeHornSmall", local = list(approximation = "vecchia", method = "bogus")), "method must be")
-  expect_error(conditional(fit, "CapeHornSmall", local = list(approximation = "vecchia", size = -1)), "size must be")
-  expect_error(conditional(fit, "CapeHornSmall", local = list(approximation = "vecchia", method = "covariance", size = 5, ordering = "bogus")), "ordering must be")
-  expect_error(conditional(fit, "CapeHornSmall", local = list(size_base = 10)), "Base and block settings require")
-  expect_error(conditional(fit, "CapeHornSmall", local = list(size_response = 10)), "size_response is not supported")
+  expect_error(conditional(fit, "CapeHornSmall", local = list(method = "bogus")), "method must be")
+  expect_error(conditional(fit, "CapeHornSmall", local = list(size = -1)), "size must be")
+  expect_error(conditional(fit, "CapeHornSmall", local = list(method = "covariance", size = 5, ordering = "bogus")), "ordering must be")
+  expect_error(conditional(fit, "CapeHornSmall", local = list(size_base = 10)), "Unknown local option")
+  expect_error(conditional(fit, "CapeHornSmall", local = list(size_response = 10)), "Unknown local option")
   expect_error(conditional(fit, "CapeHornSmall", local = list(method = "distance")), "method must be")
   for (size in c(1.5, NA_real_, Inf)) {
     expect_error(conditional(fit, "CapeHornSmall", local = list(size = size)), "positive integer")
   }
-  set.seed(2)
-  expect_warning(ignored_parallel <- conditional(fit, "CapeHornSmall", samples = 5,
-    local = list(parallel = TRUE)), "Ignoring", fixed = TRUE)
-  expect_identical(ignored_parallel, default_draws)
+  expect_error(conditional(fit, "CapeHornSmall", samples = 5,
+    local = list(parallel = TRUE)), "Unknown local option")
 
   # local + simulate_covparams = TRUE: matches spmodel -- a message and
   # Local simulation disables covariance-parameter sampling without an error.
@@ -487,7 +485,7 @@ test_that("conditional() local = TRUE/list(...) works for ssn_lm()", {
     additive = "afvArea"
   )
   set.seed(2)
-  d_dup <- conditional(fit_dup, "CapeHornSmall", output = "newdata", samples = 50, local = list(approximation = "vecchia", method ="covariance", size = 6))
+  d_dup <- conditional(fit_dup, "CapeHornSmall", output = "newdata", samples = 50, local = list(method ="covariance", size = 6))
   expect_equal(dim(d_dup), c(8, 50))
   expect_true(all(is.finite(d_dup)))
 })
@@ -511,7 +509,6 @@ test_that("local is automatically enabled when the observed or prediction sample
     conditioning <- SSN2:::get_local_list_conditional(NULL, fit_fake_big, pred),
     "exceeds 5,000"
   )
-  expect_identical(conditioning$approximation, "vecchia")
   expect_false(conditioning$exact)
   expect_identical(conditioning$size, 30L)
   fit_boundary <- fit
@@ -525,7 +522,6 @@ test_that("local is automatically enabled when the observed or prediction sample
     prediction_conditioning <- SSN2:::get_local_list_conditional(NULL, fit, large_pred),
     "exceeds 5,000"
   )
-  expect_identical(prediction_conditioning$approximation, "vecchia")
   expect_false(prediction_conditioning$exact)
   expect_no_message(
     prediction_boundary <- SSN2:::get_local_list_conditional(NULL, fit, large_pred[1:5000, ])
@@ -544,89 +540,6 @@ test_that("local is automatically enabled when the observed or prediction sample
     forced_exact <- SSN2:::get_local_list_conditional(FALSE, fit_fake_big, large_pred)
   )
   expect_true(forced_exact$exact)
-})
-
-test_that("explicit low-rank conditional simulation approximates the exact distribution", {
-  copy_lsn_to_temp()
-  temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-  mf04p <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
-  mf04p$preds$CapeHornSmall <- mf04p$preds$CapeHorn[1:8, ]
-  ssn_create_distmat(mf04p, predpts = "CapeHornSmall", overwrite = TRUE, among_predpts = TRUE)
-
-  fit <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
-    tailup_type = "exponential", additive = "afvArea",
-    tailup_initial = tailup_initial("exponential", de = 0.4, range = 300, known = "given"),
-    nugget_initial = nugget_initial("nugget", nugget = 0.1, known = "given")
-  )
-  set.seed(2)
-  d_exact <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 8000)
-  cov_exact <- cov(t(d_exact))
-
-  # no subsetting at all (method_base/method_new = "all") should match exact
-  set.seed(2)
-  d_all <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 8000,
-    local = list(approximation = "low-rank", method_base = "all", method_new = "all"))
-  expect_true(all(is.finite(d_all)))
-  rel_all <- max(abs(cov(t(d_all)) - cov_exact)) / max(abs(cov_exact))
-  expect_true(rel_all < 0.15)
-
-  # base-only subsetting (one undivided newdata block) still approximates well
-  set.seed(2)
-  d_base <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 8000,
-    local = list(approximation = "low-rank", method_base = "base", size_base = 20, method_new = "all"))
-  expect_true(all(is.finite(d_base)))
-  rel_base <- max(abs(cov(t(d_base)) - cov_exact)) / max(abs(cov_exact))
-  expect_true(rel_base < 0.4)
-
-  # genuine multi-block newdata splitting: blocks are conditionally
-  # independent given the base by construction (a documented, expected
-  # approximation trade-off -- see spmodel's own "blocks are assumed
-  # conditionally independent" caveat), so this only checks that draws stay
-  # finite with accurate means, not tight covariance agreement
-  set.seed(2)
-  d_multiblock <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 8000,
-    local = list(approximation = "low-rank", method_base = "all", method_new = "base", size_new = 3))
-  expect_true(all(is.finite(d_multiblock)))
-  rel_mean <- max(abs(rowMeans(d_multiblock) - rowMeans(d_exact))) / max(abs(rowMeans(d_exact)))
-  expect_true(rel_mean < 0.05)
-
-  pred <- fit$ssn.object$preds$CapeHornSmall
-  explicit_lowrank <- list(approximation = "low-rank", size_base = 20, reorder_base = "none")
-  lowrank_settings <- SSN2:::get_local_list_conditional(explicit_lowrank, fit, pred)
-  expect_identical(lowrank_settings$approximation, "low-rank")
-  expect_false(lowrank_settings$exact)
-  mixed_settings <- SSN2:::get_local_list_conditional(c(explicit_lowrank,
-    list(method = "covariance", size = 5, ordering = "random")), fit, pred)
-  expect_identical(mixed_settings$index, lowrank_settings$index)
-  expect_identical(SSN2:::get_local_list_conditional(list(approximation = "low-rank"),
-    fit, pred)$reorder_base, "grts")
-
-  # output = "beta"/"object" still work with low-rank
-  res <- conditional(fit, "CapeHornSmall", output = c("newdata", "beta", "object"), samples = 50,
-    local = list(approximation = "low-rank", method_base = "base", size_base = 20, method_new = "all"))
-  expect_true(all(is.finite(res$newdata)) && all(is.finite(res$beta)) && all(is.finite(res$object)))
-
-  # parallel = TRUE matches parallel = FALSE for a genuine multi-block config
-  lowrank_multiblock <- list(approximation = "low-rank", method_base = "all",
-    method_new = "base", size_new = 3, reorder_new = "none", kmeans_new = FALSE)
-  set.seed(2)
-  d_serial <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 8000, local = lowrank_multiblock)
-  set.seed(2)
-  d_par <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 8000,
-    local = c(lowrank_multiblock, list(parallel = TRUE, ncores = 2)))
-  expect_true(all(is.finite(d_par)))
-  rel_mean_par <- max(abs(rowMeans(d_par) - rowMeans(d_serial))) / max(abs(rowMeans(d_serial)))
-  expect_true(rel_mean_par < 0.05)
-
-  # rejection sweep for low-rank's own settings
-  expect_error(
-    conditional(fit, "CapeHornSmall", local = list(approximation = "low-rank", method_new = "bogus")),
-    "method_new must be"
-  )
-  expect_error(
-    conditional(fit, "CapeHornSmall", local = list(approximation = "low-rank", reorder_new = "bogus")),
-    "reorder_new must be"
-  )
 })
 
 test_that("conditional() local = TRUE/list(...) handles random effects and partition factors", {
@@ -648,7 +561,7 @@ test_that("conditional() local = TRUE/list(...) handles random effects and parti
   set.seed(2)
   d_exact <- conditional(fit_rand, "CapeHornSmall", output = "newdata", samples = 3000)
   set.seed(2)
-  d_local <- conditional(fit_rand, "CapeHornSmall", output = "newdata", samples = 3000, local = list(approximation = "vecchia", method ="all"))
+  d_local <- conditional(fit_rand, "CapeHornSmall", output = "newdata", samples = 3000, local = list(method ="all"))
   expect_equal(d_local, d_exact, tolerance = 1e-10)
 
   fit_pf <- ssn_lm(
@@ -661,7 +574,7 @@ test_that("conditional() local = TRUE/list(...) handles random effects and parti
   set.seed(2)
   d_pf_exact <- conditional(fit_pf, "CapeHornSmall", output = "newdata", samples = 3000)
   set.seed(2)
-  d_pf_local <- conditional(fit_pf, "CapeHornSmall", output = "newdata", samples = 3000, local = list(approximation = "vecchia", method ="all"))
+  d_pf_local <- conditional(fit_pf, "CapeHornSmall", output = "newdata", samples = 3000, local = list(method ="all"))
   expect_equal(d_pf_local, d_pf_exact, tolerance = 1e-10)
 })
 
@@ -687,7 +600,7 @@ test_that("local conditional simulation accepts new partition levels", {
   set.seed(2)
   draws <- conditional(
     fit, "CapeHornSmall", samples = 4,
-    local = list(approximation = "vecchia", method ="covariance", size = 5)
+    local = list(method ="covariance", size = 5)
   )
   expect_equal(dim(draws), c(8, 4))
   expect_true(all(is.finite(draws)))
@@ -708,7 +621,7 @@ test_that("conditional() local = TRUE/list(...) works for ssn_glm()", {
     additive = "afvArea"
   )
 
-  # method = "all" dispatches to exact even without an explicit approximation.
+  # method = "all" dispatches to exact.
   for (type in c("link", "response", "new")) {
     set.seed(2)
     g_exact <- conditional(fit, "CapeHornSmall", type = type, samples = 3000)
@@ -718,14 +631,13 @@ test_that("conditional() local = TRUE/list(...) works for ssn_glm()", {
   }
 
   settings <- SSN2:::get_local_list_conditional(TRUE, fit, fit$ssn.object$preds$CapeHornSmall)
-  expect_identical(settings$approximation, "vecchia")
   expect_identical(settings$size, 60L)
   expect_identical(settings$ordering, "pid")
   expect_identical(settings$ordering_observed, "pid")
   expect_false(settings$exact)
   set.seed(2)
   default_draws <- conditional(fit, "CapeHornSmall", samples = 5,
-    local = list(approximation = "vecchia", method = "covariance", size = 60L, ordering = "pid"))
+    local = list(method = "covariance", size = 60L, ordering = "pid"))
   for (local in list(TRUE, list(), list(method = "covariance"), list(size = 60L))) {
     set.seed(2)
     expect_equal(conditional(fit, "CapeHornSmall", samples = 5, local = local), default_draws,
@@ -740,10 +652,10 @@ test_that("conditional() local = TRUE/list(...) works for ssn_glm()", {
   # bounded/truncated approximation: finite, correctly-typed draws across
   # every response family output, varying newdata_size, at a small size
   set.seed(2)
-  g_resp <- conditional(fit, "CapeHornSmall", type = "response", samples = 500, local = list(approximation = "vecchia", method ="covariance", size = 8))
+  g_resp <- conditional(fit, "CapeHornSmall", type = "response", samples = 500, local = list(method ="covariance", size = 8))
   expect_true(all(g_resp > 0) && all(is.finite(g_resp)))
   set.seed(2)
-  g_new <- conditional(fit, "CapeHornSmall", type = "new", samples = 500, local = list(approximation = "vecchia", method ="covariance", size = 8))
+  g_new <- conditional(fit, "CapeHornSmall", type = "new", samples = 500, local = list(method ="covariance", size = 8))
   expect_true(all(g_new == round(g_new)))
   sd_new <- apply(g_new, 1, sd)
   sd_resp <- apply(g_resp, 1, sd)
@@ -751,7 +663,7 @@ test_that("conditional() local = TRUE/list(...) works for ssn_glm()", {
 
   # output = "beta"
   set.seed(2)
-  betas <- conditional(fit, "CapeHornSmall", output = "beta", samples = 50, local = list(approximation = "vecchia", method ="covariance", size = 5))
+  betas <- conditional(fit, "CapeHornSmall", output = "beta", samples = 50, local = list(method ="covariance", size = 5))
   expect_equal(dim(betas), c(fit$p, 50))
   expect_true(all(is.finite(betas)))
 
@@ -767,38 +679,8 @@ test_that("conditional() local = TRUE/list(...) works for ssn_glm()", {
     additive = "afvArea"
   ))
   set.seed(2)
-  d_binom <- conditional(fit_binom, "CapeHornSmall", type = "new", samples = 300, newdata_size = rep(20, 8), local = list(approximation = "vecchia", method ="covariance", size = 6))
+  d_binom <- conditional(fit_binom, "CapeHornSmall", type = "new", samples = 300, newdata_size = rep(20, 8), local = list(method ="covariance", size = 6))
   expect_true(all(d_binom >= 0 & d_binom <= 20))
-})
-
-test_that("local low-rank GLM simulation shares latent and coefficient draws", {
-  copy_lsn_to_temp()
-  temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-  mf04p <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
-  mf04p$preds$CapeHornSmall <- mf04p$preds$CapeHorn[1:8, ]
-  ssn_create_distmat(mf04p, predpts = "CapeHornSmall", overwrite = TRUE, among_predpts = TRUE)
-
-  fit <- ssn_glm(C16 ~ ELEV_DEM, mf04p, family = "poisson",
-    euclid_initial = euclid_initial("exponential", 0.15, 12000, known = "given"),
-    nugget_initial = nugget_initial("nugget", 0.12, known = "given")
-  )
-  set.seed(2)
-  d_exact <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 4000)
-  cov_exact <- cov(t(d_exact))
-
-  set.seed(2)
-  d_all <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 4000,
-    local = list(approximation = "low-rank", method_base = "all", method_new = "all"))
-  expect_true(all(is.finite(d_all)))
-  rel_all <- max(abs(cov(t(d_all)) - cov_exact)) / max(abs(cov_exact))
-  expect_true(rel_all < 0.2)
-
-  set.seed(2)
-  d_multiblock <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 4000,
-    local = list(approximation = "low-rank", method_base = "all", method_new = "base", size_new = 3))
-  expect_true(all(is.finite(d_multiblock)))
-  rel_mean <- max(abs(rowMeans(d_multiblock) - rowMeans(d_exact))) / max(abs(rowMeans(d_exact)))
-  expect_true(rel_mean < 0.1)
 })
 
 # conditional local fit
@@ -852,7 +734,7 @@ test_that("local Gaussian fits support exact and Vecchia conditional uncertainty
   expect_equal(exact, expected, ignore_attr = TRUE, tolerance = 1e-9)
   set.seed(2)
   sequential <- conditional(fit, "small", samples = 40,
-    local = list(approximation = "vecchia", method ="all", ordering = "none"))
+    local = list(method ="all", ordering = "none"))
   expect_equal(sequential, exact, tolerance = 1e-9)
   set.seed(2)
   missing_exact <- conditional(fit, ".missing", samples = 10)
@@ -863,17 +745,17 @@ test_that("local Gaussian fits support exact and Vecchia conditional uncertainty
   })
   set.seed(2)
   expect_equal(conditional(fit, ".missing", samples = 10,
-    local = list(approximation = "vecchia", method ="all", ordering = "none")), missing_exact, tolerance = 1e-9)
+    local = list(method ="all", ordering = "none")), missing_exact, tolerance = 1e-9)
   expect_equal(rownames(missing_exact), as.character(fit$missing_index))
 
   for (ordering in c("none", "pid", "random")) {
     set.seed(2)
     draws <- conditional(fit, "small", samples = 10,
-      local = list(approximation = "vecchia", method ="covariance", size = 5, ordering = ordering))
+      local = list(method ="covariance", size = 5, ordering = ordering))
     expect_equal(dim(draws), c(6, 10))
     expect_true(all(is.finite(draws)))
   }
-  for (simulation_local in list(FALSE, TRUE, list(approximation = "vecchia", method = "all"))) {
+  for (simulation_local in list(FALSE, TRUE, list(method = "all"))) {
     set.seed(2)
     expect_equal(conditional(fit, "small", output = "beta", samples = 40,
       local = simulation_local), beta, ignore_attr = TRUE)
@@ -890,7 +772,7 @@ test_that("local Gaussian fits support exact and Vecchia conditional uncertainty
   expect_equal(conditional(fit, "small", samples = 40), exact, tolerance = 1e-9)
   set.seed(2)
   expect_equal(conditional(fit, "small", samples = 40,
-    local = list(approximation = "vecchia", method ="all", ordering = "none")), exact, tolerance = 1e-9)
+    local = list(method ="all", ordering = "none")), exact, tolerance = 1e-9)
   set.seed(2)
   expect_equal(conditional(fit, ".missing", samples = 10), missing_exact, tolerance = 1e-9)
 })
@@ -906,11 +788,11 @@ test_that("local GLM fits support exact and Vecchia draws with fixed-effect unce
     exact <- conditional(fit, "small", type = type, samples = 40)
     set.seed(2)
     sequential <- conditional(fit, "small", type = type, samples = 40,
-      local = list(approximation = "vecchia", method ="all", ordering = "none"))
+      local = list(method ="all", ordering = "none"))
     expect_equal(sequential, exact, tolerance = 1e-8)
     expect_true(all(is.finite(exact)))
     draws <- conditional(fit, "small", type = type, samples = 10,
-      local = list(approximation = "vecchia", method ="covariance", size = 5, ordering = "random"))
+      local = list(method ="covariance", size = 5, ordering = "random"))
     expect_equal(dim(draws), c(6, 10))
     expect_true(all(is.finite(draws)))
     if (type == "new") expect_true(all(draws == round(draws) & draws >= 0))

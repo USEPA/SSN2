@@ -1,21 +1,4 @@
-#' Validate \code{"vecchia"} settings
-#'
-#' Fills \code{method}, \code{size}, and \code{ordering} for sequential
-#' covariance-neighbor simulation.
-#'
-#' @param local A list already known to have \code{approximation == "vecchia"}
-#'   (or about to be given it).
-#' @param default_ordering The default \code{ordering} value.
-#'
-#' @return \code{local}, with \code{approximation = "vecchia"} and every
-#'   \code{"vecchia"} setting filled in.
-#'
-#' @noRd
 get_local_vecchia_settings <- function(local, default_ordering = "pid") {
-  lowrank_options <- c("method_base", "size_base", "reorder_base", "size_new", "kmeans_new")
-  if (any(names(local) %in% lowrank_options)) {
-    stop('Base and block settings require local$approximation = "low-rank".', call. = FALSE)
-  }
   if (is.null(local$method)) {
     local$method <- "covariance"
   } else if (length(local$method) != 1L || is.na(local$method) || !local$method %in% c("all", "covariance")) {
@@ -29,68 +12,9 @@ get_local_vecchia_settings <- function(local, default_ordering = "pid") {
   }
   if (is.null(local$ordering)) local$ordering <- default_ordering
   local$ordering <- get_decorrelate_ordering(local$ordering)
-  if (isTRUE(local$parallel)) {
-    warning('local$parallel is not used when local$approximation = "vecchia" -- the simulation is inherently sequential (each location can depend on earlier-simulated ones), so there is no block-level work to parallelize. Ignoring.', call. = FALSE)
-  }
-  local$parallel <- FALSE
-  local$approximation <- "vecchia"
   local
 }
 
-#' Split a big-data approximation's remaining locations into blocks
-#'
-#' Shared by \code{\link{get_ssn_simulate_local_lowrank}()} and
-#' \code{conditional()}'s own low-rank resolver: either \code{kmeans()}
-#' clusters \code{index_new}'s own coordinates (reusing the same
-#' \code{kmeans()}-on-\code{sf::st_coordinates()} pattern
-#' \code{\link{get_local_estimation_index}()} (\code{R/local.R}) already
-#' established for \code{ssn_lm()}/\code{ssn_glm()}'s own local-likelihood
-#' fitting), or splits them into contiguous blocks of (nearly) equal size,
-#' matching spmodel's \code{get_local_list_simulation_lowrank()}/
-#' \code{get_local_list_conditional_lowrank()} exactly.
-#'
-#' @param index_new The (already ordered) row indices to split into blocks.
-#' @param data The \code{sf} rows \code{index_new} indexes into. Only used
-#'   (and only required) when \code{kmeans_new} is \code{TRUE}.
-#' @param groups The number of blocks.
-#' @param kmeans_new Whether to cluster on coordinates (\code{TRUE}) or split
-#'   contiguously (\code{FALSE}).
-#'
-#' @return A list of \code{groups} row-index vectors, together covering every
-#'   element of \code{index_new} exactly once.
-#'
-#' @noRd
-get_local_lowrank_blocks <- function(index_new, data, groups, kmeans_new) {
-  n_new <- length(index_new)
-  if (kmeans_new) {
-    coords <- sf::st_coordinates(data[index_new, , drop = FALSE])
-    if (NROW(unique(coords)) < groups) {
-      stop('There are not enough distinct prediction locations for the requested blocks; increase local$size_new or use local$kmeans_new = FALSE.', call. = FALSE)
-    }
-    cluster <- stats::kmeans(coords, centers = groups, iter.max = 30)$cluster
-    return(split(index_new, cluster))
-  }
-  sizes <- rep(n_new %/% groups, groups)
-  extra <- n_new %% groups
-  if (extra > 0L) sizes[seq_len(extra)] <- sizes[seq_len(extra)] + 1L
-  split(index_new, rep(seq_len(groups), times = sizes))
-}
-
-#' Validate and normalize the \code{local} argument for unconditional simulation
-#'
-#' Dispatches on \code{local$approximation} to one of two big-data
-#' approximations: \code{"vecchia"} (the default) or \code{"low-rank"}.
-#'
-#' @param local A logical or list; see the \code{local} argument to
-#'   \code{\link{ssn_rnorm}()}/\code{\link{ssn_simulate}()}.
-#' @param n The number of locations to simulate.
-#' @param data The \code{sf} rows to simulate at (\code{ssn.object$obs}).
-#'
-#' @return A resolved list with \code{method = "exact"} (the dense path), or
-#'   \code{approximation = "vecchia"}/\code{"low-rank"} plus that
-#'   approximation's own settings.
-#'
-#' @noRd
 get_ssn_simulate_local <- function(local, n, data) {
   if (is.null(local)) {
     local <- n > 5000
@@ -98,119 +22,25 @@ get_ssn_simulate_local <- function(local, n, data) {
       message("Because the desired simulation size exceeds 5,000, we are setting local = TRUE to perform computationally efficient approximations. To override this behavior and compute the exact solution, rerun with local = FALSE. Be aware that setting local = FALSE may result in exceedingly long computational times.")
     }
   }
-  if (identical(local, FALSE)) {
-    return(list(method = "exact"))
-  }
+  local <- validate_simulation_local(local, c("method", "size", "ordering"))
+  if (identical(local, FALSE)) return(list(exact = TRUE, method = "all"))
   if (identical(local, TRUE)) local <- list()
-  if (!is.list(local)) {
-    stop("local must be FALSE, TRUE, or a list.", call. = FALSE)
-  }
-  if (is.null(local$approximation)) local$approximation <- "vecchia"
-  if (length(local$approximation) != 1L || is.na(local$approximation) || !local$approximation %in% c("low-rank", "vecchia")) {
-    stop("local$approximation must be \"low-rank\" or \"vecchia\".", call. = FALSE)
-  }
-  if (identical(local$approximation, "vecchia")) {
-    local <- get_local_vecchia_settings(local)
-    if (local$method == "all" && n > 2000) {
-      warning('local$method = "all" can be slow for more than a few thousand locations.', call. = FALSE)
-    }
-    return(local)
-  }
-  get_ssn_simulate_local_lowrank(local, n, data)
-}
-
-#' Build the \code{"low-rank"} big data approximation settings for
-#' \code{\link{ssn_rnorm}()}/\code{\link{ssn_simulate}()}
-#'
-#' Matches spmodel's \code{get_local_list_simulation_lowrank()}
-#' (\code{R/get_local_list.R}) exactly: a base sample is drawn (ordered via
-#' \code{reorder_base}, sized \code{size_base}), and the remaining locations
-#' are split into blocks of (approximately) \code{size_new}, either by
-#' \code{kmeans_new} clustering on coordinates or contiguously (see
-#' \code{\link{get_local_lowrank_blocks}()}).
-#'
-#' @param local The partially-resolved \code{local} list (already has
-#'   \code{approximation == "low-rank"}).
-#' @param n The number of locations to simulate.
-#' @param data The \code{sf} rows to simulate at.
-#'
-#' @return \code{local}, with every \code{"low-rank"} default filled in and,
-#'   when \code{method_base != "all"}, \code{index = list(base = ..., new =
-#'   ...)} set.
-#'
-#' @noRd
-get_ssn_simulate_local_lowrank <- function(local, n, data) {
-  names_local <- names(local)
-
-  if (!"method_base" %in% names_local) local$method_base <- "base"
-  if (length(local$method_base) != 1L || !local$method_base %in% c("base", "all")) {
-    stop("local$method_base must be \"base\" or \"all\".", call. = FALSE)
-  }
-  if (!"size_base" %in% names_local) local$size_base <- 5000L
-  if (!"size_new" %in% names_local) local$size_new <- 1000L
-  if (!"reorder_base" %in% names_local) local$reorder_base <- "grts"
-  if (length(local$reorder_base) != 1L || !local$reorder_base %in% c("none", "random", "grts")) {
-    stop("local$reorder_base must be \"none\", \"random\", or \"grts\".", call. = FALSE)
-  }
-  if (!"kmeans_new" %in% names_local) {
-    local$kmeans_new <- !identical(local$reorder_base, "none")
-  }
-  if (!"parallel" %in% names_local) {
-    local$parallel <- FALSE
-    local$ncores <- NULL
-  }
-
-  if (local$size_base >= n) local$method_base <- "all"
-
-  if (!identical(local$method_base, "all")) {
-    rows <- get_decorrelate_rows(data)
-    index <- get_decorrelate_order(rows, local$reorder_base, data)
-    index_base <- index[seq_len(local$size_base)]
-    index_new <- index[-seq_len(local$size_base)]
-    groups <- ceiling(length(index_new) / local$size_new)
-
-    local$index <- list(
-      base = index_base,
-      new = get_local_lowrank_blocks(index_new, data, groups, local$kmeans_new)
-    )
-
-    if (local$parallel) {
-      n_index <- length(local$index$new)
-      local$ncores <- if ("ncores" %in% names_local) {
-        min(n_index, local$ncores, parallel::detectCores())
-      } else {
-        min(n_index, parallel::detectCores())
-      }
-    }
-  }
-
+  local <- get_local_vecchia_settings(local)
+  if (local$method == "all") return(list(exact = TRUE, method = "all"))
+  local$exact <- FALSE
   local
 }
 
-#' Build a lightweight covariance-fit-shaped list for unconditional simulation
-#'
-#' Assembles the minimal \code{covariance_fit}-shaped object (matching the
-#' shape produced by \code{\link{get_decorrelate_context}()}) needed by the
-#' shared \code{get_decorrelate_*} covariance helpers, so those helpers can be
-#' reused unchanged by \code{\link{get_ssn_simulate_vecchia}()}.
-#'
-#' @param ssn.object A fitted-model-ready SSN object.
-#' @param params_object A joint covariance parameter object (tailup, taildown,
-#'   euclid, nugget, and optionally randcov).
-#' @param additive The additive function value column name, or \code{NULL}.
-#' @param anisotropy Whether Euclidean anisotropy is active.
-#' @param partition_factor A one-sided partition factor formula, or
-#'   \code{NULL}.
-#'
-#' @return A list with \code{ssn.object}, \code{coefficients$params_object},
-#'   \code{additive}, \code{anisotropy}, \code{partition_factor},
-#'   \code{diagtol}, \code{random_xlev}, and \code{partition_xlev}.
-#'
-#' @noRd
 get_ssn_simulate_covariance_fit <- function(ssn.object, params_object, additive, anisotropy, partition_factor) {
   randcov_names <- names(params_object$randcov)
   random_xlev <- if (is.null(randcov_names)) NULL else get_randcov_xlev(randcov_names, ssn.object$obs)
-  partition_xlev <- get_partition_xlev(partition_factor, ssn.object$obs)
+  partition_xlev <- NULL
+  if (!is.null(partition_factor)) {
+    formula <- reformulate(labels(terms(partition_factor)), intercept = FALSE,
+      env = asNamespace("SSN2"))
+    frame <- model.frame(formula, ssn.object$obs, na.action = na.pass)
+    partition_xlev <- .getXlevels(terms(frame), frame)
+  }
   list(
     ssn.object = ssn.object,
     coefficients = list(params_object = params_object),
@@ -223,34 +53,19 @@ get_ssn_simulate_covariance_fit <- function(ssn.object, params_object, additive,
   )
 }
 
-#' Simulate unconditional Gaussian draws via sequential covariance-neighbor conditioning
-#'
-#' A Vecchia-style sequential simulation engine: observations are ordered via
-#' \code{\link{get_decorrelate_order}()}, and each point after the first is
-#' drawn from its conditional distribution given (up to) \code{size} of the
-#' most-correlated earlier-ordered points, reusing the same neighbor/
-#' covariance helpers as \code{\link{ssn_decorrelate_data}()}'s big-data path.
-#' \code{conditioning$method = "all"} conditions on every earlier point,
-#' recovering the exact joint Gaussian distribution.
-#'
-#' @param covariance_fit A \code{covariance_fit}-shaped list (from
-#'   \code{\link{get_ssn_simulate_covariance_fit}()} or
-#'   \code{\link{get_decorrelate_context}()}) describing the joint covariance.
-#' @param samples The number of simulated columns to draw.
-#' @param conditioning A resolved \code{"vecchia"} conditioning list (from
-#'   \code{\link{get_ssn_simulate_local}()}/\code{\link{get_local_vecchia_settings}()})
-#'   with \code{method}, \code{size}, and \code{ordering}.
-#'
-#' @return An \code{n x samples} matrix of simulated values, in the original
-#'   (unpermuted) row order.
-#'
-#' @noRd
 get_ssn_simulate_vecchia <- function(covariance_fit, samples, conditioning) {
   observed <- covariance_fit$ssn.object$obs
   n <- NROW(observed)
+  design <- get_randcov_design(observed, covariance_fit$coefficients$params_object$randcov,
+    covariance_fit$partition_factor)
+  covariance_fit$coefficients$params_object$randcov <- NULL
+  covariance_fit$random_xlev <- NULL
   rows <- get_decorrelate_rows(observed)
   permutation <- get_decorrelate_order(rows, conditioning$ordering, observed)
-  size <- if (identical(conditioning$method, "all")) n else conditioning$size
+  neighbors <- get_ssn_simulate_neighbors(covariance_fit, permutation, conditioning$size)
+  # Each neighborhood lies within one partition, so its covariance needs no mask.
+  covariance_fit$partition_factor <- NULL
+  covariance_fit$partition_xlev <- NULL
 
   Z <- matrix(rnorm(n * samples), n, samples)
   Y_ordered <- matrix(NA_real_, n, samples)
@@ -259,19 +74,13 @@ get_ssn_simulate_vecchia <- function(covariance_fit, samples, conditioning) {
     current <- permutation[[position]]
     variance <- get_decorrelate_marginal_variance(covariance_fit, observed[current, , drop = FALSE])
 
-    if (position == 1L) {
+    neighbor_positions <- neighbors[[position]]$positions
+    if (!length(neighbor_positions)) {
       Y_ordered[position, ] <- sqrt(variance) * Z[position, ]
       next
     }
 
-    pool_positions <- seq_len(position - 1L)
-    candidates <- permutation[pool_positions]
-    cross_covariance <- get_decorrelate_observed_cross_covariance(
-      covariance_fit, observed[current, , drop = FALSE], observed[candidates, , drop = FALSE]
-    )
-    keep <- get_decorrelate_covariance_neighbors(cross_covariance, size)
-    neighbor_positions <- pool_positions[keep]
-    neighbor_index <- candidates[keep]
+    neighbor_index <- permutation[neighbor_positions]
 
     covariance_neighbors <- get_decorrelate_observed_covariance(
       covariance_fit, observed[neighbor_index, , drop = FALSE]
@@ -285,7 +94,7 @@ get_ssn_simulate_vecchia <- function(covariance_fit, samples, conditioning) {
       )
     }
 
-    c_vec <- cross_covariance[keep]
+    c_vec <- neighbors[[position]]$covariance
     w <- backsolve(chol_pool, forwardsolve(t(chol_pool), c_vec))
     cond_var <- max(variance - sum(w * c_vec), 0)
     pool_val <- Y_ordered[neighbor_positions, , drop = FALSE]
@@ -296,118 +105,79 @@ get_ssn_simulate_vecchia <- function(covariance_fit, samples, conditioning) {
 
   Y <- matrix(NA_real_, n, samples)
   Y[permutation, ] <- Y_ordered
+  random <- draw_ssn_simulate_random(design, samples)
+  if (!is.null(random)) Y <- Y + random
   Y
 }
 
-#' Simulate one block of a low-rank base-and-block unconditional simulation
-#'
-#' Given a Gaussian process already simulated at a "base" set of locations
-#' (\code{base_val}), draws values at \code{block_index}'s locations from
-#' their conditional distribution given the base draws alone -- the
-#' workhorse behind \code{\link{get_ssn_simulate_lowrank}()}'s big-data
-#' approximation, mirroring spmodel's \code{get_conditional_new_from_base()}
-#' (\code{R/get_conditional_new_from_base.R}). Takes every input as an
-#' explicit argument (rather than closing over them) so it can be dispatched
-#' via \code{parallel::parLapply()} without requiring \code{clusterExport()}.
-#'
-#' @param block_index Row indices (into \code{observed}) of this block's
-#'   locations.
-#' @param covariance_fit A \code{covariance_fit}-shaped list.
-#' @param observed The full observed data (\code{covariance_fit$ssn.object$obs}).
-#' @param base_data The base sample's own rows (\code{observed[index$base, ]}).
-#' @param base_val An \code{n_base x samples} matrix of simulated base-sample
-#'   values.
-#' @param base_lowchol The lower triangular Cholesky factor of the base
-#'   sample's covariance matrix.
-#' @param samples The number of simulations (columns of \code{base_val}).
-#'
-#' @return An \code{length(block_index) x samples} matrix of simulated
-#'   values for this block.
-#'
-#' @noRd
-get_ssn_simulate_new_from_base <- function(block_index, covariance_fit, observed, base_data,
-                                            base_val, base_lowchol, samples) {
-  block_data <- observed[block_index, , drop = FALSE]
-  n_block <- length(block_index)
-  n_base <- NROW(base_data)
-
-  cross_covariance <- get_decorrelate_observed_cross_covariance(covariance_fit, base_data, block_data)
-  cross_covariance <- matrix(cross_covariance, nrow = n_base, ncol = n_block)
-  block_covariance <- get_decorrelate_observed_covariance(covariance_fit, block_data)
-
-  sqrt_siginv_cross <- forwardsolve(base_lowchol, cross_covariance)
-  sqrt_siginv_base <- forwardsolve(base_lowchol, base_val)
-
-  cond_cov <- block_covariance - crossprod(sqrt_siginv_cross, sqrt_siginv_cross)
-  cond_lowchol <- t(chol(cond_cov))
-
-  z <- matrix(rnorm(n_block * samples), n_block, samples)
-  cond_mu <- crossprod(sqrt_siginv_cross, sqrt_siginv_base)
-  (cond_lowchol %*% z) + cond_mu
+get_ssn_simulate_partition <- function(observed, partition_factor) {
+  if (is.null(partition_factor)) return(rep("", NROW(observed)))
+  formula <- reformulate(labels(terms(partition_factor)), intercept = FALSE,
+    env = asNamespace("SSN2"))
+  frame <- model.frame(formula, observed, na.action = na.pass)
+  if (anyNA(frame)) {
+    stop("Missing values in partition_factor are not supported.", call. = FALSE)
+  }
+  randcov_design_key(frame)
 }
 
-#' Simulate unconditional Gaussian draws via a low-rank base+block approximation
-#'
-#' Mirrors spmodel's low-rank branch of \code{sprnorm.exponential()}
-#' (\code{R/sprnorm.R}): draws the base sample's values jointly (its own
-#' Cholesky factor), then simulates every other location's block
-#' conditionally on the base sample alone via
-#' \code{\link{get_ssn_simulate_new_from_base}()}, treating distinct blocks
-#' as conditionally independent given the base. Unlike
-#' \code{\link{get_ssn_simulate_vecchia}()}, blocks do not depend on each
-#' other, so \code{local$parallel} genuinely parallelizes this engine.
-#'
-#' @param covariance_fit A \code{covariance_fit}-shaped list.
-#' @param samples The number of simulated columns to draw.
-#' @param local A resolved \code{local} list (from
-#'   \code{\link{get_ssn_simulate_local_lowrank}()}) with \code{method_base}
-#'   and, when \code{method_base != "all"}, \code{index}.
-#'
-#' @return An \code{n x samples} matrix of simulated values, in the original
-#'   row order.
-#'
-#' @noRd
-get_ssn_simulate_lowrank <- function(covariance_fit, samples, local) {
+get_ssn_simulate_neighbors <- function(covariance_fit, permutation, size) {
   observed <- covariance_fit$ssn.object$obs
-  n <- NROW(observed)
-
-  if (identical(local$method_base, "all")) {
-    base_index <- seq_len(n)
-    new_index <- list()
-  } else {
-    base_index <- local$index$base
-    new_index <- local$index$new
+  partition <- get_ssn_simulate_partition(observed, covariance_fit$partition_factor)[permutation]
+  covariance_fit$partition_factor <- NULL
+  covariance_fit$partition_xlev <- NULL
+  neighbors <- rep(list(list(positions = integer(), covariance = numeric())), length(permutation))
+  groups <- split(seq_along(permutation), partition)
+  for (group in groups) {
+    if (length(group) < 2L) next
+    for (j in seq.int(2L, length(group))) {
+      position <- group[j]
+      pool <- group[seq_len(j - 1L)]
+      covariance <- get_decorrelate_observed_cross_covariance(covariance_fit,
+        observed[permutation[position], , drop = FALSE], observed[permutation[pool], , drop = FALSE])
+      if (length(pool) > size) {
+        keep <- order(-abs(covariance), pool)[seq_len(size)]
+        pool <- pool[keep]
+        covariance <- covariance[keep]
+      }
+      neighbors[[position]] <- list(positions = pool, covariance = covariance)
+    }
   }
-  base_data <- observed[base_index, , drop = FALSE]
-  n_base <- NROW(base_data)
+  neighbors
+}
 
-  base_covariance <- get_decorrelate_observed_covariance(covariance_fit, base_data)
-  base_lowchol <- t(chol(base_covariance))
-  base_val <- base_lowchol %*% matrix(rnorm(n_base * samples), n_base, samples)
+draw_ssn_simulate_random <- function(design, samples) {
+  q <- NCOL(design$observed)
+  if (!q) return(NULL)
+  effects <- matrix(rnorm(q * samples), q, samples) * sqrt(design$variance)
+  unname(as.matrix(design$observed %*% effects))
+}
 
-  Y <- matrix(NA_real_, n, samples)
-  Y[base_index, ] <- as.matrix(base_val)
+is_ssn_simulate_independent <- function(params_object) {
+  all(vapply(params_object[c("tailup", "taildown", "euclid")],
+    function(x) isTRUE(x[["de"]] == 0), logical(1)))
+}
 
-  if (length(new_index) == 0L) {
-    return(Y)
+validate_ssn_simulate_independent <- function(params_object, observed, additive) {
+  for (component in c("tailup", "taildown", "euclid")) {
+    params <- params_object[[component]]
+    type <- remove_covtype(class(params))
+    if (type == "none") next
+    if (component == "euclid") {
+      check_euclid_type(type)
+      extra <- if (euclid_has_extra(type)) params[["extra"]] else NULL
+      check_euclid_extra_parameters(type, params[["de"]], params[["range"]],
+        extra, params[["rotate"]], params[["scale"]])
+    } else {
+      if (component == "tailup") check_tailup_type(type) else check_taildown_type(type)
+      check_tailup_taildown_parameters(params[["de"]], params[["range"]])
+    }
   }
-
-  if (local$parallel) {
-    cl <- make_ssn_cluster(local$ncores)
-    on.exit(parallel::stopCluster(cl), add = TRUE)
-    new_val <- parallel::parLapply(
-      cl, new_index, get_ssn_simulate_new_from_base,
-      covariance_fit, observed, base_data, base_val, base_lowchol, samples
-    )
-  } else {
-    new_val <- lapply(
-      new_index, get_ssn_simulate_new_from_base,
-      covariance_fit, observed, base_data, base_val, base_lowchol, samples
-    )
+  if (!inherits(params_object$tailup, "tailup_none")) {
+    values <- suppressWarnings(as.numeric(observed[[additive]]))
+    if (length(values) != NROW(observed) || any(!is.finite(values))) {
+      stop("additive must name a column of finite values.", call. = FALSE)
+    }
   }
-
-  for (i in seq_along(new_index)) {
-    Y[new_index[[i]], ] <- as.matrix(new_val[[i]])
-  }
-  Y
+  invisible(NULL)
 }

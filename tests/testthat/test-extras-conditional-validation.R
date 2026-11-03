@@ -52,7 +52,7 @@ test_that("conditional controls reject missing nonfinite and nonscalar values", 
                    paste0("local$", name, " must be a positive integer"), fixed = TRUE)
     }
   }
-  for (name in c("approximation", "method", "ordering", "method_random")) {
+  for (name in c("method", "ordering", "method_random")) {
     for (value in list(character(), NA_character_, c("none", "none"), "invalid")) {
       local <- list(size = 2, ordering = "none")
       local[name] <- list(value)
@@ -68,7 +68,7 @@ test_that("conditional controls reject missing nonfinite and nonscalar values", 
   expect_equal(defaults$chunk_size, 1000L)
   expect_error(get_local_list_conditional(list(groups_random = 13), fit),
                "cannot exceed the number of observed sites", fixed = TRUE)
-  expect_error(get_local_list_conditional(list(size_response = NULL), fit), "size_response")
+  expect_error(get_local_list_conditional(list(size_response = NULL), fit), "Unknown local option")
   expect_true(get_local_list_conditional(list(method = "all", size = NA, chunk_size = NA), fit)$exact)
 })
 
@@ -127,7 +127,7 @@ test_that("singleton predictions and prediction-free output combinations keep ma
 
 test_that("user return paths reject a missing requested random output", {
   set.seed(2)
-  calls <- c(exact = 0L, vecchia = 0L, lowrank = 0L, covparams = 0L)
+  calls <- c(exact = 0L, vecchia = 0L, covparams = 0L)
   missing_draw <- function(name) function(...) {
     calls[name] <<- calls[name] + 1L
     list(beta = matrix(0, 2, 1))
@@ -135,14 +135,12 @@ test_that("user return paths reject a missing requested random output", {
   local_mocked_bindings(
     draw_conditional_exact = missing_draw("exact"),
     draw_conditional_vecchia_model = missing_draw("vecchia"),
-    draw_conditional_lowrank = missing_draw("lowrank"),
     draw_conditional_covparams = missing_draw("covparams"),
     get_satterthwaite_cached = function(...) list(vcov_theta = diag(1)),
     .package = "SSN2")
   for (glm in c(FALSE, TRUE)) {
     fit <- conditional_validation_fixture(glm)
-    for (local in list(FALSE, list(size = 2, ordering = "none"),
-                      list(approximation = "low-rank", size_base = 3, reorder_base = "none"))) {
+    for (local in list(FALSE, list(size = 2, ordering = "none"))) {
       for (output in list("random", c("beta", "random"))) {
         expect_error(conditional(fit, output = output, samples = 1, local = local),
                      "Requested random-effect draws were not generated", fixed = TRUE)
@@ -154,7 +152,7 @@ test_that("user return paths reject a missing requested random output", {
                    "Requested random-effect draws were not generated", fixed = TRUE)
     }
   }
-  expect_identical(calls, c(exact = 4L, vecchia = 4L, lowrank = 4L, covparams = 2L))
+  expect_identical(calls, c(exact = 4L, vecchia = 4L, covparams = 2L))
 })
 
 test_that("local latent factors and conditional weights respect covariance scale", {
@@ -225,28 +223,6 @@ test_that("exact GLM preparation rejects non-positive-definite factors", {
   curvature <- -diag(n)
   joint <- get_conditional_glm_joint(fit)
   expect_equal(crossprod(joint$cond_prec_upchol), 2 * diag(n), tolerance = 1e-12)
-})
-
-test_that("reduced GLM preparation rejects non-positive-definite factors", {
-  set.seed(2)
-  fit <- conditional_validation_fixture(TRUE)
-  index <- c(7L, 2L, 10L)
-  covariance <- diag(3)
-  curvature <- -diag(3)
-  local_mocked_bindings(conditional_vecchia_covariance = function(...) covariance,
-                        get_D = function(...) curvature, .package = "SSN2")
-  covariance <- matrix(1, 3, 3)
-  expect_error(get_conditional_glm_base(fit, index, covariance = list()), "not positive", fixed = TRUE)
-  covariance <- diag(3)
-  for (value in c(1, 2)) {
-    curvature <- -diag(3)
-    curvature[1, 1] <- value
-    expect_error(get_conditional_glm_base(fit, index, covariance = list()),
-                 "The simulation base latent precision is not positive definite", fixed = TRUE)
-  }
-  curvature <- -diag(3)
-  base <- get_conditional_glm_base(fit, index, covariance = list())
-  expect_equal(tcrossprod(base$cov_lowchol_mH), 2 * diag(3), tolerance = 1e-12)
 })
 
 test_that("exact prediction draws reject singular conditional covariance", {

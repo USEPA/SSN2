@@ -3,7 +3,7 @@ skip_if_not(identical(Sys.getenv("SSN2_RUN_EXTRAS"), "true"),
             "set SSN2_RUN_EXTRAS = 'true' to run the extras suite")
 
 # ssn simulate local
-test_that("local = list(approximation = 'vecchia', method = 'all') reproduces the exact dense path within Monte Carlo error", {
+test_that("full-neighbor Vecchia reproduces the exact dense path within Monte Carlo error", {
   copy_lsn_to_temp()
   temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
   mf04p <- ssn_import(temp_path, overwrite = TRUE)
@@ -23,7 +23,7 @@ test_that("local = list(approximation = 'vecchia', method = 'all') reproduces th
   draws_all <- ssn_rnorm(mf04p,
     tailup_params = tailup, taildown_params = taildown,
     euclid_params = none_eu, nugget_params = nugget, additive = "afvArea", samples = 20000,
-    local = list(approximation = "vecchia", method = "all")
+    local = list(method = "covariance", size = NROW(mf04p$obs) - 1L)
   )
   expect_equal(dim(draws_exact), dim(draws_all))
   emp_cov_exact <- cov(t(draws_exact))
@@ -64,7 +64,7 @@ test_that("anisotropic simulation matches the fitted covariance for both engines
   draws_all_anis <- ssn_rnorm(mf04p,
     tailup_params = none_tu, taildown_params = none_td,
     euclid_params = euclid_anis, nugget_params = nugget, samples = 30000,
-    local = list(approximation = "vecchia", method = "all")
+    local = list(method = "covariance", size = NROW(mf04p$obs) - 1L)
   )
   emp_cov_anis <- cov(t(draws_all_anis))
   rel_diff_local <- max(abs(emp_cov_anis - correct_cov)) / max(abs(correct_cov))
@@ -144,7 +144,7 @@ test_that("local unconditional simulation supports random effects and partition 
     tailup_params = tailup, taildown_params = taildown,
     euclid_params = none_eu, nugget_params = nugget,
     randcov_params = randcov, additive = "afvArea", samples = 8000,
-    local = list(approximation = "vecchia", method = "covariance", size = 20)
+    local = list(method = "covariance", size = 20)
   )
   expect_true(all(is.finite(draws_rc)))
   analytic_marginal_var <- tailup[["de"]] + taildown[["de"]] + nugget[["nugget"]] + as.numeric(randcov)
@@ -156,7 +156,7 @@ test_that("local unconditional simulation supports random effects and partition 
     tailup_params = tailup, taildown_params = taildown,
     euclid_params = none_eu, nugget_params = nugget,
     partition_factor = ~netID, additive = "afvArea", samples = 500,
-    local = list(approximation = "vecchia", method = "covariance", size = 15)
+    local = list(method = "covariance", size = 15)
   )
   expect_true(all(is.finite(draws_pf)))
   expect_equal(dim(draws_pf), c(NROW(mf04p$obs), 500))
@@ -178,7 +178,7 @@ test_that("local unconditional simulation: dispatch, dims, RNG, rejection sweep,
   d_one <- ssn_rnorm(mf04p,
     tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
     nugget_params = nugget, additive = "afvArea", samples = 1,
-    local = list(approximation = "vecchia", method = "covariance", size = 10)
+    local = list(method = "covariance", size = 10)
   )
   expect_true(is.numeric(d_one) && !is.matrix(d_one))
   expect_equal(length(d_one), n)
@@ -188,13 +188,13 @@ test_that("local unconditional simulation: dispatch, dims, RNG, rejection sweep,
   d1 <- ssn_rnorm(mf04p,
     tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
     nugget_params = nugget, additive = "afvArea", samples = 5,
-    local = list(approximation = "vecchia", method = "covariance", size = 10)
+    local = list(method = "covariance", size = 10)
   )
   set.seed(2)
   d2 <- ssn_rnorm(mf04p,
     tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
     nugget_params = nugget, additive = "afvArea", samples = 5,
-    local = list(approximation = "vecchia", method = "covariance", size = 10)
+    local = list(method = "covariance", size = 10)
   )
   expect_identical(d1, d2)
 
@@ -214,13 +214,13 @@ test_that("local unconditional simulation: dispatch, dims, RNG, rejection sweep,
   # rejection sweep
   expect_error(
     ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
-      nugget_params = nugget, additive = "afvArea", samples = 5, local = list(approximation = "vecchia", method = "bogus")),
+      nugget_params = nugget, additive = "afvArea", samples = 5, local = list(method = "bogus")),
     "local\\$method must be"
   )
   expect_error(
     ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
       nugget_params = nugget, additive = "afvArea", samples = 5,
-      local = list(approximation = "vecchia", size = -1)),
+      local = list(size = -1)),
     "local\\$size must be"
   )
   expect_identical(
@@ -230,8 +230,8 @@ test_that("local unconditional simulation: dispatch, dims, RNG, rejection sweep,
 
   # a partial vecchia list initializes defaults for the other list elements
   expect_identical(
-    SSN2:::get_ssn_simulate_local(list(approximation = "vecchia", method = "covariance"), n, mf04p$obs),
-    SSN2:::get_ssn_simulate_local(list(approximation = "vecchia"), n, mf04p$obs)
+    SSN2:::get_ssn_simulate_local(list(method = "covariance"), n, mf04p$obs),
+    SSN2:::get_ssn_simulate_local(list(), n, mf04p$obs)
   )
 
   # duplicate locations do not crash
@@ -240,7 +240,7 @@ test_that("local unconditional simulation: dispatch, dims, RNG, rejection sweep,
   draws_dup <- ssn_rnorm(mf04p_dup,
     tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
     nugget_params = nugget, additive = "afvArea", samples = 100,
-    local = list(approximation = "vecchia", method = "covariance", size = 10)
+    local = list(method = "covariance", size = 10)
   )
   expect_true(all(is.finite(draws_dup)))
   expect_equal(dim(draws_dup), c(n + 1, 100))
@@ -251,7 +251,7 @@ test_that("local unconditional simulation: dispatch, dims, RNG, rejection sweep,
   pois_local <- ssn_rpois(mf04p,
     tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
     nugget_params = nugget, additive = "afvArea", samples = 10,
-    local = list(approximation = "vecchia", method = "covariance", size = 10)
+    local = list(method = "covariance", size = 10)
   )
   expect_equal(dim(pois_local), c(n, 10))
   expect_true(all(pois_local == round(pois_local)) && all(is.finite(pois_local)))
@@ -260,7 +260,7 @@ test_that("local unconditional simulation: dispatch, dims, RNG, rejection sweep,
   binom_local <- ssn_rbinom(mf04p,
     tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
     nugget_params = nugget, additive = "afvArea", samples = 10, size = 5,
-    local = list(approximation = "vecchia", method = "covariance", size = 10)
+    local = list(method = "covariance", size = 10)
   )
   expect_true(all(binom_local >= 0 & binom_local <= 5))
 })
@@ -284,7 +284,7 @@ test_that("local unconditional simulation: different orderings all produce valid
     d <- ssn_rnorm(mf04p,
       tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
       nugget_params = nugget, additive = "afvArea", samples = 8000,
-      local = list(approximation = "vecchia", method = "covariance", size = 8, ordering = ord)
+      local = list(method = "covariance", size = 8, ordering = ord)
     )
     emp <- cov(t(d))
     rel <- max(abs(emp - true_cov)) / max(abs(true_cov))
@@ -294,12 +294,12 @@ test_that("local unconditional simulation: different orderings all produce valid
   expect_error(
     ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
       nugget_params = nugget, additive = "afvArea", samples = 5,
-      local = list(approximation = "vecchia", method = "covariance", size = 5, ordering = "bogus")),
+      local = list(method = "covariance", size = 5, ordering = "bogus")),
     "ordering must be"
   )
 })
 
-test_that("explicit local low-rank simulation approximates the exact distribution", {
+test_that("explicit local Vecchia simulation approximates the exact distribution", {
   copy_lsn_to_temp()
   temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
   mf04p <- ssn_import(temp_path, overwrite = TRUE)
@@ -313,30 +313,12 @@ test_that("explicit local low-rank simulation approximates the exact distributio
   covariance_fit <- SSN2:::get_ssn_simulate_covariance_fit(mf04p, params_object, "afvArea", FALSE, NULL)
   true_cov <- SSN2:::get_decorrelate_observed_covariance(covariance_fit, mf04p$obs)
 
-  # method_base = "all" disables subsetting entirely -- should reproduce the
-  # exact distribution just like local$approximation = "vecchia"/method = "all"
-  set.seed(2)
-  d_all <- ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
-    nugget_params = nugget, additive = "afvArea", samples = 8000,
-    local = list(approximation = "low-rank", method_base = "all"))
-  rel_all <- max(abs(cov(t(d_all)) - true_cov)) / max(abs(true_cov))
-  expect_true(rel_all < 0.15)
-
-  # genuine base+block subsetting still approximates the true covariance
-  set.seed(2)
-  d_block <- ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
-    nugget_params = nugget, additive = "afvArea", samples = 8000,
-    local = list(approximation = "low-rank", method_base = "base", size_base = 20, size_new = 10))
-  expect_true(all(is.finite(d_block)))
-  rel_block <- max(abs(cov(t(d_block)) - true_cov)) / max(abs(true_cov))
-  expect_true(rel_block < 0.35)
-
-  expect_identical(SSN2:::get_ssn_simulate_local(TRUE, 45, mf04p$obs)$approximation, "vecchia")
+  expect_false(SSN2:::get_ssn_simulate_local(TRUE, 45, mf04p$obs)$exact)
 
   set.seed(2)
   d_vecchia <- ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
     nugget_params = nugget, additive = "afvArea", samples = 8000,
-    local = list(approximation = "vecchia", method = "covariance", size = 8))
+    local = list(method = "covariance", size = 8))
   rel_vecchia <- max(abs(cov(t(d_vecchia)) - true_cov)) / max(abs(true_cov))
   expect_true(rel_vecchia < 0.15)
 
@@ -345,19 +327,5 @@ test_that("explicit local low-rank simulation approximates the exact distributio
     nugget_params = nugget, additive = "afvArea", samples = 8000,
     local = list(method = "covariance", size = 8))
   expect_identical(d_default, d_vecchia)
-
-  # rejection sweep for low-rank's own settings
-  expect_error(
-    ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
-      nugget_params = nugget, additive = "afvArea", samples = 1,
-      local = list(approximation = "low-rank", method_base = "bogus")),
-    "method_base must be"
-  )
-  expect_error(
-    ssn_rnorm(mf04p, tailup_params = tailup, taildown_params = taildown, euclid_params = none_eu,
-      nugget_params = nugget, additive = "afvArea", samples = 1,
-      local = list(approximation = "low-rank", reorder_base = "bogus")),
-    "reorder_base must be"
-  )
 })
 

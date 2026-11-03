@@ -285,6 +285,7 @@ make_ssn_cluster <- function(ncores) {
     NULL
   }
   # Avoid loading a different SSN2 namespace while deserializing the initializer.
+  initialize <- utils::removeSource(initialize)
   environment(initialize) <- baseenv()
   parallel::clusterCall(cl, initialize, .libPaths(), dev_path, package_lib)
   ready <- TRUE
