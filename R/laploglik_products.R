@@ -29,7 +29,6 @@ laploglik_products <- function(params_object, data_object, estmethod) {
   }
 
   SigInv_list <- lapply(cholprods_list, function(x) x$SigInv)
-  SigInv <- Matrix::bdiag(SigInv_list)
   SigInv_X <- do.call("rbind", lapply(cholprods_list, function(x) x$SigInv_X))
 
   # storing relevant products
@@ -60,7 +59,9 @@ laploglik_products <- function(params_object, data_object, estmethod) {
   betahat <- tcrossprod(cov_betahat, SigInv_X) %*% w
   X <- do.call("rbind", data_object$X_list)
   r <- w - X %*% betahat
-  rt_SigInv_r <- crossprod(r, SigInv) %*% r
+  sizes <- vapply(SigInv_list, nrow, 1L)
+  idx <- split(seq_len(sum(sizes)), rep(seq_along(sizes), sizes))
+  rt_SigInv_r <- sum(mapply(function(S, i) as.numeric(crossprod(r[i], S %*% r[i])), SigInv_list, idx))
 
   # get wolfinger objects
   y <- as.vector(do.call("rbind", data_object$y_list))
@@ -119,53 +120,78 @@ get_minustwolaploglik <- function(laploglik_products, data_object, estmethod) {
 #' @noRd
 get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_betahat, cov_betahat_Inv, estmethod, ret_mHInv = FALSE) {
   family <- data_object$family
-  SigInv <- Matrix::bdiag(SigInv_list)
-  Ptheta <- SigInv - SigInv_X %*% tcrossprod(cov_betahat, SigInv_X)
   y <- as.vector(do.call("rbind", data_object$y_list))
   size <- data_object$size
   w <- get_w_init(family, y, dispersion)
   wdiffmax <- Inf
   iter <- 0
 
+  # The offset is a known, non-estimated shift on the link scale, so w and the
+  # linear predictor are not the same vector: w is the offset-free latent
+  # process the optimizer solves for (and the scale of the
+  # spatial covariance), while the family log-likelihood is always evaluated at
+  # the linear predictor w + offset. Every get_d()/get_D() call below therefore
+  # takes w + offset, and every Ptheta product takes w alone. Defaulting the
+  # offset to 0 keeps that distinction visible in one place instead of
+  # duplicating it across if/else branches, matching glm().
   offset <- if (is.null(data_object$offset)) 0 else as.vector(data_object$offset)
 
+  # single-partition case: the Hessian is small enough to solve directly
   if (length(SigInv_list) == 1) {
+    SigInv <- as.matrix(SigInv_list[[1]])
+    SigInv_X <- as.matrix(SigInv_X)
+    cov_betahat <- as.matrix(cov_betahat)
+    Ptheta <- SigInv - SigInv_X %*% tcrossprod(cov_betahat, SigInv_X)
     while (iter < 50 && wdiffmax > 1e-4) {
       iter <- iter + 1
+      # compute the d vector
       d <- get_d(family, w + offset, y, size, dispersion)
       # and then the gradient vector
-      g <- d - Ptheta %*% w
+      g <- as.vector(d - Ptheta %*% w)
       # Next, compute H
       D <- get_D(family, w + offset, y, size, dispersion)
-      H <- D - Ptheta # not PD but -H is
-      solveHg <- solve(H, g)
+      mH <- Ptheta
+      diag(mH) <- diag(mH) - as.vector(diag(D))
+      R <- tryCatch(chol(mH), error = function(e) NULL)
+      solveHg <- if (is.null(R)) solve(-mH, g) else -backsolve(R, forwardsolve(t(R), g))
+      solveHg <- as.vector(solveHg)
       wnew <- w - solveHg
+      # check overshoot on loglik surface
       dnew <- get_d(family, wnew + offset, y, size, dispersion)
       gnew <- dnew - Ptheta %*% wnew
       if (any(is.na(gnew) | is.infinite(gnew))) stop("Convergence problem. Try using a different family, removing extreme observations, rescaling the response variable (if continuous), fixing nugget at a known, non-zero value (via nugget_initial), or fixing dispersion at one (via dispersion_initial).", call. = FALSE)
-      if (max(abs(gnew)) > max(abs(g))) wnew <- w - 0.1 * solveHg # + because -H is already applied
-      # if (max(abs(gnew)) > max(abs(g))) wnew <- w + 0.1 * solveHg
+      if (max(abs(gnew)) > max(abs(g))) wnew <- w - 0.1 * solveHg
       wdiffmax <- max(abs(wnew - w))
-      # update w
       w <- wnew
     }
 
-    # if (family %in% c("binomial", "beta")) {
-    #   w <- pmax(pmin(w, 8), -8)
-    # }
-
     # ML holds beta fixed in the integral; Newton uses the profiled Hessian.
-    mHldet <- as.numeric(determinant(if (estmethod == "ml") SigInv - D else -H, logarithm = TRUE)$modulus)
-    # mHldet <- 2 * sum(log(diag(mH_upchol)))
+    if (estmethod == "ml") {
+      m <- SigInv
+      diag(m) <- diag(m) - as.vector(diag(D))
+      Rm <- tryCatch(chol(m), error = function(e) NULL)
+      mHldet <- if (is.null(Rm)) as.numeric(determinant(m, logarithm = TRUE)$modulus) else 2 * sum(log(diag(Rm)))
+    } else {
+      mHldet <- if (is.null(R)) as.numeric(determinant(mH, logarithm = TRUE)$modulus) else 2 * sum(log(diag(R)))
+    }
     w_and_H_list <- list(w = w, H = NULL, mHldet = mHldet)
     if (ret_mHInv) {
-      # not done above because this is only for model stats and solve(H) slower than solve(H, g)
-      HInv <- solve(H)
-      w_and_H_list$mHInv <- -HInv
-      # mHInv <- chol2inv(mH_upchol)
-      # w_and_H_list$mHInv <- mHInv
+      w_and_H_list$mHInv <- if (is.null(R)) solve(mH) else chol2inv(R)
     }
   } else {
+    SigInv_list <- lapply(SigInv_list, as.matrix)
+    SigInv_X <- as.matrix(SigInv_X)
+    cov_betahat <- as.matrix(cov_betahat)
+    cov_betahat_Inv <- as.matrix(cov_betahat_Inv)
+    sizes <- vapply(SigInv_list, nrow, 1L)
+    idx <- split(seq_len(sum(sizes)), rep(seq_along(sizes), sizes))
+    stopifnot(identical(unname(lengths(idx)),
+      unname(lengths(split(seq_along(y), sort(data_object$local_index))))))
+    Pw <- function(v) {
+      Sv <- unlist(Map(function(S, i) S %*% v[i], SigInv_list, idx), use.names = FALSE)
+      Sv - as.vector(SigInv_X %*% (cov_betahat %*% crossprod(SigInv_X, v)))
+    }
+    p <- ncol(SigInv_X)
     # add cov_betahat_Inv stability by same diagonal tolerance as this can have problems too
     diag(cov_betahat_Inv) <- diag(cov_betahat_Inv) + data_object$diagtol
 
@@ -174,47 +200,21 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
       # compute the d vector
       d <- get_d(family, w + offset, y, size, dispersion)
       # and then the gradient vector
-      g <- d - Ptheta %*% w
+      g <- d - Pw(w)
       # Next, compute H
       D <- get_D(family, w + offset, y, size, dispersion)
-      D_diag <- diag(D)
-      D_list <- lapply(split(D_diag, sort(data_object$local_index)), function(x) Diagonal(x = x))
-      # cholesky products (while local not implemented)
-      if (data_object$parallel) {
-        cluster_list <- lapply(seq_along(D_list), function(l) {
-          cluster_list_element <- list(
-            D = D_list[[l]],
-            S = SigInv_list[[l]]
-          )
-        })
-        DSigInv_list <- parallel::parLapply(data_object$cl, cluster_list, get_DSigInv_parallel)
-        names(DSigInv_list) <- names(D_list)
-      } else {
-        DSigInv_list <- mapply(
-          D = D_list, S = SigInv_list,
-          function(D, S) get_DSigInv(D, S),
-          SIMPLIFY = FALSE
-        )
-      }
-
-      # while local not impelmented
-      if (data_object$parallel) {
-        cluster_list <- DSigInv_list
-        DSigInv_Inv_list <- parallel::parLapply(data_object$cl, cluster_list, solve)
-        names(DSigInv_Inv_list) <- names(D_list)
-      } else {
-        DSigInv_Inv_list <- lapply(DSigInv_list, function(x) solve(x))
-      }
-
-      # DSigInv_Inv_list <- lapply(DSigInv_list, function(x) solve(x))
-
-      DSigInv_Inv <- Matrix::bdiag(DSigInv_Inv_list)
-      HInv <- smw_HInv(AInv = DSigInv_Inv, U = SigInv_X, CInv = cov_betahat_Inv)
-      solveHg <- HInv %*% g
+      F <- factor_laplace_blocks(SigInv_list, as.vector(diag(D)), idx,
+        data_object$parallel, data_object$cl)
+      AUg <- apply_Ainv(F, cbind(SigInv_X, g), idx)
+      AU <- AUg[, seq_len(p), drop = FALSE]
+      Ag <- AUg[, p + 1L]
+      mid <- cov_betahat_Inv + crossprod(SigInv_X, AU)
+      # Woodbury product; see spmodel's technical.Rmd #sec:bigdata-glm.
+      solveHg <- as.vector(Ag - AU %*% solve(mid, crossprod(SigInv_X, Ag)))
       wnew <- w - solveHg
       # check overshoot on loglik surface
       dnew <- get_d(family, wnew + offset, y, size, dispersion)
-      gnew <- dnew - Ptheta %*% wnew
+      gnew <- dnew - Pw(wnew)
       if (any(is.na(gnew) | is.infinite(gnew))) stop("Convergence problem. Try using a different family, removing extreme observations, rescaling the response variable (if continuous), fixing nugget at a known, non-zero value (via nugget_initial), or fixing dispersion at one (via dispersion_initial).", call. = FALSE)
       if (max(abs(gnew)) > max(abs(g))) wnew <- w - 0.1 * solveHg
       wdiffmax <- max(abs(wnew - w))
@@ -222,20 +222,62 @@ get_w_and_H <- function(data_object, dispersion, SigInv_list, SigInv_X, cov_beta
       w <- wnew
     }
 
-    if (estmethod == "ml") {
-      mHldet <- sum(vapply(DSigInv_list, function(x) {
-        as.numeric(determinant(x, logarithm = TRUE)$modulus)
-      }, numeric(1)))
-    } else {
-      mHldet <- smw_mHldet(A_list = DSigInv_list, AInv = DSigInv_Inv, U = SigInv_X, C = cov_betahat, CInv = cov_betahat_Inv)
+    mHldet <- logdet_A(F)
+    if (estmethod == "reml") {
+      mHldet <- mHldet + 2 * sum(log(diag(chol(cov_betahat)))) +
+        as.numeric(determinant(mid, logarithm = TRUE)$modulus)
     }
     w_and_H_list <- list(w = w, H = NULL, mHldet = mHldet)
     if (ret_mHInv) {
-      w_and_H_list$mHInv <- -HInv
+      w_and_H_list$mHInv <- structure(list(F = F, idx = idx, AU = AU, mid_inv = solve(mid)),
+        class = "laplace_mhinv")
     }
   }
 
   w_and_H_list
+}
+
+factor_laplace_block <- function(block) {
+  m <- block$S
+  diag(m) <- diag(m) - block$D
+  R <- tryCatch(chol(m), error = function(e) NULL)
+  if (is.null(R)) list(type = "lu", A = -m) else list(type = "chol", R = R)
+}
+
+factor_laplace_blocks <- function(S_list, D, idx, parallel, cl) {
+  blocks <- Map(function(S, i) list(S = S, D = D[i]), S_list, idx)
+  if (parallel) parallel::parLapply(cl, blocks, factor_laplace_block) else lapply(blocks, factor_laplace_block)
+}
+
+apply_Ainv <- function(F, V, idx) {
+  V <- as.matrix(V)
+  do.call(rbind, Map(function(f, i) {
+    if (f$type == "chol") {
+      -backsolve(f$R, forwardsolve(t(f$R), V[i, , drop = FALSE]))
+    } else {
+      solve(f$A, V[i, , drop = FALSE])
+    }
+  }, F, idx))
+}
+
+logdet_A <- function(F) {
+  sum(vapply(F, function(f) {
+    if (f$type == "chol") 2 * sum(log(diag(f$R))) else as.numeric(determinant(f$A, logarithm = TRUE)$modulus)
+  }, numeric(1)))
+}
+
+mhinv_apply <- function(M, V) {
+  if (!inherits(M, "laplace_mhinv")) return(as.matrix(M %*% V))
+  V <- as.matrix(V)
+  -(apply_Ainv(M$F, V, M$idx) - M$AU %*% (M$mid_inv %*% crossprod(M$AU, V)))
+}
+
+mhinv_diag <- function(M) {
+  if (!inherits(M, "laplace_mhinv")) return(Matrix::diag(M))
+  diag_Ainv <- unlist(lapply(M$F, function(f) {
+    if (f$type == "chol") -diag(chol2inv(f$R)) else diag(solve(f$A))
+  }), use.names = FALSE)
+  -(diag_Ainv - rowSums((M$AU %*% M$mid_inv) * M$AU))
 }
 
 #' Get the gradient of w (called d)
@@ -328,9 +370,9 @@ get_D3 <- function(family, w, y, size, dispersion) {
 }
 
 get_laplace_correction <- function(mHInv, family, eta, y, size, dispersion) {
-  v <- Matrix::diag(mHInv)
+  v <- mhinv_diag(mHInv)
   t3 <- get_D3(family, eta, y, size, dispersion)
-  delta <- 0.5 * as.numeric(mHInv %*% (t3 * v))
+  delta <- 0.5 * as.numeric(mhinv_apply(mHInv, t3 * v))
   list(delta = delta)
 }
 
@@ -407,28 +449,4 @@ get_l00 <- function(family, w, y, size, dispersion) {
     l00 <- -2 * sum(dbeta(x = y, shape1 = a, shape2 = b, log = TRUE))
   }
   l00
-}
-
-smw_HInv <- function(AInv, U, CInv) {
-  mid <- CInv + t(U) %*% AInv %*% U
-  AInv - (AInv %*% U) %*% solve(mid) %*% (t(U) %*% AInv)
-}
-
-smw_mHldet <- function(A_list, AInv, U, C, CInv) {
-  Aldet <- sum(unlist(lapply(A_list, function(x) determinant(x, logarithm = TRUE)$modulus))) # must be positive det for -H
-  Cldet <- 2 * sum(log(diag(t(chol(C)))))
-  mid <- CInv + t(U) %*% AInv %*% U
-  # diag(mid) <- diag(mid) + 1e-4
-  midldet <- determinant(mid, logarithm = TRUE)$modulus
-  as.numeric(Aldet + Cldet + midldet)
-}
-
-get_DSigInv <- function(D, SigInv) {
-  D - SigInv
-}
-
-get_DSigInv_parallel <- function(cluster_list) {
-  D <- cluster_list$D
-  S <- cluster_list$S
-  get_DSigInv(D, S)
 }

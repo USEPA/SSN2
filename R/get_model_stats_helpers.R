@@ -575,7 +575,7 @@ get_model_stats_glm_core <- function(cov_est_object, data_object, estmethod, ord
 
   cov_betahat <- as.matrix(cov_betahat)
   wts_beta <- tcrossprod(cov_betahat, SigInv_X)
-  betawtsvarw <- wts_beta %*% w_and_H$mHInv %*% t(wts_beta)
+  betawtsvarw <- wts_beta %*% mhinv_apply(w_and_H$mHInv, t(wts_beta))
 
   cov_betahat_uncorrected <- cov_betahat # save uncorrected cov beta hat
   rownames(cov_betahat_uncorrected) <- colnames(data_object$X_list[[1]])

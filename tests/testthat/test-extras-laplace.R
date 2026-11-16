@@ -123,7 +123,8 @@ test_that("Laplace determinants preserve fixed-parameter inference across releva
               get_D = function(...) { D <<- original_D(...); D })
             if (!checked) {
               checked <<- TRUE
-              expected <- if (method == "ml") logdet(Matrix::bdiag(SigInv_list) - D) else -logdet(result$mHInv)
+              expected <- if (method == "ml") logdet(Matrix::bdiag(SigInv_list) - D) else
+                -logdet(mhinv_apply(result$mHInv, diag(length(result$w))))
               if (length(SigInv_list) > 1 && method == "reml") {
                 diag(cov_betahat_Inv) <- diag(cov_betahat_Inv) + data_object$diagtol
                 expected <- expected + logdet(cov_betahat) + logdet(cov_betahat_Inv)
