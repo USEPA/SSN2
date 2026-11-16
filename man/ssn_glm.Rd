@@ -190,9 +190,6 @@ summarize model fit are available for \code{ssn_glm} objects, including
 \code{labels}, \code{logLik}, \code{loocv}, \code{model.frame}, \code{model.matrix},
 \code{plot}, \code{predict}, \code{print}, \code{pseudoR2}, \code{summary},
 \code{terms}, \code{tidy}, \code{update}, \code{varcomp}, and \code{vcov}.
-Likelihood-based statistics use the Laplace-approximated ML or restricted
-log-likelihood, including normalizing constants. Refit saved models from
-earlier versions to obtain corrected likelihood values.
 }
 \description{
 Fit spatial generalized linear models for stream network data

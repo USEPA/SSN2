@@ -216,13 +216,8 @@ is \code{"covariance"}. The default is 30.
 \code{"outsidein"}, \code{"coordinate"}, \code{"grts"},
 \code{"random"}, or \code{"none"} (these are the same options as
 \code{ssn_decorrelate()}'s \code{ordering} argument). The default is
-\code{"pid"}, which orders by \code{pid} and then by network ID.
-}
-When all spatial components are absent or have zero amplitude and the
-nugget variance is positive, independent residuals
-and any random effects are drawn directly, bypassing \code{local} settings.
-For local simulation, \code{ssn_create_bigdist()} can create \code{.bmat}
-distance matrices for efficient access.}
+\code{"pid"}.
+}}
 }
 \value{
 If \code{samples} is 1, a vector of random variables for each row of \code{ssn.object$obs}
@@ -240,17 +235,6 @@ response distribution also exist.
 Random variables are simulated via the product of the covariance matrix's
 square (Cholesky) root and independent standard normal random variables
 with mean 0 and variance 1, with big data approximations available.
-
-With Vecchia, only the combined tail-up, tail-down, Euclidean, and nugget
-field is approximated. Spatial and nonspatial random effects are independent
-of one another and hence, can be simulated separately and then summed.
-Only the spatial random effect realizations require using local neighborhoods.
-Nonspatial random effects are simulated exactly by drawing one coefficient
-per level and sharing it across matching observations. Because the random
-effect realizations are independent, they can be drawn directly without
-constructing or factoring a covariance matrix, even when there are many levels.
-With partition factors, each level-partition combination receives its own
-independent draw.
 
 If not using \code{ssn_simulate()}, individual simulation functions for
 each response distribution do exist:
