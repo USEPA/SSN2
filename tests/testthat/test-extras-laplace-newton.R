@@ -375,7 +375,7 @@ function(cov_est_object, data_object, estmethod, order, eigenprods_list) {
     cov_betahat <- cov_betahat_adjust(invcov_betahat_list, betahat_list, betahat, eigenprods_list, data_object, 
         cov_est_object$params_object, cov_betahat_noadjust, data_object$var_adjust)
     cov_betahat <- as.matrix(cov_betahat)
-    wts_beta <- tcrossprod(cov_betahat, SigInv_X)
+    wts_beta <- tcrossprod(cov_betahat_noadjust, SigInv_X)
     betawtsvarw <- wts_beta %*% w_and_H$mHInv %*% t(wts_beta)
     cov_betahat_uncorrected <- cov_betahat
     rownames(cov_betahat_uncorrected) <- colnames(data_object$X_list[[1]])

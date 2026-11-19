@@ -102,6 +102,12 @@
 #'       \code{"random"}, \code{"none"}, \code{"middleout"},
 #'       \code{"outsidein"}, \code{"coordinate"}). The default is
 #'       \code{"pid"}.
+#'     \item \code{index} specifies the observed rows in \code{object$ssn.object$obs}
+#'       used for block prediction. When \code{index} is specified, 
+#'       \code{size} is ignored.
+#'     \item \code{index_new} specifies the observed rows in \code{newdata}
+#'       used for block prediction. When \code{index_new} is specified, 
+#'       \code{size} and \code{ordering} are ignored.
 #'     \item \code{parallel} and \code{ncores} parallelize the
 #'       covariance-chunk calculations. Their defaults are the same as for
 #'       point prediction.
@@ -422,6 +428,10 @@ predict_block <- function(object, newdata, se.fit = FALSE, scale = NULL, df = In
   }
   newdata_name <- resolve_newdata_name(object, newdata)
   if (length(newdata_name) > 1L) {
+    if (is.list(local) && !is.null(local[["index_new"]]) &&
+        !identical(type, "terms") && !identical(interval, "confidence")) {
+      stop("local$index_new can only be used with a single prediction set.", call. = FALSE)
+    }
     result <- lapply(newdata_name, function(name) {
       predict_block(
         object, name, se.fit = se.fit, scale = scale, df = df, interval = interval,
@@ -453,7 +463,11 @@ predict_block <- function(object, newdata, se.fit = FALSE, scale = NULL, df = In
 
   nm <- get_newdata_model_matrix(object, grid)
   grid_size <- NROW(grid)
-  nodes <- if (local$size_new >= grid_size) {
+  use_default_nodes <- is.null(local[["index_new"]]) ||
+    identical(type, "terms") || identical(interval, "confidence")
+  nodes <- if (!use_default_nodes) {
+    NULL
+  } else if (local$size_new >= grid_size) {
     seq_len(grid_size)
   } else {
     get_block_nodes(grid, local$size_new, local$ordering)
@@ -484,6 +498,10 @@ predict_block <- function(object, newdata, se.fit = FALSE, scale = NULL, df = In
     return(output)
   }
 
+  keep <- get_block_index(local[["index"]], object$n, "index")
+  nodes_index <- get_block_index(local[["index_new"]], grid_size, "index_new")
+  if (!is.null(nodes_index)) nodes <- nodes_index
+
   subset_newdata <- identical(local$method_new, "subset") && length(nodes) < grid_size
   covariance_rows <- if (subset_newdata) nodes else seq_len(grid_size)
   need_s0 <- se.fit || identical(interval, "prediction")
@@ -493,25 +511,29 @@ predict_block <- function(object, newdata, se.fit = FALSE, scale = NULL, df = In
     parallel = local$parallel, ncores = local$ncores
   )
   if (subset_newdata && need_s0) {
-    # built once and reused for both diagonal sums below, instead of
-    # re-deriving the training-side random-effect grouping per row
-    randcov_context <- get_randcov_context(
-      object$coefficients$params_object$randcov, object$ssn.object$obs, grid
+    params_object <- object$coefficients$params_object
+    dependent_variance <- sum(
+      params_object$tailup[["de"]], params_object$taildown[["de"]],
+      params_object$euclid[["de"]]
     )
-    quantities$s0 <- quantities$s0 -
-      get_block_diagonal_sum(object, newdata_name, nodes, randcov_context = randcov_context) / length(nodes)^2 +
-      get_block_diagonal_sum(object, newdata_name, seq_len(grid_size), randcov_context = randcov_context) / grid_size^2
+    nugget <- get_spatial_nugget_var(params_object, object$diagtol) - dependent_variance
+    quantities$s0 <- quantities$s0 + nugget * (1 / grid_size - 1 / length(nodes))
   }
   c0 <- quantities$c0
-  covariance <- covmatrix(object)
   Xmat <- model.matrix(object)
   y <- model.response(model.frame(object))
   offset <- model.offset(model.frame(object))
   if (!is.null(offset)) y <- y - as.vector(offset)
-  if (identical(local$method, "covariance")) {
-    cov_index <- order(as.numeric(c0))[seq(from = object$n, to = max(1, object$n - local$size + 1L))]
+  if (identical(local$method, "all") && is.null(keep)) {
+    covariance <- covmatrix(object)
+  } else {
+    cov_index <- keep
+    if (is.null(cov_index)) {
+      cov_index <- order(as.numeric(c0))[seq(from = object$n, to = max(1, object$n - local$size + 1L))]
+    }
+    # exact row-subset covariance (no approximation; shared with the Vecchia code)
+    covariance <- unname(conditional_vecchia_covariance(get_conditional_vecchia_covariance(object), cov_index))
     c0 <- c0[cov_index]
-    covariance <- covariance[cov_index, cov_index, drop = FALSE]
     Xmat <- Xmat[cov_index, , drop = FALSE]
     y <- y[cov_index]
   }
@@ -546,4 +568,24 @@ predict_block <- function(object, newdata, se.fit = FALSE, scale = NULL, df = In
   }
   if (se.fit) return(list(fit = output, se.fit = stats::setNames(se, "1")))
   output
+}
+
+get_block_index <- function(index, n, name) {
+  if (is.null(index)) return(NULL)
+  label <- paste0("local$", name)
+  if (!is.vector(index, "numeric") && !is.vector(index, "logical")) {
+    stop(label, " must be a logical vector or a vector of whole-number positions.", call. = FALSE)
+  }
+  if (is.logical(index)) {
+    if (length(index) != n || anyNA(index)) {
+      stop(label, " must have one logical value per row and no missing values.", call. = FALSE)
+    }
+    index <- which(index)
+  }
+  if (!length(index)) stop(label, " must select at least one row.", call. = FALSE)
+  if (any(!is.finite(index)) || any(index != floor(index) | index < 1 | index > n)) {
+    stop(label, " must contain whole-number positions between 1 and ", n, ".", call. = FALSE)
+  }
+  if (anyDuplicated(index)) stop(label, " must not contain duplicate positions.", call. = FALSE)
+  sort(as.integer(index))
 }

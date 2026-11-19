@@ -115,8 +115,8 @@ test_that("stream wave point and block predictions retain signed covariance alge
       H <- x0 - W %*% X
       y <- model.response(model.frame(fit)) - model.offset(model.frame(fit))
       mu <- x0 %*% coef(fit) + W %*% (y - X %*% coef(fit)) + mean(pred$off)
-      # Subsets approximate off-diagonal averages while retaining the full-grid diagonal.
-      s0 <- mean(P[rows, rows]) - sum(diag(P)[rows]) / size_new^2 + sum(diag(P)) / 16
+      nugget <- coef(fit, type = "nugget")[["nugget"]]
+      s0 <- mean(P[rows, rows]) + nugget * (1 / nrow(pred) - 1 / size_new)
       variance <- s0 - W %*% t(c0) + H %*% vcov(fit) %*% t(H)
       expect_equal(as.numeric(block$fit), as.numeric(mu), tolerance = 1e-8)
       expect_equal(as.numeric(block$se.fit^2), as.numeric(variance), tolerance = 1e-8)

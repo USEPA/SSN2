@@ -134,6 +134,12 @@ with \code{local = TRUE} (\code{"pid"}, \code{"maxmin"}, \code{"grts"},
 \code{"random"}, \code{"none"}, \code{"middleout"},
 \code{"outsidein"}, \code{"coordinate"}). The default is
 \code{"pid"}.
+\item \code{index} specifies the observed rows in \code{object$ssn.object$obs}
+used for block prediction. When \code{index} is specified,
+\code{size} is ignored.
+\item \code{index_new} specifies the observed rows in \code{newdata}
+used for block prediction. When \code{index_new} is specified,
+\code{size} and \code{ordering} are ignored.
 \item \code{parallel} and \code{ncores} parallelize the
 covariance-chunk calculations. Their defaults are the same as for
 point prediction.

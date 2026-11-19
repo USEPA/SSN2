@@ -397,29 +397,6 @@ test_that("get_randcov_context()'s reusable pieces are built once per prediction
   expect_equal(call_count, 1)
 })
 
-test_that("block prediction's diagonal-sum context is built once, not once per get_block_diagonal_sum() call", {
-  fit <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p, random = ~ as.factor(netID),
-    tailup_type = "exponential", additive = "afvArea"
-  )
-
-  call_count <- 0
-  real_context <- get_randcov_context
-  counting_context <- function(...) {
-    call_count <<- call_count + 1
-    real_context(...)
-  }
-  testthat::local_mocked_bindings(get_randcov_context = counting_context, .package = "SSN2")
-
-  # method_new = "subset" with size_new below the grid size makes
-  # get_block_diagonal_sum() run twice (once for the node subset, once for
-  # the full grid); se.fit = TRUE makes it run at all
-  predict(fit, "CapeHorn",
-    block = TRUE, se.fit = TRUE,
-    local = list(method = "all", method_new = "subset", size_new = 5L, ordering = "pid", chunk_size = 1000L, parallel = FALSE)
-  )
-  expect_equal(call_count, 1)
-})
-
 test_that("randcov context reuse produces identical results for a random-slope term, matching fresh derivation across row-chunks", {
   fit <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
     tailup_type = "none", taildown_type = "none", euclid_type = "none",

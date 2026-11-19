@@ -237,34 +237,6 @@ get_block_quantities <- function(object, newdata_name, c0_rows, s0_rows, nodes,
   list(c0 = c0, s0 = s0_sum / (length(s0_rows) * length(nodes)))
 }
 
-#' Sum the marginal (spatial + nugget + random-effect) variance over block rows
-#'
-#' Used for the within-block variance's diagonal contribution in block
-#' prediction (the average pairwise within-block covariance excludes each
-#' row's covariance with itself, whose marginal variance is added back
-#' separately).
-#'
-#' @param object A fitted \code{ssn_lm} model object.
-#' @param newdata_name The name of the prediction set, or \code{".missing"}.
-#' @param rows The block's rows (within \code{newdata_name}) to sum over.
-#' @param randcov_context A precomputed random-effect training-side context
-#'   from \code{\link{get_randcov_context}()}, or \code{NULL} (re-derived
-#'   per row).
-#'
-#' @return The sum of marginal variances over \code{rows}.
-#'
-#' @noRd
-get_block_diagonal_sum <- function(object, newdata_name, rows, randcov_context = NULL) {
-  newdata <- object$ssn.object$preds[[newdata_name]][rows, , drop = FALSE]
-  spatial_nugget <- get_spatial_nugget_var(
-    object$coefficients$params_object, object$diagtol
-  )
-  random <- vapply(seq_len(NROW(newdata)), function(i) {
-    randcov_newvar(object$coefficients$params_object$randcov, newdata[i, , drop = FALSE], context = randcov_context)
-  }, numeric(1))
-  sum(spatial_nugget + random)
-}
-
 #' Select representative node rows for block-prediction approximation
 #'
 #' Orders rows deterministically by \code{pid}, then \code{NetworkID},
