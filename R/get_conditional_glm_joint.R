@@ -5,11 +5,12 @@
 #' @return Spatial and conditional-precision factors, coefficient
 #'   covariance factor, coupling weights, and fitted centers in observation order.
 #' @noRd
-get_conditional_glm_joint <- function(object, cov_lowchol = NULL, center = get_latent_center(object)) {
+get_conditional_glm_joint <- function(object, cov_lowchol = NULL) {
   X <- model.matrix(object)
+  betahat <- coef(object)
   eta <- fitted(object, type = "link")
   offset <- model.offset(model.frame(object))
-  w <- if (is.null(offset)) center$eta else center$eta - offset
+  w <- if (is.null(offset)) eta else eta - offset
   if (is.null(cov_lowchol)) {
     # Use the model covariance, including random effects and true partitions.
     # Local fitting groups supply estimates, not simulation covariance blocks.
@@ -25,8 +26,8 @@ get_conditional_glm_joint <- function(object, cov_lowchol = NULL, center = get_l
   })
   wts_latent <- backsolve(cond_prec_upchol,
     forwardsolve(t(cond_prec_upchol), SigInv_X))
-  list(w = as.numeric(w), betahat = center$betahat, wts_latent = wts_latent,
-    residual_center = as.numeric(w - X %*% center$betahat), wts_residual = wts_latent - X,
+  list(w = as.numeric(w), betahat = betahat, wts_latent = wts_latent,
+    residual_center = as.numeric(w - X %*% betahat), wts_residual = wts_latent - X,
     cov_lowchol = cov_lowchol, cond_prec_upchol = cond_prec_upchol,
     cov_betahat_lowchol = t(chol(vcov(object))))
 }

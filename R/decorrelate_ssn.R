@@ -1215,7 +1215,7 @@ check_decorrelate_known <- function(initial_object, randcov_initial = NULL) {
   invisible(NULL)
 }
 
-#' Build the row map used by decorrelation/simulation ordering and diagnostics
+#' Build the row map used by decorrelation ordering and diagnostics
 #'
 #' @param data An SSN observed or prediction data frame (with \code{netgeom}
 #'   information).
@@ -1237,7 +1237,7 @@ get_decorrelate_rows <- function(data, index = NULL) {
   )
 }
 
-#' Order rows for sequential decorrelation/simulation conditioning
+#' Order rows for sequential decorrelation conditioning
 #'
 #' \code{"none"} preserves row order, \code{"random"} shuffles rows,
 #' \code{"pid"} orders deterministically by point ID then \code{NetworkID}
@@ -1321,7 +1321,7 @@ get_decorrelate_order <- function(rows, ordering = NULL, data = NULL) {
   ord
 }
 
-#' Build the observed-data covariance context shared by decorrelation and simulation
+#' Build the observed-data covariance context used by decorrelation
 #'
 #' Assembles the observed design matrix/response (offset-subtracted),
 #' resolves random effects/partition factor/anisotropy, and packages the
@@ -1544,7 +1544,7 @@ get_decorrelate_prediction_chunk <- function(chunk, object, newdata_name, newdat
   list(tX_newdata = tX, yscale = yscale, yoffset = yoffset)
 }
 
-#' Select the most-correlated neighbor indices for local decorrelation/simulation
+#' Select the most-correlated neighbor indices for local decorrelation
 #'
 #' Ranks candidates by absolute covariance (rather than raw covariance,
 #' since some covariance families can be negative) and keeps the top
@@ -1632,7 +1632,7 @@ get_decorrelate_positive_scale <- function(variance, label, reference = variance
 #'   \code{coefficients$params_object} and \code{diagtol}.
 #'
 #' @return The positive total variance, used to normalize covariances into
-#'   correlations before decorrelation/simulation.
+#'   correlations before decorrelation.
 #'
 #' @noRd
 get_decorrelate_total_var <- function(covariance_fit) {
@@ -1665,7 +1665,7 @@ get_decorrelate_marginal_variance <- function(covariance_fit, data) {
 #' Assembles stream/Euclidean covariance plus, if active, random-effect and
 #' partition-factor contributions, between two (possibly different) row sets
 #' -- the SSN-correct analogue of \code{covmatrix(object, newdata, cov_type =
-#' "pred.obs")}, used by the local decorrelation/simulation neighbor-pool
+#' "pred.obs")}, used by the local decorrelation neighbor-pool
 #' machinery for row sets that need not both be the full observed data.
 #'
 #' @param covariance_fit A \code{covariance_fit}-shaped list.
@@ -1739,7 +1739,7 @@ get_decorrelate_observed_covariance <- function(covariance_fit, data) {
   as.matrix(covariance)
 }
 
-#' Select the appropriate distance backend for decorrelation/simulation covariance
+#' Select the appropriate distance backend for decorrelation covariance
 #'
 #' Called by the local/Vecchia neighbor-pool machinery (never the
 #' exact/default path), which reads many small, per-pool/per-target

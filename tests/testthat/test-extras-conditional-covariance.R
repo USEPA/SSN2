@@ -2,7 +2,7 @@ skip_on_cran()
 skip_if_not(identical(Sys.getenv("SSN2_RUN_EXTRAS"), "true"),
             "set SSN2_RUN_EXTRAS = 'true' to run the extras suite")
 
-test_that("nested slope effect conditionals retain shared blocks and true partitions", {
+test_that("nested slope effect conditionals retain true partitions", {
   set.seed(2)
   observed <- data.frame(g = c("a", "a", "a", "a", "b", "b", "a", "b"),
     h = c("u", "u", "v", "v", "u", "u", "u", "v"),
@@ -18,10 +18,8 @@ test_that("nested slope effect conditionals retain shared blocks and true partit
   same_part <- outer(all$part, all$part, "==")
   prior <- same_part * same_g * (.3 + same_h * (.2 + .15 * outer(all$x, all$x)))
   spatial <- (diag(.5, 8) + .03 * outer(1:8, 1:8)) * same_part[1:8, 1:8]
-  for (scenario in c("exact", "blocked", "reduced")) {
+  for (scenario in c("exact", "reduced")) {
     index <- if (scenario == "reduced") 1:4 else 1:8
-    blocks <- if (scenario == "blocked") list(1:4, 5:8) else list(seq_along(index))
-    settings <- list(exact = FALSE, random_blocks = blocks)
     design <- get_randcov_design(observed, params, ~part, prediction, index)
     Z <- as.matrix(design$observed)
     Zp <- as.matrix(design$newdata)
@@ -30,13 +28,11 @@ test_that("nested slope effect conditionals retain shared blocks and true partit
     expect_equal(combined %*% diag(design$variance) %*% t(combined),
                  prior[support, support], ignore_attr = TRUE, tolerance = 1e-12)
     S <- spatial[index, index]
-    blocked <- matrix(0, length(index), length(index))
-    for (rows in blocks) blocked[rows, rows] <- S[rows, rows]
-    effect <- prepare_conditional_random(object, design, settings, covariance = S)
+    effect <- prepare_conditional_random(object, design, covariance = S)
     posterior <- diag(design$variance)
     posterior[effect$active, effect$active] <- effect$covariance
     Rpo <- prior[9:12, index]
-    marginal <- blocked + prior[index, index]
+    marginal <- S + prior[index, index]
     expected_cov <- prior[9:12, 9:12] - Rpo %*% solve(marginal, t(Rpo))
     expect_equal(Zp %*% posterior %*% t(Zp), expected_cov, ignore_attr = TRUE, tolerance = 1e-10)
     residual <- cbind(seq_along(index) / 5, rev(seq_along(index)) / 3)
@@ -92,7 +88,7 @@ conditional_stream_fit <- function(network, component) {
     nugget_initial = nugget_initial("nugget", 0, known = "given"))
 }
 
-test_that("isolated stream components preserve multi-network identities and covariance floors across backends", {
+test_that("isolated stream components preserve multi-network identities", {
   set.seed(2)
   network <- conditional_stream_network()
   root <- withr::local_tempdir()
@@ -114,43 +110,4 @@ test_that("isolated stream components preserve multi-network identities and cova
     expect_true(all(references[[k]][outer(networks, networks, "!=")] == 0))
   }
   unconnected <- references[[1]] == 0 & references[[2]] > 0 & outer(networks, networks, "==")
-  expect_true(any(unconnected))
-  for (backend in c("dense", "bigdata")) {
-    if (backend == "bigdata") ssn_create_bigdist(network, predpts = "stream_test", among_predpts = TRUE,
-      overwrite = TRUE, no_cores = 1, verbose = FALSE)
-    for (k in seq_along(fits)) for (floor in c(1e-8, .01)) {
-      fit <- fits[[k]]
-      fit$diagtol <- floor
-      context <- get_conditional_vecchia_covariance(fit, "stream_test")
-      expect_true(all(unlist(context$backends) == backend))
-      de <- c(.4, .3, .7)[k]
-      reference <- references[[k]]
-      diag(reference) <- de + max(1e-4 * de, floor)
-      rows <- c(NROW(reference), 2L, fit$n + 1L, 1L, 2L)
-      columns <- c(fit$n + 2L, 2L, fit$n, 1L)
-      expect_equal(unname(conditional_vecchia_covariance(context, rows, columns)),
-                   unname(reference[rows, columns]), tolerance = 1e-10)
-      expect_equal(unname(conditional_vecchia_covariance(context, columns, rows)),
-                   unname(t(reference[rows, columns])), tolerance = 1e-10)
-      expect_equal(unname(conditional_vecchia_covariance(context, rows)),
-                   unname(reference[rows, rows]), tolerance = 1e-10)
-    }
-  }
-})
-
-test_that("coincident coordinates receive the covariance floor only for identical support rows", {
-  set.seed(2)
-  network <- conditional_stream_network()
-  sf::st_geometry(network$obs)[2] <- sf::st_geometry(network$obs)[1]
-  sf::st_geometry(network$preds$stream_test)[1] <- sf::st_geometry(network$obs)[1]
-  fit <- conditional_stream_fit(network, "euclid")
-  fit$ssn.object$path <- tempfile("no-stream-distances-")
-  for (floor in c(1e-8, .01)) {
-    fit$diagtol <- floor
-    context <- get_conditional_vecchia_covariance(fit, "stream_test")
-    rows <- c(1L, 2L, fit$n + 1L, 1L)
-    expected <- matrix(.2, 4, 4) + max(1e-4 * .2, floor) * outer(rows, rows, "==")
-    expect_equal(unname(conditional_vecchia_covariance(context, rows)), expected, tolerance = 1e-12)
-    expect_true(all(unlist(context$backends) == "none"))
-  }
 })

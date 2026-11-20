@@ -45,7 +45,7 @@ conditional_glm_joint_fixture <- local({
     B <- V0 %*% t(X) %*% P
     Q <- P - P %*% X %*% B
     w <- as.vector(fitted(fit, type = "link"))
-    w_free <- w + as.vector(fit$laplace$delta[names(fitted(fit, type = "link"))]) - network$obs$off
+    w_free <- w - network$obs$off
     D <- -diag(exp(w))
     L <- solve(P - D)
     M <- L %*% P %*% X
@@ -56,7 +56,7 @@ conditional_glm_joint_fixture <- local({
     T <- Xnew + W %*% (M - X)
     Veta <- R + W %*% L %*% t(W) + T %*% Vbeta %*% t(T)
     Vcross <- Vbeta %*% t(T)
-    beta <- as.vector(fit$laplace$betahat)
+    beta <- as.vector(coef(fit))
     mean_new <- as.vector(Xnew %*% beta +
       C %*% P %*% (w_free - X %*% beta) + network$preds$joint$off)
     fixture <<- list(fit = fit, Sigma = Sigma, C = C, Knew = Knew,
@@ -66,11 +66,6 @@ conditional_glm_joint_fixture <- local({
     fixture
   }
 })
-
-conditional_glm_joint_methods <- function() {
-  list(exact = FALSE,
-    allneighbor = list(method = "all", ordering = "none"))
-}
 
 expect_conditional_glm_joint_moments <- function(draws, mean, covariance, label) {
   n <- ncol(draws)
@@ -126,23 +121,20 @@ test_that("joint beta and offset-free latent draws preserve their dependence", {
   expect_equal(dim(one$w), c(16L, 1L))
 })
 
-test_that("exact-limit GLM paths match beta, new-site and cross moments", {
+test_that("exact GLM draws match beta, new-site and cross moments", {
   set.seed(2)
   f <- conditional_glm_joint_fixture()
   covariance <- rbind(cbind(f$Vbeta, f$Vcross), cbind(t(f$Vcross), f$Veta))
-  for (method in names(conditional_glm_joint_methods())) {
-    local <- conditional_glm_joint_methods()[[method]]
-    set.seed(2)
-    draws <- conditional(f$fit, "joint", output = c("beta", "newdata"),
-      type = "link", samples = 10000, local = local)
-    expect_named(draws, c("beta", "newdata"))
-    expect_equal(dim(draws$beta), c(2L, 10000L))
-    expect_equal(dim(draws$newdata), c(4L, 10000L))
-    expect_conditional_glm_joint_moments(rbind(draws$beta, draws$newdata),
-      c(f$beta, f$mean_new), covariance, method)
-    expect_conditional_glm_joint_moments(matrix(colMeans(draws$newdata), nrow = 1),
-      mean(f$mean_new), matrix(sum(f$Veta) / 16, 1, 1), paste(method, "joint mean"))
-  }
+  set.seed(2)
+  draws <- conditional(f$fit, "joint", output = c("beta", "newdata"),
+    type = "link", samples = 10000)
+  expect_named(draws, c("beta", "newdata"))
+  expect_equal(dim(draws$beta), c(2L, 10000L))
+  expect_equal(dim(draws$newdata), c(4L, 10000L))
+  expect_conditional_glm_joint_moments(rbind(draws$beta, draws$newdata),
+    c(f$beta, f$mean_new), covariance, "exact")
+  expect_conditional_glm_joint_moments(matrix(colMeans(draws$newdata), nrow = 1),
+    mean(f$mean_new), matrix(sum(f$Veta) / 16, 1, 1), "joint mean")
 })
 
 test_that("locally fitted GLMs retain fitting-block coefficient uncertainty", {
@@ -165,38 +157,32 @@ test_that("locally fitted GLMs retain fitting-block coefficient uncertainty", {
   expect_equal(unname(joint$wts_latent), unname(M), tolerance = 1e-8)
   expect_equal(unname(crossprod(joint$cond_prec_upchol)), unname(P - D), tolerance = 1e-8)
   expect_equal(unname(tcrossprod(joint$cov_betahat_lowchol)), unname(Vbeta), tolerance = 1e-8)
-  for (method in names(conditional_glm_joint_methods())) {
-    set.seed(2)
-    beta <- conditional(fit, "joint", output = "beta", samples = 10000,
-      local = conditional_glm_joint_methods()[[method]])
-    expect_equal(dim(beta), c(2L, 10000L))
-    expect_conditional_glm_joint_moments(beta, as.vector(fit$laplace$betahat), Vbeta,
-      paste("local fit beta", method))
-  }
+  set.seed(2)
+  beta <- conditional(fit, "joint", output = "beta", samples = 10000)
+  expect_equal(dim(beta), c(2L, 10000L))
+  expect_conditional_glm_joint_moments(beta, as.vector(coef(fit)), Vbeta,
+    "local fit beta")
 })
 
 test_that("GLM object snapshots and beta-only outputs retain their contract", {
   set.seed(2)
   f <- conditional_glm_joint_fixture()
-  for (local in conditional_glm_joint_methods()) {
-    for (samples in c(1L, 7L)) {
-      snapshot <- matrix(f$w, nrow = 16, ncol = samples)
-      set.seed(2)
-      object <- conditional(f$fit, "joint", output = "object", samples = samples, local = local)
-      expect_equal(unname(object), snapshot)
-      set.seed(2)
-      all <- conditional(f$fit, "joint", output = "all", samples = samples, local = local)
-      expect_named(all, c("newdata", "beta", "object"))
-      expect_equal(unname(all$object), snapshot)
-      set.seed(2)
-      beta <- conditional(f$fit, "joint", output = "beta", samples = samples, local = local)
-      expect_equal(dim(beta), c(2L, samples))
-      expect_identical(rownames(beta), names(coef(f$fit)))
-      expect_identical(beta, all$beta)
-      set.seed(2)
-      expect_identical(conditional(f$fit, "joint", output = "all", samples = samples,
-        local = local), all)
-    }
+  for (samples in c(1L, 7L)) {
+    snapshot <- matrix(f$w, nrow = 16, ncol = samples)
+    set.seed(2)
+    object <- conditional(f$fit, "joint", output = "object", samples = samples)
+    expect_equal(unname(object), snapshot)
+    set.seed(2)
+    all <- conditional(f$fit, "joint", output = "all", samples = samples)
+    expect_named(all, c("newdata", "beta", "object"))
+    expect_equal(unname(all$object), snapshot)
+    set.seed(2)
+    beta <- conditional(f$fit, "joint", output = "beta", samples = samples)
+    expect_equal(dim(beta), c(2L, samples))
+    expect_identical(rownames(beta), names(coef(f$fit)))
+    expect_identical(beta, all$beta)
+    set.seed(2)
+    expect_identical(conditional(f$fit, "joint", output = "all", samples = samples), all)
   }
 })
 
@@ -206,23 +192,21 @@ test_that("GLM prediction offsets enter once and response scales share link draw
   no_new_offset <- f$fit
   off <- no_new_offset$ssn.object$preds$joint$off
   no_new_offset$ssn.object$preds$joint$off <- 0
-  for (local in conditional_glm_joint_methods()) {
-    set.seed(2)
-    link <- conditional(f$fit, "joint", type = "link", samples = 31, local = local)
-    set.seed(2)
-    without <- conditional(no_new_offset, "joint", type = "link", samples = 31, local = local)
-    expect_equal(link - without, matrix(off, nrow = 4, ncol = 31), ignore_attr = TRUE,
-      tolerance = 1e-10)
-    set.seed(2)
-    response <- conditional(f$fit, "joint", type = "response", samples = 31, local = local)
-    expect_equal(response, exp(link), tolerance = 1e-12)
-    set.seed(2)
-    counts <- conditional(f$fit, "joint", type = "new", samples = 31, local = local)
-    expect_equal(dim(counts), c(4L, 31L))
-    expect_true(all(is.finite(counts) & counts >= 0 & counts == round(counts)))
-    set.seed(2)
-    expect_identical(conditional(f$fit, "joint", type = "new", samples = 31, local = local), counts)
-  }
+  set.seed(2)
+  link <- conditional(f$fit, "joint", type = "link", samples = 31)
+  set.seed(2)
+  without <- conditional(no_new_offset, "joint", type = "link", samples = 31)
+  expect_equal(link - without, matrix(off, nrow = 4, ncol = 31), ignore_attr = TRUE,
+    tolerance = 1e-10)
+  set.seed(2)
+  response <- conditional(f$fit, "joint", type = "response", samples = 31)
+  expect_equal(response, exp(link), tolerance = 1e-12)
+  set.seed(2)
+  counts <- conditional(f$fit, "joint", type = "new", samples = 31)
+  expect_equal(dim(counts), c(4L, 31L))
+  expect_true(all(is.finite(counts) & counts >= 0 & counts == round(counts)))
+  set.seed(2)
+  expect_identical(conditional(f$fit, "joint", type = "new", samples = 31), counts)
 })
 
 test_that("one prediction and one GLM draw keep matrix dimensions", {
@@ -230,20 +214,18 @@ test_that("one prediction and one GLM draw keep matrix dimensions", {
   f <- conditional_glm_joint_fixture()
   fit <- f$fit
   fit$ssn.object$preds$joint <- fit$ssn.object$preds$joint[2, , drop = FALSE]
-  for (local in conditional_glm_joint_methods()) {
-    for (type in c("link", "response", "new")) {
-      set.seed(2)
-      draws <- conditional(fit, "joint", output = "all", type = type,
-        samples = 1, local = local)
-      expect_equal(dim(draws$newdata), c(1L, 1L))
-      expect_equal(dim(draws$beta), c(2L, 1L))
-      expect_equal(dim(draws$object), c(16L, 1L))
-      expect_true(all(is.finite(unlist(draws))))
-      expect_equal(as.vector(draws$object), f$w)
-      set.seed(2)
-      expect_identical(conditional(fit, "joint", type = type,
-        samples = 1, local = local), draws$newdata)
-    }
+  for (type in c("link", "response", "new")) {
+    set.seed(2)
+    draws <- conditional(fit, "joint", output = "all", type = type,
+      samples = 1)
+    expect_equal(dim(draws$newdata), c(1L, 1L))
+    expect_equal(dim(draws$beta), c(2L, 1L))
+    expect_equal(dim(draws$object), c(16L, 1L))
+    expect_true(all(is.finite(unlist(draws))))
+    expect_equal(as.vector(draws$object), f$w)
+    set.seed(2)
+    expect_identical(conditional(fit, "joint", type = type,
+      samples = 1), draws$newdata)
   }
 })
 
@@ -322,31 +304,28 @@ for (family in c("Gamma", "nbinomial", "binomial", "beta", "inverse.gaussian")) 
     expect_identical(fit$family, family)
     expect_equal(as.vector(coef(fit, type = "dispersion")), dispersion)
     size <- c(1, 3, 7, 11)
-    methods <- c(conditional_glm_joint_methods(), list(vecchia = list(size = 3, ordering = "none")))
-    for (local in methods) {
-      set.seed(2)
-      link <- conditional(fit, "joint", type = "link", samples = 23,
-        newdata_size = size, local = local)
-      mu <- if (bounded) plogis(link) else exp(link)
-      expected_new <- vapply(seq_len(ncol(mu)), function(j) sample_response(mu[, j], size),
-        numeric(4))
-      set.seed(2)
-      response <- conditional(fit, "joint", type = "response", samples = 23,
-        newdata_size = size, local = local)
-      expect_equal(response, if (family == "binomial") mu * size else mu, tolerance = 1e-12)
-      set.seed(2)
-      new <- conditional(fit, "joint", type = "new", samples = 23,
-        newdata_size = size, local = local)
-      expect_equal(new, expected_new, ignore_attr = TRUE, tolerance = 1e-12)
-      expect_equal(dim(new), c(4L, 23L))
-      expect_true(all(is.finite(link) & is.finite(response) & is.finite(new)))
-      if (family %in% c("binomial", "nbinomial")) {
-        expect_true(all(new >= 0 & new == round(new)))
-        if (family == "binomial") expect_true(all(new <= size))
-      } else {
-        expect_true(all(new > 0))
-        if (family == "beta") expect_true(all(new < 1))
-      }
+    set.seed(2)
+    link <- conditional(fit, "joint", type = "link", samples = 23,
+      newdata_size = size)
+    mu <- if (bounded) plogis(link) else exp(link)
+    expected_new <- vapply(seq_len(ncol(mu)), function(j) sample_response(mu[, j], size),
+      numeric(4))
+    set.seed(2)
+    response <- conditional(fit, "joint", type = "response", samples = 23,
+      newdata_size = size)
+    expect_equal(response, if (family == "binomial") mu * size else mu, tolerance = 1e-12)
+    set.seed(2)
+    new <- conditional(fit, "joint", type = "new", samples = 23,
+      newdata_size = size)
+    expect_equal(new, expected_new, ignore_attr = TRUE, tolerance = 1e-12)
+    expect_equal(dim(new), c(4L, 23L))
+    expect_true(all(is.finite(link) & is.finite(response) & is.finite(new)))
+    if (family %in% c("binomial", "nbinomial")) {
+      expect_true(all(new >= 0 & new == round(new)))
+      if (family == "binomial") expect_true(all(new <= size))
+    } else {
+      expect_true(all(new > 0))
+      if (family == "beta") expect_true(all(new < 1))
     }
   })
 }

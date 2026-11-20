@@ -252,7 +252,7 @@ test_that("Poisson wave fits support fixed and estimated variances and local pre
   }
 })
 
-test_that("wave unconditional draws recover covariance through full local limits", {
+test_that("wave unconditional draws recover covariance on the exact path", {
   set.seed(2)
   network <- stream_wave_network()
   fit <- stream_wave_fit(network)
@@ -261,22 +261,13 @@ test_that("wave unconditional draws recover covariance through full local limits
     tailup_params = tailup_params("wave", .4, 2500),
     taildown_params = taildown_params("wave", .3, 3500),
     euclid_params = euclid_params("none"), nugget_params = nugget_params("nugget", .25))
-  for (local in list(FALSE,
-    list(method = "covariance", size = 12, ordering = "none"))) {
-    set.seed(2)
-    draws <- do.call(ssn_rnorm, c(args, list(samples = 3000, local = local)))
-    expect_equal(dim(draws), c(12L, 3000L))
-    expect_true(all(is.finite(draws)))
-    expect_lt(max(abs(rowMeans(draws)) / sqrt(diag(S) / 3000)), 6)
-    mcse <- sqrt((outer(diag(S), diag(S)) + S^2) / 2999)
-    expect_lt(max(abs(cov(t(draws)) - S) / mcse), 6)
-  }
-  for (local in list(list(size = 3, ordering = "none"))) {
-    set.seed(2)
-    draws <- do.call(ssn_rnorm, c(args, list(samples = 7, local = local)))
-    expect_equal(dim(draws), c(12L, 7L))
-    expect_true(all(is.finite(draws)))
-  }
+  set.seed(2)
+  draws <- do.call(ssn_rnorm, c(args, list(samples = 3000)))
+  expect_equal(dim(draws), c(12L, 3000L))
+  expect_true(all(is.finite(draws)))
+  expect_lt(max(abs(rowMeans(draws)) / sqrt(diag(S) / 3000)), 6)
+  mcse <- sqrt((outer(diag(S), diag(S)) + S^2) / 2999)
+  expect_lt(max(abs(cov(t(draws)) - S) / mcse), 6)
 })
 
 test_that("wave CV and fixed-covariance decorrelation remain finite and agree with GLS", {

@@ -229,7 +229,7 @@ test_that("delta = FALSE (default) leaves se.fit on the link scale, unaffected b
   p_link <- predict(fitg, "CapeHorn", type = "link", se.fit = TRUE, interval = "none")
   p_response_nodelta <- predict(fitg, "CapeHorn", type = "response", se.fit = TRUE, interval = "none")
   expect_equal(p_response_nodelta$se.fit, p_link$se.fit)
-  expect_equal(p_response_nodelta$fit, exp(p_link$fit + p_link$se.fit^2 / 2))
+  expect_equal(p_response_nodelta$fit, exp(p_link$fit))
 })
 
 test_that("interval = 'confidence' never applies delta, se.fit always stays link scale", {
@@ -371,19 +371,15 @@ test_that("ssn_glm() weight matrix reconstructs the link-scale point prediction 
   wt <- predict(fitg, "CapeHorn", type = "weight")
 
   w_mode <- fitted(fitg, type = "link")
-  w_train <- w_mode + fitg$laplace$delta[names(w_mode)]
   offset_train <- model.offset(model.frame(fitg))
   newdata_offset <- preds$my_offset
 
-  reconstructed <- as.numeric(wt %*% (w_train - offset_train)) + newdata_offset
+  reconstructed <- as.numeric(wt %*% (w_mode - offset_train)) + newdata_offset
   direct_link <- predict(fitg, "CapeHorn", type = "link", se.fit = TRUE)
   expect_equal(reconstructed, unname(direct_link$fit), tolerance = 1e-8)
 
   direct_response <- unname(predict(fitg, "CapeHorn", type = "response"))
-  expect_equal(exp(reconstructed + unname(direct_link$se.fit)^2 / 2), direct_response, tolerance = 1e-6)
-  uncorrected <- as.numeric(wt %*% (w_mode - offset_train)) + newdata_offset
-  expect_equal(uncorrected,
-    unname(predict(fitg, "CapeHorn", fit_correct = FALSE)), tolerance = 1e-8)
+  expect_equal(exp(reconstructed), direct_response, tolerance = 1e-6)
 })
 
 test_that("ssn_glm() weight matrix has n_pred x n_obs dimensions and the documented row/column identities", {

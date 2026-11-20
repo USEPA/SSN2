@@ -20,7 +20,6 @@ test_that("pid ordering keeps coincident rows and needs no optional package", {
   environment(fun) <- new.env(parent = environment(fun))
   environment(fun)$requireNamespace <- function(...) stop("Unexpected dependency check")
   expect_identical(SSN2:::get_decorrelate_ordering(NULL), "pid")
-  expect_identical(SSN2:::get_local_vecchia_settings(list())$ordering, "pid")
   expect_identical(fun(rows), c(3L, 2L, 4L, 1L))
   expect_identical(fun(rows, "pid"), fun(rows))
   expect_identical(fun(rows, "none"), seq_len(NROW(rows)))
@@ -83,7 +82,7 @@ test_that("GRTS retains distinct records at coincident coordinates", {
   expect_identical(rows[perm, ][order(perm), ], rows)
 })
 
-test_that("simulation and decorrelation callers share pid and duplicate safeguards", {
+test_that("decorrelation and block prediction handle coincident sites", {
   set.seed(2)
   network <- mf04p
   network$obs <- network$obs[1:8, ]
@@ -106,41 +105,10 @@ test_that("simulation and decorrelation callers share pid and duplicate safeguar
   expect_identical(transform()$ordering, "pid")
   expect_error(transform("maxmin"), "coincident locations")
 
-  simulate <- function(ordering = NULL) {
-    do.call(ssn_rnorm, c(list(ssn.object = network, samples = 3,
-      local = list(size = 3, ordering = ordering)), params))
-  }
-  set.seed(2)
-  omitted <- simulate()
-  set.seed(2)
-  expect_identical(omitted, simulate("pid"))
-  expect_true(all(is.finite(omitted)))
-  expect_error(simulate("maxmin"), "coincident locations")
-
-  for (glm in c(FALSE, TRUE)) {
-    args <- list(formula = y ~ x, ssn.object = network, tailup_type = "none",
-      euclid_type = "exponential",
-      euclid_initial = euclid_initial("exponential", de = .4, range = 1000, known = "given"),
-      nugget_initial = nugget_initial("nugget", nugget = .2, known = "given"))
-    if (glm) args$family <- "poisson"
-    fit <- do.call(if (glm) ssn_glm else ssn_lm, args)
-    set.seed(2)
-    omitted <- conditional(fit, "pred1km", samples = 3,
-      local = list(size = 3))
-    set.seed(2)
-    explicit <- conditional(fit, "pred1km", samples = 3,
-      local = list(size = 3, ordering = "pid"))
-    expect_identical(omitted, explicit)
-    expect_equal(dim(omitted), c(4, 3))
-    expect_true(all(is.finite(omitted)))
-    expect_error(conditional(fit, "pred1km", samples = 3,
-      local = list(size = 3, ordering = "maxmin")),
-      "coincident locations")
-    if (!glm) {
-      expect_error(predict(fit, "pred1km", block = TRUE,
-        local = list(method = "covariance", method_new = "subset", size_new = 2,
-                     ordering = "maxmin")),
-        "coincident locations")
-    }
-  }
+  fit <- ssn_lm(y ~ x, network, tailup_type = "none",
+    euclid_initial = euclid_initial("exponential", .4, 1000, known = "given"),
+    nugget_initial = nugget_initial("nugget", .2, known = "given"))
+  expect_error(predict(fit, "pred1km", block = TRUE,
+    local = list(method = "covariance", method_new = "subset", size_new = 2,
+                 ordering = "maxmin")), "coincident locations")
 })

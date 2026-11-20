@@ -40,7 +40,7 @@ conditional_wave_fit <- function(network, glm = FALSE, component = "both", effec
   do.call(if (glm) ssn_glm else ssn_lm, args)
 }
 
-conditional_wave_reference <- function(fit, corrected = TRUE) {
+conditional_wave_reference <- function(fit) {
   glm <- inherits(fit, "ssn_glm")
   X <- model.matrix(fit)
   pred <- fit$ssn.object$preds$pred1km
@@ -49,10 +49,9 @@ conditional_wave_reference <- function(fit, corrected = TRUE) {
   C <- covmatrix(fit, "pred1km", cov_type = "obs.pred")
   P <- covmatrix(fit, "pred1km", cov_type = "pred.pred")
   B <- as.matrix(vcov(fit))
-  beta <- as.vector(if (glm && corrected) fit$laplace$betahat else coef(fit))
+  beta <- as.vector(coef(fit))
   eta <- if (glm) fitted(fit, type = "link") else model.response(model.frame(fit))
   center <- eta
-  if (glm && corrected) center <- center + fit$laplace$delta[names(eta)]
   center <- as.vector(center - model.offset(model.frame(fit)))
   V <- if (glm) solve(solve(S) + diag(exp(eta))) else matrix(0, fit$n, fit$n)
   M <- if (glm) V %*% solve(S, X) else matrix(0, fit$n, NCOL(X))
@@ -82,7 +81,7 @@ test_that("exact wave conditional draws recover joint coefficient and prediction
     reference <- conditional_wave_reference(fit)
     set.seed(2)
     draws <- conditional(fit, "pred1km", output = c("all", if (glm) "latent"),
-      samples = 3000, local = FALSE)
+      samples = 3000)
     expect_equal(dim(draws$newdata), c(4L, 3000L))
     expect_conditional_wave_moments(rbind(draws$beta, draws$newdata),
       reference$mean, reference$covariance)
@@ -96,55 +95,26 @@ test_that("exact wave conditional draws recover joint coefficient and prediction
   }
 })
 
-test_that("wave conditional local paths recover full-neighborhood moments", {
-  set.seed(2)
-  network <- conditional_wave_network()
-  for (glm in c(FALSE, TRUE)) {
-    fit <- conditional_wave_fit(network, glm)
-    reference <- conditional_wave_reference(fit)
-    for (local in list(
-      list(method = "covariance", size = 16, ordering = "none"))) {
-      set.seed(2)
-      draws <- conditional(fit, "pred1km", output = c("beta", "newdata"), samples = 3000, local = local)
-      expect_conditional_wave_moments(rbind(draws$beta, draws$newdata),
-        reference$mean, reference$covariance)
-    }
-    for (local in list(list(size = 3, ordering = "none"))) {
-      set.seed(2)
-      draws <- conditional(fit, "pred1km", samples = 7, local = local)
-      expect_equal(dim(draws), c(4L, 7L))
-      expect_true(all(is.finite(draws)))
-    }
-  }
-})
-
 test_that("Poisson wave conditionals distinguish latent means and response draws", {
   set.seed(2)
   network <- conditional_wave_network()
   fit <- conditional_wave_fit(network, glm = TRUE)
-  for (corrected in c(FALSE, TRUE)) {
-    for (local in list(FALSE, list(size = 3, ordering = "none"))) {
-      set.seed(2)
-      link <- conditional(fit, "pred1km", type = "link", samples = 23,
-        fit_correct = corrected, local = local)
-      expected <- vapply(seq_len(NCOL(link)), function(j) rpois(4, exp(link[, j])), numeric(4))
-      set.seed(2)
-      response <- conditional(fit, "pred1km", type = "response", samples = 23,
-        fit_correct = corrected, local = local)
-      expect_equal(response, exp(link), tolerance = 1e-12)
-      set.seed(2)
-      new <- conditional(fit, "pred1km", type = "new", samples = 23,
-        fit_correct = corrected, local = local)
-      expect_equal(new, expected, ignore_attr = TRUE, tolerance = 1e-12)
-      expect_true(all(is.finite(new) & new >= 0 & new == round(new)))
-    }
-    reference <- conditional_wave_reference(fit, corrected)
-    set.seed(2)
-    draws <- conditional(fit, "pred1km", output = c("beta", "newdata", "latent"),
-      samples = 3000, local = FALSE, fit_correct = corrected)
-    expect_conditional_wave_moments(rbind(draws$beta, draws$newdata),
-      reference$mean, reference$covariance)
-    expect_conditional_wave_moments(rbind(draws$beta, draws$latent),
-      reference$latent_mean, reference$latent_covariance)
-  }
+  set.seed(2)
+  link <- conditional(fit, "pred1km", type = "link", samples = 23)
+  expected <- vapply(seq_len(NCOL(link)), function(j) rpois(4, exp(link[, j])), numeric(4))
+  set.seed(2)
+  response <- conditional(fit, "pred1km", type = "response", samples = 23)
+  expect_equal(response, exp(link), tolerance = 1e-12)
+  set.seed(2)
+  new <- conditional(fit, "pred1km", type = "new", samples = 23)
+  expect_equal(new, expected, ignore_attr = TRUE, tolerance = 1e-12)
+  expect_true(all(is.finite(new) & new >= 0 & new == round(new)))
+  reference <- conditional_wave_reference(fit)
+  set.seed(2)
+  draws <- conditional(fit, "pred1km", output = c("beta", "newdata", "latent"),
+    samples = 3000)
+  expect_conditional_wave_moments(rbind(draws$beta, draws$newdata),
+    reference$mean, reference$covariance)
+  expect_conditional_wave_moments(rbind(draws$beta, draws$latent),
+    reference$latent_mean, reference$latent_covariance)
 })

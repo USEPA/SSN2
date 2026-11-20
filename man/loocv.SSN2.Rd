@@ -23,7 +23,6 @@
   se.fit = FALSE,
   delta = FALSE,
   local,
-  fit_correct = TRUE,
   ...
 )
 }
@@ -60,9 +59,6 @@ when \code{cv_predict = TRUE} and using \code{ssn_glm()} objects.}
 
 \item{delta}{A logical indicating whether to return delta method standard errors
 on the response scale when \code{se.fit = TRUE} and \code{type = "response"}. The default is \code{FALSE}.}
-
-\item{fit_correct}{A logical indicating whether to apply the Laplace mean
-corrections to predictions. The default is \code{TRUE}.}
 }
 \value{
 If \code{cv_predict = FALSE} and \code{se.fit = FALSE},

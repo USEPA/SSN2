@@ -19,46 +19,6 @@
 #'   The default is \code{"newdata"}. See Details for more.
 #' @param samples The number of conditional simulations. The default is
 #'   \code{1,000}.
-#' @param local For \code{ssn_lm()} and \code{ssn_glm()} model objects, an optional
-#'   logical or list controlling the big data approximation. If omitted, \code{local}
-#'   is \code{TRUE} when either the observed or prediction sample size exceeds
-#'   5,000, and \code{FALSE} otherwise. \code{FALSE} uses exact simulation.
-#'   \code{TRUE} or a list uses a local neighborhood (Vecchia) approach,
-#'   simulating each prediction
-#'   conditional on neighbors selected from observed and previously simulated
-#'   predictions. A list can contain:
-#'   \itemize{
-#'     \item \code{method}: The neighbor-selection rule used to build each
-#'       location's conditioning set once it exceeds \code{size} candidates
-#'       (all observed data plus every already-simulated \code{newdata}
-#'       location). Values are \code{"all"} or \code{"covariance"}
-#'       (the \code{size} candidates with the highest absolute spatial
-#'       covariance).
-#'       The default is
-#'       \code{"covariance"}. For both linear and generalized linear models,
-#'       \code{method = "all"} uses the exact path, as with \code{local = FALSE}.
-#'     \item \code{size}: The number of neighbors used when \code{method}
-#'       is \code{"covariance"}. The default is 30 for
-#'       \code{ssn_lm()} and 60 for \code{ssn_glm()}.
-#'     \item \code{ordering}: The order \code{newdata} locations are
-#'       simulated in -- \code{"pid"}, \code{"maxmin"}, \code{"middleout"},
-#'       \code{"outsidein"}, \code{"coordinate"}, \code{"grts"},
-#'       \code{"random"}, or \code{"none"} (same options as
-#'       \code{ssn_decorrelate()}'s \code{ordering} argument). The default is
-#'       \code{"pid"}, which orders by \code{pid} and then by network ID.
-#'     \item \code{size_random}: For models with random effects, the approximate
-#'       number of observed sites per block for drawing realized random effects,
-#'       implying \code{ceiling(n / size_random)} groups. The default is 1,000.
-#'       If specified, \code{groups_random} is ignored.
-#'     \item \code{groups_random}: The number of random effect blocks.
-#'     \item \code{method_random}: How to form the random effect blocks:
-#'       \code{"kmeans"} (the default) or \code{"random"}.
-#'     \item \code{chunk_size}: For local \code{ssn_lm()} and \code{ssn_glm()}
-#'       simulation, with or without random effects, the
-#'       maximum number of \code{samples} columns processed simultaneously.
-#'       The default is 1,000. \code{chunk_size} is purely computational and does
-#'       not affect correctness.
-#'   }
 #' @param simulate_covparams For \code{ssn_lm()} model objects, whether to also
 #'   simulate new covariance parameters for each sample. \code{simulate_covparams}
 #'   requires \code{object$vcov$cov} to be specified during model fitting by
@@ -86,10 +46,6 @@
 #'   \code{"euclid"}/\code{"nugget"}/\code{"randcov"} is in
 #'   \code{output} (only available when \code{simulate_covparams = TRUE}),
 #'   the simulated covariance parameter draws themselves are returned.
-#'
-#'   With local simulation, spatial generalized linear model latent values are drawn
-#'   sequentially, conditioning on local sites and previously drawn latent
-#'   sites. The neighborhood contains at most \code{2 * size} sites.
 #'
 #' @return If \code{output = "newdata"}, an a x b matrix of conditional simulations
 #'   for each row in \code{newdata}, where a is the
@@ -142,12 +98,10 @@
 #' set.seed(1)
 #' draws <- conditional(ssn_mod, "CapeHorn")
 #' head(draws) # rows are prediction locations; columns are simulations
-conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 1000, local, simulate_covparams = FALSE, ...) {
+conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 1000, simulate_covparams = FALSE, ...) {
   if (!is.numeric(samples) || length(samples) != 1L || !is.finite(samples) || samples < 1 || samples != floor(samples)) {
     stop("samples must be a positive integer.", call. = FALSE)
   }
-  if (missing(local)) local <- NULL
-  if (is_conditional_iid(object)) local <- FALSE
   if (!is.logical(simulate_covparams) || length(simulate_covparams) != 1 || is.na(simulate_covparams)) {
     stop("simulate_covparams must be TRUE or FALSE.", call. = FALSE)
   }
@@ -167,20 +121,8 @@ conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 10
     stop('output = "random" requires a model with random effects.', call. = FALSE)
   }
   newdata_name <- if ("newdata" %in% output) resolve_conditional_newdata_name(object, newdata) else NULL
-  conditioning <- get_local_list_conditional(local, object,
-    if (!is.null(newdata_name)) object$ssn.object$preds[[newdata_name]] else NULL)
-  if (!conditioning$exact && isTRUE(simulate_covparams)) {
-    simulate_covparams <- FALSE
-    message("simulate_covparams = TRUE is not used when a big-data approximation (local) is specified; setting simulate_covparams = FALSE.")
-  }
   if (any(output %in% covparam_outputs) && !isTRUE(simulate_covparams)) {
     stop("output can only be \"cov\", \"ssn\", \"tailup\", \"taildown\", \"euclid\", \"nugget\", or \"randcov\" when simulate_covparams = TRUE.", call. = FALSE)
-  }
-
-  if (!conditioning$exact) {
-    val <- draw_conditional_vecchia_model(object, newdata_name, conditioning, samples, output)
-    if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
-    return(if (length(output) == 1) val[[output]] else val[output])
   }
 
   if (!isTRUE(simulate_covparams)) {
@@ -219,17 +161,10 @@ conditional.ssn_lm <- function(object, newdata, output = "newdata", samples = 10
 #'   from \code{object}. The default is \code{"link"}.
 #' @param newdata_size The \code{size} value for each observation in \code{newdata}
 #'   used when predicting for the binomial family, with a default value of 1.
-#' @param fit_correct Apply the latent Laplace mean correction for conditional simulations from
-#'   \code{ssn_glm()} model objects. The default is
-#'   \code{TRUE}. Regardless of \code{fit_correct}, the \code{"object"} output
-#'   still returns model fitted values.
-conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("link", "response", "new"), samples = 1000, local, newdata_size, fit_correct = TRUE, ...) {
-  center <- get_latent_center(object, fit_correct)
+conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("link", "response", "new"), samples = 1000, newdata_size, ...) {
   if (!is.numeric(samples) || length(samples) != 1L || !is.finite(samples) || samples < 1 || samples != floor(samples)) {
     stop("samples must be a positive integer.", call. = FALSE)
   }
-  if (missing(local)) local <- NULL
-  if (is_conditional_iid(object)) local <- FALSE
   if (missing(newdata_size)) newdata_size <- NULL
   if ("all" %in% output) {
     output <- c("newdata", "beta", "object", if ("latent" %in% output) "latent", if ("random" %in% output) "random")
@@ -242,16 +177,9 @@ conditional.ssn_glm <- function(object, newdata, output = "newdata", type = c("l
   }
   type <- match.arg(type)
   newdata_name <- if ("newdata" %in% output) resolve_conditional_newdata_name(object, newdata) else NULL
-  conditioning <- get_local_list_conditional(local, object,
-    if (!is.null(newdata_name)) object$ssn.object$preds[[newdata_name]] else NULL)
-  if (conditioning$exact) {
-    iid_variance <- get_conditional_iid_variance(object)
-    val <- if (is.null(iid_variance)) draw_conditional_exact(object, newdata_name, samples, output, type, newdata_size, center = center) else
-      draw_conditional_iid(object, newdata_name, iid_variance, samples, output, type, newdata_size, center = center)
-    if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
-    return(if (length(output) == 1) val[[output]] else val[output])
-  }
-  val <- draw_conditional_vecchia_model(object, newdata_name, conditioning, samples, output, type, newdata_size, center = center)
+  iid_variance <- get_conditional_iid_variance(object)
+  val <- if (is.null(iid_variance)) draw_conditional_exact(object, newdata_name, samples, output, type, newdata_size) else
+    draw_conditional_iid(object, newdata_name, iid_variance, samples, output, type, newdata_size)
   if ("random" %in% output) val$random <- check_conditional_random_output(val$random)
   if (length(output) == 1) val[[output]] else val[output]
 }
@@ -304,14 +232,11 @@ resolve_conditional_newdata_name <- function(object, newdata) {
 #' When \code{local} is not \code{TRUE}, also builds the dense exact-path
 #' pieces (observed-data covariance factor, observed-to-prediction and
 #' prediction-to-prediction covariance) used by
-#' \code{\link{get_conditional_cov}()}; local (big-data) conditional
-#' simulation builds these pieces itself, per-row, in
-#' \code{\link{prepare_conditional_vecchia}()} instead.
+#' \code{\link{get_conditional_cov}()}.
 #'
 #' @param object A fitted \code{ssn_lm}/\code{ssn_glm} model object.
 #' @param newdata_name The name of the prediction set to simulate.
-#' @param local Whether a big-data approximation is active (skips the dense
-#'   exact-path pieces when \code{TRUE}).
+#' @param local Whether to skip assembly of the dense covariance pieces.
 #'
 #' @return A list with \code{object}, \code{newdata_name}, \code{newdata},
 #'   \code{x0}, \code{newdata_offset}, \code{Xmat}, \code{add_newdata_rows},
@@ -378,7 +303,7 @@ get_conditional_base_context <- function(object, newdata_name, local = FALSE) {
 #'
 #' @param object A fitted \code{ssn_lm} model object.
 #' @param newdata_name The name of the prediction set to simulate.
-#' @param local Whether a big-data approximation is active.
+#' @param local Whether to skip assembly of the dense covariance pieces.
 #'
 #' @return The \code{\link{get_conditional_base_context}()} list, extended
 #'   with \code{y_object}, \code{y} (offset-subtracted), \code{betahat}, and
@@ -410,7 +335,7 @@ get_conditional_context <- function(object, newdata_name, local = FALSE) {
 #'
 #' @param object A fitted \code{ssn_glm} model object.
 #' @param newdata_name The name of the prediction set to simulate.
-#' @param local Whether a big-data approximation is active.
+#' @param local Whether to skip assembly of the dense covariance pieces.
 #'
 #' @return The \code{\link{get_conditional_base_context}()} list, extended
 #'   with \code{y}, \code{w} (fitted link-scale values), \code{w_free}
@@ -419,7 +344,7 @@ get_conditional_context <- function(object, newdata_name, local = FALSE) {
 #'   \code{dispersion}, and \code{size}.
 #'
 #' @noRd
-get_conditional_context_glm <- function(object, newdata_name, local = FALSE, center = get_latent_center(object)) {
+get_conditional_context_glm <- function(object, newdata_name, local = FALSE) {
   context <- get_conditional_base_context(object, newdata_name, local = local)
 
   y <- model.response(model.frame(object))
@@ -431,7 +356,7 @@ get_conditional_context_glm <- function(object, newdata_name, local = FALSE, cen
   context$w <- w
   context$w_free <- w_free
   context$offset <- offset
-  context$betahat <- center$betahat
+  context$betahat <- coef(object)
   context$cov_betahat <- vcov(object)
   context$cov_betahat_uncorrected <- vcov(object, var_correct = FALSE)
   context$family <- object$family

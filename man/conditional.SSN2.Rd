@@ -11,7 +11,6 @@
   newdata,
   output = "newdata",
   samples = 1000,
-  local,
   simulate_covparams = FALSE,
   ...
 )
@@ -22,9 +21,7 @@
   output = "newdata",
   type = c("link", "response", "new"),
   samples = 1000,
-  local,
   newdata_size,
-  fit_correct = TRUE,
   ...
 )
 }
@@ -50,47 +47,6 @@ The default is \code{"newdata"}. See Details for more.}
 \item{samples}{The number of conditional simulations. The default is
 \code{1,000}.}
 
-\item{local}{For \code{ssn_lm()} and \code{ssn_glm()} model objects, an optional
-logical or list controlling the big data approximation. If omitted, \code{local}
-is \code{TRUE} when either the observed or prediction sample size exceeds
-5,000, and \code{FALSE} otherwise. \code{FALSE} uses exact simulation.
-\code{TRUE} or a list uses a local neighborhood (Vecchia) approach,
-simulating each prediction
-conditional on neighbors selected from observed and previously simulated
-predictions. A list can contain:
-\itemize{
-\item \code{method}: The neighbor-selection rule used to build each
-location's conditioning set once it exceeds \code{size} candidates
-(all observed data plus every already-simulated \code{newdata}
-location). Values are \code{"all"} or \code{"covariance"}
-(the \code{size} candidates with the highest absolute spatial
-covariance).
-The default is
-\code{"covariance"}. For both linear and generalized linear models,
-\code{method = "all"} uses the exact path, as with \code{local = FALSE}.
-\item \code{size}: The number of neighbors used when \code{method}
-is \code{"covariance"}. The default is 30 for
-\code{ssn_lm()} and 60 for \code{ssn_glm()}.
-\item \code{ordering}: The order \code{newdata} locations are
-simulated in -- \code{"pid"}, \code{"maxmin"}, \code{"middleout"},
-\code{"outsidein"}, \code{"coordinate"}, \code{"grts"},
-\code{"random"}, or \code{"none"} (same options as
-\code{ssn_decorrelate()}'s \code{ordering} argument). The default is
-\code{"pid"}, which orders by \code{pid} and then by network ID.
-\item \code{size_random}: For models with random effects, the approximate
-number of observed sites per block for drawing realized random effects,
-implying \code{ceiling(n / size_random)} groups. The default is 1,000.
-If specified, \code{groups_random} is ignored.
-\item \code{groups_random}: The number of random effect blocks.
-\item \code{method_random}: How to form the random effect blocks:
-\code{"kmeans"} (the default) or \code{"random"}.
-\item \code{chunk_size}: For local \code{ssn_lm()} and \code{ssn_glm()}
-simulation, with or without random effects, the
-maximum number of \code{samples} columns processed simultaneously.
-The default is 1,000. \code{chunk_size} is purely computational and does
-not affect correctness.
-}}
-
 \item{simulate_covparams}{For \code{ssn_lm()} model objects, whether to also
 simulate new covariance parameters for each sample. \code{simulate_covparams}
 requires \code{object$vcov$cov} to be specified during model fitting by
@@ -112,11 +68,6 @@ from \code{object}. The default is \code{"link"}.}
 
 \item{newdata_size}{The \code{size} value for each observation in \code{newdata}
 used when predicting for the binomial family, with a default value of 1.}
-
-\item{fit_correct}{Apply the latent Laplace mean correction for conditional simulations from
-\code{ssn_glm()} model objects. The default is
-\code{TRUE}. Regardless of \code{fit_correct}, the \code{"object"} output
-still returns model fitted values.}
 }
 \value{
 If \code{output = "newdata"}, an a x b matrix of conditional simulations
@@ -167,10 +118,6 @@ fixed effects. If \code{"cov"}/\code{"ssn"}/\code{"tailup"}/\code{"taildown"}/
 \code{"euclid"}/\code{"nugget"}/\code{"randcov"} is in
 \code{output} (only available when \code{simulate_covparams = TRUE}),
 the simulated covariance parameter draws themselves are returned.
-
-With local simulation, spatial generalized linear model latent values are drawn
-sequentially, conditioning on local sites and previously drawn latent
-sites. The neighborhood contains at most \code{2 * size} sites.
 }
 \examples{
 # Copy the mf04p .ssn data to a local directory and read it into R

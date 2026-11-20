@@ -42,34 +42,9 @@ test_that("independent Gaussian draws retain the dense exact random fixture", {
       set.seed(2)
       dense <- draw_conditional_exact(fit, name, samples, c("newdata", "beta", "object"))
       set.seed(2)
-      direct <- conditional(fit, name, samples = samples, output = "all", local = FALSE)
+      direct <- conditional(fit, name, samples = samples, output = "all")
       expect_identical(direct, dense[names(direct)])
     }
-  }
-})
-
-test_that("independent models override local controls before validating them", {
-  set.seed(2)
-  controls <- list(TRUE, FALSE, NA, "invalid", list(size = -1),
-    list(approximation = "low-rank", ordering = "maxmin", kmeans_new = TRUE),
-    list(approximation = "vecchia", size = 1, parallel = TRUE))
-  for (family in list(NULL, "poisson")) {
-    fit <- conditional_iid_fixture(family)
-    set.seed(2)
-    expected <- conditional(fit, "iid", samples = 5, local = FALSE, output = "all")
-    for (control in controls) {
-      set.seed(2)
-      expect_identical(conditional(fit, "iid", samples = 5, local = control, output = "all"), expected)
-    }
-    expect_error(conditional(fit, output = "random"), "requires a model with random effects")
-    expect_error(conditional(fit, "absent"), "not a valid")
-    expect_error(conditional(fit, "iid", samples = 0), "positive integer")
-  }
-  fit <- conditional_iid_fixture()
-  expected <- loocv(fit, cv_predict = TRUE, se.fit = TRUE, interval = "prediction")
-  for (control in controls) {
-    expect_identical(loocv(fit, cv_predict = TRUE, se.fit = TRUE,
-      interval = "prediction", local = control), expected)
   }
 })
 
@@ -93,7 +68,7 @@ test_that("independent eligibility preserves variance floors and structural excl
     fit$coefficients$params_object$nugget[["nugget"]] <- 0
     if (is.null(family)) {
       expect_null(get_conditional_iid_variance(fit))
-      expect_error(conditional(fit, "iid", samples = 1, local = list(size = -1)), "not positive")
+      expect_error(conditional(fit, "iid", samples = 1), "not positive")
     } else {
       expect_equal(get_conditional_iid_variance(fit), 1e-4)
       class(fit$coefficients$params_object$nugget) <- "nugget_none"
@@ -147,8 +122,8 @@ test_that("independent draws recover shared coefficient and latent uncertainty",
   A <- (q / v) * X
   mapping <- rbind(diag(NCOL(X)), A, X0)
   target <- mapping %*% B %*% t(mapping) + diag(c(rep(0, NCOL(X)), q, rep(v, NROW(X0))))
-  beta <- fit$laplace$betahat
-  mean <- c(beta, eta + fit$laplace$delta[names(eta)], X0 %*% beta + fit$ssn.object$preds$iid$off)
+  beta <- coef(fit)
+  mean <- c(beta, eta, X0 %*% beta + fit$ssn.object$preds$iid$off)
   draws <- conditional(fit, "iid", output = c("beta", "latent", "newdata"), samples = 12000)
   value <- do.call(rbind, draws)
   expect_lt(max(abs(rowMeans(value) - mean) / sqrt(diag(target) / NCOL(value))), 6)
@@ -195,14 +170,14 @@ test_that("independent latent draws reject invalid conditional precision", {
   }
 })
 
-test_that("independent covariance-parameter simulation is not cancelled by local", {
+test_that("independent models can simulate covariance parameters", {
   set.seed(2)
   fit <- conditional_iid_fixture()
   local_mocked_bindings(get_satterthwaite_cached = function(...) list(vcov_theta = diag(1)),
     draw_conditional_covparams = function(...) list(cov = matrix(7, 1, 2)),
     draw_conditional_iid = function(...) stop("unexpected shortcut"))
   expect_message(value <- conditional(fit, output = "cov", samples = 2,
-    simulate_covparams = TRUE, local = list(size = -1)), NA)
+    simulate_covparams = TRUE), NA)
   expect_identical(value, matrix(7, 1, 2))
 })
 
@@ -222,15 +197,12 @@ test_that("stored and named missing-site geometry agree with random effects", {
   for (family in list(NULL, "poisson")) {
     fit <- conditional_iid_fixture(family, missing = TRUE, random = TRUE)
     fit$ssn.object$preds$alias <- fit$ssn.object$preds$.missing
-    for (local in list(FALSE,
-      list(size = 3, ordering = "coordinate", method_random = "random"))) {
-      set.seed(2)
-      stored <- conditional(fit, samples = 3, local = local)
-      set.seed(2)
-      named <- conditional(fit, "alias", samples = 3, local = local)
-      expect_equal(unname(stored), unname(named), tolerance = 1e-12)
-      expect_identical(rownames(stored), as.character(fit$missing_index))
-    }
+    set.seed(2)
+    stored <- conditional(fit, samples = 3)
+    set.seed(2)
+    named <- conditional(fit, "alias", samples = 3)
+    expect_equal(unname(stored), unname(named), tolerance = 1e-12)
+    expect_identical(rownames(stored), as.character(fit$missing_index))
   }
 })
 

@@ -9,23 +9,7 @@ get_conditional_random_design <- function(object, newdata = NULL, index = NULL) 
                     object$partition_factor, newdata, index)
 }
 
-conditional_random_blocks <- function(object, size = 1000L, groups = NULL, method = "kmeans") {
-  observed <- object$ssn.object$obs
-  n <- NROW(observed)
-  if (is.null(size)) size <- 1000L
-  if (is.null(method)) method <- "kmeans"
-  if (is.null(groups)) groups <- ceiling(n / size)
-  if (groups == 1L) return(list(seq_len(n)))
-  if (method == "kmeans") {
-    xy <- sf::st_coordinates(observed)
-    if (NROW(unique(xy)) < groups) stop("Too few distinct observed locations for the requested random-effect blocks; increase local$size_random or reduce local$groups_random, or use local$method_random = \"random\".", call. = FALSE)
-    if (groups == n) return(as.list(seq_len(n)))
-  }
-  labels <- get_local_estimation_index(list(method = method, groups = groups, size = ceiling(n / groups)), observed, n)
-  unname(split(seq_len(n), labels))
-}
-
-prepare_conditional_random <- function(object, design, local_list = NULL, covariance = NULL, spatial_factor = NULL, covariance_context = NULL) {
+prepare_conditional_random <- function(object, design, covariance = NULL, spatial_factor = NULL) {
   Z <- design$observed
   n <- NROW(Z)
   active <- which(design$variance > 0 & design$info$conditioned)
@@ -35,20 +19,12 @@ prepare_conditional_random <- function(object, design, local_list = NULL, covari
     format(length(active), big.mark = ",", scientific = FALSE)
   ), call. = FALSE, immediate. = TRUE)
   spatial <- conditional_spatial_object(object)
-  if (!is.null(covariance_context)) covariance_context$randcov <- numeric()
   blocks <- list(seq_len(n))
-  if (!is.null(local_list) && !isTRUE(local_list$exact)) {
-    blocks <- local_list$random_blocks
-    if (is.null(blocks)) blocks <- conditional_random_blocks(object, local_list$size_random,
-      local_list$groups_random, local_list$method_random)
-  }
   precision <- diag(1 / design$variance[active], length(active))
   prepared <- vector("list", length(blocks))
   for (k in seq_along(blocks)) {
     rows <- blocks[[k]]
-    if (!is.null(covariance_context)) {
-      S <- conditional_vecchia_covariance(covariance_context, rows)
-    } else if (is.null(covariance)) {
+    if (is.null(covariance)) {
       sub <- spatial
       S <- get_decorrelate_observed_covariance(sub, spatial$ssn.object$obs[rows, , drop = FALSE])
     } else S <- covariance[rows, rows, drop = FALSE]

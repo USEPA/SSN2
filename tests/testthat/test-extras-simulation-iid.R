@@ -11,8 +11,7 @@ simulation_iid_args <- function(n = 12L, samples = 3L) {
 
 test_that("independent simulation avoids spatial setup and matches direct normal draws", {
   unexpected <- function(...) stop("unexpected spatial setup")
-  local_mocked_bindings(get_ssn_simulate_local = unexpected,
-    get_ssn_simulate_covariance_fit = unexpected, get_dist_object = unexpected,
+  local_mocked_bindings(get_dist_object = unexpected,
     select_square_dist_backend = unexpected, get_cov_matrix = unexpected,
     partition_matrix = unexpected, .package = "SSN2")
   for (n in c(1L, 12L, 4999L, 5000L, 5001L)) {
@@ -25,14 +24,10 @@ test_that("independent simulation avoids spatial setup and matches direct normal
       }, numeric(n))
       if (samples == 1) reference <- as.vector(reference)
       reference_seed <- .Random.seed
-      for (local in list(NULL, FALSE, TRUE, list(), list(approximation = "low-rank"),
-                        list(approximation = "vecchia", parallel = TRUE),
-                        list(size = -1, ordering = "invalid"), "unused")) {
-        set.seed(2)
-        expect_message(value <- do.call(ssn_rnorm, c(args, list(local = local))), NA)
-        expect_identical(value, reference)
-        expect_identical(.Random.seed, reference_seed)
-      }
+      set.seed(2)
+      expect_message(value <- do.call(ssn_rnorm, args), NA)
+      expect_identical(value, reference)
+      expect_identical(.Random.seed, reference_seed)
       args$mean <- 2
       set.seed(2)
       scalar <- do.call(ssn_rnorm, args)
@@ -65,7 +60,6 @@ test_that("empty random effects and multiple partition factors preserve independ
 test_that("zero nugget and all-none unconditional simulation retain their existing behavior", {
   args <- simulation_iid_args(nrow(mf04p$obs))
   args$ssn.object <- mf04p
-  args$local <- FALSE
   args$nugget_params <- nugget_params("nugget", nugget = 0)
   set.seed(2)
   value <- do.call(ssn_rnorm, args)
@@ -76,7 +70,7 @@ test_that("zero nugget and all-none unconditional simulation retain their existi
 
 test_that("independent simulation includes zero spatial variance and random effects", {
   set.seed(2)
-  local_mocked_bindings(get_ssn_simulate_local = function(...) stop("general simulation"),
+  local_mocked_bindings(partition_matrix = function(...) stop("general simulation"),
                         .package = "SSN2")
   args <- simulation_iid_args()
   reference <- do.call(ssn_rnorm, args)
@@ -102,7 +96,7 @@ test_that("independent simulation includes zero spatial variance and random effe
 })
 
 test_that("independent simulation excludes positive spatial variance and degenerate variance", {
-  local_mocked_bindings(get_ssn_simulate_local = function(...) stop("general simulation"),
+  local_mocked_bindings(partition_matrix = function(...) stop("general simulation"),
                         .package = "SSN2")
   for (component in c("tailup", "taildown", "euclid")) {
     args <- simulation_iid_args()
@@ -138,12 +132,10 @@ test_that("independent family generators retain the latent normal and response t
       })
     })
     for (i in seq_along(families)) {
-      for (local in list(FALSE, TRUE, list(approximation = "low-rank", size_base = 2))) {
-        set.seed(2)
-        value <- do.call(ssn_simulate,
-          c(list(family = families[i], size = 4, dispersion = 2, local = local), args))
-        expect_identical(value, reference[[i]], info = families[i])
-      }
+      set.seed(2)
+      value <- do.call(ssn_simulate,
+        c(list(family = families[i], size = 4, dispersion = 2), args))
+      expect_identical(value, reference[[i]], info = families[i])
     }
   }
 })

@@ -177,18 +177,15 @@ test_that("new conditional and kcv methods follow upstream positional convention
                 tailup_type = "exponential", additive = "afvArea")
   count <- ssn_glm(C16 ~ ELEV_DEM, mf04p, family = "poisson",
                    tailup_type = "exponential", additive = "afvArea")
-  fit$ssn.object$preds$CapeHorn <- fit$ssn.object$preds$CapeHorn[1:3, ]
-  count$ssn.object$preds$CapeHorn <- count$ssn.object$preds$CapeHorn[1:3, ]
-  local <- list(method = "covariance", size = 4)
   set.seed(2)
-  positional <- conditional(fit, "CapeHorn", "newdata", 2, local, FALSE)
+  positional <- conditional(fit, "pred1km", "newdata", 2, FALSE)
   set.seed(2)
-  named <- conditional(fit, "CapeHorn", samples = 2, local = local, simulate_covparams = FALSE)
+  named <- conditional(fit, "pred1km", samples = 2, simulate_covparams = FALSE)
   expect_equal(positional, named)
   set.seed(2)
-  positional <- conditional(count, "CapeHorn", "newdata", "new", 2, local, NULL)
+  positional <- conditional(count, "pred1km", "newdata", "new", 2, NULL)
   set.seed(2)
-  named <- conditional(count, "CapeHorn", type = "new", samples = 2, local = local, newdata_size = NULL)
+  named <- conditional(count, "pred1km", type = "new", samples = 2, newdata_size = NULL)
   expect_equal(positional, named)
 
   folds <- rep(1:3, length.out = nrow(mf04p$obs))

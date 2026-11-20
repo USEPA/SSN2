@@ -22,8 +22,8 @@ draw_conditional_iid_error <- function(n, samples, variance, chunk_size = 1000L)
   value
 }
 
-get_conditional_iid_glm <- function(object, Xnew, variance, samples, latent = FALSE, chunk_size = 1000L, center = get_latent_center(object)) {
-  b <- center$betahat
+get_conditional_iid_glm <- function(object, Xnew, variance, samples, latent = FALSE, chunk_size = 1000L) {
+  b <- coef(object)
   delta <- t(chol(vcov(object))) %*% matrix(rnorm(length(b) * samples), length(b), samples)
   beta <- sweep(delta, 1L, b, "+")
   rownames(beta) <- names(b)
@@ -40,7 +40,7 @@ get_conditional_iid_glm <- function(object, Xnew, variance, samples, latent = FA
     q <- 1 / precision
     A <- (q / variance) * X
     offset <- model.offset(model.frame(object))
-    w <- if (is.null(offset)) center$eta else center$eta - offset
+    w <- if (is.null(offset)) eta else eta - offset
     observed <- matrix(NA_real_, NROW(X), samples)
     for (start in seq.int(1L, samples, by = chunk_size)) {
       cols <- seq.int(start, min(samples, start + chunk_size - 1L))
@@ -58,10 +58,9 @@ get_conditional_iid_glm <- function(object, Xnew, variance, samples, latent = FA
 }
 
 draw_conditional_iid <- function(object, newdata_name, variance, samples, output,
-                                 type = "link", newdata_size = NULL,
-                                 center = if (inherits(object, "ssn_glm")) get_latent_center(object) else NULL) {
+                                 type = "link", newdata_size = NULL) {
   glm <- inherits(object, "ssn_glm")
-  context <- if (glm) get_conditional_context_glm(object, newdata_name, local = TRUE, center = center) else
+  context <- if (glm) get_conditional_context_glm(object, newdata_name, local = TRUE) else
     get_conditional_context(object, newdata_name, local = TRUE)
   if (!is.null(object$partition_factor) && NROW(context$newdata)) {
     model.frame(object$partition_factor, context$newdata)
@@ -74,7 +73,7 @@ draw_conditional_iid <- function(object, newdata_name, variance, samples, output
   if (!any(c("newdata", "beta", "latent") %in% output)) return(val)
   if (glm) {
     draws <- get_conditional_iid_glm(object, context$x0, variance, samples,
-      latent = "latent" %in% output, center = center)
+      latent = "latent" %in% output)
     beta <- draws$beta
     value <- draws$newdata
     if ("latent" %in% output) {

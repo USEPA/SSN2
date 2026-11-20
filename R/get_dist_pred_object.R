@@ -6,8 +6,7 @@
 #'   subsetted (\code{"dense"}) or the requested submatrix is read directly
 #'   off disk via a memory-mapped \code{filematrix} (\code{"bigdata"}). Local
 #'   big-data machinery (model-fitting \code{local}, block prediction, and
-#'   the local/Vecchia decorrelation, simulation, and conditional
-#'   simulation neighbor-pool code) typically only ever needs small
+#'   local decorrelation) typically only needs small
 #'   submatrices at a time and passes \code{"bigdata"}, so it is not left
 #'   unreachable whenever \code{.RData} also happens to exist. Exact/default
 #'   paths, which always need an entire network's matrix anyway, keep the

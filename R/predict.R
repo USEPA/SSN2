@@ -96,11 +96,9 @@
 #'       so that its size is only \code{size_new}. The default \code{size_new}
 #'       is \code{4000}.
 #'     \item \code{ordering} chooses the \code{size_new} nodes from
-#'       \code{newdata} and takes the same values as the \code{ordering}
-#'       \code{local} option of \code{\link{ssn_simulate}()}/\code{\link{conditional}()}
-#'       with \code{local = TRUE} (\code{"pid"}, \code{"maxmin"}, \code{"grts"},
+#'       \code{newdata}. The options are \code{"pid"}, \code{"maxmin"}, \code{"grts"},
 #'       \code{"random"}, \code{"none"}, \code{"middleout"},
-#'       \code{"outsidein"}, \code{"coordinate"}). The default is
+#'       \code{"outsidein"}, \code{"coordinate"}. The default is
 #'       \code{"pid"}.
 #'     \item \code{parallel} and \code{ncores} parallelize the
 #'       covariance-chunk calculations. Their defaults are the same as for

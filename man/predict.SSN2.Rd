@@ -42,7 +42,6 @@
   delta = FALSE,
   newdata_size,
   na.action = na.fail,
-  fit_correct = TRUE,
   ...
 )
 
@@ -128,11 +127,9 @@ approximates the block mean and variance by subsampling \code{newdata}
 so that its size is only \code{size_new}. The default \code{size_new}
 is \code{4000}.
 \item \code{ordering} chooses the \code{size_new} nodes from
-\code{newdata} and takes the same values as the \code{ordering}
-\code{local} option of \code{\link{ssn_simulate}()}/\code{\link{conditional}()}
-with \code{local = TRUE} (\code{"pid"}, \code{"maxmin"}, \code{"grts"},
+\code{newdata}. The options are \code{"pid"}, \code{"maxmin"}, \code{"grts"},
 \code{"random"}, \code{"none"}, \code{"middleout"},
-\code{"outsidein"}, \code{"coordinate"}). The default is
+\code{"outsidein"}, \code{"coordinate"}. The default is
 \code{"pid"}.
 \item \code{parallel} and \code{ncores} parallelize the
 covariance-chunk calculations. Their defaults are the same as for
@@ -206,9 +203,6 @@ on the response scale when \code{se.fit = TRUE} and \code{type = "response"}. Th
 
 \item{newdata_size}{The \code{size} value for each observation in \code{newdata}
 used when predicting for the binomial family, with a default value of 1.}
-
-\item{fit_correct}{A logical indicating whether to apply the Laplace mean corrections to predictions.
-The default is \code{TRUE}.}
 }
 \value{
 For \code{ssn_lm} and \code{ssn_glm} objects, if \code{se.fit}

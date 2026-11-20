@@ -442,8 +442,8 @@ test_that("mode-based local GLM prediction matches spmodel with offsets and inte
     xcoord = "cx", ycoord = "cy")
   local <- list(method = "covariance", size = 12, parallel = FALSE)
   for (correct in c(FALSE, TRUE)) for (type in c("link", "response")) {
-    actual <- predict(a, "CapeHorn", local = local, type = type, interval = "prediction", se.fit = TRUE, var_correct = correct, fit_correct = FALSE)
-    expected <- predict(b, newdata, local = local, type = type, interval = "prediction", se.fit = TRUE, var_correct = correct, fit_correct = FALSE)
+    actual <- predict(a, "CapeHorn", local = local, type = type, interval = "prediction", se.fit = TRUE, var_correct = correct)
+    expected <- predict(b, newdata, local = local, type = type, interval = "prediction", se.fit = TRUE, var_correct = correct)
     expect_equal(unname(actual$fit), unname(expected$fit), tolerance = fit_tolerance)
     expect_equal(unname(actual$se.fit), unname(expected$se.fit), tolerance = se_tolerance)
   }

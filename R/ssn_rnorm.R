@@ -3,13 +3,10 @@
 ssn_rnorm <- function(ssn.object, network = "obs",
                       tailup_params, taildown_params, euclid_params, nugget_params,
                       mean = 0, samples = 1, additive,
-                      randcov_params, partition_factor, local, ...) {
+                      randcov_params, partition_factor, ...) {
   if (any(!(network %in% "obs"))) {
     stop("network must be \"obs\".", call. = FALSE)
   }
-
-  if (missing(local)) local <- NULL
-
   # fix additive depending on format
   if (missing(additive)) additive <- NULL
   if (is.symbol(substitute(additive))) { # or is.language
@@ -76,17 +73,6 @@ ssn_rnorm <- function(ssn.object, network = "obs",
     if (samples == 1) ssn_rnorm_val <- as.vector(ssn_rnorm_val)
     return(ssn_rnorm_val)
   }
-  conditioning <- get_ssn_simulate_local(local, n, ssn.object$obs)
-
-  if (!conditioning$exact) {
-    covariance_fit <- get_ssn_simulate_covariance_fit(ssn.object, params_object, additive, anisotropy, partition_factor)
-    ssn_rnorm_val <- get_ssn_simulate_vecchia(covariance_fit, samples, conditioning) + mean
-    if (samples == 1) {
-      ssn_rnorm_val <- as.vector(ssn_rnorm_val)
-    }
-    return(ssn_rnorm_val)
-  }
-
   partition_matrix_val <- partition_matrix(partition_factor, ssn.object$obs)
   if (!is.null(randcov_Zs)) {
     randcov_Zs <- lapply(randcov_Zs, function(x) {

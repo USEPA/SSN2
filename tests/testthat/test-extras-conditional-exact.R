@@ -54,9 +54,9 @@ test_that("shared-effect exact draws recover independent total-covariance moment
     C <- as.matrix(vcov(fit))
     W <- t(cross) %*% solve(Sigma)
     R <- prior - W %*% cross
-    beta <- as.vector(if (glm) fit$laplace$betahat else coef(fit))
+    beta <- as.vector(coef(fit))
     eta <- if (glm) fitted(fit, type = "link") else model.response(model.frame(fit))
-    center <- if (glm) as.vector(eta + fit$laplace$delta[names(eta)]) else eta
+    center <- eta
     center <- center - model.offset(model.frame(fit))
     V <- if (glm) solve(solve(Sigma) + diag(exp(fitted(fit, type = "link")))) else matrix(0, 12, 12)
     M <- if (glm) V %*% solve(Sigma, X) else matrix(0, 12, NCOL(X))
@@ -65,7 +65,7 @@ test_that("shared-effect exact draws recover independent total-covariance moment
     mean <- as.vector(Xp %*% beta + W %*% (center - X %*% beta) + pred$off)
     set.seed(2)
     draws <- conditional(fit, "pred1km", output = c("all", "random", if (glm) "latent"),
-                         samples = 6000, local = FALSE)
+                         samples = 6000)
     expect_exact_moments(rbind(draws$beta, draws$newdata), c(beta, mean),
       rbind(cbind(C, C %*% t(B)), cbind(B %*% C, covariance)))
     expect_exact_moments(matrix(colMeans(draws$newdata), 1), mean(mean), matrix(sum(covariance) / 16, 1))
@@ -120,17 +120,17 @@ test_that("exact outputs avoid prediction data and unnecessary factors", {
     fit$ssn.object$preds <- list()
     set.seed(2)
     value <- conditional(fit, output = c("beta", "object", "random", if (glm) "latent"),
-                         samples = 1, local = FALSE)
+                         samples = 1)
     expect_equal(dim(value$beta), c(2, 1))
     expect_equal(dim(value$random), c(4, 1))
     if (glm) expect_equal(dim(value$latent), c(12, 1))
-    expect_error(conditional(fit, local = FALSE), "No missing data to predict")
+    expect_error(conditional(fit), "No missing data to predict")
   }
   fit <- conditional_exact_fixture(TRUE)
   local_mocked_bindings(covmatrix = function(...) stop("Unexpected covariance read"),
     get_prediction_newdata = function(...) stop("Unexpected prediction read"), .package = "SSN2")
-  expect_equal(dim(conditional(fit, output = "beta", samples = 2, local = FALSE)), c(2, 2))
-  expect_equal(dim(conditional(fit, output = "object", samples = 2, local = FALSE)), c(12, 2))
+  expect_equal(dim(conditional(fit, output = "beta", samples = 2)), c(2, 2))
+  expect_equal(dim(conditional(fit, output = "object", samples = 2)), c(12, 2))
 })
 
 test_that("missing predictions, output combinations and offsets retain row orientation", {
@@ -138,19 +138,19 @@ test_that("missing predictions, output combinations and offsets retain row orien
   for (glm in c(FALSE, TRUE)) {
     fit <- conditional_exact_fixture(glm, missing = TRUE)
     set.seed(2)
-    implicit <- conditional(fit, samples = 7, local = FALSE)
+    implicit <- conditional(fit, samples = 7)
     set.seed(2)
-    explicit <- conditional(fit, ".missing", samples = 7, local = FALSE)
+    explicit <- conditional(fit, ".missing", samples = 7)
     expect_identical(implicit, explicit)
     expect_identical(rownames(implicit), as.character(fit$missing_index))
     expect_equal(dim(implicit), c(2, 7))
   }
   fit <- conditional_exact_fixture(TRUE)
   set.seed(2)
-  link <- conditional(fit, "pred1km", output = c("all", "latent", "random"), samples = 7, local = FALSE)
+  link <- conditional(fit, "pred1km", output = c("all", "latent", "random"), samples = 7)
   set.seed(2)
   response <- conditional(fit, "pred1km", output = c("all", "latent", "random"),
-                          samples = 7, local = FALSE, type = "response")
+                          samples = 7, type = "response")
   expect_equal(response$newdata, exp(link$newdata))
   expect_identical(response$latent, link$latent)
   expect_identical(response$random, link$random)
@@ -167,7 +167,7 @@ test_that("exact prediction reuses the GLM model covariance factor", {
     if (!length(list(...))) observed_calls <<- observed_calls + 1L
     original(object, ...)
   }, .package = "SSN2")
-  conditional(fit, "pred1km", samples = 2, local = FALSE)
+  conditional(fit, "pred1km", samples = 2)
   expect_equal(observed_calls, 1L)
 })
 
@@ -193,7 +193,7 @@ test_that("covariance-parameter draws retain paired realized effects without pre
     }, .package = "SSN2")
   set.seed(2)
   paired <- conditional(fit, output = c("cov", "beta", "random"),
-                        samples = 3, simulate_covparams = TRUE, local = FALSE)
+                        samples = 3, simulate_covparams = TRUE)
   expect_equal(paired$cov, outer(theta, 1:3), ignore_attr = TRUE)
   set.seed(2)
   X <- model.matrix(fit)
@@ -216,7 +216,7 @@ test_that("covariance-parameter draws retain paired realized effects without pre
   }
   count <- 0L
   set.seed(2)
-  only <- conditional(fit, output = "random", samples = 3, simulate_covparams = TRUE, local = FALSE)
+  only <- conditional(fit, output = "random", samples = 3, simulate_covparams = TRUE)
   expect_identical(only, paired$random)
 })
 

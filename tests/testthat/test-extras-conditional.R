@@ -233,7 +233,7 @@ test_that("conditional() GLM exact conditional simulation works", {
   set.seed(2)
   betas <- conditional(fit, "CapeHorn", output = "beta", samples = 6000)
   expect_equal(dim(betas), c(fit$p, 6000))
-  expect_equal(unname(rowMeans(betas)), unname(fit$laplace$betahat), tolerance = 0.05)
+  expect_equal(unname(rowMeans(betas)), unname(coef(fit)), tolerance = 0.05)
   expect_equal(unname(diag(cov(t(betas)))), unname(diag(as.matrix(vcov(fit)))), tolerance = 0.1)
 
   # offset applied exactly once, on the link scale
@@ -343,347 +343,6 @@ test_that("conditional() for ssn_glm() has no method for unimplemented families 
 })
 
 # conditional local
-test_that("conditional() local = TRUE/list(...) works for ssn_lm()", {
-  copy_lsn_to_temp()
-  temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-  mf04p <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
-  mf04p$preds$CapeHornSmall <- mf04p$preds$CapeHorn[1:8, ]
-  ssn_create_distmat(mf04p, predpts = "CapeHornSmall", overwrite = TRUE, among_predpts = TRUE)
-
-  fit <- ssn_lm(
-    formula = Summer_mn ~ ELEV_DEM,
-    ssn.object = mf04p,
-    tailup_type = "exponential",
-    additive = "afvArea"
-  )
-
-  set.seed(2)
-  d_exact <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 3000)
-  set.seed(2)
-  d_local_all <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 3000, local = list(method = "all"))
-  expect_equal(dim(d_local_all), dim(d_exact))
-  expect_equal(d_local_all, d_exact, tolerance = 1e-10)
-
-  # output = "beta" never touches the spatial engine -- identical under a
-  # shared RNG stream regardless of local
-  set.seed(2)
-  b_exact <- conditional(fit, "CapeHornSmall", output = "beta", samples = 50)
-  set.seed(2)
-  b_local <- conditional(fit, "CapeHornSmall", output = "beta", samples = 50, local = TRUE)
-  expect_identical(b_exact, b_local)
-
-  # "object" and multi-element output also work under local
-  obj_local <- conditional(fit, "CapeHornSmall", output = "object", samples = 3, local = TRUE)
-  y_obs <- model.response(model.frame(fit))
-  expect_equal(dim(obj_local), c(fit$n, 3))
-  expect_true(all(apply(obj_local, 2, function(col) identical(unname(col), unname(y_obs)))))
-
-  d_local_multi <- conditional(fit, "CapeHornSmall", output = c("newdata", "object"), samples = 4, local = list(method ="all"))
-  expect_identical(names(d_local_multi), c("newdata", "object"))
-
-  pred <- fit$ssn.object$preds$CapeHornSmall
-  n_pred <- NROW(pred)
-  X <- model.matrix(fit)
-  Xnew <- model.matrix(~ELEV_DEM, pred)
-  Sigma <- covmatrix(fit)
-  C <- covmatrix(fit, "CapeHornSmall", cov_type = "pred.obs")
-  Sigma_new <- covmatrix(fit, "CapeHornSmall", cov_type = "pred.pred")
-  W <- t(solve(Sigma, t(C)))
-  H <- Xnew - W %*% X
-  mean_ref <- as.vector(Xnew %*% coef(fit) + W %*% (y_obs - X %*% coef(fit)))
-  cov_ref <- Sigma_new - W %*% t(C) + H %*% vcov(fit) %*% t(H)
-
-  # full neighbors recover moments
-  samples <- 8000L
-  for (sz in c(3, 10, 45, fit$n + n_pred - 1L)) {
-    set.seed(2)
-    d <- conditional(fit, "CapeHornSmall", output = "newdata", samples = samples,
-      local = list(method = "covariance", size = sz))
-    expect_equal(dim(d), c(n_pred, samples))
-    expect_true(all(is.finite(d)))
-  }
-  mean_mcse <- sqrt(diag(cov_ref) / samples)
-  covariance_mcse <- sqrt((outer(diag(cov_ref), diag(cov_ref)) + cov_ref^2) / (samples - 1L))
-  expect_lt(max(abs(rowMeans(d) - mean_ref) / mean_mcse), 6)
-  expect_lt(max(abs(cov(t(d)) - cov_ref) / covariance_mcse), 6)
-
-  # Different factorizations need not reproduce identical individual draws.
-  for (ordering in c("pid", "none", "random", "maxmin", "middleout", "outsidein", "coordinate", "grts")) {
-    set.seed(2)
-    d <- conditional(fit, "CapeHornSmall", output = "newdata", samples = 200, local = list(method ="covariance", size = 5, ordering = ordering))
-    expect_true(all(is.finite(d)))
-    expect_equal(dim(d), c(8, 200))
-  }
-
-  # RNG reproducibility under the local (truncated) engine specifically
-  vecchia_local <- list(method = "covariance", size = 5)
-  set.seed(2)
-  d1 <- conditional(fit, "CapeHornSmall", samples = 10, local = vecchia_local)
-  set.seed(2)
-  d2 <- conditional(fit, "CapeHornSmall", samples = 10, local = vecchia_local)
-  expect_identical(d1, d2)
-  d3 <- conditional(fit, "CapeHornSmall", samples = 10, local = vecchia_local)
-  expect_false(identical(d1, d3))
-
-  settings <- SSN2:::get_local_list_conditional(list(size = 10L), fit, pred)
-  expect_mapequal(
-    settings[c("size", "method", "ordering", "exact", "chunk_size")],
-    list(size = 10L, method = "covariance", ordering = "pid",
-      exact = FALSE, chunk_size = 1000L)
-  )
-  expect_identical(settings$order[settings$inv_order], seq_len(NROW(pred)))
-  expect_mapequal(
-    SSN2:::get_local_list_conditional(list(method = "covariance"), fit, pred),
-    SSN2:::get_local_list_conditional(list(), fit, pred)
-  )
-  expect_identical(SSN2:::get_local_list_conditional(TRUE, fit, pred)$size, 30L)
-  expect_identical(SSN2:::get_local_list_conditional(TRUE, fit)$order, integer())
-  set.seed(2)
-  default_draws <- conditional(fit, "CapeHornSmall", samples = 5,
-    local = list(method = "covariance", size = 30L, ordering = "pid"))
-  for (local in list(TRUE, list(), list(method = "covariance"), list(size = 30L))) {
-    set.seed(2)
-    expect_identical(conditional(fit, "CapeHornSmall", samples = 5, local = local), default_draws)
-  }
-
-  # rejection sweep: local argument vocabulary, and local + simulate_covparams
-  expect_error(conditional(fit, "CapeHornSmall", local = list(method = "bogus")), "method must be")
-  expect_error(conditional(fit, "CapeHornSmall", local = list(size = -1)), "size must be")
-  expect_error(conditional(fit, "CapeHornSmall", local = list(method = "covariance", size = 5, ordering = "bogus")), "ordering must be")
-  expect_error(conditional(fit, "CapeHornSmall", local = list(size_base = 10)), "Unknown local option")
-  expect_error(conditional(fit, "CapeHornSmall", local = list(size_response = 10)), "Unknown local option")
-  expect_error(conditional(fit, "CapeHornSmall", local = list(method = "distance")), "method must be")
-  for (size in c(1.5, NA_real_, Inf)) {
-    expect_error(conditional(fit, "CapeHornSmall", local = list(size = size)), "positive integer")
-  }
-  expect_error(conditional(fit, "CapeHornSmall", samples = 5,
-    local = list(parallel = TRUE)), "Unknown local option")
-
-  # local + simulate_covparams = TRUE: matches spmodel -- a message and
-  # Local simulation disables covariance-parameter sampling without an error.
-  expect_message(
-    d_local_covparams <- conditional(fit, "CapeHornSmall", local = vecchia_local, simulate_covparams = TRUE, samples = 5),
-    "setting simulate_covparams = FALSE"
-  )
-  expect_true(all(is.finite(d_local_covparams)))
-  # once forced to FALSE, a covparam-only output still correctly errors
-  expect_error(
-    suppressMessages(conditional(fit, "CapeHornSmall", local = vecchia_local, output = "cov", simulate_covparams = TRUE)),
-    "output can only be"
-  )
-
-  # duplicate prediction location (a near-singular neighbor set) does not
-  # crash and produces finite draws
-  preds_dup <- mf04p$preds$CapeHornSmall
-  preds_dup[2, ] <- preds_dup[1, ]
-  mf04p_dup <- mf04p
-  mf04p_dup$preds$CapeHornSmall <- preds_dup
-  fit_dup <- ssn_lm(
-    formula = Summer_mn ~ ELEV_DEM,
-    ssn.object = mf04p_dup,
-    tailup_type = "exponential",
-    additive = "afvArea"
-  )
-  set.seed(2)
-  d_dup <- conditional(fit_dup, "CapeHornSmall", output = "newdata", samples = 50, local = list(method ="covariance", size = 6))
-  expect_equal(dim(d_dup), c(8, 50))
-  expect_true(all(is.finite(d_dup)))
-})
-
-test_that("local is automatically enabled when the observed or prediction sample size exceeds 5,000, matching spmodel", {
-  copy_lsn_to_temp()
-  temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-  mf04p <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
-  mf04p$preds$CapeHornSmall <- mf04p$preds$CapeHorn[1:8, ]
-  ssn_create_distmat(mf04p, predpts = "CapeHornSmall", overwrite = TRUE, among_predpts = TRUE)
-
-  fit <- ssn_lm(Summer_mn ~ ELEV_DEM, mf04p,
-    tailup_type = "exponential", additive = "afvArea"
-  )
-
-  pred <- fit$ssn.object$preds$CapeHornSmall
-  # Resolve threshold boundaries without fitting or simulating a large model.
-  fit_fake_big <- fit
-  fit_fake_big$n <- 5001L
-  expect_message(
-    conditioning <- SSN2:::get_local_list_conditional(NULL, fit_fake_big, pred),
-    "exceeds 5,000"
-  )
-  expect_false(conditioning$exact)
-  expect_identical(conditioning$size, 30L)
-  fit_boundary <- fit
-  fit_boundary$n <- 5000L
-  expect_no_message(
-    boundary <- SSN2:::get_local_list_conditional(NULL, fit_boundary, pred)
-  )
-  expect_true(boundary$exact)
-  large_pred <- pred[rep(seq_len(NROW(pred)), length.out = 5001L), ]
-  expect_message(
-    prediction_conditioning <- SSN2:::get_local_list_conditional(NULL, fit, large_pred),
-    "exceeds 5,000"
-  )
-  expect_false(prediction_conditioning$exact)
-  expect_no_message(
-    prediction_boundary <- SSN2:::get_local_list_conditional(NULL, fit, large_pred[1:5000, ])
-  )
-  expect_true(prediction_boundary$exact)
-
-  # small sample sizes stay exact when local is omitted (no auto-switch, no message)
-  expect_no_message(
-    exact_conditioning <- SSN2:::get_local_list_conditional(NULL, fit, pred)
-  )
-  expect_true(exact_conditioning$exact)
-
-  # explicit local = FALSE always stays exact, even for a large sample size --
-  # only an *omitted* local auto-switches
-  expect_no_message(
-    forced_exact <- SSN2:::get_local_list_conditional(FALSE, fit_fake_big, large_pred)
-  )
-  expect_true(forced_exact$exact)
-})
-
-test_that("conditional() local = TRUE/list(...) handles random effects and partition factors", {
-  copy_lsn_to_temp()
-  temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-  mf04p <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
-  mf04p$obs$netID <- as.factor(mf04p$obs$netID)
-  mf04p$preds$CapeHorn$netID <- factor(mf04p$preds$CapeHorn$netID, levels = levels(mf04p$obs$netID))
-  mf04p$preds$CapeHornSmall <- mf04p$preds$CapeHorn[1:8, ]
-  ssn_create_distmat(mf04p, predpts = "CapeHornSmall", overwrite = TRUE, among_predpts = TRUE)
-
-  fit_rand <- ssn_lm(
-    formula = Summer_mn ~ ELEV_DEM,
-    ssn.object = mf04p,
-    tailup_type = "exponential",
-    additive = "afvArea",
-    random = ~ as.factor(netID)
-  )
-  set.seed(2)
-  d_exact <- conditional(fit_rand, "CapeHornSmall", output = "newdata", samples = 3000)
-  set.seed(2)
-  d_local <- conditional(fit_rand, "CapeHornSmall", output = "newdata", samples = 3000, local = list(method ="all"))
-  expect_equal(d_local, d_exact, tolerance = 1e-10)
-
-  fit_pf <- ssn_lm(
-    formula = Summer_mn ~ ELEV_DEM,
-    ssn.object = mf04p,
-    tailup_type = "exponential",
-    additive = "afvArea",
-    partition_factor = ~ as.factor(netID)
-  )
-  set.seed(2)
-  d_pf_exact <- conditional(fit_pf, "CapeHornSmall", output = "newdata", samples = 3000)
-  set.seed(2)
-  d_pf_local <- conditional(fit_pf, "CapeHornSmall", output = "newdata", samples = 3000, local = list(method ="all"))
-  expect_equal(d_pf_local, d_pf_exact, tolerance = 1e-10)
-})
-
-test_that("local conditional simulation accepts new partition levels", {
-  copy_lsn_to_temp()
-  temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-  ssn <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
-  ssn$preds$CapeHornSmall <- ssn$preds$CapeHorn[1:8, ]
-  ssn_create_distmat(
-    ssn, predpts = "CapeHornSmall", overwrite = TRUE, among_predpts = TRUE
-  )
-  ssn$obs$new_partition <- factor(rep(c("a", "b"), length.out = NROW(ssn$obs)))
-  ssn$preds$CapeHornSmall$new_partition <- factor(
-    rep(c("c", "d"), length.out = NROW(ssn$preds$CapeHornSmall))
-  )
-  fit <- ssn_lm(
-    Summer_mn ~ ELEV_DEM, ssn,
-    tailup_type = "none", taildown_type = "none", euclid_type = "none",
-    nugget_initial = nugget_initial("nugget", nugget = 1, known = "given"),
-    partition_factor = ~new_partition
-  )
-
-  set.seed(2)
-  draws <- conditional(
-    fit, "CapeHornSmall", samples = 4,
-    local = list(method ="covariance", size = 5)
-  )
-  expect_equal(dim(draws), c(8, 4))
-  expect_true(all(is.finite(draws)))
-})
-
-test_that("conditional() local = TRUE/list(...) works for ssn_glm()", {
-  copy_lsn_to_temp()
-  temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
-  mf04p <- ssn_import(temp_path, predpts = "CapeHorn", overwrite = TRUE)
-  mf04p$preds$CapeHornSmall <- mf04p$preds$CapeHorn[1:8, ]
-  ssn_create_distmat(mf04p, predpts = "CapeHornSmall", overwrite = TRUE, among_predpts = TRUE)
-
-  fit <- ssn_glm(
-    formula = C16 ~ ELEV_DEM,
-    ssn.object = mf04p,
-    family = "poisson",
-    tailup_type = "exponential",
-    additive = "afvArea"
-  )
-
-  # method = "all" dispatches to exact.
-  for (type in c("link", "response", "new")) {
-    set.seed(2)
-    g_exact <- conditional(fit, "CapeHornSmall", type = type, samples = 3000)
-    set.seed(2)
-    g_local <- conditional(fit, "CapeHornSmall", type = type, samples = 3000, local = list(method = "all"))
-    expect_equal(g_local, g_exact, tolerance = 1e-10)
-  }
-
-  settings <- SSN2:::get_local_list_conditional(TRUE, fit, fit$ssn.object$preds$CapeHornSmall)
-  expect_identical(settings$size, 60L)
-  expect_identical(settings$ordering, "pid")
-  expect_identical(settings$ordering_observed, "pid")
-  expect_false(settings$exact)
-  set.seed(2)
-  default_draws <- conditional(fit, "CapeHornSmall", samples = 5,
-    local = list(method = "covariance", size = 60L, ordering = "pid"))
-  for (local in list(TRUE, list(), list(method = "covariance"), list(size = 60L))) {
-    set.seed(2)
-    expect_equal(conditional(fit, "CapeHornSmall", samples = 5, local = local), default_draws,
-      tolerance = 1e-12)
-  }
-
-  context_exact <- SSN2:::get_conditional_context_glm(fit, "CapeHornSmall")
-  context_local <- SSN2:::get_conditional_context_glm(fit, "CapeHornSmall", local = TRUE)
-  expect_equal(SSN2:::get_conditional_glm_joint(context_exact$object, context_exact$cov_lowchol_base),
-    SSN2:::get_conditional_glm_joint(context_local$object, context_local$cov_lowchol_base), tolerance = 1e-8)
-
-  # bounded/truncated approximation: finite, correctly-typed draws across
-  # every response family output, varying newdata_size, at a small size
-  set.seed(2)
-  g_resp <- conditional(fit, "CapeHornSmall", type = "response", samples = 500, local = list(method ="covariance", size = 8))
-  expect_true(all(g_resp > 0) && all(is.finite(g_resp)))
-  set.seed(2)
-  g_new <- conditional(fit, "CapeHornSmall", type = "new", samples = 500, local = list(method ="covariance", size = 8))
-  expect_true(all(g_new == round(g_new)))
-  sd_new <- apply(g_new, 1, sd)
-  sd_resp <- apply(g_resp, 1, sd)
-  expect_true(all(sd_new >= sd_resp - 1e-8))
-
-  # output = "beta"
-  set.seed(2)
-  betas <- conditional(fit, "CapeHornSmall", output = "beta", samples = 50, local = list(method ="covariance", size = 5))
-  expect_equal(dim(betas), c(fit$p, 50))
-  expect_true(all(is.finite(betas)))
-
-  # binomial newdata_size threading through the local engine
-  set.seed(2)
-  mf04p$obs$trials <- 10
-  mf04p$obs$succ <- rbinom(NROW(mf04p$obs), mf04p$obs$trials, plogis(0.3 * scale(mf04p$obs$ELEV_DEM)))
-  fit_binom <- suppressWarnings(ssn_glm(
-    formula = cbind(succ, trials - succ) ~ ELEV_DEM,
-    ssn.object = mf04p,
-    family = "binomial",
-    tailup_type = "exponential",
-    additive = "afvArea"
-  ))
-  set.seed(2)
-  d_binom <- conditional(fit_binom, "CapeHornSmall", type = "new", samples = 300, newdata_size = rep(20, 8), local = list(method ="covariance", size = 6))
-  expect_true(all(d_binom >= 0 & d_binom <= 20))
-})
-
-# conditional local fit
 conditional_local_fit_fixture <- function() {
   copy_lsn_to_temp()
   network <- ssn_import(file.path(tempdir(), "MiddleFork04.ssn"),
@@ -711,7 +370,7 @@ conditional_local_fit_args <- function(network) {
       var_adjust = "none", parallel = FALSE))
 }
 
-test_that("local Gaussian fits support exact and Vecchia conditional uncertainty", {
+test_that("local Gaussian fits support exact conditional uncertainty", {
   network <- conditional_local_fit_fixture()
   network$obs$Summer_mn[c(2, 9)] <- NA_real_
   args <- conditional_local_fit_args(network)
@@ -733,35 +392,17 @@ test_that("local Gaussian fits support exact and Vecchia conditional uncertainty
   exact <- conditional(fit, "small", samples = 40)
   expect_equal(exact, expected, ignore_attr = TRUE, tolerance = 1e-9)
   set.seed(2)
-  sequential <- conditional(fit, "small", samples = 40,
-    local = list(method ="all", ordering = "none"))
-  expect_equal(sequential, exact, tolerance = 1e-9)
-  set.seed(2)
   missing_exact <- conditional(fit, ".missing", samples = 10)
   local({
     local_mocked_bindings(get_block_pred_backend = function(...) "dense")
     set.seed(2)
     expect_equal(conditional(fit, ".missing", samples = 10), missing_exact, tolerance = 1e-9)
   })
-  set.seed(2)
-  expect_equal(conditional(fit, ".missing", samples = 10,
-    local = list(method ="all", ordering = "none")), missing_exact, tolerance = 1e-9)
   expect_equal(rownames(missing_exact), as.character(fit$missing_index))
-
-  for (ordering in c("none", "pid", "random")) {
-    set.seed(2)
-    draws <- conditional(fit, "small", samples = 10,
-      local = list(method ="covariance", size = 5, ordering = ordering))
-    expect_equal(dim(draws), c(6, 10))
-    expect_true(all(is.finite(draws)))
-  }
-  for (simulation_local in list(FALSE, TRUE, list(method = "all"))) {
-    set.seed(2)
-    expect_equal(conditional(fit, "small", output = "beta", samples = 40,
-      local = simulation_local), beta, ignore_attr = TRUE)
-    expect_error(conditional(fit, "small", local = simulation_local,
-      simulate_covparams = TRUE), "not supported for models fitted with 'local'")
-  }
+  set.seed(2)
+  expect_equal(conditional(fit, "small", output = "beta", samples = 40), beta, ignore_attr = TRUE)
+  expect_error(conditional(fit, "small", simulate_covparams = TRUE),
+    "not supported for models fitted with 'local'")
 
   dirs <- file.path(network$path, "distance", c("obs", "small"))
   files <- unlist(lapply(dirs, list.files, pattern = "\\.RData$", full.names = TRUE))
@@ -771,13 +412,10 @@ test_that("local Gaussian fits support exact and Vecchia conditional uncertainty
   set.seed(2)
   expect_equal(conditional(fit, "small", samples = 40), exact, tolerance = 1e-9)
   set.seed(2)
-  expect_equal(conditional(fit, "small", samples = 40,
-    local = list(method ="all", ordering = "none")), exact, tolerance = 1e-9)
-  set.seed(2)
   expect_equal(conditional(fit, ".missing", samples = 10), missing_exact, tolerance = 1e-9)
 })
 
-test_that("local GLM fits support exact and Vecchia draws with fixed-effect uncertainty", {
+test_that("local GLM fits support exact draws with fixed-effect uncertainty", {
   network <- conditional_local_fit_fixture()
   network$obs$C16[c(3, 10)] <- NA_real_
   fit <- do.call(ssn_glm, c(list(formula = C16 ~ ELEV_DEM + offset(off),
@@ -786,24 +424,14 @@ test_that("local GLM fits support exact and Vecchia draws with fixed-effect unce
   for (type in c("link", "response", "new")) {
     set.seed(2)
     exact <- conditional(fit, "small", type = type, samples = 40)
-    set.seed(2)
-    sequential <- conditional(fit, "small", type = type, samples = 40,
-      local = list(method ="all", ordering = "none"))
-    expect_equal(sequential, exact, tolerance = 1e-8)
+    expect_equal(dim(exact), c(6, 40))
     expect_true(all(is.finite(exact)))
-    draws <- conditional(fit, "small", type = type, samples = 10,
-      local = list(method ="covariance", size = 5, ordering = "random"))
-    expect_equal(dim(draws), c(6, 10))
-    expect_true(all(is.finite(draws)))
-    if (type == "new") expect_true(all(draws == round(draws) & draws >= 0))
+    if (type == "new") expect_true(all(exact == round(exact) & exact >= 0))
   }
   context <- SSN2:::get_conditional_context_glm(fit, "small")
   set.seed(2)
   beta <- SSN2:::draw_conditional_glm_joint(SSN2:::get_conditional_glm_joint(context$object), 40)$beta
-  for (simulation_local in list(FALSE, TRUE)) {
-    set.seed(2)
-    expect_equal(conditional(fit, "small", output = "beta", samples = 40,
-      local = simulation_local), beta, ignore_attr = TRUE)
-  }
+  set.seed(2)
+  expect_equal(conditional(fit, "small", output = "beta", samples = 40), beta, ignore_attr = TRUE)
 })
 

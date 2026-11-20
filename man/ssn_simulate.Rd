@@ -123,7 +123,6 @@ ssn_rnorm(
   additive,
   randcov_params,
   partition_factor,
-  local,
   ...
 )
 
@@ -188,36 +187,8 @@ The default is \code{1}, which corresponds to a Bernoulli trial for each observa
 
 \item{partition_factor}{A formula indicating the partition factor.}
 
-\item{...}{Additional arguments passed to \code{\link[=ssn_rnorm]{ssn_rnorm()}}, including \code{local},
-when using \code{ssn_simulate()} or another simulation function.}
-
-\item{local}{An optional
-logical or list controlling the big data approximation. If omitted, \code{local}
-is \code{TRUE} when the desired sample size exceeds
-5,000, and \code{FALSE} otherwise. \code{FALSE} uses exact simulation.
-\code{TRUE} or a list uses a local neighborhood (Vecchia) approach,
-simulating each observation
-conditional on neighbors selected from previously simulated
-observations. A list can contain:
-\itemize{
-\item \code{method}: The method used to build each
-location's local neighborhood set once it exceeds \code{size}
-already-simulated candidates. Values are \code{"all"} (no truncation,
-exact)
-or \code{"covariance"} (the \code{size} candidates with the
-highest covariance, in absolute value, with the location being
-simulated). This is the same convention as \code{predict()}'s own
-\code{local$method}. The default is \code{"covariance"}.
-\code{method = "all"} is an alias for \code{local = FALSE}.
-\item \code{size}: The number of neighbors used when \code{method}
-is \code{"covariance"}. The default is 30.
-\item \code{ordering}: The order locations are simulated in --
-\code{"pid"}, \code{"maxmin"}, \code{"middleout"},
-\code{"outsidein"}, \code{"coordinate"}, \code{"grts"},
-\code{"random"}, or \code{"none"} (these are the same options as
-\code{ssn_decorrelate()}'s \code{ordering} argument). The default is
-\code{"pid"}.
-}}
+\item{...}{Additional arguments passed to \code{\link[=ssn_rnorm]{ssn_rnorm()}} when using
+\code{ssn_simulate()} or another simulation function.}
 }
 \value{
 If \code{samples} is 1, a vector of random variables for each row of \code{ssn.object$obs}
@@ -234,7 +205,7 @@ response distribution also exist.
 \details{
 Random variables are simulated via the product of the covariance matrix's
 square (Cholesky) root and independent standard normal random variables
-with mean 0 and variance 1, with big data approximations available.
+with mean 0 and variance 1.
 
 If not using \code{ssn_simulate()}, individual simulation functions for
 each response distribution do exist:
