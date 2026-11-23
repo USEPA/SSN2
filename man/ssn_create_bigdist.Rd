@@ -145,17 +145,17 @@ mf04p <- ssn_import(temp_path,
 
 ## Create distance matrices for observations and one set of prediction sites
 ## Include hydrologic distance matrices among prediction sites.
-ssn_create_bigdist(mf04p,
-  predpts = "pred1km", overwrite = TRUE,
-  among_predpts = TRUE
-)
+# ssn_create_bigdist(mf04p,
+  # predpts = "pred1km", overwrite = TRUE,
+  # among_predpts = TRUE
+# )
 
 ## Create distance matrices for an additional set of prediction points.
 ## Distance matrices for observations and pred1km prediction sites are
 ## not recalculated.
-ssn_create_bigdist(mf04p,
-  predpts = "CapeHorn", overwrite = TRUE,
-  among_predpts = TRUE, only_predpts = TRUE
-)
+# ssn_create_bigdist(mf04p,
+  # predpts = "CapeHorn", overwrite = TRUE,
+  # among_predpts = TRUE, only_predpts = TRUE
+# )
 }
 }
