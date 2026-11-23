@@ -12,10 +12,20 @@ cov_estimate_gloglik <- function(data_object, ssn.object, initial_object, estmet
   nugget_is_known <- initial_NA_object$nugget_initial$is_known
   randcov_is_known <- initial_NA_object$randcov_initial$is_known
 
+  # no spatial dependence and no random effects: the covariance is nugget * I,
+  # which has a closed-form REML/ML solution, so no optimizer search is
+  # needed for the remaining free parameter (the nugget)
+  is_iid_eligible <- is.null(initial_NA_object$randcov_initial) &&
+    inherits(initial_NA_object$tailup_initial, "tailup_none") &&
+    inherits(initial_NA_object$taildown_initial, "taildown_none") &&
+    inherits(initial_NA_object$euclid_initial, "euclid_none")
+
   # if all parameters are known, find the likelihood; otherwise optimize
   if (all(tailup_is_known, taildown_is_known, euclid_is_known, nugget_is_known, randcov_is_known)) {
     # find the likelihood
     cov_estimate_val <- use_gloglik_known(cov_initial_val$initial_object, data_object, estmethod)
+  } else if (is_iid_eligible) {
+    cov_estimate_val <- use_gloglik_iid(cov_initial_val$initial_object, data_object, estmethod)
   } else {
     # optimize
     cov_estimate_val <- use_gloglik(cov_initial_val$initial_object, data_object, estmethod, optim_dotlist = optim_dotlist)

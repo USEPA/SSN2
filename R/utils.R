@@ -17,6 +17,9 @@ spmodel::AICc
 spmodel::AUROC
 
 #' @export
+spmodel::conditional
+
+#' @export
 spmodel::covmatrix
 
 #' @export
@@ -29,6 +32,9 @@ spmodel::dispersion_params
 spmodel::glances
 
 #' @export
+spmodel::kcv
+
+#' @export
 spmodel::loocv
 
 #' @export
@@ -39,6 +45,9 @@ spmodel::randcov_initial
 
 #' @export
 spmodel::randcov_params
+
+#' @export
+spmodel::satterthwaite
 
 #' @export
 spmodel::varcomp
@@ -72,14 +81,3 @@ expit <- function(x) {
 remove_covtype <- function(class_string) {
   sub("^[^_]*_", "", class_string)
 }
-
-
-#' #' CRAN release questions
-#' #'
-#' #' @noRd
-#' release_questions <- function() {
-#'   c(
-#'     "Have you changed version numbers in DESCRIPTION, CITATION, and README?",
-#'     "Have you run pkgdown::build_site() and committed?"
-#'   )
-#' }

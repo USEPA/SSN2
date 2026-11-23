@@ -12,14 +12,13 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Fitting Spatial Stream Network Models to Large Data Sets and Making Predictions (i.e., Kriging)">
-<meta property="og:description" content="SSN2">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -33,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">SSN2</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.4.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.5.0</span>
       </span>
     </div>
 
@@ -45,7 +44,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -68,7 +67,7 @@
 <li>
   <a href="https://github.com/USEPA/SSN2/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -79,7 +78,7 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
@@ -87,7 +86,7 @@
       <h1 data-toc-skip>Fitting Spatial Stream Network Models to Large
 Data Sets and Making Predictions (i.e., Kriging)</h1>
                         <h4 data-toc-skip class="author">Michael
-Dumelle</h4>
+Dumelle, Erin Peterson, Jay M. Ver Hoef, Alan Pearse, and Dan Isaak</h4>
             
       
       <small class="dont-index">Source: <a href="https://github.com/USEPA/SSN2/blob/HEAD/vignettes/articles/LargeData.Rmd" class="external-link"><code>vignettes/articles/LargeData.Rmd</code></a></small>
@@ -102,40 +101,41 @@ Dumelle</h4>
 </h2>
 <p>It can be challenging to fit SSN models to large data sets because
 the computation burden associated with estimating spatial covariance
-parameters increases exponentially with <span class="math inline">\(n\)</span>, the sample size. Typically, it is only
-feasible to fit SSN2 models using the standard (i.e., traditional)
-approach for data sets having no more than a few thousand observations.
-<span class="citation">Ver Hoef et al. (2023)</span> proposed an
-approach called spatial indexing that can be used to fit SSN models
-having tens to hundreds of thousands of observations relatively quickly.
-<span class="citation">Ver Hoef et al. (2023)</span> and <span class="citation">Dumelle et al. (2024)</span> show that spatial indexing
-tends to approximate the standard solution very accurately at a fraction
-of the computational cost via several simulation studies and data
-analyses. Spatial indexing works by splitting the data up into smaller
-subsets (<span class="math inline">\(n_{subset} &lt;&lt; n\)</span>) and
-pooling spatial covariance parameters estimates across these subsets.
-This vignette aims to compare the standard approach and large data
-(i.e., spatial indexing) approach directly on a moderately sized data
-set, whereby the standard approach can be fit relatively quickly. In
-<code>SSN2</code>, spatial indexing is available via the
+parameters increases exponentially with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>,
+the sample size. Typically, it is only feasible to fit SSN2 models using
+the standard (i.e., traditional) approach for data sets having no more
+than a few thousand observations. <span class="citation">Ver Hoef et al.
+(2023)</span> proposed an approach called spatial indexing that can be
+used to fit SSN models having tens to hundreds of thousands of
+observations relatively quickly. <span class="citation">Ver Hoef et al.
+(2023)</span> and <span class="citation">Dumelle et al. (2024)</span>
+show that spatial indexing tends to approximate the standard solution
+very accurately at a fraction of the computational cost via several
+simulation studies and data analyses. Spatial indexing works by
+splitting the data up into smaller subsets
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>n</mi><mrow><mi>s</mi><mi>u</mi><mi>b</mi><mi>s</mi><mi>e</mi><mi>t</mi></mrow></msub><mo>&lt;</mo><mo>&lt;</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">n_{subset} &lt;&lt; n</annotation></semantics></math>)
+and pooling spatial covariance parameters estimates across these
+subsets. This vignette aims to compare the standard approach and large
+data (i.e., spatial indexing) approach directly on a moderately sized
+data set, whereby the standard approach can be fit relatively quickly.
+In <code>SSN2</code>, spatial indexing is available via the
 <code>local</code> argument to <code><a href="../reference/ssn_lm.html">ssn_lm()</a></code> and
 <code><a href="../reference/ssn_glm.html">ssn_glm()</a></code>.</p>
 <p>Interestingly, the main computational burden associated with
 prediction at new locations is actually related to the size of the
-observed data (<span class="math inline">\(n\)</span>), not the number
-of locations requiring prediction (<span class="math inline">\(n_{pred})\)</span>. <span class="citation">Ver
-Hoef et al. (2023)</span> describe an approach to prediction at new
-locations using models fit to large (observed) data sets called local
-neighborhood prediction. Local neighborhood prediction subsets the
-observed data to include only the <code>size</code> observations most
-correlated with the location requiring prediction (where
-<code>size</code> is an integer). Typically, this subsetting is done
-separately for each prediction location. However, due to computational
-constraints associated with the hydrologic distance matrices required by
-SSN models, local neighborhood prediction in <code>SSN2</code> subsets
-the observed data to the <code>size</code> observations most correlated
-(on average) with all locations requiring prediction. In
-<code>SSN2</code>, local neighborhood prediction is available via the
+observed data
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>),
+not the number of locations requiring prediction
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>n</mi><mrow><mi>p</mi><mi>r</mi><mi>e</mi><mi>d</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">n_{pred})</annotation></semantics></math>.
+<span class="citation">Ver Hoef et al. (2023)</span> describe an
+approach to prediction at new locations using models fit to large
+(observed) data sets called local neighborhood prediction. For point
+prediction, <code>SSN2</code> selects the <code>size</code> observations
+with the largest absolute covariance with each prediction location
+(where <code>size</code> is an integer). Each prediction location has
+its own neighborhood, separate from the other locations being predicted.
+In <code>SSN2</code>, local neighborhood prediction is available via the
 <code>local</code> argument to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> and
 <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>.</p>
 <p>Before proceeding, we load the <code>SSN2</code> and
@@ -154,8 +154,10 @@ via GitHub at <a href="https://github.com/USEPA/SSN2/tree/develop/vignettes/arti
 link</a>. We read in <code>bugs</code> by running:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bugs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ssn_import.html">ssn_import</a></span><span class="op">(</span><span class="st">"bugs.ssn"</span>, predpts <span class="op">=</span> <span class="st">"pred"</span><span class="op">)</span></span></code></pre></div>
-<p>There are 549 observed sites (<span class="math inline">\(n\)</span>)
-and 300 prediction sites (<span class="math inline">\(n_{pred}\)</span>):</p>
+<p>There are 549 observed sites
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>)
+and 300 prediction sites
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>n</mi><mrow><mi>p</mi><mi>r</mi><mi>e</mi><mi>d</mi></mrow></msub><annotation encoding="application/x-tex">n_{pred}</annotation></semantics></math>):</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bugs</span></span>
 <span><span class="co">#&gt; Object of class SSN</span></span>
@@ -184,7 +186,7 @@ richness (obs), and prediction sites (preds) by running:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">Rich</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"H"</span>, limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">59</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LargeData_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p><img src="LargeData_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="the-standard-ssn-approach">The Standard SSN Approach<a class="anchor" aria-label="anchor" href="#the-standard-ssn-approach"></a>
@@ -206,8 +208,8 @@ running:</p>
 <span><span class="op">)</span></span>
 <span><span class="va">standard_time</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">standard_start</span></span>
 <span><span class="va">standard_time</span></span>
-<span><span class="co">#&gt; Time difference of 5.222182 secs</span></span></code></pre></div>
-<p>The model took 5.22 seconds to fit.</p>
+<span><span class="co">#&gt; Time difference of 3.603082 secs</span></span></code></pre></div>
+<p>The model took 3.6 seconds to fit.</p>
 <p>We augment the prediction data with predictions by running:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">aug_ssn_mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">ssn_mod</span>, newdata <span class="op">=</span> <span class="st">"pred"</span>, interval <span class="op">=</span> <span class="st">"prediction"</span><span class="op">)</span></span></code></pre></div>
@@ -241,8 +243,8 @@ implement spatial indexing via the <code>local</code> argument:</p>
 <span><span class="op">)</span></span>
 <span><span class="va">bd_time</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">bd_start</span></span>
 <span><span class="va">bd_time</span></span>
-<span><span class="co">#&gt; Time difference of 2.370396 secs</span></span></code></pre></div>
-<p>The model took 2.37 seconds to fit.</p>
+<span><span class="co">#&gt; Time difference of 1.846898 secs</span></span></code></pre></div>
+<p>The model took 1.85 seconds to fit.</p>
 <p>The <code>local</code> argument set to <code>TRUE</code> implements
 default settings of a more complex <code>local</code> list that has
 several options controlling nuances of the spatial indexing. One of
@@ -258,7 +260,7 @@ running:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">index</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LargeData_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<p><img src="LargeData_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" width="700"></p>
 <p>The <code><a href="https://rdrr.io/r/stats/kmeans.html" class="external-link">kmeans()</a></code> algorithm that determines subsets uses a
 random start, so setting a seed is required to reproduce results
 exactly. Model results should not change substantially between random
@@ -269,47 +271,46 @@ model fits. For more on the <code>local</code> argument, see the
 by visiting <a href="https://usepa.github.io/SSN2/reference/ssn_lm.html">this
 link</a>.</p>
 <p>Now we use the model fit via spatial indexing to make local
-neighborhood predictions. In <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> (and
-<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>), the default value for the local neighborhood
-<code>size</code> is 4,000, which is larger than <span class="math inline">\(n = 549\)</span>. However, if we set
-<code>size</code> to be 250 (instead of 4,000), we can illustrate some
-concepts behind local neighborhood prediction in <code>SSN2</code> that
-will be useful when observed data sets are larger and <code>size</code>
-<span class="math inline">\(&lt;&lt; n\)</span>.</p>
-<p>When setting <code>size</code> to 250, the 250 observations sharing
-the highest average covariance with the prediction locations are used as
-the local neighborhood subset. We compute the covariance matrix between
-the prediction and observed locations by running:</p>
+neighborhood predictions. For point prediction in <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>
+(and <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>), the default local neighborhood
+<code>size</code> is 200. Here we use <code>size = 250</code> to
+illustrate local neighborhood prediction with a subset of the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>=</mo><mn>549</mn></mrow><annotation encoding="application/x-tex">n = 549</annotation></semantics></math>
+observations. Block prediction has separate controls and defaults; see
+<code><a href="../reference/predict.SSN2.html">?predict.SSN2</a></code>.</p>
+<p>When setting <code>size</code> to 250, each prediction location uses
+the 250 observations with the largest absolute covariance with that
+location. We compute the covariance matrix between the prediction and
+observed locations by running:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cov_pred_by_obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://usepa.github.io/spmodel/reference/covmatrix.html" class="external-link">covmatrix</a></span><span class="op">(</span><span class="va">ssn_mod_bd</span>, newdata <span class="op">=</span> <span class="st">"pred"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">cov_pred_by_obs</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 300 549</span></span></code></pre></div>
-<p>We then find the average covariance between the prediction and
-observed locations by running:</p>
+<p>To illustrate the neighborhood for the first prediction location, we
+extract its covariance with the observed locations:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">avg_cov_with_obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">cov_pred_by_obs</span><span class="op">)</span></span></code></pre></div>
-<p>We then order these (largest covariance first), find indices
-corresponding to the 250 observations with the highest average
-covariance, and create a vector called <code>Include</code>, that has
-the value <code>"Yes"</code> if the observation is used in the local
-neighborhood subset and the value <code>"No"</code> if it is not:</p>
+<code class="sourceCode R"><span><span class="va">cov_with_obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">cov_pred_by_obs</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<p>We order these by decreasing absolute covariance and select the first
+250. The vector <code>Include</code> has the value <code>"Yes"</code>
+for observations in this prediction location’s neighborhood and
+<code>"No"</code> otherwise:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cov_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">avg_cov_with_obs</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">largest_300</span> <span class="op">&lt;-</span> <span class="va">cov_order</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">250</span><span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="va">cov_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">cov_with_obs</span><span class="op">)</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">largest_250</span> <span class="op">&lt;-</span> <span class="va">cov_order</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">250</span><span class="op">]</span></span>
 <span><span class="va">row_number</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">1</span>, to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">NROW</a></span><span class="op">(</span><span class="va">bugs</span><span class="op">$</span><span class="va">obs</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">bugs</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="va">Include</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">row_number</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">largest_300</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span><span class="op">)</span></span></code></pre></div>
-<p>We can visualize these designations by running:</p>
+<span><span class="va">bugs</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="va">Include</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">row_number</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">largest_250</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span><span class="op">)</span></span></code></pre></div>
+<p>We can visualize this neighborhood and its prediction location
+(black) by running:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">edges</span>, linewidth <span class="op">=</span> <span class="fl">0.1</span>, alpha <span class="op">=</span> <span class="fl">0.8</span>, color <span class="op">=</span> <span class="st">"darkgrey"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">preds</span><span class="op">$</span><span class="va">pred</span>, color <span class="op">=</span> <span class="st">"black"</span>, size <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">preds</span><span class="op">$</span><span class="va">pred</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span>, color <span class="op">=</span> <span class="st">"black"</span>, size <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">Include</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LargeData_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
-<p>The 250 observations with the highest average covariance
-(<code>Include = "Yes"</code>) tend to be nearby several prediction
-points, while the remaining observations (<code>Include = "No"</code>)
-are often on the basin’s boundaries.</p>
+<p><img src="LargeData_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" width="700"></p>
+<p>The observations marked <code>Include = "Yes"</code> form the
+neighborhood for the first prediction location only. Other prediction
+locations can use different subsets of the observed data.</p>
 <p>Using a local neighborhood <code>size</code> of 250, we then augment
 the prediction data with predictions by running:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
@@ -319,15 +320,12 @@ the prediction data with predictions by running:</p>
 <span>  interval <span class="op">=</span> <span class="st">"prediction"</span>,</span>
 <span>  local <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">250</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Unsurprisingly, the local neighborhood approach may not perform well
-when prediction locations are far away from any observed locations in
-the local neighborhood, which can happen when <code>size</code> <span class="math inline">\(&lt;&lt; n\)</span>. In this case, one can
-separate prediction locations into smaller geographically based subsets
-and stored as separate prediction data sets in
-<code>ssn.object$preds</code>. The local neighborhood is recomputed for
-each subset separately based on the <code>size</code> observations most
-correlated (on average) with the prediction locations from that
-subset.</p>
+<p>The neighborhood size controls a trade-off between computational cost
+and approximation accuracy. Increasing <code>size</code> includes more
+observations in each prediction location’s neighborhood. Splitting the
+prediction locations into separate data sets does not change their
+neighborhoods because selection is performed separately for each
+location.</p>
 </div>
 <div class="section level2">
 <h2 id="comparing-the-approaches">Comparing the Approaches<a class="anchor" aria-label="anchor" href="#comparing-the-approaches"></a>
@@ -464,7 +462,7 @@ neighborhood (LNBH) approach by running:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"H"</span>, limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">59</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">117</span>, <span class="fl">114</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span></code></pre></div>
-<p><img src="LargeData_files/figure-html/unnamed-chunk-20-1.png" width="700"></p>
+<p><img src="LargeData_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" width="700"></p>
 <p>We predict the average in the entire domain (i.e., block prediction)
 by running:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
@@ -492,13 +490,15 @@ by running:</p>
 </h2>
 <p>The standard and large data set (i.e., spatial indexing; local
 neighborhood prediction) approaches used here yielded very similar
-results. For data with larger observed sample sizes (<span class="math inline">\(n &gt; \approx 5,000\)</span>), the spatial
-indexing and local neighborhood prediction approaches are significantly
-more computationally efficient than their standard approach counterparts
-(in fact, the standard approaches won’t be feasible for very large data
-sets). See <span class="citation">Ver Hoef et al. (2023)</span> and
-<span class="citation">Dumelle et al. (2024)</span> for a more thorough
-look at spatial indexing and local neighborhood prediction.</p>
+results. For data with larger observed sample sizes
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>&gt;</mo><mo>≈</mo><mn>5</mn><mo>,</mo><mn>000</mn></mrow><annotation encoding="application/x-tex">n &gt; \approx 5,000</annotation></semantics></math>),
+the spatial indexing and local neighborhood prediction approaches are
+significantly more computationally efficient than their standard
+approach counterparts (in fact, the standard approaches won’t be
+feasible for very large data sets). See <span class="citation">Ver Hoef
+et al. (2023)</span> and <span class="citation">Dumelle et al.
+(2024)</span> for a more thorough look at spatial indexing and local
+neighborhood prediction.</p>
 </div>
 <div class="section level2">
 <h2 id="why-the-computational-burden">Why the Computational Burden?<a class="anchor" aria-label="anchor" href="#why-the-computational-burden"></a>
@@ -568,14 +568,14 @@ then use standard prediction instead of local neighborhood prediction
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
 <span><span class="va">cov_pred_by_obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://usepa.github.io/spmodel/reference/covmatrix.html" class="external-link">covmatrix</a></span><span class="op">(</span><span class="va">ssn_mod_bd</span>, newdata <span class="op">=</span> <span class="st">"pred"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">cov_pred_by_obs</span><span class="op">)</span></span>
-<span><span class="va">avg_cov_with_obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">cov_pred_by_obs</span><span class="op">)</span></span>
-<span><span class="va">cov_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">avg_cov_with_obs</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">largest_300</span> <span class="op">&lt;-</span> <span class="va">cov_order</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">250</span><span class="op">]</span></span>
+<span><span class="va">cov_with_obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">cov_pred_by_obs</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">cov_order</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">cov_with_obs</span><span class="op">)</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">largest_250</span> <span class="op">&lt;-</span> <span class="va">cov_order</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">250</span><span class="op">]</span></span>
 <span><span class="va">row_number</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">1</span>, to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">NROW</a></span><span class="op">(</span><span class="va">bugs</span><span class="op">$</span><span class="va">obs</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">bugs</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="va">Include</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">row_number</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">largest_300</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span><span class="op">)</span></span>
+<span><span class="va">bugs</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="va">Include</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">row_number</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">largest_250</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">edges</span>, linewidth <span class="op">=</span> <span class="fl">0.1</span>, alpha <span class="op">=</span> <span class="fl">0.8</span>, color <span class="op">=</span> <span class="st">"darkgrey"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">preds</span><span class="op">$</span><span class="va">pred</span>, color <span class="op">=</span> <span class="st">"black"</span>, size <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">preds</span><span class="op">$</span><span class="va">pred</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span>, color <span class="op">=</span> <span class="st">"black"</span>, size <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">bugs</span><span class="op">$</span><span class="va">obs</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">Include</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">aug_ssn_mod_bd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span></span>
@@ -618,7 +618,7 @@ then use standard prediction instead of local neighborhood prediction
 <div class="section level2">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-dumelle2024modeling" class="csl-entry">
 Dumelle, Michael, Jay M Ver Hoef, Amalia Handler, Ryan A Hill, Matt
 Higham, and Anthony R Olsen. 2024. <span>“Modeling Lake Conductivity in
@@ -637,9 +637,7 @@ e0291906.
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
+      </div>
 
 </div>
 
@@ -652,16 +650,16 @@ e0291906.
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>
 </div>
 
-  
 
 
-  
+
+
 
   </body>
 </html>

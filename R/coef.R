@@ -12,7 +12,11 @@
 #'   the dispersion parameter coefficient (\code{ssn_glm()} objects), \code{"randcov"} for random effect
 #'   variance coefficients, or \code{"ssn"} for all of the tailup, taildown,
 #'   Euclidean, nugget, and dispersion (\code{ssn_glm()} objects) parameter coefficients.
-#'   Defaults to \code{"fixed"}.
+#'   Defaults to \code{"fixed"}. If \code{type} is \code{"tailup"}, \code{"taildown"},
+#'   \code{"euclid"}, or \code{"nugget"}, the coefficient vector is a
+#'   [tailup_params()], [taildown_params()], [euclid_params()], or [nugget_params()]
+#'   object (respectively), which has class matching the corresponding
+#'   covariance function used.
 #' @param ... Other arguments. Not used (needed for generic consistency).
 #'
 #' @return A named vector of coefficients.
@@ -39,6 +43,10 @@
 #' coef(ssn_mod, type = "tailup")
 #' coefficients(ssn_mod)
 coef.ssn_lm <- function(object, type = "fixed", ...) {
+  # coefficients are stored in separate groups on the fitted object: fixed
+  # effects, tailup/taildown/Euclidean/nugget covariance parameters, and
+  # random effect variances
+  # the spatial covariance parameters and random effect variances are BLUPs
   if (type == "fixed") {
     return(object$coefficients$fixed)
   } else if (type == "ssn") {
@@ -66,6 +74,8 @@ coefficients.ssn_lm <- coef.ssn_lm
 #' @method coef ssn_glm
 #' @export
 coef.ssn_glm <- function(object, type = "fixed", ...) {
+  # GLM coefficients add a "dispersion" group (e.g. overdispersion parameter)
+  # not present in the Gaussian ssn_lm() coefficient set
   if (type == "fixed") {
     return(object$coefficients$fixed)
   } else if (type == "ssn") {

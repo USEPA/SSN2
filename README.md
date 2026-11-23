@@ -63,7 +63,7 @@ install.packages("SSN2")
 library(SSN2)
 ```
 
-Install and load the most recent version of`SSN2` from GitHub by running
+Install and load the most recent version of `SSN2` from GitHub by running
 ```r
 # Installing from GitHub requires you first install the remotes package
 install.packages("remotes")
@@ -74,7 +74,7 @@ remotes::install_github("USEPA/SSN2", ref = "main")
 library(SSN2)
 ```
 
-Install and load the most recent development version of`SSN2` from GitHub by running
+Install and load the most recent development version of `SSN2` from GitHub by running
 ```r
 # Installing from GitHub requires you first install the remotes package
 install.packages("remotes")
@@ -111,7 +111,7 @@ mf04p <- ssn_import(path, predpts = "pred1km")
 ssn_create_distmat(mf04p, predpts = "pred1km", overwrite = TRUE)
 ```
 
-We fit and summarize an SSN model explaining summer water temperature (`Summer_mn`) as a function of elevation (`ELEV_DEM`) and precipitation (`AREAWTMAP`) with a exponential, spherical, and Gaussian structures for the tail-up, tail-down, and Euclidean errors, respectively, by running
+We fit and summarize an SSN model explaining summer mean stream temperature (`Summer_mn`) as a function of elevation (`ELEV_DEM`) and precipitation (`AREAWTMAP`) with exponential, spherical, and Gaussian structures for the tail-up, tail-down, and Euclidean errors, respectively, by running
 
 ```r
 ssn_mod <- ssn_lm(
@@ -230,7 +230,7 @@ head(preds)
 * generics: For exporting generic functions.
 * graphics: For visualizations (e.g., `plot()`).
 * Matrix: For efficient matrix manipulations.
-* RSQlite: For various functions that read and write (e.g., `ssn_create_distmat()`).
+* RSQLite: For various functions that read and write (e.g., `ssn_create_distmat()`).
 * sf: For handling spatial data.
 * spmodel: For various modeling functions (e.g., `randcov_initial()`) and generic functions (e.g., `loocv()`).
 * stats: For various modeling functions (e.g., `confint()`).
@@ -255,5 +255,5 @@ This project is licensed under the GNU General Public License, [GPL-3](https://c
 
 ## EPA Disclaimer
 
-The United States Environmental Protection Agency (EPA) GitHub project code is provided on an "as is" basis and the user assumes responsibility for its use. EPA has relinquished control of the information and no longer has responsibility to protect the integrity , confidentiality, or availability of the information. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by EPA. The EPA seal and logo shall not be used in any manner to imply endorsement of any commercial product or activity by EPA or the United States Government.
+The United States Environmental Protection Agency (EPA) GitHub project code is provided on an "as is" basis and the user assumes responsibility for its use. EPA has relinquished control of the information and no longer has responsibility to protect the integrity, confidentiality, or availability of the information. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by EPA. The EPA seal and logo shall not be used in any manner to imply endorsement of any commercial product or activity by EPA or the United States Government.
 

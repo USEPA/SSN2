@@ -19,8 +19,8 @@
 #'  between any two sites in \code{SSN} object is needed to fit a spatial
 #'  statistical model using the tail-up and tail-down autocovariance
 #'  functions described in Ver Hoef and Peterson (2010). These models
-#'  are implemented in R via \command{ssn_lm} and \command{ssn_glm} in
-#'  the\code{SSN2} package. The hydrologic distance information needed to
+#'  can be fitted with \command{ssn_lm} and \command{ssn_glm} in
+#'  the \code{SSN2} package. The hydrologic distance information needed to
 #'  model the covariance between flow-connected (i.e. water flows
 #'  from one location to the other) and flow-unconnected (i.e. water
 #'  does not flow from one location to the other, but they reside on
@@ -97,7 +97,7 @@
 #'  If \code{only_predpts = TRUE}, the downstream
 #'  hydrologic distances will not be calculated between observed sites
 #'  themselves. Pairwise distances will only be calculated for observed
-#'  and prediction locations and. Pairwise distances between prediction
+#'  and prediction locations. Pairwise distances between prediction
 #'  locations will also be calculated if \code{among_predpts = TRUE}.
 #'
 #'
@@ -109,11 +109,13 @@
 #' @export
 #'
 #' @examples
-#' ## Copy the MiddleForke04.ssn data to a local temporary directory.
-#' ## Only needed for this example.
+#' # Copy the mf04p .ssn data to a local directory and read it into R
+#' # When modeling with your .ssn object, you will load it using the relevant
+#' # path to the .ssn data on your machine
 #' copy_lsn_to_temp()
+#' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
 #' ## Import SSN data
-#' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+#' mf04p <- ssn_import(temp_path,
 #'   predpts = c("pred1km.gpkg", "CapeHorn"),
 #'   overwrite = TRUE
 #' )

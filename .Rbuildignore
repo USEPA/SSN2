@@ -15,3 +15,7 @@
 ^inst/joss$
 ^inst/tutorials$
 ^vignettes/articles$
+^dev$
+^AGENTS\.md$
+^\.positai$
+^src_deprecated$

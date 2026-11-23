@@ -8,9 +8,9 @@
 \alias{tidy.anova.ssn_glm}
 \title{Compute analysis of variance and likelihood ratio tests of fitted model objects}
 \usage{
-\method{anova}{ssn_lm}(object, ..., test = TRUE, Terms, L)
+\method{anova}{ssn_lm}(object, ..., test = TRUE, Terms, L, ddf)
 
-\method{anova}{ssn_glm}(object, ..., test = TRUE, Terms, L)
+\method{anova}{ssn_glm}(object, ..., test = TRUE, Terms, L, ddf)
 
 \method{tidy}{anova.ssn_lm}(x, ...)
 
@@ -19,8 +19,7 @@
 \arguments{
 \item{object}{A fitted model object from \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}.}
 
-\item{...}{An additional fitted model object from \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}
-(for \code{anova()}).}
+\item{...}{An additional fitted model object.}
 
 \item{test}{A logical value indicating whether p-values from asymptotic Chi-squared
 hypothesis tests should be returned. Defaults to \code{TRUE}.}
@@ -47,14 +46,26 @@ If \code{L} is a list, each list element is a numeric matrix specified as above.
 Then separate hypothesis tests are conducted. The easiest
 way to obtain all possible coefficients is to run \code{tidy(object)$term}.}
 
+\item{ddf}{The denominator degrees of freedom used. \code{"asymptotic"}
+implements an asymptotic chi-squared test.
+\code{"satterthwaite"} implements a Satterthwaite/Fai-Cornelius
+F-test. The default is \code{"satterthwaite"} when the sample size is
+less than or equal to 500 and \code{"asymptotic"} otherwise.
+Currently in SSN2, only numerically approximated Satterthwaite degrees of freedom
+are available.}
+
 \item{x}{An object from \code{anova(object)}.}
 }
 \value{
-When one fitted model object is present, \code{anova()}
+When \code{ddf} is \code{"asymptotic"}, \code{anova()}
 returns a data frame with degrees of
 freedom (\code{Df}), test statistics (\code{Chi2}), and p-values
 (\code{Pr(>Chi2)} if \code{test = TRUE}) corresponding
-to asymptotic Chi-squared hypothesis tests for each model term.
+to asymptotic Chi-squared hypothesis tests for each model term. When
+\code{ddf} is \code{"satterthwaite"}, \code{anova()} instead returns
+numerator degrees of freedom (\code{NumDF}), denominator degrees of
+freedom (\code{DenDF}), \eqn{F} statistics (\code{F value}), and
+p-values (\code{Pr(>F)} if \code{test = TRUE}) for each model term.
 
 When two fitted model objects are present, \code{anova()} returns a data frame
 with the difference in degrees of freedom between the full and reduced model (\code{Df}), a test
@@ -98,4 +109,7 @@ ssn_mod <- ssn_lm(
 )
 anova(ssn_mod)
 tidy(anova(ssn_mod))
+}
+\seealso{
+\code{\link[=satterthwaite]{satterthwaite()}}
 }

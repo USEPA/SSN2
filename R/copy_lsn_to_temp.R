@@ -8,6 +8,9 @@
 #' @details Copies the LSN directory MiddleFork04.ssn to R's temporary directory
 #' @export
 #' @examples
+#' # Copy the mf04p .ssn data to a local directory and read it into R
+#' # When modeling with your .ssn object, you will load it using the relevant
+#' # path to the .ssn data on your machine
 #' copy_lsn_to_temp()
 #' # getwd()
 #' # setwd(tempdir())

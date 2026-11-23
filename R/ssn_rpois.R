@@ -8,6 +8,8 @@ ssn_rpois <- function(ssn.object, network = "obs",
     stop("network must be \"obs\".", call. = FALSE)
   }
 
+  # re-dispatch this call to ssn_rnorm() to simulate the shared latent
+  # Gaussian process, then transform it below into the target distribution
   call_val <- match.call()
   call_val[[1]] <- as.symbol("ssn_rnorm")
   ssn_rnorm_val <- eval(call_val, envir = parent.frame())
@@ -16,6 +18,9 @@ ssn_rpois <- function(ssn.object, network = "obs",
 
   n <- NROW(ssn.object$obs)
   if (is.matrix(mu)) {
+    # multiple samples: split the matrix into one mean vector per column
+    # (transpose first so split() walks columns instead of rows), simulating
+    # each sample's Poisson draws independently
     mu_list <- split(t(mu), seq_len(NCOL(mu)))
     ssn_rpois_val <- vapply(mu_list, function(x) rpois(n, x), numeric(n))
   } else {

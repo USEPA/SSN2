@@ -26,6 +26,12 @@
 #'   \code{"nugget"}, and \code{"randcov"} can generally be used to check assumptions
 #'   for each component of the fitted model object (e.g., check a Gaussian assumption).
 #'
+#'   Random effects with the same grouping level in different \code{partition_factor}
+#'   partitions are reported separately. Their names include the grouping level
+#'   and partition. Computational blocks used for \code{local} fitting do not
+#'   create distinct random effects: block contributions to the same
+#'   effect are averaged.
+#'
 #'   If from [ssn_glm()], when \code{type} is \code{"response"}, the fitted values
 #'   for each observation are the standard fitted values on the inverse link
 #'   scale: \eqn{g^{-1}}(\eqn{X \hat{\beta} + \nu}), where \eqn{g(.)} is a link function,

@@ -11,11 +11,6 @@ get_optim_dotlist <- function(...) {
   # storing dotlist and setting defaults for optim
   dotlist <- list(...)
 
-  ## l-bfgs-b deafult
-  # if (!("method" %in% names(dotlist))) {
-  #   dotlist$method <- "L-BFGS-B"
-  # }
-
   # nelder-mead default with lower relative tolerance
   if (!("method" %in% names(dotlist))) {
     dotlist$method <- "Nelder-Mead"
@@ -30,7 +25,11 @@ get_optim_dotlist <- function(...) {
   }
 
   if (!("reltol" %in% names(dotlist$control))) {
-    dotlist$control$reltol <- 1e-4
+    dotlist$control$reltol <- 1e-6
+  }
+
+  if (identical(dotlist$method, "Nelder-Mead") && !("maxit" %in% names(dotlist$control))) {
+    dotlist$control$maxit <- 2000
   }
 
   dotlist$lower <- -Inf
@@ -95,26 +94,4 @@ check_optim_method <- function(optim_par, optim_dotlist) {
     optim_dotlist$upper <- 50
   }
   optim_dotlist
-}
-
-#' Get parameters to optimize over in optim (remove known parameters) for glms
-#'
-#' @param spcov_orig2optim A \code{spcov_orig2optim} object
-#' @param dispersion_orig2optim A \code{dispersion_orig2optim} object
-#' @param randcov_orig2optim A \code{randcov_orig2optim} object
-#'
-#' @return The parameters to optimize over in optim
-#'
-#' @noRd
-get_optim_par_glm <- function(spcov_orig2optim, dispersion_orig2optim, randcov_orig2optim = NULL) {
-  if (is.null(randcov_orig2optim)) {
-    par <- spcov_orig2optim$value[!spcov_orig2optim$is_known]
-  } else {
-    spcov_pars <- spcov_orig2optim$value[!spcov_orig2optim$is_known]
-    randcov_pars <- randcov_orig2optim$value[!randcov_orig2optim$is_known]
-    par <- c(spcov_pars, randcov_pars)
-  }
-  dispersion_pars <- dispersion_orig2optim$value[!dispersion_orig2optim$is_known]
-  par <- c(par, dispersion_pars)
-  par
 }

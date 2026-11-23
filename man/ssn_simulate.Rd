@@ -170,12 +170,15 @@ in Ver Hoef and Peterson (2010).}
 
 \item{mean}{A numeric vector representing the mean. \code{mean} must have length 1
 (in which case it is recycled) or length equal
-to the number of rows in \code{data}. The default is \code{0}.}
+to the number of rows in \code{ssn.object$obs}. The default is \code{0}.
+For non-Gaussian families, this is the mean of the latent normal random variable
+on the link scale. See Details for more.}
 
 \item{samples}{The number of independent samples to generate. The default
 is \code{1}.}
 
-\item{dispersion}{The dispersion value (if relevant).}
+\item{dispersion}{The dispersion value for the beta, gamma, negative binomial,
+and inverse Gaussian distributions. The default is \code{1}.}
 
 \item{size}{A numeric vector representing the sample size for each binomial trial.
 The default is \code{1}, which corresponds to a Bernoulli trial for each observation.}
@@ -184,7 +187,8 @@ The default is \code{1}, which corresponds to a Bernoulli trial for each observa
 
 \item{partition_factor}{A formula indicating the partition factor.}
 
-\item{...}{Other arguments. Not used (needed for generic consistency).}
+\item{...}{Additional arguments passed to \code{\link[=ssn_rnorm]{ssn_rnorm()}} when using
+\code{ssn_simulate()} or another simulation function.}
 }
 \value{
 If \code{samples} is 1, a vector of random variables for each row of \code{ssn.object$obs}
@@ -201,13 +205,7 @@ response distribution also exist.
 \details{
 Random variables are simulated via the product of the covariance matrix's
 square (Cholesky) root and independent standard normal random variables
-on the link scale, which are then used to simulate a relevant variable on the response scale
-according to \code{family}.
-Computing the square root is a significant
-computational burden and likely unfeasible for sample sizes much past 10,000.
-Because this square root only needs to be computed once, however, it is
-nearly the sample computational cost to call \code{ssn_rnorm()} for any value
-of \code{samples}.
+with mean 0 and variance 1.
 
 If not using \code{ssn_simulate()}, individual simulation functions for
 each response distribution do exist:
@@ -236,6 +234,7 @@ taildown <- taildown_params("exponential", de = 0.4, range = 300)
 euclid <- euclid_params("spherical", de = 0.2, range = 1000, rotate = 0, scale = 1)
 nugget <- nugget_params("nugget", nugget = 0.1)
 ssn_simulate("gaussian", mf04p, "obs", tailup, taildown, euclid, nugget, additive = "afvArea")
+ssn_simulate("poisson", mf04p, "obs", tailup, taildown, euclid, nugget, additive = "afvArea")
 
 }
 \references{

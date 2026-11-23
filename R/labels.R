@@ -28,10 +28,15 @@
 #' )
 #' labels(ssn_mod)
 labels.ssn_lm <- function(object, ...) {
+  # delegates to base R's formula/terms machinery, so this returns the fixed
+  # effect term labels only (not tailup/taildown/euclid/nugget covariance or
+  # random effect terms)
   labels(terms(formula(object)))
 }
 
 #' @rdname labels.SSN2
 #' @method labels ssn_glm
 #' @export
+# fixed-effect term labels come from the formula alone, so the GLM method
+# just reuses the Gaussian model implementation
 labels.ssn_glm <- labels.ssn_lm

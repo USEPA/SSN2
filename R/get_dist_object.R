@@ -1,13 +1,4 @@
-#' Get the distance matrix oibject
-#'
-#' @param ssn.object SSN object.
-#' @param initial_object Initial value object.
-#' @param additive Name of the additive function value column.
-#' @param anisotropy Whether there is anisotropy.
-#'
-#' @return A distance matrix object that contains various distance matrices used in modeling.
-#' @noRd
-get_dist_object <- function(ssn.object, initial_object, additive, anisotropy) {
+get_dist_object <- function(ssn.object, initial_object, additive, anisotropy, backend = "dense") {
   # get netgeom
   netgeom <- ssn_get_netgeom(ssn.object$obs, reformat = TRUE)
 
@@ -35,10 +26,9 @@ get_dist_object <- function(ssn.object, initial_object, additive, anisotropy) {
   # get list of distance matrices in order of the original data
   dist_matlist <- get_dist_matlist(
     ssn.object, initial_object, additive,
-    order_list
+    order_list,
+    backend = backend
   )
-
-
 
   # see whether euclid is none to avoid unnecessary computations
   euclid_none <- inherits(initial_object$euclid_initial, "euclid_none")
@@ -84,12 +74,6 @@ get_dist_object_oblist <- function(dist_object, observed_index, local_index) {
     dist_object <- list(dist_object)
     names(dist_object) <- unq_local_index_sort
   } else { # commented out w/ local not available
-    # if there is more than one local index, create a template list with many elements
-    # dist_object <- lapply(unq_local_index_sort, function(x) {
-    #   index_val <- which(local_index == x)
-    #   new_val <- lapply(dist_object, subset_dist_object, index_val)
-    # })
-    # names(dist_object) <- names(split(unq_local_index_sort, unq_local_index_sort))
   }
   dist_object_oblist <- dist_object
   dist_object_oblist
@@ -104,12 +88,12 @@ get_dist_object_oblist <- function(dist_object, observed_index, local_index) {
 #'
 #' @noRd
 get_dist_matlist <- function(ssn.object, initial_object, additive,
-                             order_list) {
+                             order_list, backend = "dense") {
   network_index <- order_list$network_index
   dist_order <- order_list$dist_order
   inv_dist_order <- order_list$inv_dist_order
 
-  # see whether tailup and taildown are none to avoid unnecssary computations
+  # see whether tailup and taildown are none to avoid unnecessary computations
   tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
   taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
 
@@ -126,9 +110,11 @@ get_dist_matlist <- function(ssn.object, initial_object, additive,
   } else {
     # otherwise
 
-    # get dist junction matrices as a list (for efficiency, do things
-    # network by network and then combine so zeroes populate accordingly)
-    distjunc_matlist <- get_distjunc_matlist(order_list$network_index, ssn.object)
+    distjunc_matlist <- if (identical(backend, "bigdata")) {
+      get_distjunc_matlist_bigdata(order_list$network_index, order_list$pid, ssn.object)
+    } else {
+      get_distjunc_matlist(order_list$network_index, ssn.object)
+    }
 
     # get other matrices as a list
     dist_matlist <- list(
@@ -139,7 +125,7 @@ get_dist_matlist <- function(ssn.object, initial_object, additive,
       hydro_matlist = get_hydro_matlist(distjunc_matlist)
     )
 
-    # if only taildown covariacne, do not need additive matrix
+    # if only taildown covariance, do not need additive matrix
     if (tailup_none) {
       # store as single sparse Matrix
       dist_matlist <- list(
@@ -164,7 +150,7 @@ get_dist_matlist <- function(ssn.object, initial_object, additive,
         additive,
         order_list$network_index,
         order_list$dist_order,
-        dist_matlist$b_matlist,
+        dist_matlist$a_matlist,
         dist_matlist$mask_matlist
       )
 
@@ -273,27 +259,27 @@ get_mask_matlist <- function(distjunc_list) {
 
 #' Find the a matrix list for each network
 #'
-#' @param distjunc_list Create list of a matrices (largest stream distance) for each network.
+#' @param distjunc_list List of directed distances to the common downstream junction.
 #'
 #' @noRd
 get_a_matlist <- function(distjunc_list) {
-  # find a matrix list
+  # JASA notation uses a for the shorter distance to the common junction.
   a_matlist <- lapply(distjunc_list, function(x) {
     x_matrix <- as.matrix(x)
-    Matrix::Matrix(pmax(x_matrix, t(x_matrix)), sparse = TRUE)
+    Matrix::Matrix(pmin(x_matrix, t(x_matrix)), sparse = TRUE)
   })
 }
 
 #' Find the b matrix list for each network
 #'
-#' @param distjunc_list Create list of a matrices (smallest stream distance) for each network.
+#' @param distjunc_list List of directed distances to the common downstream junction.
 #'
 #' @noRd
 get_b_matlist <- function(distjunc_list) {
-  # find a matrix list
+  # JASA notation uses b for the longer distance to the common junction.
   b_matlist <- lapply(distjunc_list, function(x) {
     x_matrix <- as.matrix(x)
-    Matrix::Matrix(pmin(x_matrix, t(x_matrix)), sparse = TRUE)
+    Matrix::Matrix(pmax(x_matrix, t(x_matrix)), sparse = TRUE)
   })
 }
 
@@ -312,7 +298,7 @@ get_hydro_matlist <- function(distjunc_list) {
 #' @param distjunc_list Create list of w matrices (additive function weight) for each network.
 #'
 #' @noRd
-get_w_matlist <- function(ssn.object, additive, network_index, dist_order, b_matlist, mask_matlist, newdata_name = NULL) {
+get_w_matlist <- function(ssn.object, additive, network_index, dist_order, a_matlist, mask_matlist, newdata_name = NULL) {
   if (is.null(newdata_name)) {
     additive_val <- as.numeric(ssn.object$obs[[additive]]) # remember a character here
   } else {
@@ -335,9 +321,9 @@ get_w_matlist <- function(ssn.object, additive, network_index, dist_order, b_mat
 
   # apply flow connected and masking requirements
   w_matlist <- mapply(
-    FUN = function(additive, b, m) additive * (b == 0) * m, # b == 0 is flow connected
+    FUN = function(additive, a, m) additive * (a == 0) * m, # a == 0 is flow connected
     additive = additive_matlist,
-    b = b_matlist,
+    a = a_matlist,
     m = mask_matlist,
     SIMPLIFY = FALSE
   )

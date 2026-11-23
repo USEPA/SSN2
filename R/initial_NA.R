@@ -1,7 +1,11 @@
-#' An initial value object with NA values that indicate where estimation is required
+#' Fill in default (NA, unknown) covariance initial values
 #'
-#' @param initial_object Initial value object
-#' @param data_object Data object
+#' @param initial_object A covariance initial object from \code{get_initial_object()}
+#' @param data_object The data object
+#'
+#' @return An initial object with NA values (to be estimated) filled in for
+#'   any tailup, taildown, euclid, nugget, and (if relevant) randcov
+#'   parameter not otherwise given an initial or known value
 #'
 #' @noRd
 get_initial_NA_object <- function(initial_object, data_object) {
@@ -25,9 +29,13 @@ get_initial_NA_object <- function(initial_object, data_object) {
   initial_NA_object
 }
 
-#' Tailup initial NA object
+#' Fill in default (NA, unknown) tailup covariance initial values
 #'
-#' @param initial An initial value specification
+#' @param initial A \code{tailup_initial} object
+#'
+#' @return A \code{tailup_initial} object with NA values when relevant (which
+#'   are replaced later) -- values are NA if they want us to pick those
+#'   initial values
 #'
 #' @noRd
 tailup_initial_NA <- function(initial) {
@@ -47,9 +55,13 @@ tailup_initial_NA <- function(initial) {
   new_initial
 }
 
-#' Taildown initial NA object
+#' Fill in default (NA, unknown) taildown covariance initial values
 #'
-#' @param initial An initial value specification
+#' @param initial A \code{taildown_initial} object
+#'
+#' @return A \code{taildown_initial} object with NA values when relevant
+#'   (which are replaced later) -- values are NA if they want us to pick
+#'   those initial values
 #'
 #' @noRd
 taildown_initial_NA <- function(initial) {
@@ -69,13 +81,21 @@ taildown_initial_NA <- function(initial) {
   new_initial
 }
 
-#' Euclidean initial NA object
+#' Fill in default (NA, unknown) euclid covariance initial values
 #'
-#' @param initial An initial value specification
+#' @param initial A \code{euclid_initial} object
+#' @param data_object The data object, whose \code{anisotropy} element
+#'   determines whether \code{rotate} and \code{scale} are estimated or fixed
+#'   at their no-op defaults (0 rotation, scale 1)
+#'
+#' @return A \code{euclid_initial} object with NA values when relevant (which
+#'   are replaced later) -- values are NA if they want us to pick those
+#'   initial values
 #'
 #' @noRd
 euclid_initial_NA <- function(initial, data_object) {
-  euclid_names <- c("de", "range", "rotate", "scale")
+  has_extra <- inherits(initial, c("euclid_matern", "euclid_cauchy", "euclid_pexponential"))
+  euclid_names <- if (has_extra) c("de", "range", "extra", "rotate", "scale") else c("de", "range", "rotate", "scale")
 
   if (inherits(initial, "euclid_none")) {
     # set defaults if none covariance
@@ -84,12 +104,12 @@ euclid_initial_NA <- function(initial, data_object) {
   } else {
     if (data_object$anisotropy) {
       # otherwise we will pick them
-      euclid_val_default <- c(de = NA, range = NA, rotate = NA, scale = NA)
-      euclid_known_default <- c(de = FALSE, range = FALSE, rotate = FALSE, scale = FALSE)
+      euclid_val_default <- if (has_extra) c(de = NA, range = NA, extra = NA, rotate = NA, scale = NA) else c(de = NA, range = NA, rotate = NA, scale = NA)
+      euclid_known_default <- if (has_extra) c(de = FALSE, range = FALSE, extra = FALSE, rotate = FALSE, scale = FALSE) else c(de = FALSE, range = FALSE, rotate = FALSE, scale = FALSE)
     } else {
       # otherwise we will pick them (but fix anisotropy parameters)
-      euclid_val_default <- c(de = NA, range = NA, rotate = 0, scale = 1)
-      euclid_known_default <- c(de = FALSE, range = FALSE, rotate = TRUE, scale = TRUE)
+      euclid_val_default <- if (has_extra) c(de = NA, range = NA, extra = NA, rotate = 0, scale = 1) else c(de = NA, range = NA, rotate = 0, scale = 1)
+      euclid_known_default <- if (has_extra) c(de = FALSE, range = FALSE, extra = FALSE, rotate = TRUE, scale = TRUE) else c(de = FALSE, range = FALSE, rotate = TRUE, scale = TRUE)
     }
   }
   # substitute known values
@@ -97,9 +117,13 @@ euclid_initial_NA <- function(initial, data_object) {
   new_initial
 }
 
-#' Nugget initial NA object
+#' Fill in default (NA, unknown) nugget covariance initial values
 #'
-#' @param initial An initial value specification
+#' @param initial A \code{nugget_initial} object
+#'
+#' @return A \code{nugget_initial} object with NA values when relevant (which
+#'   are replaced later) -- values are NA if they want us to pick those
+#'   initial values
 #'
 #' @noRd
 nugget_initial_NA <- function(initial) {
@@ -119,12 +143,18 @@ nugget_initial_NA <- function(initial) {
   new_initial
 }
 
-#' Insert NA values when covariance parameters assumed unknown
+#' Substitute default NA values into an initial object for parameters not
+#'   otherwise given an initial or known value
 #'
-#' @param names The names to assume unknown
-#' @param val_default The default value of values (NA)
-#' @param known_default The default value of whether parameters are known
-#' @param initial An initial value specification
+#' @param names The names of all parameters for this covariance type
+#' @param val_default Default values (NA to estimate, or a fixed value) for
+#'   each name in \code{names}
+#' @param known_default Default \code{is_known} values for each name in
+#'   \code{names}
+#' @param initial A partially-specified initial object
+#'
+#' @return \code{initial} with defaults substituted in for any parameter not
+#'   already specified, reordered to match \code{names}
 #'
 #' @noRd
 insert_initial_NA <- function(names, val_default, known_default, initial) {
@@ -141,10 +171,14 @@ insert_initial_NA <- function(names, val_default, known_default, initial) {
   initial
 }
 
-#' Insert NA values when random effect parameters assumed unknown
+#' Fill random effect parameters with NA's and known FALSE if specified in
+#'   the model's \code{random} formula but not given an initial value
 #'
-#' @param randcov_initial Random effect initial object
-#' @param data_object Data object
+#' @param randcov_initial A \code{randcov_initial} object
+#' @param data_object The data object, whose \code{randcov_names} gives the
+#'   names of the random effects specified in the model
+#'
+#' @return A \code{randcov_initial} object with appropriate NA's
 #'
 #' @noRd
 randcov_initial_NA <- function(randcov_initial, data_object) {
@@ -171,10 +205,16 @@ randcov_initial_NA <- function(randcov_initial, data_object) {
   randcov_initial
 }
 
-#' An initial value object with NA values that indicate where estimation is required for glms
+#' Fill in default (NA, unknown) covariance and dispersion initial values for
+#'   GLM-type models
 #'
-#' @param initial_object Initial value object
-#' @param data_object Data object
+#' @param initial_object A covariance initial object from
+#'   \code{get_initial_object_glm()}
+#' @param data_object The data object
+#'
+#' @return An initial object with NA values (to be estimated) filled in for
+#'   any tailup, taildown, euclid, nugget, dispersion, and (if relevant)
+#'   randcov parameter not otherwise given an initial or known value
 #'
 #' @noRd
 get_initial_NA_object_glm <- function(initial_object, data_object) {
@@ -197,18 +237,26 @@ get_initial_NA_object_glm <- function(initial_object, data_object) {
   initial_NA_object
 }
 
-#' Insert NA values when dispersion parameters assumed unknown
+#' Fill in default (NA, unknown) dispersion initial values
 #'
-#' @param initial Initial value object
-#' @param data_object Data object
+#' @param initial A \code{dispersion_initial} object
+#' @param data_object The data object
+#'
+#' @return A \code{dispersion_initial} object with any missing initial value
+#'   and \code{is_known} indicator filled in with defaults (fixed at one for
+#'   the binomial and Poisson families, otherwise unknown)
 #'
 #' @noRd
 dispersion_initial_NA <- function(initial, data_object) {
   dispersion_names <- c("dispersion")
 
+  # poisson and binomial dispersion is not identifiable, so it is always
+  # fixed at one regardless of what (if anything) the user supplied
   if (data_object$family %in% c("poisson", "binomial")) {
     new_initial <- dispersion_initial(data_object$family, 1, known = "dispersion")
   } else {
+    # any dispersion value the user did not specify defaults to NA (to be
+    # estimated) and unknown, rather than erroring
     dispersion_val_default <- c(dispersion = NA)
     dispersion_known_default <- c(dispersion = FALSE)
     new_initial <- insert_initial_NA(dispersion_names, dispersion_val_default, dispersion_known_default, initial)

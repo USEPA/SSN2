@@ -72,7 +72,7 @@
 #'
 #'     # error if not ml or reml
 #'     if (!object$estmethod %in% c("ml", "reml")) {
-#'       stop("AIC is only defined is estmethod is \"ml\" or \"reml\".", call. = FALSE)
+#'       stop("AIC is only defined if estmethod is \"ml\" or \"reml\".", call. = FALSE)
 #'     }
 #'     # compute AIC
 #'     AIC_val <- -2 * logLik(object) + k * (n_est_param)
@@ -106,7 +106,7 @@
 #'     object_AIC <- lapply(object_list, function(x) {
 #'       # warning if estmethod not ml or reml
 #'       if (!object$estmethod %in% c("ml", "reml")) {
-#'         stop("AIC is only defined is estmethod is \"ml\" or \"reml\".", call. = FALSE)
+#'         stop("AIC is only defined if estmethod is \"ml\" or \"reml\".", call. = FALSE)
 #'       }
 #'
 #'       if (x$estmethod == "ml") {
@@ -115,7 +115,7 @@
 #'         n_est_param <- x$npar
 #'       }
 #'
-#'       # store degrees of freedom (parames estimated) and AIC
+#'       # store degrees of freedom (params estimated) and AIC
 #'       data.frame(df = n_est_param, AIC = -2 * logLik(x) + k * (n_est_param))
 #'     })
 #'     # put all AIC data frames together

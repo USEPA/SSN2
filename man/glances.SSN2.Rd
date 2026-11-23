@@ -11,15 +11,15 @@
 \method{glances}{ssn_glm}(object, ..., sort_by = "AICc", decreasing = FALSE, warning = TRUE)
 }
 \arguments{
-\item{object}{Fitted model object from \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}.}
+\item{object}{A fitted model object from \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}.}
 
-\item{...}{Additional fitted model objects from \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}.}
+\item{...}{Additional fitted model objects.}
 
 \item{sort_by}{Sort by a \code{glance} statistic (i.e., the name of a column
 output from \code{glance()} or the order of model input (\code{sort_by = "order"}).
 The default is \code{"AICc"}.}
 
-\item{decreasing}{Should \code{sort_by} be decreasing or not? The default is \code{FALSE}.}
+\item{decreasing}{Whether \code{sort_by} should sort by decreasing order? The default is \code{FALSE}.}
 
 \item{warning}{Whether a warning is displayed when model comparisons violate certain rules.
 The default is \code{TRUE}.}

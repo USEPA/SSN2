@@ -5,12 +5,16 @@ ssn_rinvgauss <- function(ssn.object, network = "obs",
                           dispersion = 1, mean = 0, samples = 1, additive,
                           randcov_params, partition_factor, ...) {
   if (!requireNamespace("statmod", quietly = TRUE)) {
-    stop("Install the statmod package before using sprinvgauss", call. = FALSE)
+    stop("Install the statmod package before using ssn_rinvgauss()", call. = FALSE)
   } else {
     if (any(!(network %in% "obs"))) {
       stop("network must be \"obs\".", call. = FALSE)
     }
 
+    # re-dispatch this call to ssn_rnorm() (dropping the "dispersion"
+    # argument, which ssn_rnorm() does not accept) to simulate the shared
+    # latent Gaussian process, then transform it below into the target
+    # distribution
     call_val <- match.call()
     call_val[[1]] <- as.symbol("ssn_rnorm")
     call_list <- as.list(call_val)
@@ -26,6 +30,8 @@ ssn_rinvgauss <- function(ssn.object, network = "obs",
     if (is.matrix(mu)) {
       mu_list <- split(t(mu), seq_len(NCOL(mu)))
       ssn_rinvgauss_val <- vapply(mu_list, function(x) {
+        # statmod::rinvgauss() parameterizes dispersion as 1/(mean * dispersion),
+        # the reciprocal of this package's dispersion convention
         dispersion_true <- 1 / (x * dispersion)
         statmod::rinvgauss(n, mean = x, dispersion = dispersion_true)
       }, numeric(n))

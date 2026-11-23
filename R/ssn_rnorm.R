@@ -7,7 +7,6 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   if (any(!(network %in% "obs"))) {
     stop("network must be \"obs\".", call. = FALSE)
   }
-
   # fix additive depending on format
   if (missing(additive)) additive <- NULL
   if (is.symbol(substitute(additive))) { # or is.language
@@ -28,12 +27,12 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   }
 
   # compute the random effects design matrices
-  if (missing(randcov_params)) {
+  if (missing(randcov_params) || is.null(randcov_params) || length(randcov_params) == 0L) {
     randcov_params <- NULL
     randcov_Zs <- NULL
   } else {
     names(randcov_params) <- get_randcov_names(reformulate(paste("(", names(randcov_params), ")", sep = "")))
-    randcov_Zs <- get_randcov_Zs(data = ssn.object$obs, names(randcov_params))
+    randcov_Zs <- get_randcov_Zs(data = ssn.object$obs, names(randcov_params), ZZt = FALSE)
   }
 
   # create the covariance parameter object
@@ -58,7 +57,29 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   if (missing(partition_factor)) {
     partition_factor <- NULL
   }
+
+  n <- NROW(ssn.object$obs)
+  if (is_ssn_simulate_independent(params_object) &&
+      inherits(nugget_params, "nugget_nugget") &&
+      is.finite(nugget_params[["nugget"]]) && nugget_params[["nugget"]] > 0) {
+    validate_ssn_simulate_independent(params_object, ssn.object$obs, additive)
+    get_ssn_simulate_partition(ssn.object$obs, partition_factor)
+    design <- get_randcov_design(ssn.object$obs, randcov_params, partition_factor)
+    ssn_rnorm_val <- vapply(seq_len(samples), function(x) {
+      mean + rnorm(n, sd = sqrt(nugget_params[["nugget"]]))
+    }, numeric(n))
+    random <- draw_ssn_simulate_random(design, samples)
+    if (!is.null(random)) ssn_rnorm_val <- ssn_rnorm_val + random
+    if (samples == 1) ssn_rnorm_val <- as.vector(ssn_rnorm_val)
+    return(ssn_rnorm_val)
+  }
   partition_matrix_val <- partition_matrix(partition_factor, ssn.object$obs)
+  if (!is.null(randcov_Zs)) {
+    randcov_Zs <- lapply(randcov_Zs, function(x) {
+      x$ZZt <- tcrossprod(x$Z, x$Z)
+      x
+    })
+  }
 
   # create the distance object required
   initial_object <- get_initial_object(
@@ -71,31 +92,15 @@ ssn_rnorm <- function(ssn.object, network = "obs",
     euclid_initial = NULL,
     nugget_initial = NULL
   )
-  dist_object <- get_dist_object(ssn.object, initial_object, additive, anisotropy)
+  # matches covmatrix()'s obs.obs backend resolution: prefer the standard
+  # dense (.RData) distance matrices when they exist, falling back to the
+  # big-data (.bmat) filematrix reader only when they do not
+  tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
+  taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
+  backend <- select_square_dist_backend(ssn.object, "obs", tailup_none, taildown_none)
+  dist_object <- get_dist_object(ssn.object, initial_object, additive, anisotropy, backend = backend)
 
-  # two ccw rotations/scales so that one ccw rotation in cov_matrix yields a process
-  # needing one cw rotation to be isotropic. this is a consequence of doing the
-  # anisotropy correction within cov_matrix as opposed to outside it
-  if (anisotropy) {
-    new_coords_v1 <- transform_anis_inv(
-      dist_object$.xcoord,
-      dist_object$.ycoord,
-      rotate = params_object$euclid[["rotate"]],
-      scale = params_object$euclid[["scale"]]
-    )
-
-    new_coords_v2 <- transform_anis_inv(
-      new_coords_v1$xcoord_val,
-      new_coords_v1$ycoord_val,
-      rotate = params_object$euclid[["rotate"]],
-      scale = params_object$euclid[["scale"]]
-    )
-
-    dist_object$.xcoord <- new_coords_v2$xcoord_val
-    dist_object$.ycoord <- new_coords_v2$ycoord_val
-  }
-
-  # create the covariance matrix
+  # The covariance builder applies the same anisotropy transformation as fitting.
   de_scale <- sum(params_object$tailup[["de"]], params_object$taildown[["de"]], params_object$euclid[["de"]])
   cov_matrix_val <- get_cov_matrix(params_object, dist_object, randcov_Zs, partition_matrix_val,
     anisotropy, de_scale,
@@ -106,7 +111,6 @@ ssn_rnorm <- function(ssn.object, network = "obs",
   cov_matrix_lowchol <- t(chol(cov_matrix_val))
 
   # simulate n random normal vectors
-  n <- NROW(ssn.object$obs)
   ssn_rnorm_val <- vapply(seq_len(samples), function(x) mean + as.numeric(cov_matrix_lowchol %*% rnorm(n)), numeric(n))
 
   # store as a vector if only one sample required

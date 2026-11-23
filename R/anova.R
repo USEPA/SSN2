@@ -4,8 +4,7 @@
 #'   a likelihood ratio test for two fitted model objects.
 #'
 #' @param object A fitted model object from [ssn_lm()] or [ssn_glm()].
-#' @param ... An additional fitted model object from [ssn_lm()] or [ssn_glm()]
-#'   (for \code{anova()}).
+#' @param ... An additional fitted model object.
 #' @param test A logical value indicating whether p-values from asymptotic Chi-squared
 #'   hypothesis tests should be returned. Defaults to \code{TRUE}.
 #' @param Terms An optional character or integer vector that specifies terms in the model
@@ -28,6 +27,13 @@
 #'   If \code{L} is a list, each list element is a numeric matrix specified as above.
 #'   Then separate hypothesis tests are conducted. The easiest
 #'   way to obtain all possible coefficients is to run \code{tidy(object)$term}.
+#' @param ddf The denominator degrees of freedom used. \code{"asymptotic"}
+#'   implements an asymptotic chi-squared test.
+#'   \code{"satterthwaite"} implements a Satterthwaite/Fai-Cornelius
+#'   F-test. The default is \code{"satterthwaite"} when the sample size is
+#'   less than or equal to 500 and \code{"asymptotic"} otherwise.
+#'   Currently in SSN2, only numerically approximated Satterthwaite degrees of freedom
+#'   are available.
 #'
 #'
 #' @details When one fitted model object is present, \code{anova()}
@@ -42,11 +48,15 @@
 #'   When two fitted model objects are present, one must be a "reduced"
 #'   model nested in a "full" model. Then \code{anova()} performs a likelihood ratio test.
 #'
-#' @return When one fitted model object is present, \code{anova()}
+#' @return When \code{ddf} is \code{"asymptotic"}, \code{anova()}
 #'   returns a data frame with degrees of
 #'   freedom (\code{Df}), test statistics (\code{Chi2}), and p-values
 #'   (\code{Pr(>Chi2)} if \code{test = TRUE}) corresponding
-#'   to asymptotic Chi-squared hypothesis tests for each model term.
+#'   to asymptotic Chi-squared hypothesis tests for each model term. When
+#'   \code{ddf} is \code{"satterthwaite"}, \code{anova()} instead returns
+#'   numerator degrees of freedom (\code{NumDF}), denominator degrees of
+#'   freedom (\code{DenDF}), \eqn{F} statistics (\code{F value}), and
+#'   p-values (\code{Pr(>F)} if \code{test = TRUE}) for each model term.
 #'
 #'   When two fitted model objects are present, \code{anova()} returns a data frame
 #'   with the difference in degrees of freedom between the full and reduced model (\code{Df}), a test
@@ -57,6 +67,7 @@
 #'   \code{tidy()} can be used
 #'   to obtain tidy tibbles of the \code{anova(object)} output.
 #'
+#' @seealso [satterthwaite()]
 #'
 #' @name anova.SSN2
 #' @method anova ssn_lm
@@ -79,7 +90,7 @@
 #' )
 #' anova(ssn_mod)
 #' tidy(anova(ssn_mod))
-anova.ssn_lm <- function(object, ..., test = TRUE, Terms, L) {
+anova.ssn_lm <- function(object, ..., test = TRUE, Terms, L, ddf) {
   # see if one or two models
   object2_list <- list(...)
 
@@ -113,7 +124,30 @@ anova.ssn_lm <- function(object, ..., test = TRUE, Terms, L) {
     }
     anova_val <- do.call(rbind, lapply(L, get_marginal_Chi2, object))
 
-    if (!test) {
+    if (missing(ddf)) ddf <- NULL
+    # captured before determine_ddf() resolves a missing ddf to a
+    # sample-size-based default, so the two cases below (explicit request vs.
+    # automatic attempt) can be told apart
+    ddf_explicit <- !is.null(ddf)
+    ddf <- determine_ddf(ddf, object$n)
+
+    anova_f <- NULL
+    if (ddf == "satterthwaite") {
+      # an automatic (ddf missing) attempt fails silently, falling back to
+      # the asymptotic table below -- e.g. for ssn_glm() objects or ssn_lm()
+      # objects fit with local, neither of which support Satterthwaite (see
+      # validate_satterthwaite_scope()); an explicit request lets the error
+      # surface, since the user asked for it directly
+      anova_f <- if (ddf_explicit) {
+        get_satterthwaite_anova(object, L, anova_val, test)
+      } else {
+        tryCatch(get_satterthwaite_anova(object, L, anova_val, test), error = function(e) NULL)
+      }
+    }
+
+    if (!is.null(anova_f)) {
+      anova_val <- anova_f
+    } else if (!test) {
       anova_val <- anova_val[-which(colnames(anova_val) == "Pr(>Chi2)")]
     }
     anova_val <- structure(anova_val, heading = c("Analysis of Variance Table\n", paste("Response:", deparse(object$formula[[2L]]))))
@@ -134,7 +168,7 @@ anova.ssn_lm <- function(object, ..., test = TRUE, Terms, L) {
       (object$estmethod %in% c("reml") && object2$estmethod %in% c("reml")) &&
         any(sort(colnames(model.matrix(object))) != sort(colnames(model.matrix(object2))))
     ) {
-      stop("The fixed effect coefficients must be the same when performing a likeihood ratio test using the reml estimation method. To perform the likelihood ratio tests for different fixed effect and covariance coefficients simultaneously, refit the models using the ml estimation method.", call. = FALSE)
+      stop("The fixed effect coefficients must be the same when performing a likelihood ratio test using the reml estimation method. To perform the likelihood ratio tests for different fixed effect and covariance coefficients simultaneously, refit the models using the ml estimation method.", call. = FALSE)
     }
     Chi2_stat <- abs(-2 * (logLik(object2) - logLik(object)))
 
@@ -174,14 +208,67 @@ anova.ssn_lm <- function(object, ..., test = TRUE, Terms, L) {
 #' @export
 anova.ssn_glm <- anova.ssn_lm
 
+#' @rdname anova.SSN2
+#' @param x An object from \code{anova(object)}.
+#'
+#' @method tidy anova.ssn_lm
+#' @export
+tidy.anova.ssn_lm <- function(x, ...) {
+  if (!is.null(attr(x, "full")) && !is.null(attr(x, "reduced"))) {
+    result <- tibble::tibble(full = attr(x, "full"), reduced = attr(x, "reduced"), df = x$Df, statistic = x$Chi2)
+    if ("Pr(>Chi2)" %in% colnames(x)) {
+      result$p.value <- x[["Pr(>Chi2)"]]
+    }
+  } else if ("DenDF" %in% colnames(x)) {
+    result <- tibble::tibble(
+      effects = rownames(x), num_df = x$NumDF, den_df = x$DenDF,
+      statistic = x[["F value"]]
+    )
+    if ("Pr(>F)" %in% colnames(x)) {
+      result$p.value <- x[["Pr(>F)"]]
+    }
+  } else {
+    result <- tibble::tibble(effects = rownames(x), df = x$Df, statistic = x$Chi2)
+    if ("Pr(>Chi2)" %in% colnames(x)) {
+      result$p.value <- x[["Pr(>Chi2)"]]
+    }
+  }
+  result
+}
 
-#' Get marginal (type III) chi-square statistic for ANOVA
-#'
-#' @param L Matrix of contrasts.
-#' @param object Model object.
-#'
-#' @return A marginal chi-square statistic
-#' @noRd
+#' @rdname anova.SSN2
+#' @method tidy anova.ssn_glm
+#' @export
+tidy.anova.ssn_glm <- tidy.anova.ssn_lm
+
+get_L_list <- function(assign_index, assign_indices) {
+  assign_vals <- which(assign_indices == assign_index)
+  L_vectors <- lapply(assign_vals, get_L_vector, assign_indices)
+  do.call(rbind, L_vectors)
+}
+
+get_L_vector <- function(assign_val, assign_indices) {
+  L_vector <- matrix(0, nrow = 1, ncol = length(assign_indices))
+  L_vector[, assign_val] <- 1
+  L_vector
+}
+
+# builds the single-model Satterthwaite F table (NumDF/DenDF/F value/Pr(>F))
+# from the already-computed asymptotic Chi2 table's Df/Chi2 columns, reusing
+# get_satterthwaite_cached()'s fit-time cache when available -- see
+# anova.ssn_lm()'s ddf argument
+get_satterthwaite_anova <- function(object, L, anova_val, test) {
+  sw <- get_satterthwaite_cached(object, "numeric")
+  DenDF <- vapply(L, function(Lmat) fai_cornelius(Lmat, object, sw$context, sw$vcov_theta), numeric(1))
+  F_value <- anova_val$Chi2 / anova_val$Df
+  anova_f <- data.frame(NumDF = anova_val$Df, DenDF = DenDF, `F value` = F_value, check.names = FALSE)
+  rownames(anova_f) <- rownames(anova_val)
+  if (test) {
+    anova_f$`Pr(>F)` <- pf(F_value, anova_val$Df, DenDF, lower.tail = FALSE)
+  }
+  anova_f
+}
+
 get_marginal_Chi2 <- function(L, object) {
   # make matrix if a numeric vector
   if (!is.matrix(L)) {
@@ -204,56 +291,4 @@ get_marginal_Chi2 <- function(L, object) {
   rownames(Chi2_df) <- names(L)
   # return the data frame
   Chi2_df
-}
-
-#' @rdname anova.SSN2
-#' @param x An object from \code{anova(object)}.
-#'
-#' @method tidy anova.ssn_lm
-#' @export
-tidy.anova.ssn_lm <- function(x, ...) {
-  if (!is.null(attr(x, "full")) && !is.null(attr(x, "reduced"))) {
-    result <- tibble::tibble(full = attr(x, "full"), reduced = attr(x, "reduced"), df = x$Df, statistic = x$Chi2)
-  } else {
-    result <- tibble::tibble(effects = rownames(x), df = x$Df, statistic = x$Chi2)
-  }
-  if ("Pr(>Chi2)" %in% colnames(x)) {
-    result$p.value <- x[["Pr(>Chi2)"]]
-  }
-  result
-}
-
-#' @rdname anova.SSN2
-#' @method tidy anova.ssn_glm
-#' @export
-tidy.anova.ssn_glm <- tidy.anova.ssn_lm
-
-#' Get relevant L lists for anova
-#'
-#' @description This function iterates through each call to get_L_vector (which is defined below).
-#'
-#' @param assign_index A single assign value from the model matrix
-#' @param assign_indices The assign values from the model matrix
-#'
-#' @return L lists for anova
-#'
-#' @noRd
-get_L_list <- function(assign_index, assign_indices) {
-  assign_vals <- which(assign_indices == assign_index)
-  L_vectors <- lapply(assign_vals, get_L_vector, assign_indices)
-  do.call(rbind, L_vectors)
-}
-
-#' Get relevant L vectors for anova
-#'
-#' @param assign_index Relevant assign value from the model matrix
-#' @param assign_indices The assign values from the model matrix
-#'
-#' @return L vectors for anova
-#'
-#' @noRd
-get_L_vector <- function(assign_val, assign_indices) {
-  L_vector <- matrix(0, nrow = 1, ncol = length(assign_indices))
-  L_vector[, assign_val] <- 1
-  L_vector
 }

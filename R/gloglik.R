@@ -1,4 +1,4 @@
-#' Compute log likeihood
+#' Compute log likelihood
 #'
 #' @param par Optimization parameters
 #' @param orig2optim_object An optimization object that performs necessary transformations
@@ -10,7 +10,7 @@ gloglik <- function(par, orig2optim_object, data_object, estmethod) {
   # find parameters on the original scale
   cov_orig_val <- optim2orig(orig2optim_object, par)
 
-  # crearte a parameter object
+  # create a parameter object
   params_object <- get_params_object(orig2optim_object$classes, cov_orig_val)
 
   # find the -2ll products

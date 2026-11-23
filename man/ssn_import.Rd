@@ -32,15 +32,15 @@ prediction site datasets (if they exist).}
 \code{ssn_import} returns an object of class SSN, which is a list
 with four elements containing:
 \itemize{
-\item{\code{edges}: An \code{sf data.frame} containing the stream network,
-with an additional 'netgeom' column.}
-\item{\code{obs}: An sf data.frame containing observed site locations,
+\item \code{edges}: An \code{sf data.frame} containing the stream network,
+with an additional 'netgeom' column.
+\item \code{obs}: An sf data.frame containing observed site locations,
 with an additional 'netgeom' column. NA if \code{include_obs =
-    FALSE}.}
-\item{\code{preds}: A list of sf data.frames containing prediction
-site locations. An empty list is returned if \code{predpts} is not provided.}
-\item{path: The local filepath for the .ssn directory associated with the \code{SSN}
-object.}
+    FALSE}.
+\item \code{preds}: A list of sf data.frames containing prediction
+site locations. An empty list is returned if \code{predpts} is not provided.
+\item path: The local filepath for the .ssn directory associated with the \code{SSN}
+object.
 }
 }
 \description{
@@ -54,13 +54,14 @@ from a .ssn folder generated using the
 attribute data needed to fit a spatial statistical stream network
 model to streams data.  This includes:
 \itemize{
-\item{An edges dataset with LINESTRING geometry representing the stream network.}
-\item{A sites dataset with POINT geometry where observed data were collected on
-the stream network.}
-\item{Prediction sites dataset(s) representing
-locations where predictions will be made.}
-\item{netID.dat file(s) for each distinct network, which stores the topological
-relationships of the line features in edges.}}
+\item An edges dataset with LINESTRING geometry representing the stream network.
+\item A sites dataset with POINT geometry where observed data were collected on
+the stream network.
+\item Prediction sites dataset(s) representing
+locations where predictions will be made.
+\item netID.dat file(s) for each distinct network, which stores the topological
+relationships of the line features in edges.
+}
 
 A more detailed description of the .ssn directory and its
 contents is provided in Peterson and Ver Hoef (2014).
@@ -83,7 +84,7 @@ directory. This information is used internally by
 to fit a spatial statistical model to stream network data. If
 \code{overwrite = TRUE} (\code{overwrite = FALSE} is the default) and a binaryID.db
 file already exists within the .ssn directory, it will be
-overwritten when the \code{SSN} object is created. If a 'netgeom' column exists in any of the input datasets (e.g. edges, observed sites, predictions sites) and \code{overwrite = TRUE}, it will be overwriten.
+overwritten when the \code{SSN} object is created. If a 'netgeom' column exists in any of the input datasets (e.g. edges, observed sites, prediction sites) and \code{overwrite = TRUE}, it will be overwritten.
 
 At a minimum, an \code{SSN} object must always contain streams,
 which are referred to as edges. The \code{SSN} object would also
@@ -103,20 +104,22 @@ object correspond to the vector names. Otherwise, they are set to
 the basename of the prediction site dataset file(s) specified in
 \code{predpts}. The \code{\link[SSN2]{ssn_import_predpts}}
 function allows users to import additional sets of prediction
-sites to a an existing \code{SSN} object.
+sites to an existing \code{SSN} object.
 }
 \examples{
-## Create local temporary copy of MiddleFork04.ssn found in
-# SSN2/lsndata folder. Only necessary for this example.
+# Copy the mf04p .ssn data to a local directory and read it into R
+# When modeling with your .ssn object, you will load it using the relevant
+# path to the .ssn data on your machine
 copy_lsn_to_temp()
+temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
 
 ## Import SSN object with no prediction sites
-mf04 <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+mf04 <- ssn_import(temp_path,
   overwrite = TRUE
 )
 
 ## Import SSN object with 3 sets of prediction sites
-mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+mf04p <- ssn_import(temp_path,
   predpts = c(
     "pred1km",
     "CapeHorn"

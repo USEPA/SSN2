@@ -8,6 +8,9 @@ ssn_rgamma <- function(ssn.object, network = "obs",
     stop("network must be \"obs\".", call. = FALSE)
   }
 
+  # re-dispatch this call to ssn_rnorm() (dropping the "dispersion" argument,
+  # which ssn_rnorm() does not accept) to simulate the shared latent
+  # Gaussian process, then transform it below into the target distribution
   call_val <- match.call()
   call_val[[1]] <- as.symbol("ssn_rnorm")
   call_list <- as.list(call_val)

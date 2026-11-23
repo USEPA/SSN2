@@ -18,7 +18,12 @@ partition_matrix <- function(partition_factor = NULL, data) {
       partition_model_val <- Matrix::Matrix(matrix(1, nrow = NROW(partition_model_frame), ncol = 1), sparse = TRUE)
       # partition_model_val <- Matrix::Matrix(as.matrix(partition_model_frame), sparse = TRUE)
     } else {
-      partition_model_val <- Matrix::Matrix(model.matrix(partition_formula, data), sparse = TRUE)
+      # Integer codes prevent separators in category names from merging groups.
+      group_codes <- lapply(partition_model_frame, function(x) as.integer(as.factor(x)))
+      group_label <- interaction(group_codes, drop = TRUE)
+      partition_model_val <- Matrix::t(Matrix::fac2sparse(group_label, drop.unused.levels = FALSE))
+      # Preserve the observation names omitted by fac2sparse().
+      rownames(partition_model_val) <- rownames(partition_model_frame)
     }
     partition_matrix_val <- tcrossprod(partition_model_val, partition_model_val)
   }

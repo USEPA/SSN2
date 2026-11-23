@@ -1,24 +1,16 @@
-#' Specify spatial indexing covariance matrix adjustment. Not currently
-#'   relevant as spatial indexing has not yet been implemented.
-#'
-#' @param invcov_betahat_list Placeholder.
-#' @param betahat_list Placeholder.
-#' @param betahat Placeholder.
-#' @param eigenprods_list Placeholder.
-#' @param data_object Placeholder.
-#' @param params_object Placeholder.
-#' @param cov_betahat_noadjust Placeholder.
-#' @param var_adjust Placeholder.
-#'
-#' @noRd
 cov_betahat_adjust <- function(invcov_betahat_list, betahat_list,
                                betahat, eigenprods_list, data_object, params_object,
                                cov_betahat_noadjust, var_adjust) {
 
+  randcov_params <- params_object$randcov
+
   P <- length(betahat_list)
   # reset var_adjust if only one partition
   # var_adjust == "theoretical" ||
-  if (P == 1 || (inherits(params_object$tailup, "tailup_none") && inherits(params_object$taildown, "taildown_none") && inherits(params_object$euclid, "euclid_none") && inherits(params_object$nugget, "tailup_nugget"))) {
+  if (P == 1 || (inherits(params_object$tailup, "tailup_none") &&
+      inherits(params_object$taildown, "taildown_none") &&
+      inherits(params_object$euclid, "euclid_none") &&
+      inherits(params_object$nugget, "nugget_nugget") && is.null(randcov_params))) {
     var_adjust <- "none"
   }
 
@@ -75,13 +67,13 @@ cov_betahat_adjust <- function(invcov_betahat_list, betahat_list,
 get_W_ij <- function(d1_index, d2_index, eigenprods_list, params_object,
                      randcov_params, randcov_names, data_object) {
 
-
   d1 <- data_object$obdata_list[[d1_index]]
   d2 <- data_object$obdata_list[[d2_index]]
 
-
-  dist_object_bigdata_cross <- get_dist_object_bigdata_cross(d1, d2, params_object, data_object)
-
+  dist_object_bigdata_cross <- get_dist_object_bigdata_cross(
+    d1, d2, params_object, data_object,
+    backend = if (is.null(data_object$backend)) "bigdata" else data_object$backend
+  )
 
   # random effects
   if (!is.null(data_object$randcov_list)) {
@@ -98,7 +90,6 @@ get_W_ij <- function(d1_index, d2_index, eigenprods_list, params_object,
     randcov_params <- NULL
     Zs_cross <- NULL
   }
-
 
   # partition matrix
   if (!is.null(data_object$partition_factor)) {
@@ -120,7 +111,6 @@ get_W_ij <- function(d1_index, d2_index, eigenprods_list, params_object,
   W_ij <- W_ij_half + t(W_ij_half)
 }
 
-
 get_W_ij_parallel <- function(index_list, eigenprods_list, params_object,
                               randcov_params, randcov_names, data_object) {
   d1_index <- index_list$d1
@@ -128,6 +118,6 @@ get_W_ij_parallel <- function(index_list, eigenprods_list, params_object,
   get_W_ij(
     d1_index, d2_index, eigenprods_list,
     params_object, randcov_params,
-    randcov_params, data_object
+    randcov_names, data_object
   )
 }

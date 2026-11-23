@@ -1,3 +1,7 @@
+# AICc adds a small-sample correction term to AIC because AIC's fixed
+# penalty of 2 * estparams underestimates model complexity when n is not
+# much larger than the number of estimated parameters
+
 #' @method AICc ssn_lm
 #' @export
 AICc.ssn_lm <- function(object, ..., k = 2) {
@@ -8,6 +12,9 @@ AICc.ssn_lm <- function(object, ..., k = 2) {
   # see if ... has any elements
   if (length(object_list) == 1) {
     # number of estimated parameters
+    # for ml, both fixed effects (p) and covariance parameters (npar) were
+    # optimized; for reml, only the covariance parameters were optimized
+    # (fixed effects are profiled out)
     if (object$estmethod == "ml") {
       n_est_param <- object$npar + object$p
     } else {
@@ -18,12 +25,13 @@ AICc.ssn_lm <- function(object, ..., k = 2) {
       stop("AICc is only defined if estmethod is \"ml\" or \"reml\".", call. = FALSE)
     }
     # compute AICc
+    # -2*loglik + small-sample-corrected complexity penalty
     AICc_val <- -2 * as.numeric(logLik(object)) + 2 * object$n * (n_est_param) / (object$n - n_est_param - 1)
   } else {
     # warning if ml and reml in same call
     est_methods <- vapply(object_list, function(x) x$estmethod, character(1))
     if ("ml" %in% est_methods && "reml" %in% est_methods) {
-      warning("AICc and AICcc should not compare models fit with
+      warning("AIC and AICc should not compare models fit with
              \"ml\" to models fit with \"reml\"", call. = FALSE)
     }
     # warning if reml and fixed effects change
@@ -37,6 +45,8 @@ AICc.ssn_lm <- function(object, ..., k = 2) {
       }
     }
     # find model names provided
+    # substitute() captures the unevaluated call arguments so the original
+    # variable names (not their values) are used as labels
     object_list_names <- as.character(c(substitute(object), (as.list(substitute(list(...)))[-1])))
     # error if any names duplicated
     if (any(duplicated(object_list_names))) {
@@ -46,14 +56,14 @@ AICc.ssn_lm <- function(object, ..., k = 2) {
     object_AICc <- lapply(object_list, function(x) {
       # warning if estmethod not ml or reml
       if (!object$estmethod %in% c("ml", "reml")) {
-        stop("AICc is only defined is estmethod is \"ml\" or \"reml\".", call. = FALSE)
+        stop("AICc is only defined if estmethod is \"ml\" or \"reml\".", call. = FALSE)
       }
       if (x$estmethod == "ml") {
         n_est_param <- x$npar + x$p
       } else {
         n_est_param <- x$npar
       }
-      # store degrees of freedom (parames estimated) and AICc
+      # store degrees of freedom (params estimated) and AICc
       data.frame(df = n_est_param, AICc = -2 * logLik(x) + 2 * x$n * (n_est_param) / (x$n - n_est_param - 1))
     })
     # put all AICc data frames together
@@ -67,4 +77,6 @@ AICc.ssn_lm <- function(object, ..., k = 2) {
 
 #' @method AICc ssn_glm
 #' @export
+# ssn_glm reuses the ssn_lm AICc computation directly since npar and p are
+# stored the same way across both model classes
 AICc.ssn_glm <- AICc.ssn_lm

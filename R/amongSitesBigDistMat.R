@@ -1,4 +1,4 @@
-#' Helper function to determining distance matrices among sites
+#' Helper function to determine distance matrices among sites
 #'
 #' @param ssn An SSN object.
 #' @param pids A list of pid values for prediction sites
@@ -8,7 +8,7 @@
 #' @param net.num Network number (netID) in character format.
 #'
 #' @return A distance matrix
-#' @export amongSitesBigDistMat
+#' @noRd
 #'
 amongSitesBigDistMat <- function(ssn, pids, net.num, name = "obs", bin.table,
                               workspace.name) {

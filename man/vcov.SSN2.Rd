@@ -6,12 +6,21 @@
 \alias{vcov.ssn_glm}
 \title{Calculate variance-covariance matrix for a fitted model object}
 \usage{
-\method{vcov}{ssn_lm}(object, ...)
+\method{vcov}{ssn_lm}(object, type = "fixed", ...)
 
 \method{vcov}{ssn_glm}(object, var_correct = TRUE, ...)
 }
 \arguments{
 \item{object}{A fitted model object from \code{\link[=ssn_lm]{ssn_lm()}} or \code{\link[=ssn_glm]{ssn_glm()}}.}
+
+\item{type}{For \code{type = "fixed"} (the default), the variance-covariance matrix
+of the fixed effects. If Satterthwaite degrees of freedom were calculated,
+\code{type = "cov"} returns the variance-covariance matrix of the covariance
+parameters. In SSN2, \code{type = "ssn"} returns the tailup, taildown,
+Euclidean, and nugget subset; \code{"tailup"}, \code{"taildown"},
+\code{"euclid"}, and \code{"nugget"} return their individual subsets.
+\code{type = "randcov"} returns the variance-covariance matrix of just
+the random effects (if relevant).}
 
 \item{...}{Other arguments. Not used (needed for generic consistency).}
 
@@ -20,8 +29,9 @@ matrix for models fit using \code{\link[=ssn_glm]{ssn_glm()}} (when \code{family
 from \code{"Gaussian"}). The default is \code{TRUE}.}
 }
 \value{
-The variance-covariance matrix of coefficients obtained via \code{coef()}.
-Currently, only the variance-covariance matrix of the fixed effects is supported.
+The variance-covariance matrix of fixed effect
+coefficients obtained via \code{coef(..., type = "fixed")}
+or the variance-covariance matrix of  estimated covariance parameters (when available).
 }
 \description{
 Calculate variance-covariance matrix for a fitted model object.

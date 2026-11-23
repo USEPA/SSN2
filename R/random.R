@@ -1,13 +1,3 @@
-#' Get random effects design matrices
-#'
-#' @param randcov_vars The names of the random effects
-#' @param data The data
-#' @param ZZt Should ZZt be returned?
-#' @param ZtZ Should ZtZ be returned?
-#'
-#' @return Random effects design matrices
-#'
-#' @noRd
 get_randcov_list <- function(index, randcov_Zs = NULL, randcov_names = NULL) {
   if (is.null(randcov_names)) {
     randcov_list <- NULL
@@ -19,29 +9,12 @@ get_randcov_list <- function(index, randcov_Zs = NULL, randcov_names = NULL) {
   randcov_list
 }
 
-#' Get list of random effects
-#'
-#' @param index_val A spatial index (not yet functional) to compare
-#' @param index A spatial index (not yet functional)
-#' @param randcov_Zs Random effect design matrices
-#' @param randcov_names Random effect names
-#'
-#' @noRd
 get_randcov_index_list <- function(index_val, index, randcov_Zs, randcov_names) {
   Z_lists <- lapply(randcov_names, function(x) get_randcov_var_list(x, index_val, index, randcov_Zs))
   names(Z_lists) <- randcov_names
   Z_lists
 }
 
-#' Get list of random effect variances
-#'
-#'
-#' @param randcov_name Random effect name
-#' @param index_val A spatial index (not yet functional) to compare
-#' @param index A spatial index (not yet functional)
-#' @param randcov_Zs Random effect design matrices
-#'
-#' @noRd
 get_randcov_var_list <- function(randcov_name, index_val, index, randcov_Zs) {
   Z_list <- randcov_Zs[[randcov_name]][["Z"]][index_val, , drop = FALSE]
   if (is.null(randcov_Zs[[randcov_name]][["ZZt"]])) {
@@ -96,7 +69,13 @@ get_randcov_Z <- function(randcov_name, data, ZZt = TRUE, ZtZ = FALSE, xlev_list
   if (any(!attr(terms(Z_frame), "dataClasses") %in% c("character", "factor", "ordered"))) {
     stop("Random effect grouping variables must be categorical or factor.", call. = FALSE)
   }
-  Z_index <- Matrix(model.matrix(Z_reform, Z_frame), sparse = TRUE)
+  # Compound grouping terms need every model-frame column, not just the first.
+  if (NCOL(Z_frame) == 1) {
+    Z_factor <- Z_frame[[1]]
+  } else {
+    Z_factor <- interaction(Z_frame, drop = FALSE, sep = ":")
+  }
+  Z_index <- t(fac2sparse(Z_factor, drop.unused.levels = FALSE))
   if (bar_split[[1]] == "1") {
     Z <- Z_index
   } else {
@@ -179,14 +158,36 @@ get_randcov_label <- function(label) {
   form_fronts <- lapply(labels_fronts, function(x) paste(x, strsplits[[1]][[2]], sep = " | "))
 }
 
-#' Create a random effects covariance matrix
-#'
-#' @param randcov_params A \code{randcov_params} object
-#' @param randcov_Zs Random effects design matrices
-#'
-#' @return A random effects covariance matrix
-#'
-#' @noRd
+extend_randcov_xlev <- function(random_xlev, newdata, randcov_names) {
+  if (is.null(random_xlev) || is.null(randcov_names)) {
+    return(random_xlev)
+  }
+  extended <- lapply(randcov_names, function(randcov_name) {
+    old_xlev <- random_xlev[[randcov_name]]
+    if (is.null(old_xlev)) {
+      return(NULL)
+    }
+    bar_split <- unlist(strsplit(randcov_name, " | ", fixed = TRUE))
+    reform_bar2 <- reformulate(bar_split[[2]], intercept = FALSE)
+    newdata_mf <- model.frame(reform_bar2, newdata, na.action = na.pass)
+    newdata_xlev <- .getXlevels(terms(newdata_mf), newdata_mf)
+    mapply(function(old, var) union(old, newdata_xlev[[var]]), old_xlev, names(old_xlev), SIMPLIFY = FALSE)
+  })
+  names(extended) <- randcov_names
+  extended
+}
+
+get_randcov_xlev <- function(randcov_names, obdata) {
+  randcov_xlev <- lapply(randcov_names, function(x) {
+    bar_split <- unlist(strsplit(x, " | ", fixed = TRUE))
+    reform_bar2 <- reformulate(bar_split[[2]], intercept = FALSE)
+    mf <- model.frame(reform_bar2, obdata)
+    .getXlevels(terms(mf), mf)
+  })
+  names(randcov_xlev) <- randcov_names
+  randcov_xlev
+}
+
 randcov_matrix <- function(randcov_params = NULL, randcov_list) {
   if (is.null(randcov_params)) {
     randcov_matrix_val <- NULL

@@ -21,7 +21,7 @@ ssn_names <- function(ssn.object) {
   np <- length(ssn.object$preds)
   nt <- no + np
   if (nt == 0) {
-    return(cat("There are no observed or prediction data and hence, no variables names."))
+    return(cat("There are no observed or prediction data and hence, no variable names."))
   }
 
   namesList <- vector("list", nt)

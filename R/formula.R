@@ -33,4 +33,5 @@ formula.ssn_lm <- function(x, ...) {
 #' @rdname formula.SSN2
 #' @method formula ssn_glm
 #' @export
+# GLM-type models store formula identically to ssn_lm, so reuse that method
 formula.ssn_glm <- formula.ssn_lm

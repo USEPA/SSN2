@@ -19,7 +19,7 @@ informative summaries when printing.
 Summarize data found in an SSN object.
 }
 \details{
-\code{summary.SSN()} creates a summary of a SSN object
+\code{summary.SSN()} creates a summary of an SSN object
 intended to be printed using \code{print()}. This summary
 contains information about the number of observed and prediction
 locations, as well as the column names found in their respective

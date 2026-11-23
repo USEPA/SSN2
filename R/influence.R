@@ -35,16 +35,28 @@
 #' )
 #' influence(ssn_mod)
 influence.ssn_lm <- function(model, ...) {
-  tibble::tibble( # used to be data.frame
+  # standardized residuals are requested via a separate residuals() call
+  # (rather than derived here from .resid and .hat) since the standardization
+  # accounts for the full model covariance, not just leverage
+  tibble::tibble(
     .resid = residuals(model),
     .hat = hatvalues(model),
     .cooksd = cooks.distance(model),
-    .std.resid = residuals(model, type = "standardized") # ,
-    # .sigma = abs(model$model$y - loocv(model, cv_fitted = TRUE)$cv_fitted)
+    .std.resid = residuals(model, type = "standardized")
   )
 }
 
 #' @rdname influence.SSN2
 #' @method influence ssn_glm
 #' @export
-influence.ssn_glm <- influence.ssn_lm
+influence.ssn_glm <- function(model, ...) {
+  tibble::tibble(
+    # allow ... so type can be passed to residuals()
+    .resid = residuals(model, ...),
+    .hat = hatvalues(model),
+    .cooksd = cooks.distance(model),
+    # standardized residuals always use their own default type regardless of
+    # any type passed above, since standardization needs a specific residual definition
+    .std.resid = residuals(model, type = "standardized")
+  )
+}

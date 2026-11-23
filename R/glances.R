@@ -3,12 +3,12 @@
 #' @description \code{glances()} repeatedly calls \code{glance()} on several
 #'   fitted model objects and binds the output together, sorted by a column of interest.
 #'
-#' @param object Fitted model object from [ssn_lm()] or [ssn_glm()].
-#' @param ... Additional fitted model objects from [ssn_lm()] or [ssn_glm()].
+#' @param object A fitted model object from [ssn_lm()] or [ssn_glm()].
+#' @param ... Additional fitted model objects.
 #' @param sort_by Sort by a \code{glance} statistic (i.e., the name of a column
 #'   output from \code{glance()} or the order of model input (\code{sort_by = "order"}).
 #'   The default is \code{"AICc"}.
-#' @param decreasing Should \code{sort_by} be decreasing or not? The default is \code{FALSE}.
+#' @param decreasing Whether \code{sort_by} should sort by decreasing order? The default is \code{FALSE}.
 #' @param warning Whether a warning is displayed when model comparisons violate certain rules.
 #'   The default is \code{TRUE}.
 #' @return A tibble where each row represents the output of \code{glance()} for
@@ -83,6 +83,16 @@ glances.ssn_glm <- function(object, ..., sort_by = "AICc", decreasing = FALSE, w
   tibble::as_tibble(model_bind)
 }
 
+#' Warn if a set of models is unsuitable for likelihood-based comparison
+#'
+#' @param model_list A list of fitted model objects
+#'
+#' @return Nothing; issues a warning if models were fit with a different
+#'   sample size, a mix of \code{"ml"} and \code{"reml"}, distinct fixed
+#'   effect structures under \code{"reml"}, or (for \code{ssn_glm}) incompatible
+#'   response families (see \code{check_wrong_family()})
+#'
+#' @noRd
 check_likstat_use <- function(model_list) {
 
 
@@ -95,7 +105,6 @@ check_likstat_use <- function(model_list) {
     }
     # probably should also check that the response vectors (sorted) are actually equal
     # e.g., any(sort(model.response(model.frame(model1))) != sort(model.response(model.frame(model2))))
-    # any problems here we don't foresee?
   }
 
   if (any("reml" %in% est_methods) && any("ml" %in% est_methods)) {
@@ -114,6 +123,15 @@ check_likstat_use <- function(model_list) {
   # NULL
 }
 
+#' Warn if a set of GLM-type models mixes incompatible response families
+#'
+#' @param model_list A list of fitted \code{ssn_glm} model objects
+#'
+#' @return Nothing; issues a warning if the families mix binomial, beta,
+#'   count (Poisson/negative binomial), or skewed-continuous (Gamma/inverse
+#'   Gaussian) families with families outside that group
+#'
+#' @noRd
 check_wrong_family <- function(model_list) {
 
   families <- vapply(model_list, function(x) x$family, character(1))

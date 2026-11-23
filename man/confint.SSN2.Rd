@@ -21,7 +21,7 @@ intervals (a character vector of names). If missing, all parameters are consider
 \item{...}{Other arguments. Not used (needed for generic consistency).}
 }
 \value{
-Gaussian-based confidence intervals (two-sided and equal-tailed) for the
+Confidence intervals (two-sided and equal-tailed) for the
 fixed effect coefficients based on the confidence level specified by \code{level}.
 For \code{ssn_glm()} objects, confidence intervals are on the link scale.
 }

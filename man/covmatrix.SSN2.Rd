@@ -15,12 +15,10 @@
 
 \item{newdata}{If omitted, the covariance matrix of
 the observed data is returned. If provided, \code{newdata} is
-a data frame or \code{sf} object that contains coordinate information
-required to construct the covariance between \code{newdata} and
-the observed data. If a data frame, \code{newdata}
-must contain variables that represent coordinates having the same name as
-the coordinates from the observed data used to fit \code{object}. If an
-\code{sf} object, coordinates are obtained from the geometry of \code{newdata}.}
+a character string naming the prediction data set (accessible via
+\code{object$ssn.object$preds}) for which the covariance is desired.
+Note that the prediction data must be in the original SSN object used
+to fit \code{object}.}
 
 \item{cov_type}{The type of covariance matrix returned. If \code{newdata}
 is omitted, the \eqn{n \times n} covariance matrix of the observed
@@ -36,7 +34,11 @@ the \eqn{m \times m} covariance matrix of the prediction data is returned.}
 \item{...}{Other arguments. Not used (needed for generic consistency).}
 }
 \value{
-A covariance matrix (see \code{cov_type}).
+If \code{newdata} is omitted, the covariance matrix of the observed
+data, which has dimension n x n, where n is the sample size used to fit \code{object}.
+If \code{newdata} is provided, the covariance matrix between the unobserved (new)
+data and the observed data, which has dimension m x n, where m is the number of
+new observations and n is the sample size used to fit \code{object}.
 }
 \description{
 Create a covariance matrix from a fitted model object.

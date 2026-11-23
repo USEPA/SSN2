@@ -1,4 +1,4 @@
-#' Helper function to determining distance matrices among sites
+#' Helper function to determine distance matrices among sites
 #'
 #' @param ssn An SSN object.
 #' @param pids A list of pid values for prediction sites

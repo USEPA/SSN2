@@ -112,7 +112,7 @@ amongObsPredsBigDistMat <- function(ssn, obs.pids, pred.pids, bin.table,
 
             dist.a <- ifelse(ind.fc, ob.j$upDist.j-upDist.ob,
                              ob.j$upDist.j - ob.j$juncDist)
-            ## WE CHANGE THIS SO THAT WE'RE ADDING COLUMNS (TRANSPOSE IT LATER FOR USE)
+            # Store columns here; later transpose the matrix.
             col.ind <- colnames(current_distance_matrix_a) == as.character(pid.ob)
             current_distance_matrix_a[,col.ind] <- ifelse(dist.a<0, 0, dist.a)
 

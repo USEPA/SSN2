@@ -1,12 +1,18 @@
 test_that("generics work ssn_lm point data", {
+  withr::local_pdf(NULL)
   set.seed(2)
 
   form <- Summer_mn ~ ELEV_DEM
-  ssn_mod1 <- ssn_lm(form, mf04p,
+  # Fix the legacy start so this finite-iteration generics fixture stays stable.
+  expect_warning(ssn_mod1 <- ssn_lm(form, mf04p,
     tailup_type = "exponential",
     taildown_type = "exponential", euclid_type = "exponential",
-    nugget_type = "nugget", additive = "afvArea"
-  )
+    nugget_type = "nugget", additive = "afvArea", control = list(maxit = 500),
+    tailup_initial = tailup_initial("exponential", 2.2492, 22085.989, known = "none"),
+    taildown_initial = taildown_initial("exponential", 0.0833, 7361.9963, known = "none"),
+    euclid_initial = euclid_initial("exponential", 0.0833, 6988.4664, known = "none"),
+    nugget_initial = nugget_initial("nugget", 0.0833, known = "none")
+  ), "convergence code 1", fixed = TRUE)
   ssn_mod2 <- ssn_lm(form, mf04p,
     tailup_type = "exponential",
     taildown_type = "none", euclid_type = "none",
@@ -79,7 +85,6 @@ test_that("generics work ssn_lm point data", {
   expect_null(coefficients(ssn_mod1, type = "randcov"))
   expect_error(coefficients(ssn_mod1, type = "error"), 'Invalid type argument. The type argument must be "fixed", "ssn", "tailup",  "taildown",  "euclid",  "nugget", or "randcov".')
 
-
   # confint
   expect_equal(dim(confint(ssn_mod1)), c(2, 2))
   expect_equal(dim(confint(ssn_mod1, parm = c("ELEV_DEM"), level = 0.9)), c(1, 2))
@@ -93,7 +98,7 @@ test_that("generics work ssn_lm point data", {
   expect_equal(dim(covmatrix(ssn_mod1, "pred1km")), c(175, 45))
   expect_equal(dim(covmatrix(ssn_mod1, "pred1km", cov_type = "obs.pred")), c(45, 175))
   expect_equal(dim(covmatrix(ssn_mod1, "pred1km", cov_type = "pred.pred")), c(175, 175))
-  expect_error(covmatrix(ssn_mod1, "pred1km", cov_type = "error"), 'Invalid "cov_type" argument.')
+  expect_error(covmatrix(ssn_mod1, "pred1km", cov_type = "error"), "cov_type must be")
 
   # deviance
   expect_vector(deviance(ssn_mod1))
@@ -233,7 +238,6 @@ test_that("generics work ssn_lm point data", {
   expect_vector(predict(ssn_mod1, newdata = "pred1km", block = TRUE))
   expect_error(predict(ssn_mod1, newdata = "pred1km", block = TRUE, interval = "error"))
 
-
   # print
   expect_output(print(ssn_mod1))
   expect_output(print(summary(ssn_mod1)))
@@ -263,7 +267,7 @@ test_that("generics work ssn_lm point data", {
 
   # summary
   expect_type(summary(ssn_mod1), "list")
-  expect_equal(length(ssn_mod1), 32)
+  expect_equal(length(ssn_mod1), 35)
   expect_equal(length(summary(ssn_mod1)), 8)
 
   # terms
@@ -273,9 +277,9 @@ test_that("generics work ssn_lm point data", {
 
   # tidy
   expect_s3_class(tidy(ssn_mod1), "data.frame")
-  expect_equal(dim(tidy(ssn_mod1)), c(2, 5))
+  expect_equal(dim(tidy(ssn_mod1)), c(2, 6))
   expect_s3_class(tidy(ssn_mod1, conf.int = TRUE, level = 0.9), "data.frame")
-  expect_equal(dim(tidy(ssn_mod1, conf.int = TRUE, level = 0.9)), c(2, 7))
+  expect_equal(dim(tidy(ssn_mod1, conf.int = TRUE, level = 0.9)), c(2, 8))
   expect_s3_class(tidy(ssn_mod1, effects = "ssn"), "data.frame")
   expect_equal(dim(tidy(ssn_mod1, effects = "ssn")), c(7, 4))
   expect_s3_class(tidy(ssn_mod1, effects = "tailup"), "data.frame")

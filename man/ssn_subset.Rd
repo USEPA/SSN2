@@ -56,8 +56,12 @@ matrices before fitting models to the data in the subset
 }
 \examples{
 ## Import SSN object
+# Copy the mf04p .ssn data to a local directory and read it into R
+# When modeling with your .ssn object, you will load it using the relevant
+# path to the .ssn data on your machine
 copy_lsn_to_temp() ## Only needed for this example
-mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
+mf04p <- ssn_import(temp_path,
   predpts = "pred1km",
   overwrite = TRUE
 )

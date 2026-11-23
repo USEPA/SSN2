@@ -43,8 +43,12 @@
 #' @export
 #' @examples
 #' ## Import SSN object
+#' # Copy the mf04p .ssn data to a local directory and read it into R
+#' # When modeling with your .ssn object, you will load it using the relevant
+#' # path to the .ssn data on your machine
 #' copy_lsn_to_temp() ## Only needed for this example
-#' mf04p <- ssn_import(paste0(tempdir(), "/MiddleFork04.ssn"),
+#' temp_path <- paste0(tempdir(), "/MiddleFork04.ssn")
+#' mf04p <- ssn_import(temp_path,
 #'   predpts = "pred1km",
 #'   overwrite = TRUE
 #' )
@@ -183,7 +187,7 @@ ssn_subset <- function(ssn, path, subset, clip = FALSE, overwrite = FALSE) {
       rm(ind.na)
 
       if (sum(ind.edges) == 0) {
-        stop("No edges have have been selected based on subset expression")
+        stop("No edges have been selected based on subset expression")
       }
 
       if (exists("netg.edges")) {

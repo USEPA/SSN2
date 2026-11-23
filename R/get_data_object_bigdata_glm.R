@@ -1,21 +1,6 @@
-#' Get the glm data object for use with many other functions.
-#'
-#' @param formula Model formula.
-#' @param ssn.object SSN object.
-#' @param additive Name of the additive function value column.
-#' @param anisotropy Whether there is anisotropy.
-#' @param initial_object The initial value object.
-#' @param random Random effect formula.
-#' @param randcov_initial The initial random effect object.
-#' @param partition_factor Partition factor formula.
-#' @param local Spatial indexing argument (not yet implemented)
-#' @param ... Additional arguments
-#'
-#' @return The glm data object that contains various pieces of important information
-#'   required for modeling.
-#' @noRd
 get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, anisotropy,
-                                initial_object, random, randcov_initial, partition_factor, local, ...) {
+                                initial_object, random, randcov_initial, partition_factor, local,
+                                range_constrain = FALSE, ...) {
   sf_column_name <- attributes(ssn.object$obs)$sf_column
   crs <- attributes(ssn.object$obs[[sf_column_name]])$crs
 
@@ -29,40 +14,18 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
 
   # get ob data and frame objects
   obdata <- ssn.object$obs[observed_index, , drop = FALSE]
-  # finding model frame
-  obdata_model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.pass)
-  # finding contrasts as ...
-  dots <- list(...)
-  if (!"contrasts" %in% names(dots)) dots$contrasts <- NULL
-
-  # model matrix with potential NA
-  X <- model.matrix(formula, obdata_model_frame, contrasts = dots$contrasts)
-  # finding rows w/out NA
-  ob_predictors <- complete.cases(X)
-  if (any(!ob_predictors)) {
-    stop("Cannot have NA values in predictors", call. = FALSE)
-  }
-  # subset obdata by nonNA predictors
-  obdata <- obdata[ob_predictors, , drop = FALSE]
+  mm <- get_model_matrix_object(formula, obdata, sf_column_name = sf_column_name, ...)
+  obdata <- mm$obdata
+  formula <- mm$formula
   obdata_netgeom <- ssn_get_netgeom(obdata)
   original_pid <- as.numeric(obdata_netgeom$pid)
-
-  # new model frame
-  obdata_model_frame <- model.frame(formula, obdata, drop.unused.levels = TRUE, na.action = na.omit)
-  # find terms
-  terms_val <- terms(obdata_model_frame)
-  # find X
-  X <- model.matrix(formula, obdata_model_frame, contrasts = dots$contrasts)
-  # find induced contrasts and xlevels
-  dots$contrasts <- attr(X, "contrasts")
-  xlevels <- .getXlevels(terms_val, obdata_model_frame)
-  # find p
-  p <- as.numeric(Matrix::rankMatrix(X, method = "qr"))
-  if (p < NCOL(X)) {
-    warning("There are perfect collinearities detected in X (the matrix of explanatory variables). This may make the model fit unreliable or may cause an error while model fitting. Consider removing redundant explanatory variables and refitting the model.", call. = FALSE)
-  }
-  # find sample size
-  n <- NROW(X)
+  obdata_model_frame <- mm$obdata_model_frame
+  terms_val <- mm$terms_val
+  X <- mm$X
+  dots <- mm$dots
+  xlevels <- mm$xlevels
+  p <- mm$p
+  n <- mm$n
   # find response
   y_modr <- model.response(obdata_model_frame)
   if (NCOL(y_modr) == 2) {
@@ -92,23 +55,12 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
     offset <- as.matrix(offset, ncol = 1)
   }
 
-  # see if response is numeric
-  if (!is.numeric(y)) {
-    stop("Response variable must be numeric", call. = FALSE)
-  }
-
-  # error if no variance
-  if (var(y) == 0) {
-    stop("The response has no variability. Model fit unreliable.", call. = FALSE)
-  }
+  check_response_numeric_and_variable(y)
 
   # checks on y
   response_checks_glm(family, y, size)
 
-  # error if p >= n
-  if (p >= n) {
-    stop("The number of fixed effects is at least as large as the number of observations (p >= n). Consider reducing the number of fixed effects and rerunning ssn_lm().", call. = FALSE)
-  }
+  check_p_lt_n(p, n, refit_fun_text = "ssn_glm")
 
   # find s2 for initial values
   y_trans <- log(y + 1)
@@ -117,25 +69,12 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
   betahat <- backsolve(R_val, qr.qty(qr_val, y_trans))
   resid <- y_trans - X %*% betahat
   s2 <- sum(resid^2) / (n - p)
-  # diagtol <- 1e-4
-  diagtol <- min(1e-4, 1e-4 * s2)
+  diagtol <- 1e-4
 
   # correct anisotropy
   anisotropy <- get_anisotropy_corrected(anisotropy, initial_object)
 
-  # coerce to factor
-  if (!is.null(partition_factor)) {
-    partition_factor_labels <- labels(terms(partition_factor))
-    if (length(partition_factor_labels) > 1) {
-      stop("Only one variable can be specified in partition_factor.", call. = FALSE)
-    }
-    partition_mf <- model.frame(partition_factor, obdata)
-    if (any(!attr(terms(partition_mf), "dataClasses") %in% c("character", "factor"))) {
-      stop("Partition factor variable must be categorical or factor.", call. = FALSE)
-    }
-    partition_factor <- reformulate(partition_factor_labels, intercept = FALSE)
-    # partition_factor <- reformulate(paste0("as.character(", partition_factor_labels, ")"), intercept = FALSE)
-  }
+  partition_factor <- coerce_partition_factor(partition_factor, obdata)
 
   if (is.null(local)) {
     if (n > 3000) {
@@ -151,6 +90,7 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
         if (length(local$index) == NROW(ssn.object$obs))
           local$index <- local$index[observed_index]
       }
+      check_local_index_length(local$index, n)
     }
   }
 
@@ -164,6 +104,12 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
   local$index <- local$index[order_bigdata]
   X <- X[order_bigdata, , drop = FALSE]
   y <- y[order_bigdata, , drop = FALSE]
+  if (!is.null(offset)) {
+    offset <- offset[order_bigdata, , drop = FALSE]
+  }
+  if (!is.null(size)) {
+    size <- size[order_bigdata]
+  }
 
   # store data list
   obdata_list <- split.data.frame(obdata, local$index)
@@ -172,53 +118,28 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
   X_list <- split.data.frame(X, local$index)
   y_list <- split.data.frame(y, local$index)
   ones_list <- lapply(obdata_list, function(x) matrix(rep(1, nrow(x)), ncol = 1))
-  if (!is.null(size)) {
-    size_list <- split(size, local$index) # just split because vector not matrix
-    size <- as.vector(do.call("c", size_list)) # rearranging size by y list
-  }
+  # size/offset already row-aligned with X_list/y_list via order_bigdata above
 
-  # organize offset (as a one col matrix)
-  if (!is.null(offset)) {
-    offset <- do.call("rbind", (split.data.frame(offset, local$index)))
-  }
+  rc <- build_randcov_list(random, randcov_initial, obdata, local$index)
+  randcov_initial <- rc$randcov_initial
+  randcov_list <- rc$randcov_list
+  randcov_names <- rc$randcov_names
+  randcov_xlev <- rc$randcov_xlev
 
-  # store random effects list
-  if (is.null(random)) {
-    randcov_initial <- NULL
-    randcov_list <- NULL
-    randcov_names <- NULL
-  } else {
-    randcov_names <- get_randcov_names(random)
-    randcov_Zs <- get_randcov_Zs(obdata, randcov_names)
-    randcov_list <- get_randcov_list(local$index, randcov_Zs, randcov_names)
-    if (is.null(randcov_initial)) {
-      randcov_initial <- randcov_initial()
-    } else {
-      randcov_given_names <- unlist(lapply(
-        names(randcov_initial$initial),
-        function(x) labels(terms(reformulate(x)))
-      ))
-      randcov_initial_names <- unique(unlist(lapply(randcov_given_names, get_randcov_name)))
-      if (length(randcov_initial_names) != length(names(randcov_initial$initial))) {
-        stop("No / can be specified in randcov_initial(). Please specify starting
-             values for each variable (e.g., a/b = a + a:b)", call. = FALSE)
-      }
-      names(randcov_initial$initial) <- randcov_initial_names
-      names(randcov_initial$is_known) <- randcov_initial_names
-    }
-  }
+  partition_list <- build_partition_list(local$partition_factor, obdata_list)
+  partition_xlev <- get_partition_xlev(local$partition_factor, obdata)
 
-  # store partition matrix list
-  if (!is.null(local$partition_factor)) {
-    partition_list <- lapply(obdata_list, function(x) partition_matrix(local$partition_factor, x))
-  } else {
-    partition_list <- NULL
-  }
-
-  dist_object <- get_dist_object_bigdata(ssn.object, initial_object, additive, anisotropy, local_index_orig, observed_index)
-  bbox <- st_bbox(obdata)
+  # local model fitting only ever reads small per-partition/per-pair-of-
+  # partition submatrices at a time, so prefer the big-data (.bmat)
+  # filematrix reader (a direct, memory-mapped submatrix read) whenever it
+  # exists, falling back to the standard dense (.RData) matrices (which
+  # deserialize an entire network's matrix before subsetting) only when
+  # .bmat does not exist
   tailup_none <- inherits(initial_object$tailup_initial, "tailup_none")
   taildown_none <- inherits(initial_object$taildown_initial, "taildown_none")
+  backend <- select_square_dist_backend(ssn.object, "obs", tailup_none, taildown_none, prefer = "bigdata")
+  dist_object <- get_dist_object_bigdata(ssn.object, initial_object, additive, anisotropy, local_index_orig, observed_index, backend = backend)
+  bbox <- st_bbox(obdata)
   if (tailup_none && taildown_none) {
     tail_max <- Inf
   } else {
@@ -230,6 +151,13 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
   } else {
     euclid_max <- sqrt((bbox[["xmax"]] - bbox[["xmin"]])^2 + (bbox[["ymax"]] - bbox[["ymin"]])^2)
   }
+
+  range_setup <- get_range_constrain_setup(obdata, initial_object, range_constrain)
+  range_constrain_value <- range_setup$range_constrain_value
+  tailup_range_constrain <- range_setup$tailup_range_constrain
+  taildown_range_constrain <- range_setup$taildown_range_constrain
+  euclid_range_constrain <- range_setup$euclid_range_constrain
+
   dist_object <- get_dist_object_oblist_bigdata(dist_object)
 
   # rename as oblist to not store two sets
@@ -246,6 +174,7 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
   list(
     anisotropy = anisotropy,
     additive = additive,
+    backend = backend,
     contrasts = dots$contrasts,
     crs = crs,
     diagtol = diagtol,
@@ -273,11 +202,17 @@ get_data_object_bigdata_glm <- function(formula, ssn.object, family, additive, a
     randcov_initial = randcov_initial,
     randcov_list = randcov_list,
     randcov_names = randcov_names,
+    randcov_xlev = randcov_xlev,
+    partition_xlev = partition_xlev,
     sf_column_name = sf_column_name,
     size = size,
     ssn.object = ssn.object,
     s2 = s2,
     tail_max = tail_max,
+    range_constrain_value = range_constrain_value,
+    tailup_range_constrain = tailup_range_constrain,
+    taildown_range_constrain = taildown_range_constrain,
+    euclid_range_constrain = euclid_range_constrain,
     terms = terms_val,
     var_adjust = local$var_adjust,
     X_list = X_list,

@@ -1,5 +1,10 @@
 test_that("torgegram works", {
-  tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p)
+  withr::local_pdf(NULL)
+  # mf04p's only zero-hydro-distance pairs are cross-network (masked to zero
+  # by mask_mat, not genuine coincident sites), so this must stay silent --
+  # regression guard for the mask-vs-genuine-zero distinction in
+  # check_torgegram_zero_distance()
+  expect_no_warning(tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p))
   expect_s3_class(tg, "Torgegram")
   tg_names <- names(tg)
   expect_identical(c("flowcon", "flowuncon"), tg_names)
@@ -15,7 +20,8 @@ test_that("torgegram works", {
 })
 
 test_that("torgegram works euclid", {
-  tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, type = "euclid")
+  withr::local_pdf(NULL)
+  expect_no_warning(tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, type = "euclid"))
   expect_s3_class(tg, "Torgegram")
   tg_names <- names(tg)
   expect_identical(c("euclid"), tg_names)
@@ -26,7 +32,10 @@ test_that("torgegram works euclid", {
 })
 
 test_that("torgegram works (partition factor)", {
-  tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, partition_factor = ~ as.factor(netID), type = c("flowcon", "flowuncon", "euclid"))
+  withr::local_pdf(NULL)
+  expect_no_warning(
+    tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, partition_factor = ~ as.factor(netID), type = c("flowcon", "flowuncon", "euclid"))
+  )
   expect_s3_class(tg, "Torgegram")
   tg_names <- names(tg)
   expect_identical(c("flowcon", "flowuncon", "euclid"), tg_names)
@@ -45,7 +54,8 @@ test_that("torgegram works (partition factor)", {
 })
 
 test_that("torgegram robust works", {
-  tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, robust = TRUE)
+  withr::local_pdf(NULL)
+  expect_no_warning(tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, robust = TRUE))
   expect_s3_class(tg, "Torgegram")
   tg_names <- names(tg)
   expect_identical(c("flowcon", "flowuncon"), tg_names)
@@ -61,7 +71,8 @@ test_that("torgegram robust works", {
 })
 
 test_that("torgegram cloud works", {
-  tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, cloud = TRUE)
+  withr::local_pdf(NULL)
+  expect_no_warning(tg <- Torgegram(Summer_mn ~ ELEV_DEM, mf04p, cloud = TRUE))
   expect_s3_class(tg, "Torgegram")
   tg_names <- names(tg)
   expect_identical(c("flowcon", "flowuncon"), tg_names)
@@ -74,5 +85,19 @@ test_that("torgegram cloud works", {
   expect_s3_class(tg$flowuncon, "data.frame")
   expect_equal(unlist(tg$flowuncon[1, c("dist", "gamma")]), c("dist" = 1.2033e2, "gamma" = 5.2123e-3), tolerance = 0.01)
   expect_invisible(plot(tg))
+})
+
+test_that("warn_torgegram_zero_distance() warns only when observation coordinates are genuinely duplicated", {
+  # checking hydro/euclid distance vectors directly for zeros is ambiguous
+  # as hydro_mat is forced to zero for masked-out cross-network pairs; checking
+  # physical coincidence directly in the coordinates sidesteps this entirely.
+  no_dups <- sf::st_as_sf(data.frame(x = c(0, 1, 2), y = c(0, 1, 2)), coords = c("x", "y"))
+  expect_no_warning(warn_torgegram_zero_distance(no_dups))
+
+  has_dups <- sf::st_as_sf(data.frame(x = c(0, 1, 0), y = c(0, 1, 0)), coords = c("x", "y"))
+  expect_warning(
+    warn_torgegram_zero_distance(has_dups),
+    "Zero distances observed between at least one pair"
+  )
 })
 

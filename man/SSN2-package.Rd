@@ -6,7 +6,7 @@
 \alias{SSN2-package}
 \title{SSN2: Spatial Modeling on Stream Networks}
 \description{
-Spatial statistical modeling and prediction for data on stream networks, including models based on in-stream distance (Ver Hoef, J.M. and Peterson, E.E., (2010) \doi{10.1198/jasa.2009.ap08248}.) Models are created using moving average constructions. Spatial linear models, including explanatory variables, can be fit with (restricted) maximum likelihood. Mapping and other graphical functions are included.
+Fit, summarize, and predict for spatial linear and generalized linear models on stream networks. Stream covariance models use moving average constructions based on in-stream distance. Parameters are estimated using likelihood methods. Additional modeling features include Euclidean covariance, anisotropy, non-spatial random effects, partition factors, and big data methods. Model-fit statistics are used to summarize, visualize, and compare models, and predictions at unobserved locations are readily obtainable. For additional details, see Ver Hoef and Peterson (2010) \doi{10.1198/jasa.2009.ap08248} and Dumelle et al. (2024) \doi{10.21105/joss.06389}.
 }
 \seealso{
 Useful links:
